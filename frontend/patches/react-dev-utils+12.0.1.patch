@@ -1,0 +1,20 @@
+diff --git a/node_modules/react-dev-utils/WebpackDevServerUtils.js b/node_modules/react-dev-utils/WebpackDevServerUtils.js
+index d9eea34..da5ce5b 100644
+--- a/node_modules/react-dev-utils/WebpackDevServerUtils.js
++++ b/node_modules/react-dev-utils/WebpackDevServerUtils.js
+@@ -17,7 +17,6 @@ const prompts = require('prompts');
+ const clearConsole = require('./clearConsole');
+ const formatWebpackMessages = require('./formatWebpackMessages');
+ const getProcessForPort = require('./getProcessForPort');
+-const forkTsCheckerWebpackPlugin = require('./ForkTsCheckerWebpackPlugin');
+ 
+ const isInteractive = process.stdout.isTTY;
+ 
+@@ -136,6 +135,7 @@ function createCompiler({
+   let tsMessagesPromise;
+ 
+   if (useTypeScript) {
++    const forkTsCheckerWebpackPlugin = require('./ForkTsCheckerWebpackPlugin');
+     forkTsCheckerWebpackPlugin
+       .getCompilerHooks(compiler)
+       .waiting.tap('awaitingTypeScriptCheck', () => {

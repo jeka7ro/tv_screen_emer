@@ -1,0 +1,545 @@
+import React, { useState, useEffect } from 'react';
+import { DashboardLayout } from '../components/DashboardLayout';
+import { Plus, Edit, Trash2, ShoppingBag } from 'lucide-react';
+import api from '../utils/api';
+import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+
+const categories = [
+  { value: 'sushi', label: 'Sushi' },
+  { value: 'rolls', label: 'Rolls' },
+  { value: 'sashimi', label: 'Sashimi' },
+  { value: 'tempura', label: 'Tempura' },
+  { value: 'soup', label: 'Supă' },
+  { value: 'salad', label: 'Salată' },
+  { value: 'dessert', label: 'Desert' },
+  { value: 'drinks', label: 'Băuturi' },
+];
+
+export const Products = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showDialog, setShowDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    price: '',
+    currency: 'RON',
+    category: 'sushi',
+    image_url: '',
+    available: true,
+    featured: false
+  });
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      const response = await api.get('/products');
+      setProducts(response.data);
+    } catch (error) {
+      toast.error('Eroare la încărcarea produselor');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const submitData = {
+        ...formData,
+        price: parseFloat(formData.price)
+      };
+      if (editingProduct) {
+        await api.put(`/products/${editingProduct.id}`, submitData);
+        toast.success('Produs actualizat!');
+      } else {
+        await api.post('/products', submitData);
+        toast.success('Produs creat!');
+      }
+      setShowDialog(false);
+      resetForm();
+      loadProducts();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Eroare la salvare');
+    }
+  };
+
+  const handleEdit = (product) => {
+    setEditingProduct(product);
+    setFormData({
+      name: product.name,
+      description: product.description || '',
+      price: product.price.toString(),
+      currency: product.currency,
+      category: product.category,
+      image_url: product.image_url || '',
+      available: product.available,
+      featured: product.featured
+    });
+    setShowDialog(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Sigur dorești să ștergi acest produs?')) return;
+    try {
+      await api.delete(`/products/${id}`);
+      toast.success('Produs șters!');
+      loadProducts();
+    } catch (error) {
+      toast.error('Eroare la ștergere');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      price: '',
+      currency: 'RON',
+      category: 'sushi',
+      image_url: '',
+      available: true,
+      featured: false
+    });
+    setEditingProduct(null);
+  };
+
+  const importSushiMasterProducts = async () => {
+    setImporting(true);
+    try {
+      // Produse inspirate din meniu tipic SushiMaster
+      const sushiMasterProducts = [
+        {
+          name: "California Roll",
+          description: "8 buc - Crab stick, avocado, castravete, susan",
+          price: 28.00,
+          currency: "RON",
+          category: "rolls",
+          image_url: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800",
+          available: true,
+          featured: true
+        },
+        {
+          name: "Philadelphia Roll",
+          description: "8 buc - Somon, brânză Philadelphia, castravete",
+          price: 32.00,
+          currency: "RON",
+          category: "rolls",
+          image_url: "https://images.unsplash.com/photo-1611143669185-af224c5e3252?w=800",
+          available: true,
+          featured: true
+        },
+        {
+          name: "Sake Maki",
+          description: "8 buc - Somon proaspăt",
+          price: 24.00,
+          currency: "RON",
+          category: "rolls",
+          image_url: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800",
+          available: true,
+          featured: false
+        },
+        {
+          name: "Nigiri Somon",
+          description: "2 buc - Somon proaspăt pe orez",
+          price: 15.00,
+          currency: "RON",
+          category: "sushi",
+          image_url: "https://images.unsplash.com/photo-1564489563601-c53cfc451e93?w=800",
+          available: true,
+          featured: false
+        },
+        {
+          name: "Tempura Roll",
+          description: "8 buc - Creveți tempura, avocado, sos picant",
+          price: 35.00,
+          currency: "RON",
+          category: "tempura",
+          image_url: "https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?w=800",
+          available: true,
+          featured: false
+        },
+        {
+          name: "Dragon Roll",
+          description: "8 buc - Anghilă, avocado, sos teriyaki",
+          price: 38.00,
+          currency: "RON",
+          category: "rolls",
+          image_url: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800",
+          available: true,
+          featured: true
+        },
+        {
+          name: "Sashimi Mix",
+          description: "12 buc - Selecție somon, ton, anghilă",
+          price: 45.00,
+          currency: "RON",
+          category: "sashimi",
+          image_url: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=800",
+          available: true,
+          featured: false
+        },
+        {
+          name: "Miso Soup",
+          description: "Supă tradițională cu tofu și alge",
+          price: 12.00,
+          currency: "RON",
+          category: "soup",
+          image_url: "https://images.unsplash.com/photo-1588566565463-180a5b2090d2?w=800",
+          available: true,
+          featured: false
+        },
+        {
+          name: "Edamame",
+          description: "Boabe de soia prăjite cu sare de mare",
+          price: 14.00,
+          currency: "RON",
+          category: "sushi",
+          image_url: "https://images.unsplash.com/photo-1601039641847-7857b994d704?w=800",
+          available: true,
+          featured: false
+        },
+        {
+          name: "Green Tea Ice Cream",
+          description: "Înghețată cu ceai verde matcha",
+          price: 16.00,
+          currency: "RON",
+          category: "dessert",
+          image_url: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800",
+          available: true,
+          featured: false
+        }
+      ];
+
+      await api.post('/products/import-batch', sushiMasterProducts);
+      toast.success(`${sushiMasterProducts.length} produse importate cu succes!`);
+      setShowImportDialog(false);
+      loadProducts();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Eroare la import');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="spinner"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="animate-in" data-testid="products-page">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-slate-800 mb-2">Produse</h1>
+            <p className="text-slate-500">Gestionează meniul cu produse și prețuri</p>
+          </div>
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => setShowImportDialog(true)} 
+              className="btn-secondary"
+              data-testid="import-products-button"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Import SushiMaster
+            </Button>
+            <Dialog open={showDialog} onOpenChange={(open) => {
+              setShowDialog(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button className="btn-primary" data-testid="add-product-button">
+                  <Plus className="w-5 h-5 mr-2" />
+                  Adaugă produs
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="glass-panel max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingProduct ? 'Editează produsul' : 'Adaugă produs nou'}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label>Nume produs</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    placeholder="California Roll"
+                    required
+                    data-testid="product-name-input"
+                  />
+                </div>
+                <div>
+                  <Label>Descriere (opțional)</Label>
+                  <Textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    placeholder="Descriere delicată a produsului..."
+                    rows={3}
+                    data-testid="product-description-input"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Preț</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.price}
+                      onChange={(e) => setFormData({...formData, price: e.target.value})}
+                      placeholder="35.99"
+                      required
+                      data-testid="product-price-input"
+                    />
+                  </div>
+                  <div>
+                    <Label>Monedă</Label>
+                    <Select
+                      value={formData.currency}
+                      onValueChange={(value) => setFormData({...formData, currency: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="RON">RON</SelectItem>
+                        <SelectItem value="EUR">EUR</SelectItem>
+                        <SelectItem value="USD">USD</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label>Categorie</Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) => setFormData({...formData, category: value})}
+                  >
+                    <SelectTrigger data-testid="product-category-select">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(cat => (
+                        <SelectItem key={cat.value} value={cat.value}>
+                          {cat.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>URL imagine (opțional)</Label>
+                  <Input
+                    value={formData.image_url}
+                    onChange={(e) => setFormData({...formData, image_url: e.target.value})}
+                    placeholder="https://..."
+                    data-testid="product-image-input"
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.available}
+                      onChange={(e) => setFormData({...formData, available: e.target.checked})}
+                      className="rounded"
+                    />
+                    <span className="text-sm text-slate-700">Disponibil</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.featured}
+                      onChange={(e) => setFormData({...formData, featured: e.target.checked})}
+                      className="rounded"
+                    />
+                    <span className="text-sm text-slate-700">În evidență</span>
+                  </label>
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <Button type="submit" className="btn-primary flex-1" data-testid="save-product-button">
+                    {editingProduct ? 'Actualizează' : 'Creează'}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setShowDialog(false)}
+                    className="btn-secondary"
+                  >
+                    Anulează
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {products.length === 0 ? (
+          <div className="glass-card p-12 text-center" data-testid="no-products">
+            <ShoppingBag className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-slate-800 mb-2">
+              Niciun produs
+            </h3>
+            <p className="text-slate-500 mb-6">
+              Adaugă primul produs în meniu
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <div key={product.id} className="glass-card p-6" data-testid={`product-card-${product.id}`}>
+                {product.image_url && (
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="w-full h-40 object-cover rounded-2xl mb-4"
+                  />
+                )}
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-lg font-semibold text-slate-800 flex-1">
+                    {product.name}
+                  </h3>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleEdit(product)}
+                      className="p-1.5 hover:bg-white/50 rounded-lg transition-colors"
+                      data-testid={`edit-product-${product.id}`}
+                    >
+                      <Edit className="w-4 h-4 text-slate-600" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="p-1.5 hover:bg-rose-100/50 rounded-lg transition-colors"
+                      data-testid={`delete-product-${product.id}`}
+                    >
+                      <Trash2 className="w-4 h-4 text-rose-600" />
+                    </button>
+                  </div>
+                </div>
+                {product.description && (
+                  <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+                    {product.description}
+                  </p>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-indigo-600">
+                    {product.price} {product.currency}
+                  </span>
+                  <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full">
+                    {categories.find(c => c.value === product.category)?.label}
+                  </span>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  {product.available && (
+                    <span className="status-active text-xs">Disponibil</span>
+                  )}
+                  {product.featured && (
+                    <span className="text-xs bg-amber-100/50 text-amber-700 px-2 py-1 rounded-full border border-amber-200">
+                      În evidență
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Import Dialog */}
+        <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Import Produse SushiMaster</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="bg-indigo-50/50 rounded-2xl p-6">
+                <h3 className="font-semibold text-slate-800 mb-3">📦 Ce se va importa:</h3>
+                <ul className="space-y-2 text-sm text-slate-600">
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                    <span><strong>10 produse</strong> tipice din meniul SushiMaster</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                    <span>Nume produse în <strong>limba română</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                    <span>Prețuri în <strong>RON</strong> (actualizabile după import)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                    <span>Imagini reprezentative de <strong>calitate înaltă</strong></span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                    <span>Categorii: <strong>Rolls, Sushi, Sashimi, Tempura, Soup, Dessert</strong></span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="glass-card p-4">
+                <h3 className="font-semibold text-slate-800 mb-2">✏️ Toate produsele sunt editabile</h3>
+                <p className="text-sm text-slate-600">
+                  După import, poți edita orice produs: <strong>preț, nume, descriere, imagine</strong>. 
+                  Importul este doar un punct de plecare rapid.
+                </p>
+              </div>
+
+              <div className="bg-amber-50/50 rounded-xl p-4 border border-amber-200">
+                <p className="text-sm text-amber-800">
+                  <strong>Notă:</strong> Dacă un produs cu același nume există deja, va fi actualizat cu noile informații.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={importSushiMasterProducts}
+                  disabled={importing}
+                  className="flex-1 btn-primary"
+                  data-testid="confirm-import-button"
+                >
+                  {importing ? (
+                    <div className="flex items-center gap-2">
+                      <div className="spinner w-4 h-4"></div>
+                      Se importă...
+                    </div>
+                  ) : (
+                    <>
+                      <Plus className="w-5 h-5 mr-2" />
+                      Importă Produse
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={() => setShowImportDialog(false)}
+                  className="btn-secondary"
+                  disabled={importing}
+                >
+                  Anulează
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </DashboardLayout>
+  );
+};

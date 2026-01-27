@@ -1,0 +1,19 @@
+# Netlify – frontend SushiMaster TV
+# https://docs.netlify.com/configure-builds/file-based-configuration
+
+[build]
+  base    = "frontend"
+  command = "npm run build"
+  publish = "build"
+
+# Setează în Netlify UI: REACT_APP_BACKEND_URL = https://xxx.onrender.com
+
+[build.environment]
+  NODE_VERSION = "18"
+  DISABLE_ESLINT_PLUGIN = "true"
+
+# SPA: toate rutele -> index.html
+[[redirects]]
+  from = "/*"
+  to   = "/index.html"
+  status = 200

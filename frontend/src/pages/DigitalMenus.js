@@ -1,0 +1,291 @@
+import React, { useState, useEffect } from 'react';
+import { DashboardLayout } from '../components/DashboardLayout';
+import { Menu, Plus, Edit, Trash2 } from 'lucide-react';
+import api from '../utils/api';
+import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+
+export const DigitalMenus = () => {
+  const [menus, setMenus] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showDialog, setShowDialog] = useState(false);
+  const [editingMenu, setEditingMenu] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    products_per_page: 6,
+    page_duration: 10,
+    auto_rotate: true,
+    status: 'active'
+  });
+  const [selectedProducts, setSelectedProducts] = useState([]);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [menusRes, productsRes] = await Promise.all([
+        api.get('/digital-menus'),
+        api.get('/products')
+      ]);
+      setMenus(menusRes.data);
+      setProducts(productsRes.data);
+    } catch (error) {
+      toast.error('Eroare la încărcarea datelor');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const submitData = {
+        ...formData,
+        selected_products: selectedProducts,
+        products_per_page: parseInt(formData.products_per_page),
+        page_duration: parseInt(formData.page_duration)
+      };
+      if (editingMenu) {
+        await api.put(`/digital-menus/${editingMenu.id}`, submitData);
+        toast.success('Meniu actualizat!');
+      } else {
+        await api.post('/digital-menus', submitData);
+        toast.success('Meniu creat!');
+      }
+      setShowDialog(false);
+      resetForm();
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Eroare la salvare');
+    }
+  };
+
+  const handleEdit = (menu) => {
+    setEditingMenu(menu);
+    setFormData({
+      name: menu.name,
+      products_per_page: menu.products_per_page,
+      page_duration: menu.page_duration,
+      auto_rotate: menu.auto_rotate,
+      status: menu.status
+    });
+    setSelectedProducts(menu.selected_products || []);
+    setShowDialog(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Sigur dorești să ștergi acest meniu?')) return;
+    try {
+      await api.delete(`/digital-menus/${id}`);
+      toast.success('Meniu șters!');
+      loadData();
+    } catch (error) {
+      toast.error('Eroare la ștergere');
+    }
+  };
+
+  const toggleProduct = (productId) => {
+    if (selectedProducts.includes(productId)) {
+      setSelectedProducts(selectedProducts.filter(id => id !== productId));
+    } else {
+      setSelectedProducts([...selectedProducts, productId]);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      products_per_page: 6,
+      page_duration: 10,
+      auto_rotate: true,
+      status: 'active'
+    });
+    setSelectedProducts([]);
+    setEditingMenu(null);
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="spinner"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="animate-in" data-testid="digital-menus-page">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-slate-800 mb-2">Meniuri Digitale</h1>
+            <p className="text-slate-500">Creează meniuri cu produse pentru afișare</p>
+          </div>
+          <Dialog open={showDialog} onOpenChange={(open) => {
+            setShowDialog(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button className="btn-primary" data-testid="add-menu-button">
+                <Plus className="w-5 h-5 mr-2" />
+                Creează meniu
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="glass-panel max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingMenu ? 'Editează meniul' : 'Creează meniu nou'}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label>Nume meniu</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    placeholder="Meniu Principal"
+                    required
+                    data-testid="menu-name-input"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Produse pe pagină</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={formData.products_per_page}
+                      onChange={(e) => setFormData({...formData, products_per_page: e.target.value})}
+                      data-testid="menu-products-per-page"
+                    />
+                  </div>
+                  <div>
+                    <Label>Durată pagină (sec)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={formData.page_duration}
+                      onChange={(e) => setFormData({...formData, page_duration: e.target.value})}
+                      data-testid="menu-page-duration"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.auto_rotate}
+                      onChange={(e) => setFormData({...formData, auto_rotate: e.target.checked})}
+                      className="rounded"
+                    />
+                    <span className="text-sm text-slate-700">Rotație automată</span>
+                  </label>
+                </div>
+                <div>
+                  <Label>Selectează produse ({selectedProducts.length} selectate)</Label>
+                  <div className="mt-2 max-h-64 overflow-y-auto space-y-2 border border-white/60 rounded-xl p-4 bg-white/20">
+                    {products.map(product => (
+                      <label
+                        key={product.id}
+                        className="flex items-center gap-3 p-3 bg-white/40 rounded-lg hover:bg-white/60 cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedProducts.includes(product.id)}
+                          onChange={() => toggleProduct(product.id)}
+                          className="rounded"
+                        />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-slate-800">{product.name}</p>
+                          <p className="text-xs text-slate-500">{product.price} {product.currency}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <Button type="submit" className="btn-primary flex-1" data-testid="save-menu-button">
+                    {editingMenu ? 'Actualizează' : 'Creează'}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setShowDialog(false)}
+                    className="btn-secondary"
+                  >
+                    Anulează
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {menus.length === 0 ? (
+          <div className="glass-card p-12 text-center" data-testid="no-menus">
+            <Menu className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-slate-800 mb-2">
+              Niciun meniu
+            </h3>
+            <p className="text-slate-500 mb-6">
+              Creează primul meniu digital
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {menus.map((menu) => (
+              <div key={menu.id} className="glass-card p-6" data-testid={`menu-card-${menu.id}`}>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="bg-purple-100 p-3 rounded-2xl">
+                    <Menu className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(menu)}
+                      className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                      data-testid={`edit-menu-${menu.id}`}
+                    >
+                      <Edit className="w-4 h-4 text-slate-600" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(menu.id)}
+                      className="p-2 hover:bg-rose-100/50 rounded-lg transition-colors"
+                      data-testid={`delete-menu-${menu.id}`}
+                    >
+                      <Trash2 className="w-4 h-4 text-rose-600" />
+                    </button>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                  {menu.name}
+                </h3>
+                <div className="space-y-2 text-sm text-slate-600">
+                  <p>{menu.selected_products?.length || 0} produse selectate</p>
+                  <p>{menu.products_per_page} produse/pagină</p>
+                  <p>{menu.page_duration}s durată/pagină</p>
+                </div>
+                <div className="flex items-center gap-2 mt-4">
+                  <span className={menu.status === 'active' ? 'status-active' : 'status-offline'}>
+                    {menu.status === 'active' ? 'Activ' : 'Draft'}
+                  </span>
+                  {menu.auto_rotate && (
+                    <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full">
+                      Auto-rotație
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
+  );
+};
