@@ -9,13 +9,17 @@ import {
   Calendar,
   RefreshCw,
   XCircle,
+  Clock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../utils/api';
+import { useViewMode } from '../hooks/useViewMode';
+import { ViewToggle } from '../components/ViewToggle';
 
 export const Users = () => {
   const { isSuperAdmin } = useAuth();
   const [users, setUsers] = useState([]);
+  const [viewMode, setViewMode] = useViewMode('view_mode_users', 'list');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -81,14 +85,18 @@ export const Users = () => {
               Evidență utilizatori înregistrați în aplicație
             </p>
           </div>
-          <button
-            onClick={loadUsers}
-            className="btn-secondary flex items-center gap-2"
-            data-testid="refresh-users-btn"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Reîncarcă
-          </button>
+
+          <div className="flex gap-3">
+            <button
+              onClick={loadUsers}
+              className="btn-secondary flex items-center gap-2"
+              data-testid="refresh-users-btn"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Reîncarcă
+            </button>
+            <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+          </div>
         </div>
 
         {/* Stats */}
@@ -126,7 +134,7 @@ export const Users = () => {
               Utilizatorii care se înregistrează vor apărea aici.
             </p>
           </div>
-        ) : (
+        ) : viewMode === 'list' ? (
           <div className="glass-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -143,6 +151,9 @@ export const Users = () => {
                     </th>
                     <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 uppercase tracking-wider">
                       Înregistrat
+                    </th>
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                      Ultima logare
                     </th>
                   </tr>
                 </thead>
@@ -183,14 +194,69 @@ export const Users = () => {
                           {formatDate(u.created_at)}
                         </div>
                       </td>
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-2 text-slate-500 text-sm">
+                          <Clock className="w-4 h-4 text-slate-400" />
+                          {formatDate(u.last_login)}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {users.map((u) => (
+              <div key={u.id} className="glass-card p-6 flex flex-col items-center text-center" data-testid={`user-card-${u.email}`}>
+                <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center mb-4 border-4 border-white shadow-sm">
+                  <User className="w-10 h-10 text-indigo-600" />
+                </div>
+
+                <h3 className="text-lg font-bold text-slate-800 mb-1">
+                  {u.full_name || '—'}
+                </h3>
+
+                <div className="flex items-center gap-1.5 text-sm text-slate-500 mb-4">
+                  <Mail className="w-3.5 h-3.5" />
+                  {u.email}
+                </div>
+
+                <div className="mb-6">
+                  {u.is_super_admin ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-700 text-sm font-medium rounded-full border border-amber-200">
+                      <Shield className="w-3.5 h-3.5" />
+                      Super Admin
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-600 text-sm font-medium rounded-full border border-slate-200">
+                      Utilizator
+                    </span>
+                  )}
+                </div>
+
+                <div className="w-full space-y-3 border-t border-slate-100 pt-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="flex items-center gap-2 text-slate-500">
+                      <Calendar className="w-4 h-4" />
+                      <span>Înregistrat</span>
+                    </div>
+                    <span className="font-medium text-slate-700">{formatDate(u.created_at).split(',')[0]}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="flex items-center gap-2 text-slate-500">
+                      <Clock className="w-4 h-4" />
+                      <span>Ultima logare</span>
+                    </div>
+                    <span className="font-medium text-slate-700">{formatDate(u.last_login).split(',')[0]}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
-    </DashboardLayout>
+    </DashboardLayout >
   );
 };

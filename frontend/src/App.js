@@ -19,6 +19,7 @@ import { ScreenSync } from './pages/ScreenSync';
 import { DisplayScreen } from './pages/DisplayScreen';
 import { Invitations } from './pages/Invitations';
 import { Users } from './pages/Users';
+import { LivePreviewDashboard } from './pages/LivePreviewDashboard';
 
 function App() {
   return (
@@ -35,6 +36,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/live-preview"
+            element={
+              <ProtectedRoute>
+                <LivePreviewDashboard />
               </ProtectedRoute>
             }
           />

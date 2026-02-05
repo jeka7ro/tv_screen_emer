@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Resetează parola unui utilizator. Folosește .env din backend."""
+"""Resetează parola unui utilizator (Supabase / Postgres). Folosește .env din backend."""
 import asyncio
 import os
 import sys
 from pathlib import Path
 
+import asyncpg
 import bcrypt
 from dotenv import load_dotenv
-from motor.motor_asyncio import AsyncIOMotorClient
 
 ROOT = Path(__file__).parent
 load_dotenv(ROOT / ".env")
@@ -26,31 +26,34 @@ async def main():
     email = sys.argv[1].strip()
     new_password = sys.argv[2]
 
-    mongo_url = os.environ.get("MONGO_URL", "")
-    if not mongo_url:
-        print("Lipsește MONGO_URL în backend/.env")
+    url = os.environ.get("DATABASE_URL") or os.environ.get("SUPABASE_DB_URL")
+    if not url:
+        print("Lipsește DATABASE_URL sau SUPABASE_DB_URL în backend/.env")
         sys.exit(1)
-    if "?" in mongo_url:
-        mongo_url += "&serverSelectionTimeoutMS=5000"
-    else:
-        mongo_url += "?serverSelectionTimeoutMS=5000"
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[11:]
+    if ("supabase.co" in url or "pooler.supabase.com" in url) and "sslmode=" not in url:
+        sep = "&" if "?" in url else "?"
+        url = f"{url}{sep}sslmode=require"
 
     try:
-        client = AsyncIOMotorClient(mongo_url)
-        db = client[os.environ["DB_NAME"]]
-        await client.admin.command("ping")
+        conn = await asyncpg.connect(url, command_timeout=10)
     except Exception as e:
-        print("Nu s-a putut conecta la MongoDB. Asigură-te că rulează (ex: mongod).")
+        print("Nu s-a putut conecta la baza de date.")
         print(f"Eroare: {e}")
         sys.exit(1)
 
     hashed = get_password_hash(new_password)
-    r = await db.users.update_one(
-        {"email": email},
-        {"$set": {"hashed_password": hashed}}
-    )
+    try:
+        r = await conn.execute(
+            "UPDATE users SET hashed_password = $1 WHERE email = $2",
+            hashed,
+            email,
+        )
+    finally:
+        await conn.close()
 
-    if r.matched_count == 0:
+    if "UPDATE 0" in r:
         print(f"Utilizator cu email '{email}' nu a fost găsit în baza de date.")
         sys.exit(1)
 

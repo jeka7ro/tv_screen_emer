@@ -37,10 +37,10 @@
                     corePlugins: { preflight: false },
                 };
 
-                // Load Tailwind CDN
-                var tailwindScript = document.createElement('script');
-                tailwindScript.src = 'https://cdn.tailwindcss.com';
-                document.head.appendChild(tailwindScript);
+                // Tailwind injection removed to prevent console warnings
+                // var tailwindScript = document.createElement('script');
+                // tailwindScript.src = 'https://cdn.tailwindcss.com';
+                // document.head.appendChild(tailwindScript);
             }
         </script>
     </head>

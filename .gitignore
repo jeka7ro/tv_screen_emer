@@ -78,9 +78,29 @@ agenthub/agents/youtube/db
 .cache/
 
 # Mobile development
-android-sdk/ backend/uploads/videos/e51d305f-7ed5-42a0-bdea-d3f23c402a42.mp4
-backend/uploads/videos/e51d305f-7ed5-42a0-bdea-d3f23c402a42.mp4
--e 
+android-sdk/
+
 # Environment files
 *.env
 *.env.*
+
+# Local Netlify folder
+.netlify
+
+# Temporary scripts
+add_locations.py
+add_sync_group_name.py
+add_sync_type_column.py
+backend/add_sync_columns.py
+backend/apply_schema.py
+backend/migrate_last_login.py
+backend/update_products.py
+check_user.py
+create_test_user.py
+fix_requirements.py
+verify_*.py
+
+# Large/Temporary Media
+*.png
+*.mp4
+backend/uploads/

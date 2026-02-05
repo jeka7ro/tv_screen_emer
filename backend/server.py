@@ -1,8 +1,10 @@
+import asyncio
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, status
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
@@ -15,13 +17,72 @@ from jose import JWTError, jwt
 import shutil
 from PIL import Image
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+from db import (
+    init_db,
+    close_db,
+    user_get_by_email,
+    user_insert,
+    user_update_last_login,
+    users_count,
+    users_list,
+    invitation_get_by_code,
+    invitation_insert,
+    invitation_increment_uses,
+    invitations_list,
+    invitation_deactivate,
+    location_get,
+    locations_list,
+    location_insert,
+    location_update,
+    location_delete,
+    locations_count,
+    screen_get,
+    screen_get_by_slug,
+    screens_list,
+    screen_exists_by_slug,
+    screen_insert,
+    screen_update,
+    screen_update_sync,
+    screen_update_heartbeat,
+    screen_delete,
+    screens_count,
+    screens_count_online,
+    screen_zones_list,
+    screen_zones_delete_by_screen_and_zone,
+    screen_zone_insert,
+    screen_zone_delete,
+    screen_zones_delete_by_screen,
+    content_get,
+    content_list,
+    content_insert,
+    content_delete,
+    content_count,
+    playlist_get,
+    playlists_list,
+    playlist_insert,
+    playlist_update,
+    playlist_delete,
+    product_get,
+    product_get_by_name,
+    products_list,
+    products_by_category,
+    product_insert,
+    product_update,
+    product_upsert_by_name,
+    product_delete,
+    products_count,
+    digital_menu_get,
+    digital_menus_list,
+    digital_menu_insert,
+    digital_menu_update,
+    digital_menu_delete,
+    screens_by_sync_group,
+    sync_groups_list,
+    sync_group_delete,
+)
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / ".env")
 
 # JWT settings
 SECRET_KEY = os.environ.get("SECRET_KEY", "sushimaster-secret-key-change-in-production")
@@ -31,13 +92,49 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 # Security
 security = HTTPBearer()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        await asyncio.wait_for(init_db(), timeout=20.0)
+    except asyncio.TimeoutError:
+        logging.getLogger("uvicorn.error").error(
+            "Conectare la Supabase expirată. Posibil IPv4: folosește Session Pooler în Connect (Supabase)."
+        )
+        raise
+    yield
+    await close_db()
+
+
 # Create the main app with increased file size limit
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 # Increase max request body size to 500MB for video uploads
 app.router.route_class = type('CustomRoute', (app.router.route_class,), {
-    'max_body_size': 500 * 1024 * 1024  # 500MB
 })
+
+# Get CORS origins from environment
+cors_origins_env = os.getenv("CORS_ORIGINS", "")
+allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000",
+]
+if cors_origins_env:
+    # Handle both comma-separated and space-separated origins
+    extra_origins = cors_origins_env.replace(",", " ").split()
+    allowed_origins.extend(extra_origins)
+else:
+    # Fallback to wildcard ONLY if no origins are specified in env
+    allowed_origins.append("*")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -49,6 +146,9 @@ VIDEOS_DIR = UPLOAD_DIR / "videos"
 for dir in [UPLOAD_DIR, IMAGES_DIR, VIDEOS_DIR]:
     dir.mkdir(exist_ok=True)
 
+# Mount static files
+app.mount("/api/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
 # ============ MODELS ============
 
 class User(BaseModel):
@@ -59,6 +159,7 @@ class User(BaseModel):
     hashed_password: str
     is_super_admin: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_login: Optional[datetime] = None
 
 class InvitationLink(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -90,6 +191,7 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     is_super_admin: bool = False
+    last_login: Optional[datetime] = None
 
 class Token(BaseModel):
     access_token: str
@@ -128,6 +230,8 @@ class Screen(BaseModel):
     cascade_offset: int = 0
     status: str = "offline"  # online, offline
     last_active: Optional[datetime] = None
+    parallax_enabled: bool = False
+    steam_enabled: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ScreenCreate(BaseModel):
@@ -137,6 +241,8 @@ class ScreenCreate(BaseModel):
     resolution: Optional[str] = "1920x1080"
     orientation: Optional[str] = "landscape"
     template_id: Optional[str] = None
+    parallax_enabled: Optional[bool] = False
+    steam_enabled: Optional[bool] = False
 
 class ScreenTemplate(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -283,8 +389,19 @@ class ScreenZoneContentCreate(BaseModel):
 
 class ScreenSync(BaseModel):
     screen_ids: List[str]
-    sync_type: str  # simple, cascade
-    master_screen_id: str
+    sync_type: str  # simple, cascade, matrix
+class ScreenSync(BaseModel):
+    screen_ids: List[str]
+    sync_type: str  # simple, cascade, matrix
+    master_screen_id: Optional[str] = None
+    content_id: Optional[str] = None  # Direct content selection
+    group_name: Optional[str] = None  # Sync group name
+    grid_cols: Optional[int] = None
+    grid_rows: Optional[int] = None
+
+class ScreenSyncUpdate(BaseModel):
+    group_name: Optional[str] = None
+    content_id: Optional[str] = None
 
 # ============ AUTH HELPERS ============
 
@@ -314,107 +431,87 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     
-    user_doc = await db.users.find_one({"email": email}, {"_id": 0})
+    user_doc = await user_get_by_email(email)
     if user_doc is None:
         raise HTTPException(status_code=401, detail="User not found")
-    
-    if isinstance(user_doc.get('created_at'), str):
-        user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
-    
+    if isinstance(user_doc.get("created_at"), str):
+        user_doc["created_at"] = datetime.fromisoformat(user_doc["created_at"])
     return User(**user_doc)
 
 # ============ AUTH ROUTES ============
 
 @api_router.post("/auth/register", response_model=Token)
 async def register(user_data: UserCreate):
-    # Check if user exists
-    existing_user = await db.users.find_one({"email": user_data.email})
+    existing_user = await user_get_by_email(user_data.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email deja înregistrat")
-    
-    # Check if this is the first user (becomes Super Admin)
-    users_count = await db.users.count_documents({})
-    is_first_user = users_count == 0
-    
+    n = await users_count()
+    is_first_user = n == 0
     if not is_first_user:
-        # Not first user - requires valid invitation code
         if not user_data.invitation_code:
             raise HTTPException(status_code=403, detail="Înregistrarea necesită un cod de invitație valid")
-        
-        # Validate invitation code
-        invitation = await db.invitations.find_one({
-            "code": user_data.invitation_code,
-            "is_active": True
-        }, {"_id": 0})
-        
+        invitation = await invitation_get_by_code(user_data.invitation_code)
         if not invitation:
             raise HTTPException(status_code=403, detail="Cod de invitație invalid sau expirat")
-        
-        # Check expiration
-        expires_at = invitation.get('expires_at')
+        expires_at = invitation.get("expires_at")
         if isinstance(expires_at, str):
             expires_at = datetime.fromisoformat(expires_at)
-        
         if datetime.now(timezone.utc) > expires_at:
             raise HTTPException(status_code=403, detail="Cod de invitație expirat")
-        
-        # Check max uses
-        if invitation.get('uses', 0) >= invitation.get('max_uses', 1):
+        if invitation.get("uses", 0) >= invitation.get("max_uses", 1):
             raise HTTPException(status_code=403, detail="Codul de invitație a atins limita maximă de utilizări")
-        
-        # Increment uses
-        await db.invitations.update_one(
-            {"code": user_data.invitation_code},
-            {"$inc": {"uses": 1}}
-        )
-    
-    # Create user
+        await invitation_increment_uses(user_data.invitation_code)
     user = User(
         email=user_data.email,
         full_name=user_data.full_name,
         hashed_password=get_password_hash(user_data.password),
-        is_super_admin=is_first_user
+        is_super_admin=is_first_user,
     )
-    
     user_dict = user.model_dump()
-    user_dict['created_at'] = user_dict['created_at'].isoformat()
-    
-    await db.users.insert_one(user_dict)
-    
-    # Create token
+    await user_insert(user_dict)
     access_token = create_access_token(data={"sub": user.email})
-    
     return Token(
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse(id=user.id, email=user.email, full_name=user.full_name, is_super_admin=user.is_super_admin)
+        user=UserResponse(id=user.id, email=user.email, full_name=user.full_name, is_super_admin=user.is_super_admin),
     )
 
 @api_router.post("/auth/login", response_model=Token)
 async def login(credentials: UserLogin):
-    user_doc = await db.users.find_one({"email": credentials.email}, {"_id": 0})
+    user_doc = await user_get_by_email(credentials.email)
     if not user_doc:
         raise HTTPException(status_code=401, detail="Email sau parolă incorectă")
-    
-    if isinstance(user_doc.get('created_at'), str):
-        user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
-    
+    if isinstance(user_doc.get("created_at"), str):
+        user_doc["created_at"] = datetime.fromisoformat(user_doc["created_at"])
     user = User(**user_doc)
-    
     if not verify_password(credentials.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Email sau parolă incorectă")
     
-    access_token = create_access_token(data={"sub": user.email})
+    # Update last_login
+    await user_update_last_login(user.email)
     
+    access_token = create_access_token(data={"sub": user.email})
     return Token(
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse(id=user.id, email=user.email, full_name=user.full_name, is_super_admin=user.is_super_admin)
+        user=UserResponse(
+            id=user.id, 
+            email=user.email, 
+            full_name=user.full_name, 
+            is_super_admin=user.is_super_admin,
+            last_login=datetime.now(timezone.utc)
+        ),
     )
 
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
-    return UserResponse(id=current_user.id, email=current_user.email, full_name=current_user.full_name, is_super_admin=current_user.is_super_admin)
+    return UserResponse(
+        id=current_user.id, 
+        email=current_user.email, 
+        full_name=current_user.full_name, 
+        is_super_admin=current_user.is_super_admin,
+        last_login=current_user.last_login
+    )
 
 # ============ INVITATION ROUTES ============
 
@@ -426,131 +523,88 @@ async def get_super_admin(current_user: User = Depends(get_current_user)) -> Use
 
 @api_router.post("/invitations")
 async def create_invitation(invitation_data: InvitationCreate, current_user: User = Depends(get_super_admin)):
-    """Create a new invitation link - Super Admin only"""
     invitation = InvitationLink(
         created_by=current_user.id,
         expires_at=datetime.now(timezone.utc) + timedelta(days=invitation_data.expires_in_days),
-        max_uses=invitation_data.max_uses
+        max_uses=invitation_data.max_uses,
     )
-    
     inv_dict = invitation.model_dump()
-    inv_dict['created_at'] = inv_dict['created_at'].isoformat()
-    inv_dict['expires_at'] = inv_dict['expires_at'].isoformat()
-    
-    await db.invitations.insert_one(inv_dict)
-    
+    await invitation_insert(inv_dict)
     return {
         "id": invitation.id,
         "code": invitation.code,
-        "expires_at": inv_dict['expires_at'],
+        "expires_at": invitation.expires_at.isoformat(),
         "max_uses": invitation.max_uses,
         "uses": invitation.uses,
-        "is_active": invitation.is_active
+        "is_active": invitation.is_active,
     }
 
 @api_router.get("/invitations")
 async def get_invitations(current_user: User = Depends(get_super_admin)):
-    """Get all invitation links - Super Admin only"""
-    invitations = await db.invitations.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
-    return invitations
+    return await invitations_list()
 
 @api_router.delete("/invitations/{invitation_id}")
 async def delete_invitation(invitation_id: str, current_user: User = Depends(get_super_admin)):
-    """Deactivate an invitation - Super Admin only"""
-    result = await db.invitations.update_one(
-        {"id": invitation_id},
-        {"$set": {"is_active": False}}
-    )
-    if result.matched_count == 0:
+    ok = await invitation_deactivate(invitation_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Invitație negăsită")
     return {"message": "Invitație dezactivată"}
 
 @api_router.get("/users")
 async def get_users(current_user: User = Depends(get_super_admin)):
-    """Lista utilizatorilor – doar Super Admin"""
-    cursor = db.users.find({}, {"_id": 0, "hashed_password": 0}).sort("created_at", -1)
-    users = await cursor.to_list(500)
-    for u in users:
-        if u.get("created_at"):
-            u["created_at"] = u["created_at"].isoformat() if hasattr(u["created_at"], "isoformat") else u["created_at"]
-    return users
+    return await users_list(exclude_password=True)
 
 @api_router.get("/invitations/validate/{code}")
 async def validate_invitation(code: str):
-    """Public endpoint to validate an invitation code"""
-    invitation = await db.invitations.find_one({
-        "code": code,
-        "is_active": True
-    }, {"_id": 0})
-    
+    invitation = await invitation_get_by_code(code)
     if not invitation:
         raise HTTPException(status_code=404, detail="Cod de invitație invalid")
-    
-    # Check expiration
-    expires_at = invitation.get('expires_at')
+    expires_at = invitation.get("expires_at")
     if isinstance(expires_at, str):
         expires_at = datetime.fromisoformat(expires_at)
-    
     if datetime.now(timezone.utc) > expires_at:
         raise HTTPException(status_code=403, detail="Cod de invitație expirat")
-    
-    # Check max uses
-    if invitation.get('uses', 0) >= invitation.get('max_uses', 1):
+    if invitation.get("uses", 0) >= invitation.get("max_uses", 1):
         raise HTTPException(status_code=403, detail="Codul de invitație a atins limita maximă")
-    
-    return {"valid": True, "expires_at": invitation['expires_at']}
+    return {"valid": True, "expires_at": invitation["expires_at"]}
 
 @api_router.get("/auth/check-registration-open")
 async def check_registration_open():
-    """Check if open registration is available (first user)"""
-    users_count = await db.users.count_documents({})
-    return {"open": users_count == 0}
+    return {"open": (await users_count()) == 0}
 
 # ============ LOCATIONS ROUTES ============
 
 @api_router.get("/locations", response_model=List[Location])
 async def get_locations(current_user: User = Depends(get_current_user)):
-    locations = await db.locations.find({}, {"_id": 0}).to_list(1000)
-    for loc in locations:
-        if isinstance(loc.get('created_at'), str):
-            loc['created_at'] = datetime.fromisoformat(loc['created_at'])
-    return locations
+    return await locations_list()
 
 @api_router.post("/locations", response_model=Location)
 async def create_location(location_data: LocationCreate, current_user: User = Depends(get_current_user)):
     location = Location(**location_data.model_dump())
-    loc_dict = location.model_dump()
-    loc_dict['created_at'] = loc_dict['created_at'].isoformat()
-    await db.locations.insert_one(loc_dict)
+    await location_insert(location.model_dump())
     return location
 
 @api_router.get("/locations/{location_id}", response_model=Location)
 async def get_location(location_id: str, current_user: User = Depends(get_current_user)):
-    location = await db.locations.find_one({"id": location_id}, {"_id": 0})
+    location = await location_get(location_id)
     if not location:
         raise HTTPException(status_code=404, detail="Location not found")
-    if isinstance(location.get('created_at'), str):
-        location['created_at'] = datetime.fromisoformat(location['created_at'])
     return location
 
 @api_router.put("/locations/{location_id}", response_model=Location)
 async def update_location(location_id: str, location_data: LocationCreate, current_user: User = Depends(get_current_user)):
-    existing = await db.locations.find_one({"id": location_id})
+    existing = await location_get(location_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Location not found")
-    
     update_data = location_data.model_dump()
-    await db.locations.update_one({"id": location_id}, {"$set": update_data})
-    
-    updated = await db.locations.find_one({"id": location_id}, {"_id": 0})
-    if isinstance(updated.get('created_at'), str):
-        updated['created_at'] = datetime.fromisoformat(updated['created_at'])
+    await location_update(location_id, update_data)
+    updated = await location_get(location_id)
     return updated
 
 @api_router.delete("/locations/{location_id}")
 async def delete_location(location_id: str, current_user: User = Depends(get_current_user)):
-    result = await db.locations.delete_one({"id": location_id})
-    if result.deleted_count == 0:
+    ok = await location_delete(location_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Location not found")
     return {"message": "Location deleted"}
 
@@ -558,72 +612,42 @@ async def delete_location(location_id: str, current_user: User = Depends(get_cur
 
 @api_router.get("/screens", response_model=List[Screen])
 async def get_screens(current_user: User = Depends(get_current_user)):
-    screens = await db.screens.find({}, {"_id": 0}).to_list(1000)
-    for screen in screens:
-        if isinstance(screen.get('created_at'), str):
-            screen['created_at'] = datetime.fromisoformat(screen['created_at'])
-        if isinstance(screen.get('last_active'), str):
-            screen['last_active'] = datetime.fromisoformat(screen['last_active'])
-    return screens
+    return await screens_list()
 
 @api_router.post("/screens", response_model=Screen)
 async def create_screen(screen_data: ScreenCreate, current_user: User = Depends(get_current_user)):
-    # Check if slug already exists
-    existing = await db.screens.find_one({"slug": screen_data.slug})
-    if existing:
+    if await screen_exists_by_slug(screen_data.slug):
         raise HTTPException(status_code=400, detail="Slug already exists")
-    
     screen = Screen(**screen_data.model_dump())
-    screen_dict = screen.model_dump()
-    screen_dict['created_at'] = screen_dict['created_at'].isoformat()
-    if screen_dict.get('last_active'):
-        screen_dict['last_active'] = screen_dict['last_active'].isoformat()
-    
-    await db.screens.insert_one(screen_dict)
+    await screen_insert(screen.model_dump())
     return screen
 
 @api_router.get("/screens/{screen_id}", response_model=Screen)
 async def get_screen(screen_id: str, current_user: User = Depends(get_current_user)):
-    screen = await db.screens.find_one({"id": screen_id}, {"_id": 0})
+    screen = await screen_get(screen_id)
     if not screen:
         raise HTTPException(status_code=404, detail="Screen not found")
-    if isinstance(screen.get('created_at'), str):
-        screen['created_at'] = datetime.fromisoformat(screen['created_at'])
-    if isinstance(screen.get('last_active'), str):
-        screen['last_active'] = datetime.fromisoformat(screen['last_active'])
     return screen
 
 @api_router.put("/screens/{screen_id}", response_model=Screen)
 async def update_screen(screen_id: str, screen_data: ScreenCreate, current_user: User = Depends(get_current_user)):
-    existing = await db.screens.find_one({"id": screen_id})
+    existing = await screen_get(screen_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Screen not found")
-    
-    update_data = screen_data.model_dump()
-    await db.screens.update_one({"id": screen_id}, {"$set": update_data})
-    
-    updated = await db.screens.find_one({"id": screen_id}, {"_id": 0})
-    if isinstance(updated.get('created_at'), str):
-        updated['created_at'] = datetime.fromisoformat(updated['created_at'])
-    if isinstance(updated.get('last_active'), str):
-        updated['last_active'] = datetime.fromisoformat(updated['last_active'])
+    await screen_update(screen_id, screen_data.model_dump())
+    updated = await screen_get(screen_id)
     return updated
 
 @api_router.delete("/screens/{screen_id}")
 async def delete_screen(screen_id: str, current_user: User = Depends(get_current_user)):
-    result = await db.screens.delete_one({"id": screen_id})
-    if result.deleted_count == 0:
+    ok = await screen_delete(screen_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Screen not found")
     return {"message": "Screen deleted"}
 
 @api_router.post("/screens/{screen_id}/heartbeat")
 async def screen_heartbeat(screen_id: str):
-    """Public endpoint for screens to report they are online"""
-    update_data = {
-        "status": "online",
-        "last_active": datetime.now(timezone.utc).isoformat()
-    }
-    await db.screens.update_one({"id": screen_id}, {"$set": update_data})
+    await screen_update_heartbeat(screen_id, "online", datetime.now(timezone.utc))
     return {"message": "Heartbeat received"}
 
 # ============ SCREEN TEMPLATES ROUTES ============
@@ -675,11 +699,14 @@ async def get_screen_templates(current_user: User = Depends(get_current_user)):
 
 @api_router.get("/content", response_model=List[Content])
 async def get_content(current_user: User = Depends(get_current_user)):
-    content_list = await db.content.find({}, {"_id": 0}).to_list(1000)
-    for content in content_list:
-        if isinstance(content.get('created_at'), str):
-            content['created_at'] = datetime.fromisoformat(content['created_at'])
-    return content_list
+    return await content_list()
+
+@api_router.get("/content/{content_id}", response_model=Content)
+async def get_content_item(content_id: str, current_user: User = Depends(get_current_user)):
+    item = await content_get(content_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Content not found")
+    return item
 
 @api_router.post("/content/upload")
 async def upload_content(
@@ -687,88 +714,98 @@ async def upload_content(
     type: str = Form(...),
     category: str = Form("other"),
     duration: int = Form(10),
-    file: UploadFile = File(...),
+    files: List[UploadFile] = File(...),
     current_user: User = Depends(get_current_user)
 ):
-    try:
-        # Validate file type
-        allowed_image_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
-        allowed_video_types = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm']
-        
-        if type == "image" and file.content_type not in allowed_image_types:
-            raise HTTPException(status_code=400, detail=f"Tip fișier imagine invalid: {file.content_type}")
-        if type == "video" and file.content_type not in allowed_video_types:
-            raise HTTPException(status_code=400, detail=f"Tip fișier video invalid: {file.content_type}")
-        
-        # Determine save directory
-        save_dir = IMAGES_DIR if type == "image" else VIDEOS_DIR
-        
-        # Generate unique filename
-        file_ext = Path(file.filename).suffix.lower()
-        if not file_ext:
-            file_ext = '.mp4' if type == "video" else '.jpg'
-        unique_filename = f"{uuid.uuid4()}{file_ext}"
-        file_path = save_dir / unique_filename
-        
-        # Save file in chunks for large files
-        chunk_size = 1024 * 1024  # 1MB chunks
-        with open(file_path, "wb") as buffer:
-            while chunk := await file.read(chunk_size):
-                buffer.write(chunk)
-        
-        # Generate relative URL
-        file_url = f"/api/uploads/{type}s/{unique_filename}"
-        
-        # Create content record
-        content = Content(
-            title=title,
-            type=type,
-            file_url=file_url,
-            duration=duration,
-            category=category,
-            thumbnail_url=file_url if type == "image" else None
-        )
-        
-        content_dict = content.model_dump()
-        content_dict['created_at'] = content_dict['created_at'].isoformat()
-        
-        await db.content.insert_one(content_dict)
-        return content
-    except Exception as e:
-        logger.error(f"Upload error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Eroare la upload: {str(e)}")
+    created_items = []
+    
+    for file in files:
+        try:
+            # Validate file type
+            allowed_image_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+            allowed_video_types = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm']
+            
+            if type == "image" and file.content_type not in allowed_image_types:
+                # Skip invalid files or raise error? raising error aborts all. 
+                # For now let's raise to be safe, or just log and continue. 
+                # User expects all or nothing usually, or at least feedback.
+                raise HTTPException(status_code=400, detail=f"Tip fișier imagine invalid: {file.content_type}")
+            if type == "video" and file.content_type not in allowed_video_types:
+                raise HTTPException(status_code=400, detail=f"Tip fișier video invalid: {file.content_type}")
+            
+            # Determine save directory
+            save_dir = IMAGES_DIR if type == "image" else VIDEOS_DIR
+            
+            # Generate unique filename
+            file_ext = Path(file.filename).suffix.lower()
+            if not file_ext:
+                file_ext = '.mp4' if type == "video" else '.jpg'
+            unique_filename = f"{uuid.uuid4()}{file_ext}"
+            file_path = save_dir / unique_filename
+            
+            # Save file in chunks for large files
+            chunk_size = 1024 * 1024  # 1MB chunks
+            with open(file_path, "wb") as buffer:
+                while chunk := await file.read(chunk_size):
+                    buffer.write(chunk)
+            
+            # Create content record
+            # Use original filename as title if multiple files are uploaded, or if user didn't simplify it.
+            # User request: "keep filenames".
+            content_title = title if len(files) == 1 else Path(file.filename).stem
+
+            file_url_path = f"/api/uploads/{'images' if type == 'image' else 'videos'}/{unique_filename}"
+            
+            content_id = str(uuid.uuid4())
+            new_content = {
+                "id": content_id,
+                "title": content_title, 
+                "type": type,
+                "file_url": file_url_path,
+                "duration": duration,
+                "category": category,
+                "tags": [], # default empty list
+                "thumbnail_url": file_url_path if type == "image" else None,
+                "autoplay": True,
+                "loop": True,
+                "playlist_urls": [],
+                "created_at": datetime.now(timezone.utc)
+            }
+            
+            await content_insert(new_content)
+            created_items.append(new_content)
+            
+        except Exception as e:
+            # If one fails, we probably should report it. 
+            # For simplicity in this iteration, we raise.
+            logging.error(f"Error uploading file {file.filename}: {e}")
+            raise HTTPException(status_code=500, detail=f"Eroare la procesarea fișierului {file.filename}: {str(e)}")
+
+    return created_items
 
 @api_router.post("/content/external", response_model=Content)
 async def create_external_content(content_data: ContentCreate, current_user: User = Depends(get_current_user)):
-    """Create content from external URL"""
     content = Content(**content_data.model_dump())
-    content_dict = content.model_dump()
-    content_dict['created_at'] = content_dict['created_at'].isoformat()
-    await db.content.insert_one(content_dict)
+    await content_insert(content.model_dump())
     return content
 
 @api_router.get("/content/{content_id}", response_model=Content)
 async def get_content_by_id(content_id: str, current_user: User = Depends(get_current_user)):
-    content = await db.content.find_one({"id": content_id}, {"_id": 0})
+    content = await content_get(content_id)
     if not content:
         raise HTTPException(status_code=404, detail="Content not found")
-    if isinstance(content.get('created_at'), str):
-        content['created_at'] = datetime.fromisoformat(content['created_at'])
     return content
 
 @api_router.delete("/content/{content_id}")
 async def delete_content(content_id: str, current_user: User = Depends(get_current_user)):
-    content = await db.content.find_one({"id": content_id}, {"_id": 0})
+    content = await content_get(content_id)
     if not content:
         raise HTTPException(status_code=404, detail="Content not found")
-    
-    # Delete file if it's local
-    if content['file_url'].startswith('/api/uploads/'):
-        file_path = ROOT_DIR / content['file_url'].replace('/api/uploads/', 'uploads/')
+    if content.get("file_url", "").startswith("/api/uploads/"):
+        file_path = ROOT_DIR / content["file_url"].replace("/api/uploads/", "uploads/")
         if file_path.exists():
             file_path.unlink()
-    
-    await db.content.delete_one({"id": content_id})
+    await content_delete(content_id)
     return {"message": "Content deleted"}
 
 # Serve uploaded files
@@ -785,47 +822,34 @@ async def serve_upload(file_type: str, filename: str):
 
 @api_router.get("/playlists", response_model=List[Playlist])
 async def get_playlists(current_user: User = Depends(get_current_user)):
-    playlists = await db.playlists.find({}, {"_id": 0}).to_list(1000)
-    for playlist in playlists:
-        if isinstance(playlist.get('created_at'), str):
-            playlist['created_at'] = datetime.fromisoformat(playlist['created_at'])
-    return playlists
+    return await playlists_list()
 
 @api_router.post("/playlists", response_model=Playlist)
 async def create_playlist(playlist_data: PlaylistCreate, current_user: User = Depends(get_current_user)):
     playlist = Playlist(**playlist_data.model_dump())
-    playlist_dict = playlist.model_dump()
-    playlist_dict['created_at'] = playlist_dict['created_at'].isoformat()
-    await db.playlists.insert_one(playlist_dict)
+    await playlist_insert(playlist.model_dump())
     return playlist
 
 @api_router.get("/playlists/{playlist_id}", response_model=Playlist)
 async def get_playlist(playlist_id: str, current_user: User = Depends(get_current_user)):
-    playlist = await db.playlists.find_one({"id": playlist_id}, {"_id": 0})
+    playlist = await playlist_get(playlist_id)
     if not playlist:
         raise HTTPException(status_code=404, detail="Playlist not found")
-    if isinstance(playlist.get('created_at'), str):
-        playlist['created_at'] = datetime.fromisoformat(playlist['created_at'])
     return playlist
 
 @api_router.put("/playlists/{playlist_id}", response_model=Playlist)
 async def update_playlist(playlist_id: str, playlist_data: PlaylistCreate, current_user: User = Depends(get_current_user)):
-    existing = await db.playlists.find_one({"id": playlist_id})
+    existing = await playlist_get(playlist_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Playlist not found")
-    
-    update_data = playlist_data.model_dump()
-    await db.playlists.update_one({"id": playlist_id}, {"$set": update_data})
-    
-    updated = await db.playlists.find_one({"id": playlist_id}, {"_id": 0})
-    if isinstance(updated.get('created_at'), str):
-        updated['created_at'] = datetime.fromisoformat(updated['created_at'])
+    await playlist_update(playlist_id, playlist_data.model_dump())
+    updated = await playlist_get(playlist_id)
     return updated
 
 @api_router.delete("/playlists/{playlist_id}")
 async def delete_playlist(playlist_id: str, current_user: User = Depends(get_current_user)):
-    result = await db.playlists.delete_one({"id": playlist_id})
-    if result.deleted_count == 0:
+    ok = await playlist_delete(playlist_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Playlist not found")
     return {"message": "Playlist deleted"}
 
@@ -833,76 +857,45 @@ async def delete_playlist(playlist_id: str, current_user: User = Depends(get_cur
 
 @api_router.get("/products", response_model=List[Product])
 async def get_products(current_user: User = Depends(get_current_user)):
-    products = await db.products.find({}, {"_id": 0}).sort("order_index", 1).to_list(1000)
-    for product in products:
-        if isinstance(product.get('created_at'), str):
-            product['created_at'] = datetime.fromisoformat(product['created_at'])
-    return products
+    return await products_list()
 
 @api_router.post("/products", response_model=Product)
 async def create_product(product_data: ProductCreate, current_user: User = Depends(get_current_user)):
     product = Product(**product_data.model_dump())
-    product_dict = product.model_dump()
-    product_dict['created_at'] = product_dict['created_at'].isoformat()
-    await db.products.insert_one(product_dict)
+    await product_insert(product.model_dump())
     return product
 
 @api_router.get("/products/{product_id}", response_model=Product)
 async def get_product(product_id: str, current_user: User = Depends(get_current_user)):
-    product = await db.products.find_one({"id": product_id}, {"_id": 0})
+    product = await product_get(product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    if isinstance(product.get('created_at'), str):
-        product['created_at'] = datetime.fromisoformat(product['created_at'])
     return product
 
 @api_router.put("/products/{product_id}", response_model=Product)
 async def update_product(product_id: str, product_data: ProductCreate, current_user: User = Depends(get_current_user)):
-    existing = await db.products.find_one({"id": product_id})
+    existing = await product_get(product_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Product not found")
-    
-    update_data = product_data.model_dump()
-    await db.products.update_one({"id": product_id}, {"$set": update_data})
-    
-    updated = await db.products.find_one({"id": product_id}, {"_id": 0})
-    if isinstance(updated.get('created_at'), str):
-        updated['created_at'] = datetime.fromisoformat(updated['created_at'])
-    return updated
+    await product_update(product_id, product_data.model_dump())
+    return await product_get(product_id)
 
 @api_router.post("/products/import-batch", response_model=List[Product])
 async def import_products_batch(
     products_data: List[ProductCreate],
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    """Import multiple products at once"""
-    imported_products = []
-    
-    for product_data in products_data:
-        product = Product(**product_data.model_dump())
-        product_dict = product.model_dump()
-        product_dict['created_at'] = product_dict['created_at'].isoformat()
-        
-        # Check if product with same name exists
-        existing = await db.products.find_one({"name": product.name})
-        if existing:
-            # Update existing product
-            await db.products.update_one(
-                {"name": product.name},
-                {"$set": product_dict}
-            )
-        else:
-            # Insert new product
-            await db.products.insert_one(product_dict)
-        
-        imported_products.append(product)
-    
-    return imported_products
+    imported = []
+    for d in products_data:
+        p = Product(**d.model_dump())
+        await product_upsert_by_name(p.model_dump())
+        imported.append(p)
+    return imported
 
 @api_router.delete("/products/{product_id}")
 async def delete_product(product_id: str, current_user: User = Depends(get_current_user)):
-    result = await db.products.delete_one({"id": product_id})
-    if result.deleted_count == 0:
+    ok = await product_delete(product_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Product not found")
     return {"message": "Product deleted"}
 
@@ -945,47 +938,33 @@ async def get_menu_templates(current_user: User = Depends(get_current_user)):
 
 @api_router.get("/digital-menus", response_model=List[DigitalMenu])
 async def get_digital_menus(current_user: User = Depends(get_current_user)):
-    menus = await db.digital_menus.find({}, {"_id": 0}).to_list(1000)
-    for menu in menus:
-        if isinstance(menu.get('created_at'), str):
-            menu['created_at'] = datetime.fromisoformat(menu['created_at'])
-    return menus
+    return await digital_menus_list()
 
 @api_router.post("/digital-menus", response_model=DigitalMenu)
 async def create_digital_menu(menu_data: DigitalMenuCreate, current_user: User = Depends(get_current_user)):
     menu = DigitalMenu(**menu_data.model_dump())
-    menu_dict = menu.model_dump()
-    menu_dict['created_at'] = menu_dict['created_at'].isoformat()
-    await db.digital_menus.insert_one(menu_dict)
+    await digital_menu_insert(menu.model_dump())
     return menu
 
 @api_router.get("/digital-menus/{menu_id}", response_model=DigitalMenu)
 async def get_digital_menu(menu_id: str, current_user: User = Depends(get_current_user)):
-    menu = await db.digital_menus.find_one({"id": menu_id}, {"_id": 0})
+    menu = await digital_menu_get(menu_id)
     if not menu:
         raise HTTPException(status_code=404, detail="Digital menu not found")
-    if isinstance(menu.get('created_at'), str):
-        menu['created_at'] = datetime.fromisoformat(menu['created_at'])
     return menu
 
 @api_router.put("/digital-menus/{menu_id}", response_model=DigitalMenu)
 async def update_digital_menu(menu_id: str, menu_data: DigitalMenuCreate, current_user: User = Depends(get_current_user)):
-    existing = await db.digital_menus.find_one({"id": menu_id})
+    existing = await digital_menu_get(menu_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Digital menu not found")
-    
-    update_data = menu_data.model_dump()
-    await db.digital_menus.update_one({"id": menu_id}, {"$set": update_data})
-    
-    updated = await db.digital_menus.find_one({"id": menu_id}, {"_id": 0})
-    if isinstance(updated.get('created_at'), str):
-        updated['created_at'] = datetime.fromisoformat(updated['created_at'])
-    return updated
+    await digital_menu_update(menu_id, menu_data.model_dump())
+    return await digital_menu_get(menu_id)
 
 @api_router.delete("/digital-menus/{menu_id}")
 async def delete_digital_menu(menu_id: str, current_user: User = Depends(get_current_user)):
-    result = await db.digital_menus.delete_one({"id": menu_id})
-    if result.deleted_count == 0:
+    ok = await digital_menu_delete(menu_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Digital menu not found")
     return {"message": "Digital menu deleted"}
 
@@ -993,22 +972,19 @@ async def delete_digital_menu(menu_id: str, current_user: User = Depends(get_cur
 
 @api_router.get("/screen-zones/{screen_id}", response_model=List[ScreenZoneContent])
 async def get_screen_zones(screen_id: str, current_user: User = Depends(get_current_user)):
-    zones = await db.screen_zones.find({"screen_id": screen_id}, {"_id": 0}).to_list(100)
-    return zones
+    return await screen_zones_list(screen_id)
 
 @api_router.post("/screen-zones", response_model=ScreenZoneContent)
 async def create_screen_zone(zone_data: ScreenZoneContentCreate, current_user: User = Depends(get_current_user)):
-    # Delete existing zone config for this screen+zone
-    await db.screen_zones.delete_many({"screen_id": zone_data.screen_id, "zone_id": zone_data.zone_id})
-    
+    await screen_zones_delete_by_screen_and_zone(zone_data.screen_id, zone_data.zone_id)
     zone = ScreenZoneContent(**zone_data.model_dump())
-    await db.screen_zones.insert_one(zone.model_dump())
+    await screen_zone_insert(zone.model_dump())
     return zone
 
 @api_router.delete("/screen-zones/{zone_id}")
 async def delete_screen_zone(zone_id: str, current_user: User = Depends(get_current_user)):
-    result = await db.screen_zones.delete_one({"id": zone_id})
-    if result.deleted_count == 0:
+    ok = await screen_zone_delete(zone_id)
+    if not ok:
         raise HTTPException(status_code=404, detail="Zone configuration not found")
     return {"message": "Zone configuration deleted"}
 
@@ -1016,155 +992,254 @@ async def delete_screen_zone(zone_id: str, current_user: User = Depends(get_curr
 
 @api_router.post("/screen-sync")
 async def sync_screens(sync_data: ScreenSync, current_user: User = Depends(get_current_user)):
-    # Generate sync group ID
     sync_group = str(uuid.uuid4())
     
-    # Find master screen
-    master_screen = await db.screens.find_one({"id": sync_data.master_screen_id})
+    # Logic for leader screen
+    # If content_id is provided, we pick first screen as leader and set its content
+    leader_screen_id = sync_data.master_screen_id
+    
+    if sync_data.content_id:
+        if not sync_data.screen_ids:
+             raise HTTPException(status_code=400, detail="No screens selected")
+        # First screen becomes leader
+        leader_screen_id = sync_data.screen_ids[0]
+        
+        # Verify content exists
+        content = await content_get(sync_data.content_id)
+        if not content:
+            raise HTTPException(status_code=404, detail="Content not found")
+            
+        # Set zone1 of leader screen to this content
+        # Clear existing zones
+        await screen_zones_delete_by_screen(leader_screen_id)
+        
+        # Insert new zone with content
+        new_zone = {
+            "id": str(uuid.uuid4()),
+            "screen_id": leader_screen_id,
+            "zone_id": "zone1",
+            "content_type": "single_content",
+            "content_id": sync_data.content_id
+        }
+        await screen_zone_insert(new_zone)
+        
+    if not leader_screen_id:
+        # If no master and no content, this is invalid unless just grouping?
+        # Assuming we need a source.
+        if sync_data.screen_ids:
+             leader_screen_id = sync_data.screen_ids[0]
+        else:
+             raise HTTPException(status_code=400, detail="No screens or master specified")
+
+    master_screen = await screen_get(leader_screen_id)
     if not master_screen:
-        raise HTTPException(status_code=404, detail="Master screen not found")
+        raise HTTPException(status_code=404, detail="Leader screen not found")
+        
+    tpl = master_screen.get("template_id")
     
+    group_name = sync_data.group_name
+    if not group_name:
+        # Fallback to something like "Group {short_uuid}"
+        group_name = f"Group {sync_group[:8]}"
+
     if sync_data.sync_type == "simple":
-        # Simple sync: all screens show same content
-        for screen_id in sync_data.screen_ids:
-            await db.screens.update_one(
-                {"id": screen_id},
-                {"$set": {
-                    "sync_group": sync_group,
-                    "cascade_offset": 0,
-                    "template_id": master_screen.get('template_id')
-                }}
-            )
-            # Copy zone configuration
-            master_zones = await db.screen_zones.find({"screen_id": sync_data.master_screen_id}, {"_id": 0}).to_list(100)
-            await db.screen_zones.delete_many({"screen_id": screen_id})
-            for zone in master_zones:
-                new_zone = zone.copy()
-                new_zone['id'] = str(uuid.uuid4())
-                new_zone['screen_id'] = screen_id
-                await db.screen_zones.insert_one(new_zone)
-    
+        for sid in sync_data.screen_ids:
+            # Skip update if logic requires, but usually we just sync all
+            await screen_update_sync(sid, sync_group, 0, tpl, "simple", group_name)
+            
+            # Copy zones from leader (if sid is leader, it just rewrites same zones, or skip)
+            if sid != leader_screen_id:
+                master_zones = await screen_zones_list(leader_screen_id)
+                await screen_zones_delete_by_screen(sid)
+                for z in master_zones:
+                    new_z = {**z, "id": str(uuid.uuid4()), "screen_id": sid}
+                    await screen_zone_insert(new_z)
+        
+        # Ensure leader also gets sync info updated
+        if leader_screen_id in sync_data.screen_ids:
+             await screen_update_sync(leader_screen_id, sync_group, 0, tpl, "simple", group_name)
+
     elif sync_data.sync_type == "cascade":
-        # Cascade sync: each screen shows offset pages
-        for idx, screen_id in enumerate(sync_data.screen_ids):
-            await db.screens.update_one(
-                {"id": screen_id},
-                {"$set": {
-                    "sync_group": sync_group,
-                    "cascade_offset": idx,
-                    "template_id": master_screen.get('template_id')
-                }}
-            )
-            # Copy zone configuration
-            if idx > 0:  # Skip master
-                master_zones = await db.screen_zones.find({"screen_id": sync_data.master_screen_id}, {"_id": 0}).to_list(100)
-                await db.screen_zones.delete_many({"screen_id": screen_id})
-                for zone in master_zones:
-                    new_zone = zone.copy()
-                    new_zone['id'] = str(uuid.uuid4())
-                    new_zone['screen_id'] = screen_id
-                    await db.screen_zones.insert_one(new_zone)
-    
+        for idx, sid in enumerate(sync_data.screen_ids):
+            await screen_update_sync(sid, sync_group, idx, tpl, "cascade", group_name)
+            if sid != leader_screen_id:
+                master_zones = await screen_zones_list(leader_screen_id)
+                await screen_zones_delete_by_screen(sid)
+                for z in master_zones:
+                    new_z = {**z, "id": str(uuid.uuid4()), "screen_id": sid}
+                    await screen_zone_insert(new_z)
+                    
+    elif sync_data.sync_type == "matrix":
+        # Matrix works similar to cascade (assigning indexes 0..N)
+        # Frontend uses the index to calculate grid position
+        
+        # If grid dimensions are provided, encode them in sync_type
+        actual_sync_type = "matrix"
+        if sync_data.grid_cols and sync_data.grid_rows:
+            actual_sync_type = f"matrix:{sync_data.grid_cols}x{sync_data.grid_rows}"
+            
+        for idx, sid in enumerate(sync_data.screen_ids):
+            await screen_update_sync(sid, sync_group, idx, tpl, actual_sync_type, group_name)
+            if sid != leader_screen_id:
+                master_zones = await screen_zones_list(leader_screen_id)
+                await screen_zones_delete_by_screen(sid)
+                for z in master_zones:
+                    new_z = {**z, "id": str(uuid.uuid4()), "screen_id": sid}
+                    await screen_zone_insert(new_z)
+                    
     return {"message": f"Screens synchronized with group {sync_group}", "sync_group": sync_group}
+
+@api_router.get("/screen-sync/groups")
+async def get_sync_groups(current_user: User = Depends(get_current_user)):
+    return await sync_groups_list()
+
+@api_router.delete("/screen-sync/groups/{group_id}")
+async def unsync_group(group_id: str, current_user: User = Depends(get_current_user)):
+    screens = await screens_list()
+    group_screens = [s for s in screens if s.get("sync_group") == group_id]
+    
+    for s in group_screens:
+        await screen_update_sync(s["id"], None, 0, s.get("template_id"), "simple", None)
+        await screen_zones_delete_by_screen(s["id"])
+        
+    return {"message": "Group unsynced"}
+
+@api_router.put("/screen-sync/groups/{group_id}")
+async def update_sync_group(group_id: str, data: ScreenSyncUpdate, current_user: User = Depends(get_current_user)):
+    screens = await screens_list()
+    group_screens = [s for s in screens if s.get("sync_group") == group_id]
+    
+    if not group_screens:
+        raise HTTPException(status_code=404, detail="Group not found")
+        
+    # 1. Update Group Name
+    if data.group_name is not None:
+        for s in group_screens:
+            await screen_update_sync(
+                s["id"], 
+                s.get("sync_group"), 
+                s.get("cascade_offset", 0), 
+                s.get("template_id"), 
+                s.get("sync_type", "simple"), 
+                data.group_name
+            )
+            
+    # 2. Update Content
+    if data.content_id:
+        content = await content_get(data.content_id)
+        if not content:
+            raise HTTPException(status_code=404, detail="Content not found")
+            
+        leader = group_screens[0]
+        leader_id = leader["id"]
+        
+        await screen_zones_delete_by_screen(leader_id)
+        new_zone = {
+            "id": str(uuid.uuid4()),
+            "screen_id": leader_id,
+            "zone_id": "zone1",
+            "content_type": "single_content",
+            "content_id": data.content_id
+        }
+        await screen_zone_insert(new_zone)
+        
+        master_zones = [new_zone]
+        
+        for s in group_screens:
+            if s["id"] == leader_id:
+                continue
+                
+            await screen_zones_delete_by_screen(s["id"])
+            for z in master_zones:
+                new_z = {**z, "id": str(uuid.uuid4()), "screen_id": s["id"]}
+                await screen_zone_insert(new_z)
+                
+    return {"message": "Group updated"}
 
 # ============ PUBLIC DISPLAY ROUTES ============
 
 @api_router.get("/display/{slug}")
 async def get_display_data(slug: str, security_code: Optional[str] = None):
-    """Public endpoint for screen display"""
-    screen = await db.screens.find_one({"slug": slug}, {"_id": 0})
+    screen = await screen_get_by_slug(slug)
     if not screen:
         raise HTTPException(status_code=404, detail="Screen not found")
-    
-    # Check security code
-    location = await db.locations.find_one({"id": screen['location_id']}, {"_id": 0})
-    if location and location.get('security_code'):
-        if not security_code or security_code != location['security_code']:
+    location = await location_get(screen["location_id"]) if screen.get("location_id") else None
+    if location and location.get("security_code"):
+        if not security_code or security_code != location["security_code"]:
             raise HTTPException(status_code=403, detail="Security code required")
-    
-    # Get template
-    if screen.get('template_id'):
-        # Check predefined templates first
-        predefined = [
-            {"id": "fullscreen", "name": "Full Screen", "zones": [{"id": "zone1", "name": "Main", "x": 0, "y": 0, "width": 100, "height": 100, "type": "menu"}]},
-            {"id": "split-horizontal", "name": "Split Horizontal", "zones": [{"id": "zone1", "name": "Left", "x": 0, "y": 0, "width": 50, "height": 100, "type": "menu"}, {"id": "zone2", "name": "Right", "x": 50, "y": 0, "width": 50, "height": 100, "type": "promo"}]}
-        ]
-        template = next((t for t in predefined if t['id'] == screen['template_id']), None)
-    else:
-        template = None
-    
-    # Get zone configurations
-    zones_config = await db.screen_zones.find({"screen_id": screen['id']}, {"_id": 0}).to_list(100)
-    
-    # Get content for each zone
-    for zone_config in zones_config:
-        if zone_config['content_type'] == 'digital_menu' and zone_config.get('digital_menu_id'):
-            menu = await db.digital_menus.find_one({"id": zone_config['digital_menu_id']}, {"_id": 0})
+    predefined = [
+        {"id": "fullscreen", "name": "Full Screen", "zones": [{"id": "zone1", "name": "Main", "x": 0, "y": 0, "width": 100, "height": 100, "type": "menu"}]},
+        {"id": "split-horizontal", "name": "Split Horizontal", "zones": [{"id": "zone1", "name": "Left", "x": 0, "y": 0, "width": 50, "height": 100, "type": "menu"}, {"id": "zone2", "name": "Right", "x": 50, "y": 0, "width": 50, "height": 100, "type": "promo"}]},
+    ]
+    template = next((t for t in predefined if t["id"] == screen.get("template_id")), None) if screen.get("template_id") else None
+    zones_config = await screen_zones_list(screen["id"])
+    for zc in zones_config:
+        if zc.get("content_type") == "digital_menu" and zc.get("digital_menu_id"):
+            menu = await digital_menu_get(zc["digital_menu_id"])
             if menu:
-                # Get products
                 products = []
-                if menu.get('selected_products'):
-                    for pid in menu['selected_products']:
-                        product = await db.products.find_one({"id": pid}, {"_id": 0})
-                        if product:
-                            products.append(product)
-                if menu.get('selected_categories'):
-                    cat_products = await db.products.find({"category": {"$in": menu['selected_categories']}}, {"_id": 0}).to_list(1000)
-                    products.extend(cat_products)
-                menu['products'] = products
-                zone_config['digital_menu'] = menu
-        
-        elif zone_config['content_type'] == 'playlist' and zone_config.get('playlist_id'):
-            playlist = await db.playlists.find_one({"id": zone_config['playlist_id']}, {"_id": 0})
+                for pid in menu.get("selected_products") or []:
+                    p = await product_get(pid)
+                    if p:
+                        products.append(p)
+                cat_prods = await products_by_category(menu.get("selected_categories") or [])
+                products.extend(cat_prods)
+                menu = {**menu, "products": products}
+                zc["digital_menu"] = menu
+        elif zc.get("content_type") == "playlist" and zc.get("playlist_id"):
+            playlist = await playlist_get(zc["playlist_id"])
             if playlist:
-                # Get content items
                 items = []
-                for item in playlist.get('items', []):
-                    content = await db.content.find_one({"id": item['content_id']}, {"_id": 0})
-                    if content:
-                        items.append({**content, 'duration_override': item.get('duration_override')})
-                playlist['content_items'] = items
-                zone_config['playlist'] = playlist
-        
-        elif zone_config['content_type'] == 'single_content' and zone_config.get('content_id'):
-            content = await db.content.find_one({"id": zone_config['content_id']}, {"_id": 0})
-            if content:
-                zone_config['content'] = content
+                for it in playlist.get("items") or []:
+                    c = await content_get(it["content_id"])
+                    if c:
+                        items.append({**c, "duration_override": it.get("duration_override")})
+                playlist = {**playlist, "content_items": items}
+                zc["playlist"] = playlist
+        elif zc.get("content_type") == "single_content" and zc.get("content_id"):
+            c = await content_get(zc["content_id"])
+            if c:
+                zc["content"] = c
     
-    return {
-        "screen": screen,
-        "template": template,
-        "zones_config": zones_config
-    }
+    # Get sync group info if applicable
+    sync_info = None
+    if screen.get("sync_group"):
+        group_screens = await screens_by_sync_group(screen["sync_group"])
+        sync_info = {
+            "group_id": screen["sync_group"],
+            "total_screens": len(group_screens),
+            "sync_type": screen.get("sync_type", "simple"),
+            "my_index": screen.get("cascade_offset", 0),
+            "screens": [{"id": s["id"], "index": s.get("cascade_offset", 0)} for s in group_screens]
+        }
+        
+        # Parse grid dims if matrix
+        st = screen.get("sync_type", "")
+        if st and st.startswith("matrix:"):
+            try:
+                dims = st.split(":")[1].split("x")
+                sync_info["grid_cols"] = int(dims[0])
+                sync_info["grid_rows"] = int(dims[1])
+            except:
+                pass
+    
+    return {"screen": screen, "template": template, "zones_config": zones_config, "sync_info": sync_info}
 
-# ============ DASHBOARD STATS ============
 
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
-    locations_count = await db.locations.count_documents({})
-    screens_count = await db.screens.count_documents({})
-    online_screens = await db.screens.count_documents({"status": "online"})
-    products_count = await db.products.count_documents({})
-    content_count = await db.content.count_documents({})
-    
     return {
-        "locations": locations_count,
-        "screens": screens_count,
-        "online_screens": online_screens,
-        "products": products_count,
-        "content": content_count
+        "locations": await locations_count(),
+        "screens": await screens_count(),
+        "online_screens": await screens_count_online(),
+        "products": await products_count(),
+        "content": await content_count(),
     }
 
 # Include the router in the main app
 app.include_router(api_router)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 # Configure logging
 logging.basicConfig(
@@ -1173,6 +1248,3 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()

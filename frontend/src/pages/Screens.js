@@ -9,6 +9,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { useViewMode } from '../hooks/useViewMode';
+import { ViewToggle } from '../components/ViewToggle';
 
 export const Screens = () => {
   const [screens, setScreens] = useState([]);
@@ -20,6 +22,7 @@ export const Screens = () => {
   const [selectedScreenForLink, setSelectedScreenForLink] = useState(null);
   const [shortUrl, setShortUrl] = useState('');
   const [loadingShortUrl, setLoadingShortUrl] = useState(false);
+  const [viewMode, setViewMode] = useViewMode('view_mode_screens', 'grid');
   const [formData, setFormData] = useState({
     location_id: '',
     name: '',
@@ -39,7 +42,9 @@ export const Screens = () => {
         api.get('/screens'),
         api.get('/locations')
       ]);
-      setScreens(screensRes.data);
+      setScreens(screensRes.data.sort((a, b) =>
+        (a.name || '').localeCompare(b.name || '', undefined, { numeric: true })
+      ));
       setLocations(locationsRes.data);
     } catch (error) {
       toast.error('Eroare la încărcarea datelor');
@@ -107,7 +112,7 @@ export const Screens = () => {
     return location?.name || 'Unknown';
   };
 
-  const displayUrl = process.env.REACT_APP_BACKEND_URL;
+  const displayUrl = window.location.origin;
 
   const handleShowLink = (screen) => {
     setSelectedScreenForLink(screen);
@@ -173,7 +178,7 @@ export const Screens = () => {
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
+
     try {
       document.execCommand('copy');
       toast.success('Link copiat în clipboard!');
@@ -181,7 +186,7 @@ export const Screens = () => {
       console.error('Failed to copy:', err);
       toast.error('Nu s-a putut copia. Selectează manual și copiază.');
     }
-    
+
     document.body.removeChild(textArea);
   };
 
@@ -231,7 +236,7 @@ export const Screens = () => {
                   <Label>Locație</Label>
                   <Select
                     value={formData.location_id}
-                    onValueChange={(value) => setFormData({...formData, location_id: value})}
+                    onValueChange={(value) => setFormData({ ...formData, location_id: value })}
                     required
                   >
                     <SelectTrigger data-testid="location-select">
@@ -250,7 +255,7 @@ export const Screens = () => {
                   <Label>Nume ecran</Label>
                   <Input
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Ecran Principal"
                     required
                     data-testid="screen-name-input"
@@ -260,7 +265,7 @@ export const Screens = () => {
                   <Label>Slug (link scurt)</Label>
                   <Input
                     value={formData.slug}
-                    onChange={(e) => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-')})}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
                     placeholder="c1"
                     required
                     data-testid="screen-slug-input"
@@ -273,7 +278,7 @@ export const Screens = () => {
                   <Label>Rezoluție</Label>
                   <Select
                     value={formData.resolution}
-                    onValueChange={(value) => setFormData({...formData, resolution: value})}
+                    onValueChange={(value) => setFormData({ ...formData, resolution: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -289,7 +294,7 @@ export const Screens = () => {
                   <Label>Orientare</Label>
                   <Select
                     value={formData.orientation}
-                    onValueChange={(value) => setFormData({...formData, orientation: value})}
+                    onValueChange={(value) => setFormData({ ...formData, orientation: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -327,6 +332,95 @@ export const Screens = () => {
               Adaugă primul ecran pentru a începe
             </p>
           </div>
+        ) : viewMode === 'list' ? (
+          <div className="glass-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-600">
+                <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-semibold text-slate-500">
+                  <tr>
+                    <th className="px-6 py-4">Previzualizare</th>
+                    <th className="px-6 py-4">Nume / Locație</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Slug</th>
+                    <th className="px-6 py-4 text-right">Acțiuni</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {screens.map((screen) => (
+                    <tr key={screen.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="relative w-32 aspect-video bg-slate-900 rounded-lg overflow-hidden border border-slate-200 shadow-sm group">
+                          <iframe
+                            src={`/display/${screen.slug}`}
+                            title={screen.name}
+                            className="absolute inset-0 w-full h-full border-0 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity"
+                            style={{ transform: 'scale(0.25)', transformOrigin: 'top left', width: '400%', height: '400%' }}
+                          />
+                          <div className="absolute inset-0 bg-transparent z-10"></div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-medium text-slate-800">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-blue-100 p-2 rounded-lg">
+                            <Tv className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <div>{screen.name}</div>
+                            <div className="text-xs text-slate-400 font-normal">{getLocationName(screen.location_id)}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'
+                          }`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-slate-500'
+                            }`}></div>
+                          {screen.status === 'online' ? 'Online' : 'Offline'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <code className="bg-slate-100 px-2 py-0.5 rounded text-slate-600 text-xs font-mono">
+                          /{screen.slug}
+                        </code>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500">
+                        {screen.resolution}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleShowLink(screen)}
+                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                            title="Generează Link TV"
+                          >
+                            <LinkIcon className="w-4 h-4" />
+                          </button>
+                          <Link
+                            to={`/screens/${screen.id}/design`}
+                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                          >
+                            <Settings className="w-4 h-4" />
+                          </Link>
+                          <button
+                            onClick={() => handleEdit(screen)}
+                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(screen.id)}
+                            className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all text-slate-500 hover:text-rose-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {screens.map((screen) => (
@@ -338,25 +432,45 @@ export const Screens = () => {
                   <div className="flex gap-2">
                     <Link
                       to={`/screens/${screen.id}/design`}
-                      className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                      className="p-2 hover:bg-white/50 rounded-lg transition-colors border border-transparent hover:border-slate-200"
                       data-testid={`design-screen-${screen.id}`}
                     >
                       <Settings className="w-4 h-4 text-slate-600" />
                     </Link>
                     <button
                       onClick={() => handleEdit(screen)}
-                      className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                      className="p-2 hover:bg-white/50 rounded-lg transition-colors border border-transparent hover:border-slate-200"
                       data-testid={`edit-screen-${screen.id}`}
                     >
                       <Edit className="w-4 h-4 text-slate-600" />
                     </button>
                     <button
                       onClick={() => handleDelete(screen.id)}
-                      className="p-2 hover:bg-rose-100/50 rounded-lg transition-colors"
+                      className="p-2 hover:bg-rose-100/50 rounded-lg transition-colors border border-transparent hover:border-rose-100"
                       data-testid={`delete-screen-${screen.id}`}
                     >
                       <Trash2 className="w-4 h-4 text-rose-600" />
                     </button>
+                  </div>
+                </div>
+
+                {/* LIVE PREVIEW CONTAINER */}
+                <div className="relative aspect-video bg-slate-900 rounded-xl overflow-hidden mb-4 border border-slate-200 shadow-inner group">
+                  <iframe
+                    src={`/display/${screen.slug}`}
+                    title={screen.name}
+                    className="absolute inset-0 w-full h-full border-0 pointer-events-none transition-transform group-hover:scale-105"
+                    style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
+                  />
+                  <div className="absolute inset-0 bg-transparent z-10 cursor-alias" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
+
+                  {/* Status Overlay */}
+                  <div className="absolute bottom-2 left-2 z-20">
+                    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg backdrop-blur-md ${screen.status === 'online' ? 'bg-emerald-500/20 text-emerald-100' : 'bg-slate-500/20 text-slate-100'
+                      } text-[10px] font-bold uppercase tracking-wider`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'online' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`}></div>
+                      {screen.status}
+                    </div>
                   </div>
                 </div>
                 <h3 className="text-lg font-semibold text-slate-800 mb-2">
@@ -530,6 +644,6 @@ export const Screens = () => {
           )}
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </DashboardLayout >
   );
 };

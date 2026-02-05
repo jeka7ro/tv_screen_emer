@@ -7,12 +7,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { useViewMode } from '../hooks/useViewMode';
+import { ViewToggle } from '../components/ViewToggle';
 
 export const Locations = () => {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [editingLocation, setEditingLocation] = useState(null);
+  const [viewMode, setViewMode] = useViewMode('view_mode_locations', 'grid');
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -127,7 +130,7 @@ export const Locations = () => {
                   <Label>Nume locație</Label>
                   <Input
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="SushiMaster Centru"
                     required
                     data-testid="location-name-input"
@@ -137,7 +140,7 @@ export const Locations = () => {
                   <Label>Adresă</Label>
                   <Input
                     value={formData.address}
-                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     placeholder="Strada Principală nr. 123"
                     required
                     data-testid="location-address-input"
@@ -147,7 +150,7 @@ export const Locations = () => {
                   <Label>Oraș</Label>
                   <Input
                     value={formData.city}
-                    onChange={(e) => setFormData({...formData, city: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     placeholder="București"
                     required
                     data-testid="location-city-input"
@@ -157,7 +160,7 @@ export const Locations = () => {
                   <Label>Cod de securitate (opțional)</Label>
                   <Input
                     value={formData.security_code}
-                    onChange={(e) => setFormData({...formData, security_code: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, security_code: e.target.value })}
                     placeholder="1234"
                     data-testid="location-security-input"
                   />
@@ -180,6 +183,7 @@ export const Locations = () => {
               </form>
             </DialogContent>
           </Dialog>
+          <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
         </div>
 
         {locations.length === 0 ? (
@@ -191,6 +195,69 @@ export const Locations = () => {
             <p className="text-slate-500 mb-6">
               Începe prin a adăuga prima locație
             </p>
+          </div>
+        ) : viewMode === 'list' ? (
+          <div className="glass-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-600">
+                <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-semibold text-slate-500">
+                  <tr>
+                    <th className="px-6 py-4">Nume</th>
+                    <th className="px-6 py-4">Adresă / Oraș</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Acțiuni</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {locations.map((location) => (
+                    <tr key={location.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-slate-800">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-indigo-100 p-2 rounded-lg">
+                            <MapPin className="w-4 h-4 text-indigo-600" />
+                          </div>
+                          {location.name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          {location.address}
+                          <p className="text-xs text-slate-400 mt-0.5">{location.city}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className={location.status === 'active' ? 'status-active' : 'status-offline'}>
+                            {location.status === 'active' ? 'Activ' : 'Inactiv'}
+                          </span>
+                          {location.security_code && (
+                            <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full border border-slate-200">
+                              Protejat
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEdit(location)}
+                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(location.id)}
+                            className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all text-slate-500 hover:text-rose-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

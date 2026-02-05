@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import '../styles/effects.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -34,7 +35,7 @@ export const DisplayScreen = () => {
       setDisplayData(response.data);
       setNeedsAuth(false);
       setLoading(false);
-      
+
       // Send initial heartbeat
       if (response.data.screen?.id) {
         await axios.post(`${API}/screens/${response.data.screen.id}/heartbeat`);
@@ -59,7 +60,7 @@ export const DisplayScreen = () => {
       const menu = zone.digital_menu;
       const totalProducts = menu.products?.length || 0;
       const totalPages = Math.ceil(totalProducts / menu.products_per_page);
-      
+
       const interval = setInterval(() => {
         setCurrentPage(prev => (prev + 1) % totalPages);
       }, menu.page_duration * 1000);
@@ -67,6 +68,33 @@ export const DisplayScreen = () => {
       return () => clearInterval(interval);
     }
   }, [displayData, currentPage]);
+
+  // Poll for configuration changes every 10 seconds
+  useEffect(() => {
+    const pollInterval = setInterval(() => {
+      const code = securityCode || searchParams.get('code');
+      const params = code ? `?security_code=${code}` : '';
+
+      axios.get(`${API}/display/${slug}${params}`)
+        .then(response => {
+          const newData = response.data;
+          // Check for changes that require re-render (content, sync info, template)
+          // Simple deep comparison or key fields check
+          const currentSync = displayData?.sync_info;
+          const newSync = newData.sync_info;
+
+          const hasSyncChanged = JSON.stringify(currentSync) !== JSON.stringify(newSync);
+          const hasContentChanged = JSON.stringify(displayData?.zones_config) !== JSON.stringify(newData.zones_config);
+
+          if (hasSyncChanged || hasContentChanged) {
+            setDisplayData(newData);
+          }
+        })
+        .catch(err => console.error("Poll error", err));
+    }, 10000);
+
+    return () => clearInterval(pollInterval);
+  }, [slug, securityCode, displayData]);
 
   const handleSecuritySubmit = (e) => {
     e.preventDefault();
@@ -128,11 +156,10 @@ export const DisplayScreen = () => {
         <h1 className="text-6xl font-bold text-white mb-12 text-center">
           {menu.name}
         </h1>
-        <div className={`grid gap-8 ${
-          menu.products_per_page <= 3 ? 'grid-cols-3' :
+        <div className={`grid gap-8 ${menu.products_per_page <= 3 ? 'grid-cols-3' :
           menu.products_per_page <= 6 ? 'grid-cols-3' :
-          'grid-cols-4'
-        }`}>
+            'grid-cols-4'
+          }`}>
           {productsToShow.map(product => (
             <div key={product.id} className="glass-card p-6 text-center">
               {product.image_url && (
@@ -176,26 +203,64 @@ export const DisplayScreen = () => {
       return url;
     };
 
+    const parallaxEnabled = displayData?.screen?.parallax_enabled;
+    const steamEnabled = displayData?.screen?.steam_enabled;
+
     return (
-      <div className="w-full h-full bg-slate-900 flex items-center justify-center">
-        {currentItem.type === 'image' ? (
-          <img
-            src={getFullUrl(currentItem.file_url)}
-            alt={currentItem.title}
-            className="max-w-full max-h-full object-contain"
-          />
-        ) : (
-          <video
-            src={getFullUrl(currentItem.file_url)}
-            autoPlay={playlist.autoplay}
-            loop={playlist.loop || currentItem.loop}
-            muted
-            playsInline
-            className="max-w-full max-h-full"
-          >
-            Browser-ul nu suportă video.
-          </video>
-        )}
+      <div className="relative w-full h-full bg-black overflow-hidden">
+        <div className={`w-full h-full relative ${parallaxEnabled ? 'parallax-container' : ''}`}>
+          {/* Blurred Background Layer */}
+          <div className="absolute inset-0 z-0">
+            {currentItem.type === 'image' ? (
+              <img
+                src={getFullUrl(currentItem.file_url)}
+                className="w-full h-full object-cover opacity-50 blur-xl scale-110"
+                alt=""
+              />
+            ) : (
+              <video
+                src={getFullUrl(currentItem.file_url)}
+                className="w-full h-full object-cover opacity-50 blur-xl scale-110"
+                muted
+                loop
+                autoPlay // Background video should autoplay
+                playsInline
+              />
+            )}
+          </div>
+
+          {/* Foreground Content Layer */}
+          <div className="absolute inset-0 z-10 flex items-center justify-center">
+            {currentItem.type === 'image' ? (
+              <img
+                src={getFullUrl(currentItem.file_url)}
+                alt={currentItem.title}
+                className={`max-w-full max-h-full shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
+                style={{ objectFit: 'contain' }}
+              />
+            ) : (
+              <video
+                src={getFullUrl(currentItem.file_url)}
+                autoPlay={playlist.autoplay}
+                loop={playlist.loop || currentItem.loop}
+                muted
+                playsInline
+                className={`max-w-full max-h-full shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
+                style={{ objectFit: 'contain' }}
+              >
+                Browser-ul nu suportă video.
+              </video>
+            )}
+          </div>
+
+          {steamEnabled && (
+            <div className="steam z-20">
+              {[...Array(12)].map((_, i) => (
+                <div key={i} className="steam-particle"></div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -213,26 +278,76 @@ export const DisplayScreen = () => {
       return url;
     };
 
+    const parallaxEnabled = displayData?.screen?.parallax_enabled;
+    const steamEnabled = displayData?.screen?.steam_enabled;
+
     return (
-      <div className="w-full h-full bg-slate-900 flex items-center justify-center">
-        {content.type === 'image' ? (
-          <img
-            src={getFullUrl(content.file_url)}
-            alt={content.title}
-            className="max-w-full max-h-full object-contain"
-          />
-        ) : (
-          <video
-            src={getFullUrl(content.file_url)}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="max-w-full max-h-full"
-          >
-            Browser-ul nu suportă video.
-          </video>
-        )}
+      <div className="relative w-full h-full bg-black overflow-hidden">
+        <div className={`w-full h-full relative ${parallaxEnabled ? 'parallax-container' : ''}`}>
+          {/* Blurred Background Layer */}
+          <div className="absolute inset-0 z-0">
+            {content.type === 'image' ? (
+              <img
+                src={getFullUrl(content.file_url)}
+                className="w-full h-full object-cover opacity-50 blur-xl scale-110"
+                alt=""
+              />
+            ) : (
+              <video
+                src={getFullUrl(content.file_url)}
+                className="w-full h-full object-cover opacity-50 blur-xl scale-110"
+                muted
+                loop
+                autoPlay
+                playsInline
+              />
+            )}
+          </div>
+
+          {/* Foreground Content Layer */}
+          <div className="absolute inset-0 z-10 flex items-center justify-center">
+            {content.type === 'image' ? (
+              <img
+                src={getFullUrl(content.file_url)}
+                alt={content.title}
+                className={`shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
+                style={{
+                  objectFit: displayData?.sync_info?.sync_type?.startsWith('matrix') ? 'cover' : 'contain',
+                  width: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : 'auto',
+                  height: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : 'auto',
+                  maxWidth: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%',
+                  maxHeight: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%'
+                }}
+              />
+            ) : (
+              <video
+                src={getFullUrl(content.file_url)}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className={`shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
+                style={{
+                  objectFit: displayData?.sync_info?.sync_type?.startsWith('matrix') ? 'cover' : 'contain',
+                  width: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : 'auto',
+                  height: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : 'auto',
+                  maxWidth: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%',
+                  maxHeight: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%'
+                }}
+              >
+                Browser-ul nu suportă video.
+              </video>
+            )}
+          </div>
+
+          {steamEnabled && (
+            <div className="steam z-20">
+              {[...Array(12)].map((_, i) => (
+                <div key={i} className="steam-particle"></div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -240,16 +355,66 @@ export const DisplayScreen = () => {
   const renderZone = (zone, zoneConfig) => {
     if (!zoneConfig) return null;
 
-    switch (zoneConfig.content_type) {
-      case 'digital_menu':
-        return renderDigitalMenu(zoneConfig);
-      case 'playlist':
-        return renderPlaylist(zoneConfig);
-      case 'single_content':
-        return renderSingleContent(zoneConfig);
-      default:
-        return null;
+    // Matrix transform logic
+    const syncInfo = displayData.sync_info;
+    const isMatrix = syncInfo && (syncInfo.sync_type === 'matrix' || (syncInfo.sync_type && syncInfo.sync_type.startsWith('matrix')));
+
+    let matrixStyle = {};
+    if (isMatrix) {
+      // Use dimensions from backend if available (parsed from matrix:CxR)
+      // Fallback heuristics:
+      // 3 screens -> 3x1 (Horizontal Strip) - most common for menus/ads
+      // 4 screens -> 2x2 (Grid)
+      // Others -> Standard rectangular approximation
+      let cols = 1;
+      let rows = 1;
+
+      if (syncInfo.grid_cols) {
+        cols = syncInfo.grid_cols;
+        rows = syncInfo.grid_rows || Math.ceil(syncInfo.total_screens / cols);
+      } else {
+        if (syncInfo.total_screens === 3) { cols = 3; rows = 1; }
+        else if (syncInfo.total_screens === 4) { cols = 2; rows = 2; }
+        else if (syncInfo.total_screens === 2) { cols = 2; rows = 1; }
+        else {
+          cols = Math.ceil(Math.sqrt(syncInfo.total_screens));
+          rows = Math.ceil(syncInfo.total_screens / cols);
+        }
+      }
+
+      const myIndex = syncInfo.my_index;
+      const myRow = Math.floor(myIndex / cols);
+      const myCol = myIndex % cols;
+
+      matrixStyle = {
+        width: `${cols * 100}%`,
+        height: `${rows * 100}%`,
+        transform: `translate(-${(myCol * 100) / cols}%, -${(myRow * 100) / rows}%)`,
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        transformOrigin: 'top left'
+      };
     }
+
+    return (
+      <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+        <div style={isMatrix ? matrixStyle : { width: '100%', height: '100%' }}>
+          {(() => {
+            switch (zoneConfig.content_type) {
+              case 'digital_menu':
+                return renderDigitalMenu(zoneConfig);
+              case 'playlist':
+                return renderPlaylist(zoneConfig);
+              case 'single_content':
+                return renderSingleContent(zoneConfig);
+              default:
+                return null;
+            }
+          })()}
+        </div>
+      </div>
+    );
   };
 
   return (

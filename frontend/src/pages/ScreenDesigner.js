@@ -1,17 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/DashboardLayout';
-import { Save, ArrowLeft } from 'lucide-react';
+import { Save, ArrowLeft, Eye } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
+import '../styles/effects.css';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Helper function to get full URL for files
+const getFileUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('/api/uploads')) {
+    return `${BACKEND_URL}${url}`;
+  }
+  return url;
+};
 
 export const ScreenDesigner = () => {
   const { screenId } = useParams();
   const navigate = useNavigate();
   const [screen, setScreen] = useState(null);
+  const [allScreens, setAllScreens] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [zoneConfigs, setZoneConfigs] = useState([]);
@@ -20,6 +34,12 @@ export const ScreenDesigner = () => {
   const [content, setContent] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showLivePreview, setShowLivePreview] = useState(false);
+
+  // Visual effects state
+  const [enableParallax, setEnableParallax] = useState(false);
+  const [enableSteam, setEnableSteam] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -27,8 +47,9 @@ export const ScreenDesigner = () => {
 
   const loadData = async () => {
     try {
-      const [screenRes, templatesRes, menusRes, playlistsRes, contentRes, zonesRes] = await Promise.all([
+      const [screenRes, screensRes, templatesRes, menusRes, playlistsRes, contentRes, zonesRes] = await Promise.all([
         api.get(`/screens/${screenId}`),
+        api.get('/screens'),
         api.get('/screen-templates'),
         api.get('/digital-menus'),
         api.get('/playlists'),
@@ -37,10 +58,15 @@ export const ScreenDesigner = () => {
       ]);
 
       setScreen(screenRes.data);
+      setAllScreens(screensRes.data);
       setTemplates(templatesRes.data);
       setDigitalMenus(menusRes.data);
       setPlaylists(playlistsRes.data);
       setContent(contentRes.data);
+
+      // Initialize effects from DB
+      setEnableParallax(screenRes.data.parallax_enabled || false);
+      setEnableSteam(screenRes.data.steam_enabled || false);
 
       const template = templatesRes.data.find(t => t.id === screenRes.data.template_id);
       setSelectedTemplate(template || templatesRes.data[0]);
@@ -94,7 +120,9 @@ export const ScreenDesigner = () => {
       // Update screen template
       await api.put(`/screens/${screenId}`, {
         ...screen,
-        template_id: selectedTemplate.id
+        template_id: selectedTemplate.id,
+        parallax_enabled: enableParallax,
+        steam_enabled: enableSteam
       });
 
       // Save zone configurations
@@ -143,25 +171,46 @@ export const ScreenDesigner = () => {
               <p className="text-slate-500">Configurează template-ul și zonele</p>
             </div>
           </div>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="btn-primary"
-            data-testid="save-config-button"
-          >
-            {saving ? (
-              <div className="flex items-center gap-2">
-                <div className="spinner w-4 h-4"></div>
-                Se salvează...
-              </div>
-            ) : (
-              <>
-                <Save className="w-5 h-5 mr-2" />
-                Salvează configurarea
-              </>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => setShowLivePreview(true)}
+              className="btn-secondary"
+              data-testid="live-preview-button"
+            >
+              <Eye className="w-5 h-5 mr-2" />
+              Live Preview
+            </Button>
+            {screen?.sync_group && (
+              <Button
+                onClick={() => setShowPreview(true)}
+                className="btn-secondary"
+                data-testid="preview-button"
+              >
+                <Eye className="w-5 h-5 mr-2" />
+                Preview Sync
+              </Button>
             )}
-          </Button>
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="btn-primary"
+              data-testid="save-config-button"
+            >
+              {saving ? (
+                <div className="flex items-center gap-2">
+                  <div className="spinner w-4 h-4"></div>
+                  Se salvează...
+                </div>
+              ) : (
+                <>
+                  <Save className="w-5 h-5 mr-2" />
+                  Salvează configurarea
+                </>
+              )}
+            </Button>
+          </div>
         </div>
+
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
@@ -183,23 +232,78 @@ export const ScreenDesigner = () => {
                 </SelectContent>
               </Select>
 
-              <div className="mt-6 bg-slate-100 rounded-2xl p-4 aspect-video relative">
-                {selectedTemplate?.zones.map(zone => (
-                  <div
-                    key={zone.id}
-                    className="zone-preview"
-                    style={{
-                      left: `${zone.x}%`,
-                      top: `${zone.y}%`,
-                      width: `${zone.width}%`,
-                      height: `${zone.height}%`
-                    }}
-                  >
-                    <div className="flex items-center justify-center h-full text-xs font-medium text-indigo-700">
-                      {zone.name}
+              <div className="mt-6 bg-slate-100 rounded-2xl p-4 aspect-video relative overflow-hidden shadow-inner border-2 border-slate-200">
+                {selectedTemplate?.zones.map(zone => {
+                  const config = zoneConfigs.find(c => c.zone_id === zone.id);
+                  let previewUrl = null;
+                  let isVideo = false;
+
+                  if (config?.content_id) {
+                    const item = content.find(c => c.id === config.content_id);
+                    if (item) {
+                      previewUrl = getFileUrl(item.file_url);
+                      isVideo = item.type === 'video';
+                    }
+                  }
+
+                  return (
+                    <div
+                      key={zone.id}
+                      className="absolute overflow-hidden shadow-lg border border-white/20"
+                      style={{
+                        left: `${zone.x}%`,
+                        top: `${zone.y}%`,
+                        width: `${zone.width}%`,
+                        height: `${zone.height}%`,
+                        zIndex: 1
+                      }}
+                    >
+                      {previewUrl ? (
+                        <div className={`relative w-full h-full bg-black ${enableParallax ? 'parallax-container' : ''}`}>
+                          {/* TV Style Background */}
+                          <div className="absolute inset-0 z-0">
+                            {isVideo ? (
+                              <video src={previewUrl} className="w-full h-full object-cover opacity-50 blur-lg scale-110" muted loop autoPlay />
+                            ) : (
+                              <img src={previewUrl} className="w-full h-full object-cover opacity-50 blur-lg scale-110" alt="" />
+                            )}
+                          </div>
+
+                          {/* Main Content */}
+                          <div className="absolute inset-0 z-10 flex items-center justify-center">
+                            {isVideo ? (
+                              <video
+                                src={previewUrl}
+                                className={`max-w-full max-h-full ${enableParallax ? 'parallax-layer' : ''}`}
+                                style={{ objectFit: 'contain' }}
+                                autoPlay loop muted
+                              />
+                            ) : (
+                              <img
+                                src={previewUrl}
+                                className={`max-w-full max-h-full shadow-lg ${enableParallax ? 'parallax-layer' : ''}`}
+                                style={{ objectFit: 'contain' }}
+                                alt="Preview"
+                              />
+                            )}
+                          </div>
+
+                          {enableSteam && (
+                            <div className="steam z-20">
+                              {[...Array(12)].map((_, i) => (
+                                <div key={i} className="steam-particle"></div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-xs font-bold text-indigo-400 bg-indigo-50/50 backdrop-blur-sm border-2 border-dashed border-indigo-200">
+                          {zone.name}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -247,6 +351,22 @@ export const ScreenDesigner = () => {
                             ))}
                           </SelectContent>
                         </Select>
+                        {/* Preview for Digital Menu */}
+                        {config.digital_menu_id && (() => {
+                          const menu = digitalMenus.find(m => m.id === config.digital_menu_id);
+                          if (!menu) return null;
+                          return (
+                            <div className="mt-2 p-3 bg-indigo-50/50 rounded-lg text-xs space-y-1 border border-indigo-100">
+                              <div className="flex justify-between font-medium text-slate-700">
+                                <span>Produse: {menu.selected_products?.length || 0}</span>
+                                <span>Categorii: {menu.selected_categories?.length || 0}</span>
+                              </div>
+                              <div className="text-slate-500">
+                                {menu.products_per_page} produse / pagină • {menu.page_duration}s
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
 
@@ -268,6 +388,31 @@ export const ScreenDesigner = () => {
                             ))}
                           </SelectContent>
                         </Select>
+                        {/* Preview for Playlist */}
+                        {config.playlist_id && (() => {
+                          const playlist = playlists.find(p => p.id === config.playlist_id);
+                          if (!playlist) return null;
+                          return (
+                            <div className="mt-2 p-3 bg-indigo-50/50 rounded-lg text-xs space-y-2 border border-indigo-100">
+                              <div className="font-medium text-slate-700">{playlist.items?.length || 0} elemente</div>
+                              <div className="flex gap-1 overflow-hidden">
+                                {playlist.items?.slice(0, 4).map((item, idx) => {
+                                  const contentItem = content.find(c => c.id === item.content_id);
+                                  if (!contentItem) return null;
+                                  return (
+                                    <div key={idx} className="w-8 h-8 rounded bg-slate-200 flex-shrink-0 overflow-hidden">
+                                      {contentItem.type === 'image' ? (
+                                        <img src={getFileUrl(contentItem.file_url)} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <div className="w-full h-full bg-slate-800 flex items-center justify-center text-white text-[8px]">VID</div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
 
@@ -289,6 +434,47 @@ export const ScreenDesigner = () => {
                             ))}
                           </SelectContent>
                         </Select>
+                        {/* Preview for Single Content */}
+                        {config.content_id && (() => {
+                          const item = content.find(c => c.id === config.content_id);
+                          if (!item) return null;
+                          return (
+                            <div className="mt-2 text-xs">
+                              <div className="relative aspect-video rounded-lg overflow-hidden bg-slate-100 border-2 border-slate-200 group-hover:border-indigo-400 shadow-sm transition-all">
+                                {item.type === 'image' ? (
+                                  <img src={getFileUrl(item.file_url)} className="w-full h-full object-cover" alt={item.title} />
+                                ) : (
+                                  <video src={getFileUrl(item.file_url)} className="w-full h-full object-cover" />
+                                )}
+                              </div>
+
+                              {/* Integrated Effect Controls */}
+                              <div className="mt-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 space-y-2">
+                                <p className="font-bold text-slate-700 mb-1">Efecte Vizuale</p>
+                                <div className="flex items-center justify-between">
+                                  <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-600">
+                                    <input
+                                      type="checkbox"
+                                      checked={enableParallax}
+                                      onChange={(e) => setEnableParallax(e.target.checked)}
+                                      className="w-4 h-4 text-indigo-600 rounded"
+                                    />
+                                    Parallax Effect 🌊
+                                  </label>
+                                  <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-600">
+                                    <input
+                                      type="checkbox"
+                                      checked={enableSteam}
+                                      onChange={(e) => setEnableSteam(e.target.checked)}
+                                      className="w-4 h-4 text-indigo-600 rounded"
+                                    />
+                                    Steam Effect 💨
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
@@ -297,7 +483,256 @@ export const ScreenDesigner = () => {
             </div>
           </div>
         </div>
-      </div>
-    </DashboardLayout>
+
+        {/* Sync Preview Modal */}
+        <Dialog open={showPreview} onOpenChange={setShowPreview}>
+          <DialogContent className="glass-panel max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Preview Sincronizare ({screen?.sync_type})</DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              {(() => {
+                if (!screen?.sync_group) return null;
+
+                // Filter screens in same group and sort by cascade index
+                const groupScreens = allScreens
+                  .filter(s => s.sync_group === screen.sync_group)
+                  .sort((a, b) => a.cascade_offset - b.cascade_offset);
+
+                // Find master content (assuming Zone 1 of Master screen has distinct content)
+                // For preview, we mostly care about visual aid. 
+                // We'll use a placeholder or the actual content of the current screen's Zone 1 if available.
+                const configZone1 = zoneConfigs.find(z => z.zone_id === 'zone-1');
+                let previewImage = 'https://via.placeholder.com/800x450?text=No+Content';
+
+                if (configZone1?.content_id) {
+                  const item = content.find(c => c.id === configZone1.content_id);
+                  if (item) previewImage = item.file_url.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${item.file_url}` : item.file_url;
+                } else if (configZone1?.content_type === 'digital_menu') {
+                  previewImage = 'https://via.placeholder.com/800x450?text=Digital+Menu';
+                }
+
+                if (screen.sync_type === 'matrix') {
+                  // Calculate grid dimensions
+                  const count = groupScreens.length;
+                  const cols = count <= 2 ? 2 : Math.ceil(Math.sqrt(count));
+                  const rows = Math.ceil(count / cols);
+
+                  return (
+                    <div className="flex flex-col items-center">
+                      <div
+                        className="relative bg-black"
+                        style={{
+                          width: '800px',
+                          aspectRatio: '16/9',
+                          backgroundImage: `url(${previewImage})`,
+                          backgroundSize: '100% 100%',
+                          backgroundRepeat: 'no-repeat'
+                        }}
+                      >
+                        {/* Overlay Grid */}
+                        <div
+                          className="absolute inset-0 grid gap-1 p-1 bg-slate-900/50"
+                          style={{
+                            gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                            gridTemplateRows: `repeat(${rows}, 1fr)`
+                          }}
+                        >
+                          {groupScreens.map((s, idx) => (
+                            <div
+                              key={s.id}
+                              className={`border-2 flex items-center justify-center p-2 relative overflow-hidden backdrop-blur-sm ${s.id === screen.id ? 'border-yellow-400 bg-yellow-500/20' : 'border-white/30 bg-white/10'}`}
+                            >
+                              <div className="text-center">
+                                <p className="font-bold text-white drop-shadow-md text-xl">{idx + 1}</p>
+                                <p className="text-xs text-white/80 truncate px-1">{s.name}</p>
+                                {s.id === screen.id && <p className="text-[10px] text-yellow-300 font-bold">(This Screen)</p>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="mt-4 text-slate-500 text-sm">
+                        Simulare Video Wall ({cols}x{rows}). Imaginea este întinsă pe toate ecranele.
+                      </p>
+                    </div>
+                  );
+                }
+
+                // Simple or Cascade visualization
+                return (
+                  <div className="flex flex-wrap gap-4 justify-center">
+                    {groupScreens.map((s, idx) => (
+                      <div key={s.id} className={`w-64 aspect-video bg-slate-100 rounded-lg border-2 overflow-hidden relative ${s.id === screen.id ? 'border-yellow-400' : 'border-slate-200'}`}>
+                        <img src={previewImage} className="w-full h-full object-cover opacity-80" alt="Preview" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                          <div className="text-white text-center">
+                            <p className="font-bold">{s.name}</p>
+                            <span className="text-xs px-2 py-1 bg-white/20 rounded-full">
+                              {screen.sync_type === 'cascade' ? `Offset: ${s.cascade_offset}` : 'Synced'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+
+              })()}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Live Preview Dialog with Effects */}
+        <Dialog open={showLivePreview} onOpenChange={setShowLivePreview}>
+          <DialogContent className="max-w-7xl w-full">
+            <DialogHeader>
+              <DialogTitle>Live Preview - {screen?.name}</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Large Preview */}
+              <div className="relative bg-black rounded-lg overflow-hidden border border-slate-700 shadow-2xl" style={{ aspectRatio: '16/9' }}>
+                <div className={enableParallax ? 'parallax-container w-full h-full' : 'w-full h-full'}>
+                  {(() => {
+                    // Smart Preview Logic: Improved detection
+                    // 1. Try to find a zone with 'main' or 'zone-1' (case insensitive)
+                    // 2. Fallback to the first zone that has any content/playlist/menu selected
+                    // 3. Fallback to just the first zone
+                    let mainZone = zoneConfigs.find(z =>
+                      z.zone_id?.toLowerCase() === 'main' ||
+                      z.zone_id?.toLowerCase() === 'zone-1'
+                    );
+
+                    if (!mainZone || (!mainZone.content_id && !mainZone.playlist_id && !mainZone.digital_menu_id)) {
+                      mainZone = zoneConfigs.find(z => z.content_id || z.playlist_id || z.digital_menu_id) || zoneConfigs[0];
+                    }
+
+                    let previewUrl = null;
+                    let isVideo = false;
+
+                    // Handle Single Content
+                    if (mainZone?.content_id) {
+                      const item = content.find(c => c.id === mainZone.content_id);
+                      if (item) {
+                        previewUrl = getFileUrl(item.file_url);
+                        isVideo = item.type === 'video';
+                      }
+                    }
+                    // Handle Playlist Fallback (first item)
+                    else if (mainZone?.playlist_id && playlists) {
+                      const playlist = playlists.find(p => p.id === mainZone.playlist_id);
+                      const firstItem = playlist?.content_items?.[0] || playlist?.items?.[0];
+                      if (firstItem) {
+                        const contentId = firstItem.content_id || firstItem.id;
+                        const item = content.find(c => c.id === contentId);
+                        if (item) {
+                          previewUrl = getFileUrl(item.file_url);
+                          isVideo = item.type === 'video';
+                        }
+                      }
+                    }
+                    // Handle Digital Menu Fallback (first product image if exists)
+                    else if (mainZone?.digital_menu_id && digitalMenus) {
+                      const menu = digitalMenus.find(m => m.id === mainZone.digital_menu_id);
+                      const firstProduct = menu?.products?.[0];
+                      if (firstProduct?.image_url) {
+                        previewUrl = getFileUrl(firstProduct.image_url);
+                      }
+                    }
+
+                    if (!previewUrl) {
+                      return (
+                        <div className="w-full h-full flex items-center justify-center text-slate-500 bg-slate-900">
+                          <div className="text-center">
+                            <p className="text-xl font-bold mb-2">Niciun conținut selectat</p>
+                            <p className="text-sm">Selectează o imagine sau video în Configurare Zone</p>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="relative w-full h-full overflow-hidden">
+                        {/* Blurred Background similar to TV-Style */}
+                        <div className="absolute inset-0 z-0">
+                          {isVideo ? (
+                            <video src={previewUrl} className="w-full h-full object-cover opacity-50 blur-xl scale-110" muted loop autoPlay />
+                          ) : (
+                            <img src={previewUrl} className="w-full h-full object-cover opacity-50 blur-xl scale-110" alt="" />
+                          )}
+                        </div>
+
+                        {/* Foreground Content */}
+                        <div className="absolute inset-0 z-10 flex items-center justify-center">
+                          {isVideo ? (
+                            <video
+                              src={previewUrl}
+                              className={`max-w-full max-h-full shadow-2xl ${enableParallax ? 'parallax-layer' : ''}`}
+                              style={{ objectFit: 'contain' }}
+                              autoPlay loop muted
+                            />
+                          ) : (
+                            <img
+                              src={previewUrl}
+                              className={`max-w-full max-h-full shadow-2xl ${enableParallax ? 'parallax-layer' : ''}`}
+                              style={{ objectFit: 'contain' }}
+                              alt="Preview"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {enableSteam && (
+                    <div className="steam z-20 pointer-events-none">
+                      {[...Array(12)].map((_, i) => (
+                        <div key={i} className="steam-particle"></div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Effect Controls - Moved BELOW image as requested */}
+              <div className="flex gap-6 p-4 bg-slate-100 rounded-lg border justify-center">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="parallax-toggle"
+                    checked={enableParallax}
+                    onChange={(e) => setEnableParallax(e.target.checked)}
+                    className="w-5 h-5 text-indigo-600 rounded cursor-pointer"
+                  />
+                  <label htmlFor="parallax-toggle" className="text-base font-semibold text-slate-800 cursor-pointer select-none">
+                    Parallax Effect 🌊
+                  </label>
+                </div>
+
+                <div className="w-px bg-slate-300 h-6"></div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="steam-toggle"
+                    checked={enableSteam}
+                    onChange={(e) => setEnableSteam(e.target.checked)}
+                    className="w-5 h-5 text-indigo-600 rounded cursor-pointer"
+                  />
+                  <label htmlFor="steam-toggle" className="text-base font-semibold text-slate-800 cursor-pointer select-none">
+                    Steam Effect 💨
+                  </label>
+                </div>
+              </div>
+
+              <p className="text-sm text-slate-500 text-center">
+                * Aceasta este o simulare smart a conținutului selectat curent (fără a fi nevoie de salvare)
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div >
+    </DashboardLayout >
   );
 };

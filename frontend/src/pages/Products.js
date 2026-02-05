@@ -9,6 +9,8 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { useViewMode } from '../hooks/useViewMode';
+import { ViewToggle } from '../components/ViewToggle';
 
 const categories = [
   { value: 'sushi', label: 'Sushi' },
@@ -28,6 +30,7 @@ export const Products = () => {
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importing, setImporting] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [viewMode, setViewMode] = useViewMode('view_mode_products', 'grid');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -74,6 +77,11 @@ export const Products = () => {
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Eroare la salvare');
     }
+  };
+
+  const handleImageError = (e) => {
+    e.target.onerror = null;
+    e.target.src = "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&auto=format&fit=crop&q=60";
   };
 
   const handleEdit = (product) => {
@@ -252,8 +260,8 @@ export const Products = () => {
             <p className="text-slate-500">Gestionează meniul cu produse și prețuri</p>
           </div>
           <div className="flex gap-3">
-            <Button 
-              onClick={() => setShowImportDialog(true)} 
+            <Button
+              onClick={() => setShowImportDialog(true)}
               className="btn-secondary"
               data-testid="import-products-button"
             >
@@ -281,7 +289,7 @@ export const Products = () => {
                     <Label>Nume produs</Label>
                     <Input
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="California Roll"
                       required
                       data-testid="product-name-input"
@@ -291,7 +299,7 @@ export const Products = () => {
                     <Label>Descriere (opțional)</Label>
                     <Textarea
                       value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       placeholder="Descriere delicată a produsului..."
                       rows={3}
                       data-testid="product-description-input"
@@ -304,7 +312,7 @@ export const Products = () => {
                         type="number"
                         step="0.01"
                         value={formData.price}
-                        onChange={(e) => setFormData({...formData, price: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                         placeholder="35.99"
                         required
                         data-testid="product-price-input"
@@ -314,7 +322,7 @@ export const Products = () => {
                       <Label>Monedă</Label>
                       <Select
                         value={formData.currency}
-                        onValueChange={(value) => setFormData({...formData, currency: value})}
+                        onValueChange={(value) => setFormData({ ...formData, currency: value })}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -331,7 +339,7 @@ export const Products = () => {
                     <Label>Categorie</Label>
                     <Select
                       value={formData.category}
-                      onValueChange={(value) => setFormData({...formData, category: value})}
+                      onValueChange={(value) => setFormData({ ...formData, category: value })}
                     >
                       <SelectTrigger data-testid="product-category-select">
                         <SelectValue />
@@ -349,7 +357,7 @@ export const Products = () => {
                     <Label>URL imagine (opțional)</Label>
                     <Input
                       value={formData.image_url}
-                      onChange={(e) => setFormData({...formData, image_url: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                       placeholder="https://..."
                       data-testid="product-image-input"
                     />
@@ -359,7 +367,7 @@ export const Products = () => {
                       <input
                         type="checkbox"
                         checked={formData.available}
-                        onChange={(e) => setFormData({...formData, available: e.target.checked})}
+                        onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
                         className="rounded"
                       />
                       <span className="text-sm text-slate-700">Disponibil</span>
@@ -368,7 +376,7 @@ export const Products = () => {
                       <input
                         type="checkbox"
                         checked={formData.featured}
-                        onChange={(e) => setFormData({...formData, featured: e.target.checked})}
+                        onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
                         className="rounded"
                       />
                       <span className="text-sm text-slate-700">În evidență</span>
@@ -389,6 +397,7 @@ export const Products = () => {
                 </form>
               </DialogContent>
             </Dialog>
+            <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
           </div>
         </div>
 
@@ -402,6 +411,88 @@ export const Products = () => {
               Adaugă primul produs în meniu
             </p>
           </div>
+        ) : viewMode === 'list' ? (
+          <div className="glass-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-600">
+                <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-semibold text-slate-500">
+                  <tr>
+                    <th className="px-6 py-4">Produs</th>
+                    <th className="px-6 py-4">Categorie</th>
+                    <th className="px-6 py-4">Preț</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Acțiuni</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {products.map((product) => (
+                    <tr key={product.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-slate-800">
+                        <div className="flex items-center gap-3">
+                          {product.image_url ? (
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="w-10 h-10 object-cover rounded-lg"
+                              onError={handleImageError}
+                            />
+                          ) : (
+                            <div className="bg-slate-100 p-2 rounded-lg">
+                              <ShoppingBag className="w-6 h-6 text-slate-400" />
+                            </div>
+                          )}
+                          <div>
+                            <div>{product.name}</div>
+                            {product.description && (
+                              <div className="text-xs text-slate-400 font-normal truncate max-w-[200px]">{product.description}</div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full border border-slate-200">
+                          {categories.find(c => c.value === product.category)?.label}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-semibold text-indigo-600">
+                        {product.price} {product.currency}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          {product.available ? (
+                            <span className="status-active text-xs">Disponibil</span>
+                          ) : (
+                            <span className="status-offline text-xs">Indisponibil</span>
+                          )}
+                          {product.featured && (
+                            <span className="text-xs bg-amber-100/50 text-amber-700 px-2 py-1 rounded-full border border-amber-200">
+                              Featured
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleEdit(product)}
+                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(product.id)}
+                            className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all text-slate-500 hover:text-rose-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((product) => (
@@ -411,6 +502,7 @@ export const Products = () => {
                     src={product.image_url}
                     alt={product.name}
                     className="w-full h-40 object-cover rounded-2xl mb-4"
+                    onError={handleImageError}
                   />
                 )}
                 <div className="flex items-start justify-between mb-2">
@@ -497,7 +589,7 @@ export const Products = () => {
               <div className="glass-card p-4">
                 <h3 className="font-semibold text-slate-800 mb-2">✏️ Toate produsele sunt editabile</h3>
                 <p className="text-sm text-slate-600">
-                  După import, poți edita orice produs: <strong>preț, nume, descriere, imagine</strong>. 
+                  După import, poți edita orice produs: <strong>preț, nume, descriere, imagine</strong>.
                   Importul este doar un punct de plecare rapid.
                 </p>
               </div>
@@ -539,6 +631,6 @@ export const Products = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    </DashboardLayout >
   );
 };

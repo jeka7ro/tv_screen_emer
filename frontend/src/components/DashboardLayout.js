@@ -14,11 +14,13 @@ import {
   LogOut,
   UserPlus,
   Users,
-  Shield
+  Shield,
+  Eye
 } from 'lucide-react';
 
 const menuItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/live-preview', icon: Eye, label: 'Live Preview' },
   { path: '/locations', icon: MapPin, label: 'Locații' },
   { path: '/screens', icon: Tv, label: 'Ecrane' },
   { path: '/content', icon: FileImage, label: 'Conținut' },
