@@ -30,13 +30,33 @@ async def init_db() -> None:
     if ("supabase.co" in url or "pooler.supabase.com" in url) and "sslmode=" not in url:
         sep = "&" if "?" in url else "?"
         url = f"{url}{sep}sslmode=require"
+    import urllib.parse
+    
+    # Workaround for Python 3.13 + asyncpg issue with certain hostnames
+    # We parse the URL manually and pass kwargs to create_pool
+    p = urllib.parse.urlparse(url)
+    
+    username = p.username
+    password = p.password
+    hostname = p.hostname
+    port = p.port or 5432
+    database = p.path.lstrip("/")
+    
+    query_params = urllib.parse.parse_qs(p.query)
+    ssl_mode = query_params.get("sslmode", ["require"])[0] 
+    
     pool = await asyncpg.create_pool(
-        url, 
+        user=username,
+        password=password,
+        host=hostname,
+        port=port,
+        database=database,
+        ssl=ssl_mode if ssl_mode != "disable" else None,
         min_size=1, 
         max_size=10, 
         command_timeout=60, 
         timeout=15,
-        statement_cache_size=0  # Disable prepared statements for Supabase compatibility
+        statement_cache_size=0
     )
 
 
