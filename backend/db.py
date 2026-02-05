@@ -30,34 +30,47 @@ async def init_db() -> None:
     if ("supabase.co" in url or "pooler.supabase.com" in url) and "sslmode=" not in url:
         sep = "&" if "?" in url else "?"
         url = f"{url}{sep}sslmode=require"
-    import urllib.parse
+    import re
     
-    # Workaround for Python 3.13 + asyncpg issue with certain hostnames
-    # We parse the URL manually and pass kwargs to create_pool
-    p = urllib.parse.urlparse(url)
+    # Manual parsing to bypass urllib/ipaddress issues in Python 3.13
+    # Format: postgresql://user:password@host:port/database?params
+    match = re.match(r"postgresql://([^:]+):([^@]+)@([^:/]+)(?::(\d+))?/([^?]+)(?:\?(.*))?", url)
     
-    username = p.username
-    password = p.password
-    hostname = p.hostname
-    port = p.port or 5432
-    database = p.path.lstrip("/")
-    
-    query_params = urllib.parse.parse_qs(p.query)
-    ssl_mode = query_params.get("sslmode", ["require"])[0] 
-    
-    pool = await asyncpg.create_pool(
-        user=username,
-        password=password,
-        host=hostname,
-        port=port,
-        database=database,
-        ssl=ssl_mode if ssl_mode != "disable" else None,
-        min_size=1, 
-        max_size=10, 
-        command_timeout=60, 
-        timeout=15,
-        statement_cache_size=0
-    )
+    if match:
+        username = match.group(1)
+        password = match.group(2)
+        hostname = match.group(3)
+        port = int(match.group(4)) if match.group(4) else 5432
+        database = match.group(5)
+        query_str = match.group(6) or ""
+        
+        ssl_mode = "require"
+        if "sslmode=disable" in query_str:
+            ssl_mode = "disable"
+            
+        pool = await asyncpg.create_pool(
+            user=username,
+            password=password,
+            host=hostname,
+            port=port,
+            database=database,
+            ssl=ssl_mode if ssl_mode != "disable" else None,
+            min_size=1, 
+            max_size=10, 
+            command_timeout=60, 
+            timeout=15,
+            statement_cache_size=0
+        )
+    else:
+        # Fallback for simple URLs or if regex fails
+        pool = await asyncpg.create_pool(
+            url, 
+            min_size=1, 
+            max_size=10, 
+            command_timeout=60, 
+            timeout=15,
+            statement_cache_size=0
+        )
 
 
 async def close_db() -> None:
