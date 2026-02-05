@@ -9,7 +9,7 @@
 # Setează în Netlify UI: REACT_APP_BACKEND_URL = https://xxx.onrender.com
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   DISABLE_ESLINT_PLUGIN = "true"
 
 # SPA: toate rutele -> index.html
