@@ -31,7 +31,12 @@ async def init_db() -> None:
         sep = "&" if "?" in url else "?"
         url = f"{url}{sep}sslmode=require"
     pool = await asyncpg.create_pool(
-        url, min_size=1, max_size=10, command_timeout=60, timeout=15
+        url, 
+        min_size=1, 
+        max_size=10, 
+        command_timeout=60, 
+        timeout=15,
+        statement_cache_size=0  # Disable prepared statements for Supabase compatibility
     )
 
 
