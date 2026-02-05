@@ -34,8 +34,6 @@ async def init_db() -> None:
     
     # Manual parsing to bypass urllib/ipaddress issues in Python 3.13
     # Format: postgresql://user:password@host:port/database?params
-    # We use a non-greedy matcher for password to stop at the LAST @ before host
-    # But simpler: split by @ from the right to separate user:pass from host:port/db
     
     # 1. Remove scheme
     if "://" in url:
@@ -43,48 +41,48 @@ async def init_db() -> None:
     else:
         url_body = url
         
-    # 2. Split user:pass and host:port/db
-    if "@" in url_body:
-        user_pass_part, host_db_part = url_body.rsplit("@", 1)
-    else:
-        user_pass_part = ""
-        host_db_part = url_body
+    try:
+        # 2. Split user:pass and host:port/db
+        if "@" in url_body:
+            user_pass_part, host_db_part = url_body.rsplit("@", 1)
+        else:
+            user_pass_part = ""
+            host_db_part = url_body
 
-    # 3. Parse user:pass
-    if ":" in user_pass_part:
-        username, password = user_pass_part.split(":", 1)
-    else:
-        username = user_pass_part
-        password = None
-        
-    # URL decode credentials (they might be percent-encoded)
-    from urllib.parse import unquote
-    if username: username = unquote(username)
-    if password: password = unquote(password)
+        # 3. Parse user:pass
+        if ":" in user_pass_part:
+            username, password = user_pass_part.split(":", 1)
+        else:
+            username = user_pass_part
+            password = None
+            
+        # URL decode credentials
+        from urllib.parse import unquote
+        if username: username = unquote(username)
+        if password: password = unquote(password)
 
-    # 4. Parse host:port/db?query
-    # host_db_part = "aws-1...:5432/postgres?sslmode=require"
-    if "/" in host_db_part:
-        host_port, db_query = host_db_part.split("/", 1)
-    else:
-        host_port = host_db_part
-        db_query = "postgres"
+        # 4. Parse host:port/db?query
+        if "/" in host_db_part:
+            host_port, db_query = host_db_part.split("/", 1)
+        else:
+            host_port = host_db_part
+            db_query = "postgres"
 
-    # 5. Parse host:port
-    if ":" in host_port:
-        hostname, port_str = host_port.split(":", 1)
-        port = int(port_str)
-    else:
-        hostname = host_port
-        port = 5432
+        # 5. Parse host:port
+        if ":" in host_port:
+            hostname, port_str = host_port.split(":", 1)
+            port = int(port_str)
+        else:
+            hostname = host_port
+            port = 5432
 
-    # 6. Parse db?query
-    if "?" in db_query:
-        database, query_str = db_query.split("?", 1)
-    else:
-        database = db_query
-        query_str = ""
-        
+        # 6. Parse db?query
+        if "?" in db_query:
+            database, query_str = db_query.split("?", 1)
+        else:
+            database = db_query
+            query_str = ""
+            
         ssl_mode = "require"
         if "sslmode=disable" in query_str:
             ssl_mode = "disable"
@@ -102,8 +100,9 @@ async def init_db() -> None:
             timeout=15,
             statement_cache_size=0
         )
-    else:
-        # Fallback for simple URLs or if regex fails
+    except Exception as e:
+        print(f"Manual parsing failed: {e}. Falling back to default.")
+        # Fallback for simple URLs or if parsing fails
         pool = await asyncpg.create_pool(
             url, 
             min_size=1, 
