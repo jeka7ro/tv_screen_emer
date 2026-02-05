@@ -122,11 +122,14 @@ allowed_origins = [
 ]
 if cors_origins_env:
     # Handle both comma-separated and space-separated origins
-    extra_origins = cors_origins_env.replace(",", " ").split()
+    # Strip whitespace and trailing slashes to be more robust
+    extra_origins = [o.strip().rstrip("/") for o in cors_origins_env.replace(",", " ").split() if o.strip()]
     allowed_origins.extend(extra_origins)
 else:
     # Fallback to wildcard ONLY if no origins are specified in env
     allowed_origins.append("*")
+
+print(f"DEBUG: Allowed CORS origins: {allowed_origins}")
 
 app.add_middleware(
     CORSMiddleware,
@@ -148,6 +151,10 @@ for dir in [UPLOAD_DIR, IMAGES_DIR, VIDEOS_DIR]:
 
 # Mount static files
 app.mount("/api/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+@app.get("/")
+async def health_check():
+    return {"status": "ok", "message": "SushiMaster TV API is running"}
 
 # ============ MODELS ============
 
