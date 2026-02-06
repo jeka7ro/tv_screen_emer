@@ -695,12 +695,21 @@ async def send_reset_email(email: str, token: str):
         try:
             # Run blocking SMTP call in a thread
             def _send():
-                with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-                    # Debug level
-                    server.set_debuglevel(1)
-                    server.starttls()
-                    server.login(SMTP_USER, SMTP_PASSWORD)
-                    server.send_message(msg)
+                try:
+                    print(f"🔌 Connecting to SMTP {SMTP_HOST}:{SMTP_PORT} (STARTTLS)...")
+                    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
+                        # Debug level
+                        server.set_debuglevel(1)
+                        server.starttls()
+                        server.login(SMTP_USER, SMTP_PASSWORD)
+                        server.send_message(msg)
+                except Exception as e1:
+                    print(f"⚠️ Port {SMTP_PORT} failed ({e1}). Retrying with Port 465 (SSL)...")
+                    # Fallback to 465 (SSL)
+                    with smtplib.SMTP_SSL(SMTP_HOST, 465, timeout=10) as server:
+                        server.set_debuglevel(1)
+                        server.login(SMTP_USER, SMTP_PASSWORD)
+                        server.send_message(msg)
             
             await asyncio.to_thread(_send)
             print(f"📧 Email sent to {email}")
