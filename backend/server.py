@@ -78,7 +78,12 @@ from db import (
     digital_menu_delete,
     screens_by_sync_group,
     sync_groups_list,
+    sync_groups_list,
     sync_group_delete,
+    password_reset_create,
+    password_reset_get,
+    password_reset_delete,
+    user_update_password,
 )
 
 ROOT_DIR = Path(__file__).parent
@@ -88,6 +93,13 @@ load_dotenv(ROOT_DIR / ".env")
 SECRET_KEY = os.environ.get("SECRET_KEY", "sushimaster-secret-key-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+
+# Email settings
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
+FROM_EMAIL = os.environ.get("FROM_EMAIL", "noreply@sushimaster.ro")
 
 # Security
 security = HTTPBearer()
@@ -656,6 +668,91 @@ async def delete_screen(screen_id: str, current_user: User = Depends(get_current
 async def screen_heartbeat(screen_id: str):
     await screen_update_heartbeat(screen_id, "online", datetime.now(timezone.utc))
     return {"message": "Heartbeat received"}
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(min_length=6)
+
+async def send_reset_email(email: str, token: str):
+    reset_link = f"https://tvscreener.netlify.app/reset-password?token={token}"
+    
+    # Check if SMTP is configured
+    if SMTP_USER and SMTP_PASSWORD:
+        import smtplib
+        from email.message import EmailMessage
+        import asyncio
+        
+        msg = EmailMessage()
+        msg.set_content(f"Click the link to reset your password: {reset_link}")
+        msg["Subject"] = "Reset Your Password - SushiMaster TV"
+        msg["From"] = FROM_EMAIL
+        msg["To"] = email
+        
+        try:
+            # Run blocking SMTP call in a thread
+            def _send():
+                with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+                    server.starttls()
+                    server.login(SMTP_USER, SMTP_PASSWORD)
+                    server.send_message(msg)
+            
+            await asyncio.to_thread(_send)
+            print(f"📧 Email sent to {email}")
+        except Exception as e:
+            print(f"❌ Failed to send email: {e}")
+            # Fallback to log
+            print(f"🔗 RESET LINK (Fallback): {reset_link}")
+    else:
+        # Log to console
+        print(f"🔗 RESET LINK for {email}: {reset_link}")
+
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest):
+    user = await user_get_by_email(req.email)
+    if not user:
+        # Don't reveal user existence, just fake success
+        # But for debugging now, we might want to know. 
+        # Production security best practice: return OK anyway.
+        return {"message": "If the email exists, a reset link has been sent."}
+    
+    token = str(uuid.uuid4())
+    # Expire in 1 hour
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    await password_reset_create(req.email, token, expires_at)
+    await send_reset_email(req.email, token)
+    
+    return {"message": "If the email exists, a reset link has been sent."}
+
+
+@api_router.post("/auth/reset-password")
+async def reset_password_endpoint(req: ResetPasswordRequest):
+    reset_record = await password_reset_get(req.token)
+    if not reset_record:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+        
+    if reset_record["expires_at"] < datetime.now(timezone.utc):
+        await password_reset_delete(req.token)
+        raise HTTPException(status_code=400, detail="Token expired")
+        
+    # User exists?
+    user = await user_get_by_email(reset_record["email"])
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    # Update password
+    hashed_password = get_password_hash(req.new_password)
+    await user_update_password(reset_record["email"], hashed_password)
+    
+    # Delete token
+    await password_reset_delete(req.token)
+    
+    return {"message": "Password updated successfully"}
 
 # ============ SCREEN TEMPLATES ROUTES ============
 

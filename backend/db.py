@@ -112,6 +112,18 @@ async def init_db() -> None:
             statement_cache_size=0
         )
 
+    
+    # Initialize tables if needed
+    async with pool.acquire() as conn:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS password_resets (
+                email TEXT PRIMARY KEY,
+                token TEXT NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+        """)
+
 
 async def close_db() -> None:
     global pool
@@ -571,6 +583,32 @@ async def screens_count() -> int:
     return r["c"] if r else 0
 
 
+
 async def screens_count_online() -> int:
     r = await _fetch_one("SELECT count(*)::int AS c FROM screens WHERE status = 'online'")
     return r["c"] if r else 0
+
+
+# ---------- password resets ----------
+
+async def password_reset_create(email: str, token: str, expires_at: Any) -> None:
+    # Upsert: if email exists, update token and expiry
+    await _execute(
+        """INSERT INTO password_resets (email, token, expires_at, created_at)
+           VALUES ($1, $2, $3, NOW())
+           ON CONFLICT (email) DO UPDATE 
+           SET token = $2, expires_at = $3, created_at = NOW()""",
+        email, token, expires_at
+    )
+
+
+async def password_reset_get(token: str) -> Optional[Dict[str, Any]]:
+    return await _fetch_one("SELECT * FROM password_resets WHERE token = $1", token)
+
+
+async def password_reset_delete(token: str) -> None:
+    await _execute("DELETE FROM password_resets WHERE token = $1", token)
+
+
+async def user_update_password(email: str, hashed_password: str) -> None:
+    await _execute("UPDATE users SET hashed_password = $1 WHERE email = $2", hashed_password, email)

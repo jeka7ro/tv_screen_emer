@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Monitor, UserPlus, Lock, Mail, User, KeyRound, Shield } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ import api from '../utils/api';
 export const Login = () => {
   const [searchParams] = useSearchParams();
   const inviteCode = searchParams.get('invite');
-  
+
   const [isLogin, setIsLogin] = useState(!inviteCode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,7 +18,7 @@ export const Login = () => {
   const [isOpenRegistration, setIsOpenRegistration] = useState(false);
   const [inviteValid, setInviteValid] = useState(false);
   const [checkingInvite, setCheckingInvite] = useState(!!inviteCode);
-  
+
   const { login, register } = useAuth();
   const navigate = useNavigate();
 
@@ -102,7 +102,7 @@ export const Login = () => {
               <Monitor className="w-12 h-12 text-indigo-600" data-testid="logo-icon" />
             </div>
           </div>
-          
+
           <h1 className="text-3xl font-bold text-center text-slate-800 mb-2">
             SushiMaster TV
           </h1>
@@ -180,6 +180,18 @@ export const Login = () => {
                 data-testid="password-input"
               />
             </div>
+
+            {/* Forgot Password Link */}
+            {isLogin && (
+              <div className="flex justify-end">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                >
+                  Ai uitat parola?
+                </Link>
+              </div>
+            )}
 
             {/* Invitation code field - only shown when registering and not first user */}
             {!isLogin && !isOpenRegistration && !inviteCode && (
