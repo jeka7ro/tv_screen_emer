@@ -17,6 +17,7 @@ export const Screens = () => {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
+  const [editingScreen, setEditingScreen] = useState(null);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [selectedScreenForLink, setSelectedScreenForLink] = useState(null);
   const [shortUrl, setShortUrl] = useState('');
