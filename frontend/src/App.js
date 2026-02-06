@@ -22,6 +22,7 @@ import { Users } from './pages/Users';
 import { LivePreviewDashboard } from './pages/LivePreviewDashboard';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
+import { ShortLinkRedirect } from './components/ShortLinkRedirect';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/s/:slug" element={<ShortLinkRedirect />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/display/:slug" element={<DisplayScreen />} />

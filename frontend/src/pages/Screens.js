@@ -17,11 +17,9 @@ export const Screens = () => {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
-  const [editingScreen, setEditingScreen] = useState(null);
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [selectedScreenForLink, setSelectedScreenForLink] = useState(null);
   const [shortUrl, setShortUrl] = useState('');
-  const [loadingShortUrl, setLoadingShortUrl] = useState(false);
   const [viewMode, setViewMode] = useViewMode('view_mode_screens', 'grid');
   const [formData, setFormData] = useState({
     location_id: '',
@@ -116,35 +114,9 @@ export const Screens = () => {
 
   const handleShowLink = (screen) => {
     setSelectedScreenForLink(screen);
-    setShortUrl('');
+    // Use internal short link: origin + /s/ + slug
+    setShortUrl(`${window.location.origin}/s/${screen.slug}`);
     setShowLinkDialog(true);
-    // Generate short URL
-    generateShortUrl(screen.slug);
-  };
-
-  const generateShortUrl = async (slug) => {
-    setLoadingShortUrl(true);
-    try {
-      const longUrl = getScreenUrl(slug);
-      // Using TinyURL API
-      const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`);
-      const shortUrl = await response.text();
-      setShortUrl(shortUrl);
-    } catch (error) {
-      console.error('Error generating short URL:', error);
-      // If TinyURL fails, try alternative
-      try {
-        const longUrl = getScreenUrl(slug);
-        const response = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(longUrl)}`);
-        const shortUrl = await response.text();
-        setShortUrl(shortUrl);
-      } catch (err) {
-        console.error('Error with is.gd:', err);
-        setShortUrl(''); // Fallback to showing only long URL
-      }
-    } finally {
-      setLoadingShortUrl(false);
-    }
   };
 
   const getScreenUrl = (slug) => {
@@ -191,9 +163,9 @@ export const Screens = () => {
   };
 
   const generateQRCode = (urlOrSlug) => {
-    // If it's already a full URL (starts with http), use it directly
+    // ALWAYS use the direct full URL for QR codes to avoid redirects and issues
+    // If it's already a URL, use it, otherwise build it
     const url = urlOrSlug.startsWith('http') ? urlOrSlug : getScreenUrl(urlOrSlug);
-    // Using QR Server API for QR code generation
     return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
   };
 
@@ -521,48 +493,41 @@ export const Screens = () => {
           {selectedScreenForLink && (
             <div className="space-y-6">
               {/* Short URL - PROMINENT */}
-              {loadingShortUrl ? (
-                <div className="bg-indigo-50/50 rounded-2xl p-6 text-center">
-                  <div className="spinner w-8 h-8 mx-auto mb-3"></div>
-                  <p className="text-sm text-slate-600">Se generează link scurt...</p>
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-300">
+                <Label className="text-lg font-bold text-indigo-900 mb-3 block flex items-center gap-2">
+                  ⚡ Link Scurt pentru TV
+                </Label>
+                <div className="flex gap-2 mb-3">
+                  <Input
+                    value={shortUrl}
+                    readOnly
+                    onClick={(e) => e.target.select()}
+                    className="text-2xl font-bold text-center bg-white border-2 border-indigo-200 rounded-xl py-4 cursor-pointer"
+                    data-testid="short-url-input"
+                  />
                 </div>
-              ) : shortUrl ? (
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-300">
-                  <Label className="text-lg font-bold text-indigo-900 mb-3 block flex items-center gap-2">
-                    ⚡ Link Scurt pentru TV
-                  </Label>
-                  <div className="flex gap-2 mb-3">
-                    <Input
-                      value={shortUrl}
-                      readOnly
-                      onClick={(e) => e.target.select()}
-                      className="text-2xl font-bold text-center bg-white border-2 border-indigo-200 rounded-xl py-4 cursor-pointer"
-                      data-testid="short-url-input"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => copyToClipboard(shortUrl)}
-                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-3"
-                      data-testid="copy-short-url-button"
-                    >
-                      <LinkIcon className="w-5 h-5 mr-2" />
-                      Copiază Link Scurt
-                    </Button>
-                    <a
-                      href={shortUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-secondary px-6"
-                    >
-                      <ExternalLink className="w-5 h-5" />
-                    </a>
-                  </div>
-                  <p className="text-sm text-indigo-700 mt-3 text-center font-medium">
-                    👆 Scrie acest link pe TV - MULT mai simplu!
-                  </p>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => copyToClipboard(shortUrl)}
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-3"
+                    data-testid="copy-short-url-button"
+                  >
+                    <LinkIcon className="w-5 h-5 mr-2" />
+                    Copiază Link Scurt
+                  </Button>
+                  <a
+                    href={shortUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary px-6"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                  </a>
                 </div>
-              ) : null}
+                <p className="text-sm text-indigo-700 mt-3 text-center font-medium">
+                  👆 Scrie acest link pe TV - ACUM E SIMPLU! (Fără tinyurl)
+                </p>
+              </div>
 
               {/* Original URL - Secondary */}
               <details className="glass-card p-4">
