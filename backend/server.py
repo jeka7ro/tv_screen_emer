@@ -738,28 +738,35 @@ async def forgot_password(req: ForgotPasswordRequest):
 
 @api_router.post("/auth/reset-password")
 async def reset_password_endpoint(req: ResetPasswordRequest):
-    reset_record = await password_reset_get(req.token)
-    if not reset_record:
-        raise HTTPException(status_code=400, detail="Invalid or expired token")
+    try:
+        reset_record = await password_reset_get(req.token)
+        if not reset_record:
+            raise HTTPException(status_code=400, detail="Invalid or expired token")
+            
+        # Compare with naive datetime since DB returns naive for TIMESTAMP
+        if reset_record["expires_at"] < datetime.utcnow():
+            await password_reset_delete(req.token)
+            raise HTTPException(status_code=400, detail="Token expired")
+            
+        # User exists?
+        user = await user_get_by_email(reset_record["email"])
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+        # Update password
+        hashed_password = get_password_hash(req.new_password)
+        await user_update_password(reset_record["email"], hashed_password)
         
-    # Compare with naive datetime since DB returns naive for TIMESTAMP
-    if reset_record["expires_at"] < datetime.utcnow():
+        # Delete token
         await password_reset_delete(req.token)
-        raise HTTPException(status_code=400, detail="Token expired")
         
-    # User exists?
-    user = await user_get_by_email(reset_record["email"])
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-        
-    # Update password
-    hashed_password = get_password_hash(req.new_password)
-    await user_update_password(reset_record["email"], hashed_password)
-    
-    # Delete token
-    await password_reset_delete(req.token)
-    
-    return {"message": "Password updated successfully"}
+        return {"message": "Password updated successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal Reset Error: {str(e)}")
 
 # ============ SCREEN TEMPLATES ROUTES ============
 
