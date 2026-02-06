@@ -696,19 +696,23 @@ async def send_reset_email(email: str, token: str):
             # Run blocking SMTP call in a thread
             def _send():
                 with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+                    # Debug level
+                    server.set_debuglevel(1)
                     server.starttls()
                     server.login(SMTP_USER, SMTP_PASSWORD)
                     server.send_message(msg)
             
             await asyncio.to_thread(_send)
             print(f"📧 Email sent to {email}")
+            return "Email sent via SMTP"
         except Exception as e:
             print(f"❌ Failed to send email: {e}")
-            # Fallback to log
-            print(f"🔗 RESET LINK (Fallback): {reset_link}")
+            # RETHROW so the endpoint knows functionality failed
+            raise Exception(f"SMTP Error: {str(e)}")
     else:
         # Log to console
         print(f"🔗 RESET LINK for {email}: {reset_link}")
+        return "SMTP not configured (Logged to console)"
 
 
 @api_router.post("/auth/forgot-password")
@@ -717,8 +721,6 @@ async def forgot_password(req: ForgotPasswordRequest):
         user = await user_get_by_email(req.email)
         if not user:
             # Don't reveal user existence, just fake success
-            # But for debugging now, we might want to know. 
-            # Production security best practice: return OK anyway.
             return {"message": "If the email exists, a reset link has been sent."}
         
         token = str(uuid.uuid4())
@@ -727,9 +729,21 @@ async def forgot_password(req: ForgotPasswordRequest):
         expires_at = datetime.utcnow() + timedelta(hours=1)
         
         await password_reset_create(req.email, token, expires_at)
-        await send_reset_email(req.email, token)
         
-        return {"message": "If the email exists, a reset link has been sent."}
+        # Send email (and catch SMTP specific errors to show USER)
+        try:
+            status = await send_reset_email(req.email, token)
+            return {"message": f"Success: {status}"}
+        except Exception as smtp_err:
+             # FOR DEBUGGING: Return the actual error
+             raise HTTPException(status_code=500, detail=f"Email Send Failed: {str(smtp_err)}")
+             
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal Error: {str(e)}")
     except Exception as e:
         import traceback
         traceback.print_exc()
