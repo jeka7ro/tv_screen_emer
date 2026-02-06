@@ -695,8 +695,32 @@ async def send_reset_email(email: str, token: str):
         try:
             # Run blocking SMTP call in a thread
             def _send():
+                import socket
+                
+                # Monkey-patch getaddrinfo to force IPv4 (fixes Errno 101 on some containers)
+                original_getaddrinfo = socket.getaddrinfo
+                def getaddrinfo_ipv4_only(*args, **kwargs):
+                    # Force AF_INET (IPv4)
+                    new_args = list(args)
+                    if len(new_args) >= 3:
+                         # family is the 3rd arg (0-indexed 2)
+                         new_args[2] = socket.AF_INET
+                    elif 'family' in kwargs:
+                        kwargs['family'] = socket.AF_INET
+                    else:
+                        # Append defaults until we can set family
+                        # args signature: host, port, family, type, proto, flags
+                        while len(new_args) < 2:
+                            new_args.append(0) # Should not happen for getaddrinfo(host, port)
+                        if len(new_args) == 2:
+                            new_args.append(socket.AF_INET)
+                    return original_getaddrinfo(*new_args, **kwargs)
+
                 try:
-                    print(f"🔌 Connecting to SMTP {SMTP_HOST}:{SMTP_PORT} (STARTTLS)...")
+                    # Apply patch
+                    socket.getaddrinfo = getaddrinfo_ipv4_only
+                    
+                    print(f"🔌 Connecting to SMTP {SMTP_HOST}:{SMTP_PORT} (STARTTLS) [IPv4 Forced]...")
                     with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
                         # Debug level
                         server.set_debuglevel(1)
@@ -704,13 +728,16 @@ async def send_reset_email(email: str, token: str):
                         server.login(SMTP_USER, SMTP_PASSWORD)
                         server.send_message(msg)
                 except Exception as e1:
-                    print(f"⚠️ Port {SMTP_PORT} failed ({e1}). Retrying with Port 465 (SSL)...")
+                    print(f"⚠️ Port {SMTP_PORT} failed ({e1}). Retrying with Port 465 (SSL) [IPv4 Forced]...")
                     # Fallback to 465 (SSL)
                     with smtplib.SMTP_SSL(SMTP_HOST, 465, timeout=10) as server:
                         server.set_debuglevel(1)
                         server.login(SMTP_USER, SMTP_PASSWORD)
                         server.send_message(msg)
-            
+                finally:
+                    # Restore original
+                    socket.getaddrinfo = original_getaddrinfo
+
             await asyncio.to_thread(_send)
             print(f"📧 Email sent to {email}")
             return "Email sent via SMTP"
