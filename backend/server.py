@@ -743,8 +743,24 @@ async def reset_password_endpoint(req: ResetPasswordRequest):
         if not reset_record:
             raise HTTPException(status_code=400, detail="Invalid or expired token")
             
-        # Compare with naive datetime since DB returns naive for TIMESTAMP
-        if reset_record["expires_at"] < datetime.utcnow():
+        expires_at = reset_record["expires_at"]
+        
+        # Handle case where DB returns string instead of datetime
+        if isinstance(expires_at, str):
+            # Replace space with T for fromisoformat compatibility if needed
+            # Postgres format: YYYY-MM-DD HH:MM:SS.mmmmmm
+            try:
+                expires_at = datetime.fromisoformat(expires_at.replace(" ", "T"))
+            except ValueError:
+                # Fallback for other formats
+                pass
+
+        # Compare with naive datetime
+        # Ensure expires_at is naive if comparing with naive utcnow
+        if expires_at.tzinfo:
+            expires_at = expires_at.replace(tzinfo=None)
+
+        if expires_at < datetime.utcnow():
             await password_reset_delete(req.token)
             raise HTTPException(status_code=400, detail="Token expired")
             
