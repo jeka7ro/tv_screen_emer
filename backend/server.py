@@ -723,7 +723,8 @@ async def forgot_password(req: ForgotPasswordRequest):
         
         token = str(uuid.uuid4())
         # Expire in 1 hour
-        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        # Use naive datetime because DB column is TIMESTAMP (without timezone)
+        expires_at = datetime.utcnow() + timedelta(hours=1)
         
         await password_reset_create(req.email, token, expires_at)
         await send_reset_email(req.email, token)
@@ -741,7 +742,8 @@ async def reset_password_endpoint(req: ResetPasswordRequest):
     if not reset_record:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
         
-    if reset_record["expires_at"] < datetime.now(timezone.utc):
+    # Compare with naive datetime since DB returns naive for TIMESTAMP
+    if reset_record["expires_at"] < datetime.utcnow():
         await password_reset_delete(req.token)
         raise HTTPException(status_code=400, detail="Token expired")
         
