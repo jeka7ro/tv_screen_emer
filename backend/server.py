@@ -713,21 +713,26 @@ async def send_reset_email(email: str, token: str):
 
 @api_router.post("/auth/forgot-password")
 async def forgot_password(req: ForgotPasswordRequest):
-    user = await user_get_by_email(req.email)
-    if not user:
-        # Don't reveal user existence, just fake success
-        # But for debugging now, we might want to know. 
-        # Production security best practice: return OK anyway.
+    try:
+        user = await user_get_by_email(req.email)
+        if not user:
+            # Don't reveal user existence, just fake success
+            # But for debugging now, we might want to know. 
+            # Production security best practice: return OK anyway.
+            return {"message": "If the email exists, a reset link has been sent."}
+        
+        token = str(uuid.uuid4())
+        # Expire in 1 hour
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        
+        await password_reset_create(req.email, token, expires_at)
+        await send_reset_email(req.email, token)
+        
         return {"message": "If the email exists, a reset link has been sent."}
-    
-    token = str(uuid.uuid4())
-    # Expire in 1 hour
-    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
-    
-    await password_reset_create(req.email, token, expires_at)
-    await send_reset_email(req.email, token)
-    
-    return {"message": "If the email exists, a reset link has been sent."}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal Error: {str(e)}")
 
 
 @api_router.post("/auth/reset-password")
