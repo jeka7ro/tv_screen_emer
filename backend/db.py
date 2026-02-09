@@ -512,12 +512,12 @@ async def digital_menu_insert(row: Dict[str, Any]) -> None:
     await _execute(
         """INSERT INTO digital_menus (id, name, template_id, selected_products, selected_categories,
            promo_products, show_promo_slides, promo_slide_duration, products_per_page, page_duration,
-           auto_rotate, status, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)""",
+           auto_rotate, background_image_url, status, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)""",
         row["id"], row["name"], row.get("template_id"), sp, sc, pp,
         row.get("show_promo_slides", False), row.get("promo_slide_duration", 8),
         row.get("products_per_page", 6), row.get("page_duration", 10),
-        row.get("auto_rotate", True), row.get("status", "active"), row["created_at"],
+        row.get("auto_rotate", True), row.get("background_image_url"), row.get("status", "active"), row["created_at"],
     )
 
 
@@ -528,11 +528,12 @@ async def digital_menu_update(id: str, data: Dict[str, Any]) -> None:
     await _execute(
         """UPDATE digital_menus SET name = $1, template_id = $2, selected_products = $3,
            selected_categories = $4, promo_products = $5, show_promo_slides = $6, promo_slide_duration = $7,
-           products_per_page = $8, page_duration = $9, auto_rotate = $10, status = $11 WHERE id = $12""",
+           products_per_page = $8, page_duration = $9, auto_rotate = $10, background_image_url = $11, 
+           status = $12 WHERE id = $13""",
         data["name"], data.get("template_id"), sp, sc, pp,
         data.get("show_promo_slides", False), data.get("promo_slide_duration", 8),
         data.get("products_per_page", 6), data.get("page_duration", 10),
-        data.get("auto_rotate", True), data.get("status", "active"), id,
+        data.get("auto_rotate", True), data.get("background_image_url"), data.get("status", "active"), id,
     )
 
 

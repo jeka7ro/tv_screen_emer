@@ -6,6 +6,15 @@ import '../styles/effects.css';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Helper to get full URL for files
+const getFileUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('/api/uploads') || url.startsWith('/uploads')) {
+    return `${BACKEND_URL}${url}`;
+  }
+  return url;
+};
+
 export const DisplayScreen = () => {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
@@ -151,8 +160,19 @@ export const DisplayScreen = () => {
     const endIndex = startIndex + menu.products_per_page;
     const productsToShow = menu.products.slice(startIndex, endIndex);
 
+    const backgroundStyle = menu.background_image_url
+      ? {
+        backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.85)), url(${getFileUrl(menu.background_image_url)})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }
+      : {};
+
     return (
-      <div className="w-full h-full p-12 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900">
+      <div
+        className="w-full h-full p-12 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900"
+        style={backgroundStyle}
+      >
         <h1 className="text-6xl font-bold text-white mb-12 text-center">
           {menu.name}
         </h1>
@@ -164,9 +184,12 @@ export const DisplayScreen = () => {
             <div key={product.id} className="glass-card p-6 text-center">
               {product.image_url && (
                 <img
-                  src={product.image_url}
+                  src={getFileUrl(product.image_url)}
                   alt={product.name}
                   className="w-full h-48 object-cover rounded-2xl mb-4"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
                 />
               )}
               <h3 className="text-2xl font-bold text-slate-800 mb-2">

@@ -371,6 +371,7 @@ class DigitalMenu(BaseModel):
     products_per_page: int = 6
     page_duration: int = 10
     auto_rotate: bool = True
+    background_image_url: Optional[str] = None
     status: str = "active"  # active, draft
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -385,6 +386,7 @@ class DigitalMenuCreate(BaseModel):
     products_per_page: Optional[int] = 6
     page_duration: Optional[int] = 10
     auto_rotate: Optional[bool] = True
+    background_image_url: Optional[str] = None
     status: Optional[str] = "active"
 
 class ScreenZoneContent(BaseModel):

@@ -7,12 +7,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
 
 export const DigitalMenus = () => {
   const [menus, setMenus] = useState([]);
   const [products, setProducts] = useState([]);
+  const [content, setContent] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [editingMenu, setEditingMenu] = useState(null);
@@ -21,6 +23,7 @@ export const DigitalMenus = () => {
     products_per_page: 6,
     page_duration: 10,
     auto_rotate: true,
+    background_image_url: '',
     status: 'active'
   });
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -32,12 +35,14 @@ export const DigitalMenus = () => {
 
   const loadData = async () => {
     try {
-      const [menusRes, productsRes] = await Promise.all([
+      const [menusRes, productsRes, contentRes] = await Promise.all([
         api.get('/digital-menus'),
-        api.get('/products')
+        api.get('/products'),
+        api.get('/content')
       ]);
       setMenus(menusRes.data);
       setProducts(productsRes.data);
+      setContent(contentRes.data);
     } catch (error) {
       toast.error('Eroare la încărcarea datelor');
     } finally {
@@ -76,6 +81,7 @@ export const DigitalMenus = () => {
       products_per_page: menu.products_per_page,
       page_duration: menu.page_duration,
       auto_rotate: menu.auto_rotate,
+      background_image_url: menu.background_image_url || '',
       status: menu.status
     });
     setSelectedProducts(menu.selected_products || []);
@@ -107,6 +113,7 @@ export const DigitalMenus = () => {
       products_per_page: 6,
       page_duration: 10,
       auto_rotate: true,
+      background_image_url: '',
       status: 'active'
     });
     setSelectedProducts([]);
@@ -162,14 +169,24 @@ export const DigitalMenus = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Produse pe pagină</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="12"
-                        value={formData.products_per_page}
-                        onChange={(e) => setFormData({ ...formData, products_per_page: e.target.value })}
-                        data-testid="menu-products-per-page"
-                      />
+                      <Select
+                        value={formData.products_per_page?.toString()}
+                        onValueChange={(value) => setFormData({ ...formData, products_per_page: parseInt(value) })}
+                      >
+                        <SelectTrigger data-testid="menu-products-per-page">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">1 produs</SelectItem>
+                          <SelectItem value="2">2 produse</SelectItem>
+                          <SelectItem value="3">3 produse</SelectItem>
+                          <SelectItem value="4">4 produse</SelectItem>
+                          <SelectItem value="5">5 produse</SelectItem>
+                          <SelectItem value="6">6 produse</SelectItem>
+                          <SelectItem value="7">7 produse</SelectItem>
+                          <SelectItem value="8">8 produse</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label>Durată pagină (sec)</Label>
@@ -181,6 +198,25 @@ export const DigitalMenus = () => {
                         data-testid="menu-page-duration"
                       />
                     </div>
+                  </div>
+                  <div>
+                    <Label>Imagine de fundal (opțional)</Label>
+                    <Select
+                      value={formData.background_image_url}
+                      onValueChange={(value) => setFormData({ ...formData, background_image_url: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selectează imagine" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Fără fundal</SelectItem>
+                        {content.filter(c => c.type === 'image').map(img => (
+                          <SelectItem key={img.id} value={img.file_url}>
+                            {img.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <label className="flex items-center gap-2">

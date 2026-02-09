@@ -115,6 +115,7 @@ CREATE TABLE IF NOT EXISTS digital_menus (
   products_per_page INT DEFAULT 6,
   page_duration INT DEFAULT 10,
   auto_rotate BOOLEAN DEFAULT TRUE,
+  background_image_url TEXT,
   status TEXT DEFAULT 'active',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
