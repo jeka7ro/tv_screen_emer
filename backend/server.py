@@ -89,6 +89,42 @@ from db import (
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
+# Initialize Supabase client for storage
+from supabase import create_client, Client
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
+STORAGE_BUCKET = "content"
+
+# Helper functions for Supabase Storage
+async def upload_to_supabase(file_bytes: bytes, file_path: str, content_type: str) -> str:
+    """Upload file to Supabase Storage and return public URL"""
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase not configured")
+    try:
+        # Upload file
+        supabase.storage.from_(STORAGE_BUCKET).upload(
+            file_path,
+            file_bytes,
+            {"content-type": content_type, "upsert": "true"}
+        )
+        
+        # Get public URL
+        public_url = supabase.storage.from_(STORAGE_BUCKET).get_public_url(file_path)
+        return public_url
+    except Exception as e:
+        print(f"Supabase upload error: {e}")
+        raise HTTPException(status_code=500, detail=f"Storage upload failed: {str(e)}")
+
+async def delete_from_supabase(file_path: str):
+    """Delete file from Supabase Storage"""
+    if not supabase:
+        return
+    try:
+        supabase.storage.from_(STORAGE_BUCKET).remove([file_path])
+    except Exception as e:
+        print(f"Supabase delete error: {e}")
+
 # JWT settings
 SECRET_KEY = os.environ.get("SECRET_KEY", "sushimaster-secret-key-change-in-production")
 ALGORITHM = "HS256"
@@ -922,39 +958,36 @@ async def upload_content(
             if type == "video" and file.content_type not in allowed_video_types:
                 raise HTTPException(status_code=400, detail=f"Tip fișier video invalid: {file.content_type}")
             
-            # Determine save directory
-            save_dir = IMAGES_DIR if type == "image" else VIDEOS_DIR
+            # Determine save directory and path
+            file_type_folder = "images" if type == "image" else "videos"
             
             # Generate unique filename
             file_ext = Path(file.filename).suffix.lower()
             if not file_ext:
                 file_ext = '.mp4' if type == "video" else '.jpg'
             unique_filename = f"{uuid.uuid4()}{file_ext}"
-            file_path = save_dir / unique_filename
             
-            # Save file in chunks for large files
-            chunk_size = 1024 * 1024  # 1MB chunks
-            with open(file_path, "wb") as buffer:
-                while chunk := await file.read(chunk_size):
-                    buffer.write(chunk)
+            # Read file bytes
+            file_bytes = await file.read()
+            
+            # Upload to Supabase Storage
+            supabase_path = f"{file_type_folder}/{unique_filename}"
+            file_url = await upload_to_supabase(file_bytes, supabase_path, file.content_type)
             
             # Create content record
-            # Use original filename as title if multiple files are uploaded, or if user didn't simplify it.
-            # User request: "keep filenames".
+            # Use original filename as title if multiple files are uploaded
             content_title = title if len(files) == 1 else Path(file.filename).stem
 
-            file_url_path = f"/api/uploads/{'images' if type == 'image' else 'videos'}/{unique_filename}"
-            
             content_id = str(uuid.uuid4())
             new_content = {
                 "id": content_id,
                 "title": content_title, 
                 "type": type,
-                "file_url": file_url_path,
+                "file_url": file_url,  # Supabase public URL
                 "duration": duration,
                 "category": category,
-                "tags": [], # default empty list
-                "thumbnail_url": file_url_path if type == "image" else None,
+                "tags": [],
+                "thumbnail_url": file_url if type == "image" else None,
                 "autoplay": True,
                 "loop": True,
                 "playlist_urls": [],
@@ -990,10 +1023,28 @@ async def delete_content(content_id: str, current_user: User = Depends(get_curre
     content = await content_get(content_id)
     if not content:
         raise HTTPException(status_code=404, detail="Content not found")
-    if content.get("file_url", "").startswith("/api/uploads/"):
-        file_path = ROOT_DIR / content["file_url"].replace("/api/uploads/", "uploads/")
+    
+    # Delete file from storage
+    file_url = content.get("file_url", "")
+    
+    # For Supabase URLs, extract path and delete
+    if "supabase.co/storage" in file_url:
+        # Extract path from URL: https://.../storage/v1/object/public/content/images/file.jpg
+        # We want: images/file.jpg
+        try:
+            path_parts = file_url.split("/content/")
+            if len(path_parts) > 1:
+                file_path = path_parts[1]
+                await delete_from_supabase(file_path)
+        except Exception as e:
+            print(f"Error deleting from Supabase: {e}")
+    
+    # Legacy: Delete old local files if they exist
+    elif file_url.startswith("/api/uploads/"):
+        file_path = ROOT_DIR / file_url.replace("/api/uploads/", "uploads/")
         if file_path.exists():
             file_path.unlink()
+    
     await content_delete(content_id)
     return {"message": "Content deleted"}
 
