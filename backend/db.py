@@ -325,13 +325,13 @@ async def screen_exists_by_slug(slug: str) -> bool:
 async def screen_insert(row: Dict[str, Any]) -> None:
     await _execute(
         """INSERT INTO screens (id, location_id, name, slug, resolution, orientation, template_id,
-           sync_group, cascade_offset, status, last_active, sync_type, parallax_enabled, steam_enabled, created_at, sync_group_name)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)""",
+           sync_group, cascade_offset, status, last_active, sync_type, created_at, sync_group_name)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)""",
         row["id"], row["location_id"], row["name"], row["slug"],
         row.get("resolution", "1920x1080"), row.get("orientation", "landscape"),
         row.get("template_id"), row.get("sync_group"), row.get("cascade_offset", 0),
         row.get("status", "offline"), row.get("last_active"), row.get("sync_type", "simple"), 
-        row.get("parallax_enabled", False), row.get("steam_enabled", False), row["created_at"], row.get("sync_group_name"),
+        row["created_at"], row.get("sync_group_name"),
     )
 
 
@@ -339,13 +339,13 @@ async def screen_update(id: str, data: Dict[str, Any]) -> None:
     await _execute(
         """UPDATE screens SET location_id = $1, name = $2, slug = $3, resolution = $4, orientation = $5,
            template_id = $6, sync_group = $7, cascade_offset = $8, status = $9, last_active = $10, 
-           sync_type = $11, parallax_enabled = $12, steam_enabled = $13, sync_group_name = $14
-           WHERE id = $15""",
+           sync_type = $11, sync_group_name = $12
+           WHERE id = $13""",
         data["location_id"], data["name"], data["slug"],
         data.get("resolution", "1920x1080"), data.get("orientation", "landscape"),
         data.get("template_id"), data.get("sync_group"), data.get("cascade_offset", 0),
         data.get("status", "offline"), data.get("last_active"), data.get("sync_type", "simple"), 
-        data.get("parallax_enabled", False), data.get("steam_enabled", False), data.get("sync_group_name"), id,
+        data.get("sync_group_name"), id,
     )
 
 
