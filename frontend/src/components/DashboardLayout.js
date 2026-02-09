@@ -52,7 +52,7 @@ export const DashboardLayout = ({ children }) => {
         <div className="p-6 border-b border-white/40">
           <Link to="/dashboard" className="flex items-center gap-3">
             <img
-              src="/logo-sushimaster.png"
+              src="https://sushimaster.ro/_next/static/images/logo-83e52024fa4e316c47581a7890fe5e8c.png"
               alt="SushiMaster Logo"
               className="w-10 h-10 object-contain"
             />
