@@ -32,7 +32,7 @@ code {
 }
 
 .glass-input {
-    @apply rounded-xl bg-white/50 border-white/60 focus:bg-white/80 focus:ring-2 focus:ring-indigo-200 transition-all placeholder:text-slate-400;
+    @apply rounded-xl bg-white/50 border-white/60 focus:bg-white/80 focus:ring-2 focus:ring-red-200 transition-all placeholder:text-slate-400;
 }
 
 /* Background gradient */
@@ -43,7 +43,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 50%, #E9D5FF 100%);
+    background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 50%, #FECACA 100%);
     opacity: 0.5;
     z-index: -1;
     pointer-events: none;

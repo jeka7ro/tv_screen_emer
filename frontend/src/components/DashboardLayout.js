@@ -51,9 +51,11 @@ export const DashboardLayout = ({ children }) => {
       <aside className="w-64 h-screen fixed left-0 top-0 glass-panel z-50 flex flex-col" data-testid="sidebar">
         <div className="p-6 border-b border-white/40">
           <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="bg-indigo-100 p-2 rounded-xl">
-              <Monitor className="w-6 h-6 text-indigo-600" />
-            </div>
+            <img
+              src="/logo-sushimaster.png"
+              alt="SushiMaster Logo"
+              className="w-10 h-10 object-contain"
+            />
             <div>
               <h1 className="text-lg font-bold text-slate-800">SushiMaster</h1>
               <p className="text-xs text-slate-500">Digital Menu System</p>

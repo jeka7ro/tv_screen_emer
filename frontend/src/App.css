@@ -1,7 +1,7 @@
 /* SushiMaster TV - Frosted Edition Styles */
 
 .btn-primary {
-  @apply rounded-full bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-transform hover:scale-105 active:scale-95 px-6 py-2.5 font-medium;
+  @apply rounded-full bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200 transition-transform hover:scale-105 active:scale-95 px-6 py-2.5 font-medium;
 }
 
 .btn-secondary {
@@ -14,11 +14,13 @@
 
 /* Card hover effects */
 .glass-card:hover {
-  @apply shadow-[0_12px_40px_rgb(0,0,0,0.08)] -translate-y-1;
+  @apply shadow-[0_12px_40px_rgb(0, 0, 0, 0.08)] -translate-y-1;
 }
 
 /* Input focus styles */
-input:focus, textarea:focus, select:focus {
+input:focus,
+textarea:focus,
+select:focus {
   outline: none;
 }
 
@@ -32,12 +34,12 @@ input:focus, textarea:focus, select:focus {
 }
 
 .status-active {
-  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-100/50 text-indigo-700 border border-indigo-200;
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-red-100/50 text-red-700 border border-red-200;
 }
 
 /* Sidebar active link */
 .sidebar-link-active {
-  @apply bg-indigo-100/50 text-indigo-700 font-medium;
+  @apply bg-red-100/50 text-red-700 font-medium;
 }
 
 .sidebar-link {
@@ -46,8 +48,8 @@ input:focus, textarea:focus, select:focus {
 
 /* Loading spinner */
 .spinner {
-  border: 3px solid rgba(99, 102, 241, 0.1);
-  border-top-color: rgb(99, 102, 241);
+  border: 3px solid rgba(239, 68, 68, 0.1);
+  border-top-color: rgb(239, 68, 68);
   border-radius: 50%;
   width: 24px;
   height: 24px;
@@ -55,7 +57,9 @@ input:focus, textarea:focus, select:focus {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Bento grid */
@@ -67,11 +71,11 @@ input:focus, textarea:focus, select:focus {
 
 /* Zone preview in template designer */
 .zone-preview {
-  @apply absolute border-2 border-indigo-400 bg-indigo-100/20 rounded-lg transition-all duration-200;
+  @apply absolute border-2 border-red-400 bg-red-100/20 rounded-lg transition-all duration-200;
 }
 
 .zone-preview:hover {
-  @apply bg-indigo-100/40 border-indigo-500;
+  @apply bg-red-100/40 border-red-500;
 }
 
 /* Digital Menu Display Styles */
@@ -84,7 +88,7 @@ input:focus, textarea:focus, select:focus {
 }
 
 .menu-item-price {
-  @apply text-2xl font-bold text-indigo-600 mt-2;
+  @apply text-2xl font-bold text-red-600 mt-2;
 }
 
 /* Fullscreen display mode */
