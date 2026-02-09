@@ -242,13 +242,15 @@ class Screen(BaseModel):
     location_id: str
     name: str
     slug: str
-    resolution: str = "1920x1080"
-    orientation: str = "landscape"  # landscape, portrait
+    resolution: Optional[str] = "1920x1080"
+    orientation: Optional[str] = "landscape"  # landscape, portrait
     template_id: Optional[str] = None
     sync_group: Optional[str] = None
     cascade_offset: int = 0
-    status: str = "offline"  # online, offline
+    status: Optional[str] = "offline"  # online, offline
+    sync_type: Optional[str] = "simple"
     last_active: Optional[datetime] = None
+    sync_group_name: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ScreenCreate(BaseModel):
@@ -258,6 +260,11 @@ class ScreenCreate(BaseModel):
     resolution: Optional[str] = "1920x1080"
     orientation: Optional[str] = "landscape"
     template_id: Optional[str] = None
+    sync_group: Optional[str] = None
+    cascade_offset: int = 0
+    status: Optional[str] = "offline"
+    sync_type: Optional[str] = "simple"
+    sync_group_name: Optional[str] = None
 
 class ScreenTemplate(BaseModel):
     model_config = ConfigDict(extra="ignore")
