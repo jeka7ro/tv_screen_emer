@@ -13,9 +13,9 @@
 }
 
 /* Card hover effects */
-/* Card hover effects */
 .glass-card:hover {
-  @apply shadow-[0_12px_40px_rgb(0, 0, 0, 0.08)] -translate-y-1;
+  @apply -translate-y-1;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.08);
 }
 
 /* Input focus styles */
