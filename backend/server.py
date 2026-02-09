@@ -84,6 +84,13 @@ from db import (
     password_reset_get,
     password_reset_delete,
     user_update_password,
+    audio_playlist_create,
+    audio_playlists_list,
+    audio_playlist_get,
+    audio_playlist_delete,
+    audio_track_insert,
+    audio_tracks_by_playlist,
+    audio_track_delete,
 )
 
 ROOT_DIR = Path(__file__).parent
@@ -1475,6 +1482,147 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
         "products": await products_count(),
         "content": await content_count(),
     }
+
+# ============ AUDIO HELPERS ============
+STORAGE_BUCKET_AUDIO = "audio"
+
+async def upload_audio_to_supabase(file_bytes: bytes, file_path: str, content_type: str) -> str:
+    """Upload audio file to Supabase Storage 'audio' bucket and return public URL"""
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase not configured")
+    try:
+        supabase.storage.from_(STORAGE_BUCKET_AUDIO).upload(
+            file_path,
+            file_bytes,
+            {"content-type": content_type, "upsert": "true"}
+        )
+        return supabase.storage.from_(STORAGE_BUCKET_AUDIO).get_public_url(file_path)
+    except Exception as e:
+        print(f"Supabase audio upload error: {e}")
+        raise HTTPException(status_code=500, detail=f"Storage upload failed: {str(e)}")
+
+async def delete_audio_from_supabase(file_path: str):
+    if not supabase: return
+    try:
+        supabase.storage.from_(STORAGE_BUCKET_AUDIO).remove([file_path])
+    except Exception as e:
+        print(f"Supabase audio delete error: {e}")
+
+# ============ AUDIO MODELS ============
+class AudioPlaylistCreate(BaseModel):
+    name: str
+    location_id: Optional[str] = None
+    ad_frequency: Optional[int] = 3
+    description: Optional[str] = None
+
+class AudioPlaylist(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    location_id: Optional[str] = None
+    ad_frequency: int = 3
+    description: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    location_name: Optional[str] = None
+
+# ============ AUDIO ROUTES ============
+
+@api_router.post("/audio/playlists", response_model=AudioPlaylist)
+async def create_audio_playlist_endpoint(data: AudioPlaylistCreate, current_user: User = Depends(get_current_user)):
+    playlist = AudioPlaylist(**data.model_dump())
+    await audio_playlist_create(playlist.model_dump())
+    return playlist
+
+@api_router.get("/audio/playlists", response_model=List[AudioPlaylist])
+async def list_audio_playlists(current_user: User = Depends(get_current_user)):
+    return await audio_playlists_list()
+
+@api_router.get("/audio/playlists/{id}")
+async def get_audio_playlist_details(id: str, current_user: User = Depends(get_current_user)):
+    pl = await audio_playlist_get(id)
+    if not pl:
+        raise HTTPException(status_code=404, detail="Playlist not found")
+    tracks = await audio_tracks_by_playlist(id)
+    pl["tracks"] = tracks
+    return pl
+
+@api_router.delete("/audio/playlists/{id}")
+async def delete_audio_playlist_endpoint(id: str, current_user: User = Depends(get_current_user)):
+    tracks = await audio_tracks_by_playlist(id)
+    for track in tracks:
+        url = track.get("url", "")
+        if "supabase" in url and "/audio/" in url:
+            try:
+                path = url.split("/audio/")[1]
+                await delete_audio_from_supabase(path)
+            except:
+                pass
+    ok = await audio_playlist_delete(id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Playlist not found")
+    return {"message": "Playlist deleted"}
+
+@api_router.post("/audio/upload")
+async def upload_audio_track_endpoint(
+    playlist_id: str = Form(...),
+    title: str = Form(...),
+    type: str = Form("music"), # music / ad
+    file: UploadFile = File(None),
+    youtube_url: str = Form(None),
+    current_user: User = Depends(get_current_user)
+):
+    pl = await audio_playlist_get(playlist_id)
+    if not pl:
+        raise HTTPException(status_code=404, detail="Playlist not found")
+    
+    track_id = str(uuid.uuid4())
+    final_url = ""
+    source_type = "file"
+    duration = 0
+    
+    if youtube_url and len(youtube_url) > 5:
+        final_url = youtube_url
+        source_type = "youtube"
+    elif file:
+        file_ext = Path(file.filename).suffix.lower() or ".mp3"
+        unique_filename = f"{uuid.uuid4()}{file_ext}"
+        try:
+            file_bytes = await file.read()
+            final_url = await upload_audio_to_supabase(file_bytes, unique_filename, file.content_type or "audio/mpeg")
+        except Exception as e:
+             raise HTTPException(status_code=500, detail=f"Upload failed: {e}")
+    else:
+        raise HTTPException(status_code=400, detail="Must provide file or YouTube URL")
+
+    track_data = {
+        "id": track_id,
+        "playlist_id": playlist_id,
+        "title": title,
+        "url": final_url,
+        "type": type,
+        "source_type": source_type,
+        "duration": duration,
+        "position": 0,
+        "created_at": datetime.now(timezone.utc)
+    }
+    await audio_track_insert(track_data)
+    return track_data
+
+@api_router.delete("/audio/tracks/{track_id}")
+async def delete_audio_track_endpoint(track_id: str, current_user: User = Depends(get_current_user)):
+    ok = await audio_track_delete(track_id)
+    if not ok:
+         raise HTTPException(status_code=404, detail="Track not found")
+    return {"message": "Track deleted"}
+
+@api_router.get("/public/audio-player/{playlist_id}")
+async def get_public_player_data(playlist_id: str):
+    pl = await audio_playlist_get(playlist_id)
+    if not pl:
+        raise HTTPException(status_code=404, detail="Playlist not found")
+    tracks = await audio_tracks_by_playlist(playlist_id)
+    return {"playlist": pl, "tracks": tracks}
+
 
 # Include the router in the main app
 app.include_router(api_router)

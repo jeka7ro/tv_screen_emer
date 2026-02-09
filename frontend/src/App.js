@@ -22,6 +22,8 @@ import { Users } from './pages/Users';
 import { LivePreviewDashboard } from './pages/LivePreviewDashboard';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
+import AudioStreaming from './pages/AudioStreaming';
+import AudioPlayer from './pages/AudioPlayer';
 import { ShortLinkRedirect } from './components/ShortLinkRedirect';
 
 function App() {
@@ -35,6 +37,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/display/:slug" element={<DisplayScreen />} />
+          <Route path="/play-audio/:playlistId" element={<AudioPlayer />} />
 
           {/* Protected routes */}
           <Route
@@ -106,6 +109,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Playlists />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/audio"
+            element={
+              <ProtectedRoute>
+                <AudioStreaming />
               </ProtectedRoute>
             }
           />

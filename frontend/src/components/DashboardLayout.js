@@ -15,7 +15,8 @@ import {
   UserPlus,
   Users,
   Shield,
-  Eye
+  Eye,
+  Music
 } from 'lucide-react';
 
 const menuItems = [
@@ -27,6 +28,7 @@ const menuItems = [
   { path: '/products', icon: ShoppingBag, label: 'Produse' },
   { path: '/digital-menus', icon: Menu, label: 'Meniuri Digitale' },
   { path: '/playlists', icon: List, label: 'Playlist-uri' },
+  { path: '/audio', icon: Music, label: 'Muzică & Reclame' },
   { path: '/screen-sync', icon: Shuffle, label: 'Sincronizare' },
 ];
 

@@ -613,3 +613,49 @@ async def password_reset_delete(token: str) -> None:
 
 async def user_update_password(email: str, hashed_password: str) -> None:
     await _execute("UPDATE users SET hashed_password = $1 WHERE email = $2", hashed_password, email)
+
+
+# ---------- audio streaming ----------
+
+async def audio_playlist_create(row: Dict[str, Any]) -> None:
+    await _execute(
+        """INSERT INTO audio_playlists (id, name, location_id, ad_frequency, description, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6)""",
+        row["id"], row["name"], row.get("location_id"), row.get("ad_frequency", 3), row.get("description"), row["created_at"]
+    )
+
+
+async def audio_playlists_list() -> List[Dict[str, Any]]:
+    return await _fetch_all("""
+        SELECT ap.*, l.name as location_name 
+        FROM audio_playlists ap 
+        LEFT JOIN locations l ON ap.location_id = l.id 
+        ORDER BY ap.created_at DESC
+    """)
+
+
+async def audio_playlist_get(id: str) -> Optional[Dict[str, Any]]:
+    return await _fetch_one("SELECT * FROM audio_playlists WHERE id = $1", id)
+
+
+async def audio_playlist_delete(id: str) -> bool:
+    res = await _execute_many("DELETE FROM audio_playlists WHERE id = $1", id)
+    return "DELETE 1" in res
+
+
+async def audio_track_insert(row: Dict[str, Any]) -> None:
+    await _execute(
+        """INSERT INTO audio_tracks (id, playlist_id, title, url, type, source_type, duration, position, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)""",
+        row["id"], row["playlist_id"], row["title"], row["url"], row.get("type", "music"),
+        row.get("source_type", "file"), row.get("duration", 0), row.get("position", 0), row["created_at"]
+    )
+
+
+async def audio_tracks_by_playlist(playlist_id: str) -> List[Dict[str, Any]]:
+    return await _fetch_all("SELECT * FROM audio_tracks WHERE playlist_id = $1 ORDER BY position ASC, created_at ASC", playlist_id)
+
+
+async def audio_track_delete(id: str) -> bool:
+    res = await _execute_many("DELETE FROM audio_tracks WHERE id = $1", id)
+    return "DELETE 1" in res
