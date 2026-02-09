@@ -22,11 +22,13 @@ code {
 }
 
 .glass-panel {
-    @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-[0_8px_30px_rgb(0, 0, 0, 0.04)];
+    @apply bg-white/60 backdrop-blur-xl border border-white/40;
+    box-shadow: 0 8px 30px rgb(0, 0, 0, 0.04);
 }
 
 .glass-card {
-    @apply rounded-3xl bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0, 0, 0, 0.04)] transition-all duration-300;
+    @apply rounded-3xl bg-white/40 backdrop-blur-xl border border-white/60 transition-all duration-300;
+    box-shadow: 0 8px 30px rgb(0, 0, 0, 0.04);
 }
 
 .glass-input {
