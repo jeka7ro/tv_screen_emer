@@ -638,6 +638,14 @@ async def audio_playlist_get(id: str) -> Optional[Dict[str, Any]]:
     return await _fetch_one("SELECT * FROM audio_playlists WHERE id = $1", id)
 
 
+async def audio_playlist_update(id: str, data: Dict[str, Any]) -> None:
+    await _execute(
+        """UPDATE audio_playlists SET name = $1, location_id = $2, ad_frequency = $3, description = $4
+           WHERE id = $5""",
+        data["name"], data.get("location_id"), data.get("ad_frequency", 3), data.get("description"), id
+    )
+
+
 async def audio_playlist_delete(id: str) -> bool:
     res = await _execute_many("DELETE FROM audio_playlists WHERE id = $1", id)
     return "DELETE 1" in res

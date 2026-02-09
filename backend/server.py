@@ -91,6 +91,8 @@ from db import (
     audio_track_insert,
     audio_tracks_by_playlist,
     audio_track_delete,
+    audio_playlist_update
+,
 )
 
 ROOT_DIR = Path(__file__).parent
@@ -1545,6 +1547,14 @@ async def get_audio_playlist_details(id: str, current_user: User = Depends(get_c
     tracks = await audio_tracks_by_playlist(id)
     pl["tracks"] = tracks
     return pl
+
+@api_router.put("/audio/playlists/{id}")
+async def update_audio_playlist_endpoint(id: str, data: AudioPlaylistCreate, current_user: User = Depends(get_current_user)):
+    existing = await audio_playlist_get(id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Playlist not found")
+    await audio_playlist_update(id, data.model_dump())
+    return {"message": "Updated"}
 
 @api_router.delete("/audio/playlists/{id}")
 async def delete_audio_playlist_endpoint(id: str, current_user: User = Depends(get_current_user)):

@@ -45,6 +45,7 @@
     "react-day-picker": "8.10.1",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.2",
+    "react-player": "^3.4.0",
     "react-resizable-panels": "^3.0.1",
     "react-router-dom": "^7.5.1",
     "react-scripts": "5.0.1",
@@ -80,12 +81,11 @@
     ]
   },
   "devDependencies": {
-    "ajv": "^8.17.1",
-    "ajv-keywords": "^5.1.0",
-    "patch-package": "^8.0.0",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@craco/craco": "^7.1.0",
     "@eslint/js": "9.23.0",
+    "ajv": "^8.17.1",
+    "ajv-keywords": "^5.1.0",
     "autoprefixer": "^10.4.20",
     "eslint": "9.23.0",
     "eslint-plugin-import": "2.31.0",
@@ -93,6 +93,7 @@
     "eslint-plugin-react": "7.37.4",
     "eslint-plugin-react-hooks": "5.2.0",
     "globals": "15.15.0",
+    "patch-package": "^8.0.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17"
   },
