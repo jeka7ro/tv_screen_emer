@@ -249,8 +249,6 @@ class Screen(BaseModel):
     cascade_offset: int = 0
     status: str = "offline"  # online, offline
     last_active: Optional[datetime] = None
-    parallax_enabled: bool = False
-    steam_enabled: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ScreenCreate(BaseModel):
@@ -260,8 +258,6 @@ class ScreenCreate(BaseModel):
     resolution: Optional[str] = "1920x1080"
     orientation: Optional[str] = "landscape"
     template_id: Optional[str] = None
-    parallax_enabled: Optional[bool] = False
-    steam_enabled: Optional[bool] = False
 
 class ScreenTemplate(BaseModel):
     model_config = ConfigDict(extra="ignore")
