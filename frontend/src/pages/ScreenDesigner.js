@@ -64,10 +64,6 @@ export const ScreenDesigner = () => {
       setPlaylists(playlistsRes.data);
       setContent(contentRes.data);
 
-      // Initialize effects from DB
-      setEnableParallax(screenRes.data.parallax_enabled || false);
-      setEnableSteam(screenRes.data.steam_enabled || false);
-
       const template = templatesRes.data.find(t => t.id === screenRes.data.template_id);
       setSelectedTemplate(template || templatesRes.data[0]);
 
@@ -120,9 +116,7 @@ export const ScreenDesigner = () => {
       // Update screen template
       await api.put(`/screens/${screenId}`, {
         ...screen,
-        template_id: selectedTemplate.id,
-        parallax_enabled: enableParallax,
-        steam_enabled: enableSteam
+        template_id: selectedTemplate.id
       });
 
       // Save zone configurations
@@ -259,7 +253,7 @@ export const ScreenDesigner = () => {
                       }}
                     >
                       {previewUrl ? (
-                        <div className={`relative w-full h-full bg-black ${enableParallax ? 'parallax-container' : ''}`}>
+                        <div className="relative w-full h-full bg-black">
                           {/* TV Style Background */}
                           <div className="absolute inset-0 z-0">
                             {isVideo ? (
@@ -274,14 +268,14 @@ export const ScreenDesigner = () => {
                             {isVideo ? (
                               <video
                                 src={previewUrl}
-                                className={`max-w-full max-h-full ${enableParallax ? 'parallax-layer' : ''}`}
+                                className="max-w-full max-h-full"
                                 style={{ objectFit: 'contain' }}
                                 autoPlay loop muted
                               />
                             ) : (
                               <img
                                 src={previewUrl}
-                                className={`max-w-full max-h-full shadow-lg ${enableParallax ? 'parallax-layer' : ''}`}
+                                className="max-w-full max-h-full shadow-lg"
                                 style={{ objectFit: 'contain' }}
                                 alt="Preview"
                               />
@@ -447,31 +441,6 @@ export const ScreenDesigner = () => {
                                   <video src={getFileUrl(item.file_url)} className="w-full h-full object-cover" />
                                 )}
                               </div>
-
-                              {/* Integrated Effect Controls */}
-                              <div className="mt-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 space-y-2">
-                                <p className="font-bold text-slate-700 mb-1">Efecte Vizuale</p>
-                                <div className="flex items-center justify-between">
-                                  <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-600">
-                                    <input
-                                      type="checkbox"
-                                      checked={enableParallax}
-                                      onChange={(e) => setEnableParallax(e.target.checked)}
-                                      className="w-4 h-4 text-indigo-600 rounded"
-                                    />
-                                    Parallax Effect 🌊
-                                  </label>
-                                  <label className="flex items-center gap-2 cursor-pointer font-medium text-slate-600">
-                                    <input
-                                      type="checkbox"
-                                      checked={enableSteam}
-                                      onChange={(e) => setEnableSteam(e.target.checked)}
-                                      className="w-4 h-4 text-indigo-600 rounded"
-                                    />
-                                    Steam Effect 💨
-                                  </label>
-                                </div>
-                              </div>
                             </div>
                           );
                         })()}
@@ -593,7 +562,7 @@ export const ScreenDesigner = () => {
             <div className="space-y-4">
               {/* Large Preview */}
               <div className="relative bg-black rounded-lg overflow-hidden border border-slate-700 shadow-2xl" style={{ aspectRatio: '16/9' }}>
-                <div className={enableParallax ? 'parallax-container w-full h-full' : 'w-full h-full'}>
+                <div className="w-full h-full">
                   {(() => {
                     // Smart Preview Logic: Improved detection
                     // 1. Try to find a zone with 'main' or 'zone-1' (case insensitive)
@@ -668,14 +637,14 @@ export const ScreenDesigner = () => {
                           {isVideo ? (
                             <video
                               src={previewUrl}
-                              className={`max-w-full max-h-full shadow-2xl ${enableParallax ? 'parallax-layer' : ''}`}
+                              className="max-w-full max-h-full shadow-2xl"
                               style={{ objectFit: 'contain' }}
                               autoPlay loop muted
                             />
                           ) : (
                             <img
                               src={previewUrl}
-                              className={`max-w-full max-h-full shadow-2xl ${enableParallax ? 'parallax-layer' : ''}`}
+                              className="max-w-full max-h-full shadow-2xl"
                               style={{ objectFit: 'contain' }}
                               alt="Preview"
                             />
@@ -692,37 +661,6 @@ export const ScreenDesigner = () => {
                       ))}
                     </div>
                   )}
-                </div>
-              </div>
-
-              {/* Effect Controls - Moved BELOW image as requested */}
-              <div className="flex gap-6 p-4 bg-slate-100 rounded-lg border justify-center">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="parallax-toggle"
-                    checked={enableParallax}
-                    onChange={(e) => setEnableParallax(e.target.checked)}
-                    className="w-5 h-5 text-indigo-600 rounded cursor-pointer"
-                  />
-                  <label htmlFor="parallax-toggle" className="text-base font-semibold text-slate-800 cursor-pointer select-none">
-                    Parallax Effect 🌊
-                  </label>
-                </div>
-
-                <div className="w-px bg-slate-300 h-6"></div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="steam-toggle"
-                    checked={enableSteam}
-                    onChange={(e) => setEnableSteam(e.target.checked)}
-                    className="w-5 h-5 text-indigo-600 rounded cursor-pointer"
-                  />
-                  <label htmlFor="steam-toggle" className="text-base font-semibold text-slate-800 cursor-pointer select-none">
-                    Steam Effect 💨
-                  </label>
                 </div>
               </div>
 
