@@ -34,8 +34,13 @@ export const ScreenSync = () => {
   const [editingGroup, setEditingGroup] = useState(null);
   const [editGroupName, setEditGroupName] = useState('');
   const [editContentId, setEditContentId] = useState('');
+  const [editSelectedScreens, setEditSelectedScreens] = useState([]);
 
-  // Create Modal State
+  // ... (keep createModalOpen)
+
+  // ... (keep loadData logic)
+
+
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   // Update preview when content changes
@@ -136,20 +141,80 @@ export const ScreenSync = () => {
     }
   };
 
+  /* State for Edit Modal */
+  const [editSyncType, setEditSyncType] = useState('simple');
+  const [editGridCols, setEditGridCols] = useState(2);
+  const [editGridRows, setEditGridRows] = useState(1);
+
   const openEditGroup = (group) => {
     setEditingGroup(group);
     setEditGroupName(group.name || '');
     setEditContentId('');
+
+    // Parse Sync Type and Grid
+    const typeStr = group.sync_type || 'simple';
+    if (typeStr.startsWith('matrix:')) {
+      setEditSyncType('matrix');
+      const dims = typeStr.split(':')[1].split('x');
+      setEditGridCols(parseInt(dims[0]) || 2);
+      setEditGridRows(parseInt(dims[1]) || 1);
+    } else {
+      setEditSyncType(typeStr);
+      setEditGridCols(2);
+      setEditGridRows(1);
+    }
+
+    // Initialize Ordered Screen List
+    // We trust screen_ids if available for order.
+    // If not, we fallback to names but that might lose order if names aren't sorted.
+    // The backend now returns screen_ids, so we should rely on that.
+    if (group.screen_ids && group.screen_ids.length > 0) {
+      setEditSelectedScreens(group.screen_ids);
+    } else {
+      // Fallback: try to find ids from names (less reliable for order)
+      const matchedIds = screens
+        .filter(s => group.screen_names.includes(s.name))
+        .map(s => s.id);
+      setEditSelectedScreens(matchedIds);
+    }
+  };
+
+  const toggleEditScreen = (screenId) => {
+    // If exists, remove it
+    if (editSelectedScreens.includes(screenId)) {
+      setEditSelectedScreens(editSelectedScreens.filter(id => id !== screenId));
+    } else {
+      // If adding, append to END (preserving order of existing)
+      setEditSelectedScreens([...editSelectedScreens, screenId]);
+    }
   };
 
   const handleUpdateGroup = async () => {
     if (!editingGroup) return;
 
+    // Validate Matrix
+    if (editSyncType === 'matrix') {
+      const totalSlots = editGridCols * editGridRows;
+      if (editSelectedScreens.length !== totalSlots) {
+        toast.error(`Matrix ${editGridCols}x${editGridRows} necesită exact ${totalSlots} ecrane. Ai selectat ${editSelectedScreens.length}.`);
+        return;
+      }
+    }
+
     try {
-      await api.put(`/screen-sync/groups/${editingGroup.id}`, {
+      const payload = {
         group_name: editGroupName,
-        content_id: editContentId || undefined
-      });
+        content_id: editContentId || undefined,
+        screen_ids: editSelectedScreens,
+        sync_type: editSyncType,
+      };
+
+      if (editSyncType === 'matrix') {
+        payload.grid_cols = editGridCols;
+        payload.grid_rows = editGridRows;
+      }
+
+      await api.put(`/screen-sync/groups/${editingGroup.id}`, payload);
       toast.success('Grup actualizat!');
       setEditingGroup(null);
       loadData();
@@ -318,11 +383,18 @@ export const ScreenSync = () => {
             </DialogHeader>
 
             <div className="space-y-6 py-4">
-              {/* SECTION 1: Select Screens (Moved from Main Page) */}
+              {/* SECTION 1: Select Screens (Ordered) */}
               <div>
-                <Label className="text-base font-semibold text-slate-800 mb-3 block border-b pb-2">1. Selectează Ecranele ({selectedScreens.length})</Label>
-                <div className="flex items-center gap-2 mb-4 text-sm text-slate-500 italic">
-                  Ordinea selecției contează pentru Matrix (1 = Stânga/Sus). Poți reordona folosind săgețile.
+                <Label className="text-base font-semibold text-slate-800 mb-2 block border-b pb-2">1. Selectează Ecranele ({selectedScreens.length})</Label>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-slate-500 italic">
+                    Click pe ecran pentru a-l adăuga în ordine (1, 2, 3...). Click din nou pentru a-l elimina.
+                  </span>
+                  {syncType === 'matrix' && (
+                    <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">
+                      Necesar: {parseInt(gridCols) * parseInt(gridRows)}
+                    </span>
+                  )}
                 </div>
 
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
@@ -330,88 +402,42 @@ export const ScreenSync = () => {
                     const locationScreens = screens.filter(s => s.location_id === location.id);
                     if (locationScreens.length === 0) return null;
 
-                    const allSelected = locationScreens.every(s => selectedScreens.includes(s.id));
-                    const someSelected = locationScreens.some(s => selectedScreens.includes(s.id));
-
                     return (
                       <div key={location.id} className="bg-slate-50/50 rounded-xl p-4 border border-slate-100">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <input
-                              type="checkbox"
-                              checked={allSelected}
-                              ref={input => { if (input) input.indeterminate = someSelected && !allSelected; }}
-                              onChange={(e) => handleSelectLocation(location.id, e.target.checked)}
-                              className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                            />
-                            <h3 className="text-base font-bold text-slate-800">{location.name}</h3>
-                            <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded-full border border-slate-200">
-                              {locationScreens.length} ecrane
-                            </span>
-                          </div>
-                        </div>
+                        <h3 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                          {location.name}
+                          <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded-full border border-slate-200">
+                            {locationScreens.length} ecrane
+                          </span>
+                        </h3>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-2">
                           {locationScreens.sort((a, b) => a.name.localeCompare(b.name)).map((screen) => {
-                            const isSelected = selectedScreens.includes(screen.id);
                             const selectedIndex = selectedScreens.indexOf(screen.id);
+                            const isSelected = selectedIndex !== -1;
                             const isInActiveGroup = activeGroups.some(g => g.screen_names.includes(screen.name));
 
                             return (
-                              <div key={screen.id} className="relative group">
-                                <label
-                                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${isSelected
-                                    ? 'border-indigo-400 bg-indigo-50/50'
-                                    : 'border-slate-200 bg-white hover:bg-slate-50'
-                                    }`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => toggleScreen(screen.id)}
-                                    className="mt-1 rounded"
-                                  />
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <Tv className={`w-3.5 h-3.5 ${isInActiveGroup ? 'text-indigo-500' : 'text-slate-600'}`} />
-                                      <p className="font-medium text-slate-800 text-sm">{screen.name}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      {/* Simplified status for modal compact view */}
-                                      <span className={`w-2 h-2 rounded-full ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-
-                                      {isSelected && (
-                                        <span className="text-xs font-bold bg-slate-200 text-slate-700 w-5 h-5 flex items-center justify-center rounded-full">
-                                          {selectedIndex + 1}
-                                        </span>
-                                      )}
-                                      {isInActiveGroup && (
-                                        <span className="text-[9px] bg-indigo-100 text-indigo-700 px-1 py-0.5 rounded border border-indigo-200 opacity-70">
-                                          Sinc
-                                        </span>
-                                      )}
-                                    </div>
+                              <div
+                                key={screen.id}
+                                onClick={() => toggleScreen(screen.id)}
+                                className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${isSelected
+                                  ? 'border-indigo-500 bg-indigo-50/50 shadow-sm ring-1 ring-indigo-500/20'
+                                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                                  }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs transition-colors ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                                    {isSelected ? selectedIndex + 1 : <Tv className="w-3 h-3" />}
                                   </div>
-                                </label>
-                                {/* Reordering controls inside modal */}
-                                {isSelected && (
-                                  <div className="absolute right-1 top-1 flex flex-col gap-0.5">
-                                    <button
-                                      onClick={(e) => { e.preventDefault(); moveScreen(selectedIndex, 'up'); }}
-                                      disabled={selectedIndex === 0 || !isSelected}
-                                      className="p-0.5 bg-white shadow rounded hover:bg-indigo-50 disabled:opacity-30 text-[10px]"
-                                    >
-                                      ▲
-                                    </button>
-                                    <button
-                                      onClick={(e) => { e.preventDefault(); moveScreen(selectedIndex, 'down'); }}
-                                      disabled={selectedIndex === selectedScreens.length - 1 || !isSelected}
-                                      className="p-0.5 bg-white shadow rounded hover:bg-indigo-50 disabled:opacity-30 text-[10px]"
-                                    >
-                                      ▼
-                                    </button>
+                                  <div>
+                                    <p className={`font-medium text-sm ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>{screen.name}</p>
+                                    {isInActiveGroup && <span className="text-[10px] text-amber-600 font-medium">Deja sincronizat</span>}
                                   </div>
-                                )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`w-2 h-2 rounded-full ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                                </div>
                               </div>
                             );
                           })}
@@ -671,29 +697,127 @@ export const ScreenSync = () => {
 
         {/* Edit Group Modal */}
         <Dialog open={!!editingGroup} onOpenChange={(open) => !open && setEditingGroup(null)}>
-          <DialogContent>
+          <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Editează Grup Sincronizare</DialogTitle>
-              <div className="text-sm text-muted-foreground hidden">
-                Modifică numele grupului sau conținutul afișat.
-              </div>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-6 py-4">
+
+              {/* 1. Name */}
               <div>
-                <Label>Nume Grup</Label>
+                <Label className="mb-2 block font-semibold text-slate-700">Nume Grup</Label>
                 <Input
                   value={editGroupName}
                   onChange={(e) => setEditGroupName(e.target.value)}
+                  className="bg-white border-slate-300 focus:border-indigo-500"
                 />
               </div>
-              <div>
-                <Label className="mb-3 block">Schimbă Conținutul (Opțional)</Label>
-                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
-                  {contents.length === 0 && (
-                    <div className="text-center py-8 text-slate-500 text-sm">
-                      Nu există conținut disponibil.
+
+              {/* 2. Sync Configuration */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-2 block font-semibold text-slate-700">Tip Sincronizare</Label>
+                  <Select
+                    value={editSyncType}
+                    onValueChange={setEditSyncType}
+                  // disabled={!editingGroup}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Selectează tipul..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="simple">Simplu (Oglindă)</SelectItem>
+                      <SelectItem value="matrix">Matrix (Video Wall)</SelectItem>
+                      <SelectItem value="cascade">Cascadă (Secvențial)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {editSyncType === 'matrix' && (
+                  <div className="flex gap-2">
+                    <div>
+                      <Label className="mb-2 block font-semibold text-slate-700">Coloane</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={editGridCols}
+                        onChange={(e) => setEditGridCols(parseInt(e.target.value) || 1)}
+                        className="bg-white"
+                      />
                     </div>
-                  )}
+                    <div>
+                      <Label className="mb-2 block font-semibold text-slate-700">Rânduri</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={editGridRows}
+                        onChange={(e) => setEditGridRows(parseInt(e.target.value) || 1)}
+                        className="bg-white"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Screen Selection (Ordered) */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label className="block font-semibold text-slate-700">Selectează Ecranele (În Ordine!)</Label>
+                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
+                    {editSelectedScreens.length} selectate
+                    {editSyncType === 'matrix' && ` / ${editGridCols * editGridRows} necesare`}
+                  </span>
+                </div>
+
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 border border-slate-200 rounded-lg p-3 bg-slate-50">
+                  {locations.map(location => {
+                    const locScreens = screens.filter(s => s.location_id === location.id);
+                    if (locScreens.length === 0) return null;
+
+                    return (
+                      <div key={location.id} className="mb-3 last:mb-0">
+                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2 px-1 flex items-center gap-2">
+                          {location.name}
+                          <div className="h-px flex-1 bg-slate-200"></div>
+                        </h4>
+                        <div className="grid grid-cols-1 gap-2">
+                          {locScreens.map(screen => {
+                            const selectedIndex = editSelectedScreens.indexOf(screen.id);
+                            const isSelected = selectedIndex !== -1;
+
+                            return (
+                              <div
+                                key={screen.id}
+                                onClick={() => toggleEditScreen(screen.id)}
+                                className={`flex items-center justify-between p-2 rounded border cursor-pointer transition-all select-none ${isSelected ? 'bg-indigo-50 border-indigo-500 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                    {isSelected ? selectedIndex + 1 : <Tv className="w-4 h-4" />}
+                                  </div>
+                                  <span className={`text-sm ${isSelected ? 'font-medium text-slate-900' : 'text-slate-600'}`}>{screen.name}</span>
+                                </div>
+                                {isSelected && (
+                                  <div className="text-xs text-indigo-600 font-medium px-2 py-1 bg-indigo-100 rounded">
+                                    Poziția {selectedIndex + 1}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-slate-500 mt-2">
+                  * Ordinea selectării determină poziția în grid/cascadă. Deselectează pentru a schimba ordinea.
+                </p>
+              </div>
+
+              {/* 3. Content Selection */}
+              <div>
+                <Label className="mb-3 block font-semibold text-slate-700">Schimbă Conținutul (Opțional)</Label>
+                <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2 border border-slate-100 rounded-lg p-3 bg-slate-50/50">
                   {contents.map(content => {
                     const isSelected = editContentId === content.id;
                     const imageUrl = content.thumbnail_url || content.file_url;
@@ -703,60 +827,26 @@ export const ScreenSync = () => {
                       <div
                         key={content.id}
                         onClick={() => setEditContentId(content.id === editContentId ? '' : content.id)}
-                        className={`relative flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-sm group ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 hover:border-primary/50 bg-white'
-                          }`}
+                        className={`relative flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-sm ${isSelected ? 'border-indigo-500 bg-indigo-50/30' : 'border-slate-200 bg-white'}`}
                       >
-                        {/* Thumbnail */}
-                        <div className="w-20 h-12 flex-shrink-0 bg-slate-900 rounded overflow-hidden relative">
-                          {content.type === 'video' ? (
-                            <video
-                              src={fullUrl}
-                              className="w-full h-full object-cover"
-                              muted
-                              playsInline
-                              onMouseOver={e => e.target.play()}
-                              onMouseOut={e => { e.target.pause(); e.target.currentTime = 0; }}
-                            />
-                          ) : (
-                            <img
-                              src={fullUrl}
-                              alt={content.title}
-                              className="w-full h-full object-cover"
-                              onError={(e) => { e.target.style.display = 'none'; }}
-                            />
-                          )}
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            {content.type === 'video' && <Film className="w-4 h-4 text-white/70" />}
-                          </div>
+                        <div className="w-16 h-10 flex-shrink-0 bg-slate-900 rounded overflow-hidden">
+                          {content.type === 'video' ? <video src={fullUrl} className="w-full h-full object-cover" muted /> : <img src={fullUrl} className="w-full h-full object-cover" />}
                         </div>
-
-                        {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <h4 className={`text-sm font-medium truncate ${isSelected ? 'text-primary' : 'text-slate-700'}`}>
-                            {content.title || content.name}
-                          </h4>
-                          <div className="flex items-center gap-2 text-xs text-slate-500">
-                            <span className="capitalize">{content.type}</span>
-                            <span>•</span>
-                            <span className="capitalize">{content.category}</span>
-                          </div>
+                          <h4 className={`text-sm font-medium truncate ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>{content.title || content.name}</h4>
                         </div>
-
-                        {/* Checkbox */}
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-slate-300'
-                          }`}>
-                          {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'}`}>
+                          {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                         </div>
                       </div>
                     );
                   })}
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">Selectează doar dacă vrei să schimbi ce se afișează.</p>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                 <Button variant="outline" onClick={() => setEditingGroup(null)}>Anulează</Button>
-                <Button onClick={handleUpdateGroup}>Salvează Modificările</Button>
+                <Button onClick={handleUpdateGroup} className="bg-indigo-600 hover:bg-indigo-700 text-white">Salvează Modificările</Button>
               </div>
             </div>
           </DialogContent>

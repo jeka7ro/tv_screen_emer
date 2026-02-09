@@ -471,11 +471,12 @@ class ScreenSync(BaseModel):
 class ScreenSyncUpdate(BaseModel):
     group_name: Optional[str] = None
     content_id: Optional[str] = None
+    screen_ids: Optional[List[str]] = None
+    sync_type: Optional[str] = None
+    grid_cols: Optional[int] = None
+    grid_rows: Optional[int] = None
 
 # ============ AUTH HELPERS ============
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(
         plain_password.encode("utf-8"),
         hashed_password.encode("utf-8") if isinstance(hashed_password, str) else hashed_password,
     )
@@ -1356,32 +1357,96 @@ async def unsync_group(group_id: str, current_user: User = Depends(get_current_u
 @api_router.put("/screen-sync/groups/{group_id}")
 async def update_sync_group(group_id: str, data: ScreenSyncUpdate, current_user: User = Depends(get_current_user)):
     screens = await screens_list()
-    group_screens = [s for s in screens if s.get("sync_group") == group_id]
+    # Find screens currently in this group
+    current_group_screens = [s for s in screens if s.get("sync_group") == group_id]
     
-    if not group_screens:
-        raise HTTPException(status_code=404, detail="Group not found")
+    if not current_group_screens and not data.screen_ids:
+        pass
+
+    # 1. Update Screen Selection if provided
+    active_screen_ids = [s["id"] for s in current_group_screens]
+    
+    if data.screen_ids is not None:
+        new_ids = data.screen_ids
         
-    # 1. Update Group Name
-    if data.group_name is not None:
-        for s in group_screens:
-            await screen_update_sync(
-                s["id"], 
-                s.get("sync_group"), 
-                s.get("cascade_offset", 0), 
-                s.get("template_id"), 
-                s.get("sync_type", "simple"), 
-                data.group_name
-            )
+        # Identify removed screens
+        removed_ids = set(active_screen_ids) - set(new_ids)
+        for rid in removed_ids:
+            # Reset sync for removed screens
+            await screen_update_sync(rid, None, 0, None, "simple", None)
+            await screen_zones_delete_by_screen(rid)
             
-    # 2. Update Content
+        # Identify added or kept screens
+        active_screen_ids = new_ids
+        
+    # Get the actual screen objects for the active set
+    all_screens = await screens_list()
+    group_screens = []
+    for sid in active_screen_ids:
+        s = next((x for x in all_screens if x["id"] == sid), None)
+        if s:
+            group_screens.append(s)
+            
+    if not group_screens:
+         return {"message": "Group updated (empty)"}
+
+    # Determine leader
+    leader = group_screens[0]
+    leader_id = leader["id"]
+    
+    # Get properties
+    existing_leader = current_group_screens[0] if current_group_screens else None
+    
+    # Determine new configuration
+    # If data.sync_type is provided, use it. Else use existing.
+    new_sync_type = data.sync_type if data.sync_type else (existing_leader.get("sync_type", "simple") if existing_leader else "simple")
+    
+    # Handle Matrix Grid dimensions
+    # If switching to Matrix or updating Matrix, check for grid cols/rows
+    if new_sync_type == "matrix":
+        # Extract existing dims if available
+        # existing sync_type might be "matrix:2x2"
+        existing_raw_type = existing_leader.get("sync_type", "") if existing_leader else ""
+        existing_cols = 2
+        existing_rows = 1
+        if "matrix:" in existing_raw_type:
+            try:
+                dims = existing_raw_type.split(":")[1].split("x")
+                existing_cols = int(dims[0])
+                existing_rows = int(dims[1])
+            except:
+                pass
+        
+        # Prefer new data, fallback to existing
+        cols = data.grid_cols if data.grid_cols else existing_cols
+        rows = data.grid_rows if data.grid_rows else existing_rows
+        
+        # Construct actual sync type string
+        final_sync_type = f"matrix:{cols}x{rows}"
+    else:
+        final_sync_type = new_sync_type
+
+    current_template_id = existing_leader.get("template_id") if existing_leader else None
+    current_group_name = data.group_name if data.group_name is not None else (existing_leader.get("sync_group_name") if existing_leader else f"Group {group_id[:8]}")
+
+    # 2. Update Group Name & Sync Config
+    # 2. Update Group Name & Sync Config
+    for idx, s in enumerate(group_screens):
+        await screen_update_sync(
+            s["id"], 
+            group_id, 
+            idx, 
+            current_template_id, 
+            final_sync_type, 
+            current_group_name
+        )
+
+    # 3. Update Content
     if data.content_id:
         content = await content_get(data.content_id)
         if not content:
             raise HTTPException(status_code=404, detail="Content not found")
             
-        leader = group_screens[0]
-        leader_id = leader["id"]
-        
         await screen_zones_delete_by_screen(leader_id)
         new_zone = {
             "id": str(uuid.uuid4()),
@@ -1393,7 +1458,6 @@ async def update_sync_group(group_id: str, data: ScreenSyncUpdate, current_user:
         await screen_zone_insert(new_zone)
         
         master_zones = [new_zone]
-        
         for s in group_screens:
             if s["id"] == leader_id:
                 continue
@@ -1402,6 +1466,16 @@ async def update_sync_group(group_id: str, data: ScreenSyncUpdate, current_user:
             for z in master_zones:
                 new_z = {**z, "id": str(uuid.uuid4()), "screen_id": s["id"]}
                 await screen_zone_insert(new_z)
+                
+    elif data.screen_ids is not None and existing_leader:
+         # Sync content from old leader to new screens if content_id wasn't changed
+         src_zones = await screen_zones_list(existing_leader["id"])
+         if src_zones:
+             for s in group_screens:
+                 await screen_zones_delete_by_screen(s["id"])
+                 for z in src_zones:
+                     new_z = {**z, "id": str(uuid.uuid4()), "screen_id": s["id"]}
+                     await screen_zone_insert(new_z)
                 
     return {"message": "Group updated"}
 

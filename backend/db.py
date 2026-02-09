@@ -303,7 +303,7 @@ async def screens_by_sync_group(sync_group: str) -> List[Dict[str, Any]]:
 
 async def sync_groups_list() -> List[Dict[str, Any]]:
     return await _fetch_all("""
-        SELECT sync_group as id, sync_type, MAX(sync_group_name) as name, array_agg(name) as screen_names, count(id) as screen_count
+        SELECT sync_group as id, sync_type, MAX(sync_group_name) as name, array_agg(name) as screen_names, array_agg(id) as screen_ids, count(id) as screen_count
         FROM screens
         WHERE sync_group IS NOT NULL
         GROUP BY sync_group, sync_type
