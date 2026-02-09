@@ -438,9 +438,9 @@ export const ScreenSync = () => {
 
                   <div>
                     <Label className="text-base font-semibold text-slate-800 mb-3 block mt-4">3. Alege Conținutul</Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto pr-2 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
+                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
                       {contents.length === 0 && (
-                        <div className="col-span-full text-center py-8 text-slate-500 text-sm">
+                        <div className="text-center py-8 text-slate-500 text-sm">
                           Nu există conținut disponibil.
                         </div>
                       )}
@@ -453,34 +453,50 @@ export const ScreenSync = () => {
                           <div
                             key={content.id}
                             onClick={() => setSelectedContentId(content.id)}
-                            className={`relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all hover:shadow-md aspect-video group ${isSelected ? 'border-indigo-600 ring-2 ring-indigo-100' : 'border-slate-200 hover:border-indigo-300'
+                            className={`relative flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-sm group ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 hover:border-primary/50 bg-white'
                               }`}
                           >
-                            {content.type === 'image' || (content.type === 'video' && fullUrl) ? (
-                              <img
-                                src={fullUrl}
-                                className="w-full h-full object-cover"
-                                alt={content.name}
-                                onError={(e) => { e.target.src = 'https://placehold.co/400x225/e2e8f0/64748b?text=No+Image'; }}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-slate-800">
-                                <Film className="w-8 h-8 text-slate-400" />
-                              </div>
-                            )}
-
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-6">
-                              <div className="flex items-center gap-1.5 text-white">
-                                {content.type === 'video' ? <Film className="w-3 h-3 flex-shrink-0" /> : <ImageIcon className="w-3 h-3 flex-shrink-0" />}
-                                <span className="text-[10px] font-medium truncate leading-tight">{content.name}</span>
+                            {/* Thumbnail */}
+                            <div className="w-20 h-12 flex-shrink-0 bg-slate-900 rounded overflow-hidden relative">
+                              {content.type === 'video' ? (
+                                <video
+                                  src={fullUrl}
+                                  className="w-full h-full object-cover"
+                                  muted
+                                  playsInline
+                                  onMouseOver={e => e.target.play()}
+                                  onMouseOut={e => { e.target.pause(); e.target.currentTime = 0; }}
+                                />
+                              ) : (
+                                <img
+                                  src={fullUrl}
+                                  alt={content.title}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              )}
+                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                {content.type === 'video' && <Film className="w-4 h-4 text-white/70" />}
                               </div>
                             </div>
 
-                            {isSelected && (
-                              <div className="absolute top-2 right-2 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
-                                ✓
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <h4 className={`text-sm font-medium truncate ${isSelected ? 'text-primary' : 'text-slate-700'}`}>
+                                {content.title || content.name}
+                              </h4>
+                              <div className="flex items-center gap-2 text-xs text-slate-500">
+                                <span className="capitalize">{content.type}</span>
+                                <span>•</span>
+                                <span className="capitalize">{content.category}</span>
                               </div>
-                            )}
+                            </div>
+
+                            {/* Checkbox */}
+                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-slate-300'
+                              }`}>
+                              {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                            </div>
                           </div>
                         );
                       })}
@@ -672,9 +688,9 @@ export const ScreenSync = () => {
               </div>
               <div>
                 <Label className="mb-3 block">Schimbă Conținutul (Opțional)</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto pr-2 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
+                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
                   {contents.length === 0 && (
-                    <div className="col-span-full text-center py-8 text-slate-500 text-sm">
+                    <div className="text-center py-8 text-slate-500 text-sm">
                       Nu există conținut disponibil.
                     </div>
                   )}
@@ -687,34 +703,50 @@ export const ScreenSync = () => {
                       <div
                         key={content.id}
                         onClick={() => setEditContentId(content.id === editContentId ? '' : content.id)}
-                        className={`relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all hover:shadow-md aspect-video group ${isSelected ? 'border-indigo-600 ring-2 ring-indigo-100' : 'border-slate-200 hover:border-indigo-300'
+                        className={`relative flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-sm group ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 hover:border-primary/50 bg-white'
                           }`}
                       >
-                        {content.type === 'image' || (content.type === 'video' && fullUrl) ? (
-                          <img
-                            src={fullUrl}
-                            className="w-full h-full object-cover"
-                            alt={content.name}
-                            onError={(e) => { e.target.src = 'https://placehold.co/400x225/e2e8f0/64748b?text=No+Image'; }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-slate-800">
-                            <Film className="w-8 h-8 text-slate-400" />
-                          </div>
-                        )}
-
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-2 pt-6">
-                          <div className="flex items-center gap-1.5 text-white">
-                            {content.type === 'video' ? <Film className="w-3 h-3 flex-shrink-0" /> : <ImageIcon className="w-3 h-3 flex-shrink-0" />}
-                            <span className="text-[10px] font-medium truncate leading-tight">{content.name}</span>
+                        {/* Thumbnail */}
+                        <div className="w-20 h-12 flex-shrink-0 bg-slate-900 rounded overflow-hidden relative">
+                          {content.type === 'video' ? (
+                            <video
+                              src={fullUrl}
+                              className="w-full h-full object-cover"
+                              muted
+                              playsInline
+                              onMouseOver={e => e.target.play()}
+                              onMouseOut={e => { e.target.pause(); e.target.currentTime = 0; }}
+                            />
+                          ) : (
+                            <img
+                              src={fullUrl}
+                              alt={content.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            {content.type === 'video' && <Film className="w-4 h-4 text-white/70" />}
                           </div>
                         </div>
 
-                        {isSelected && (
-                          <div className="absolute top-2 right-2 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs shadow-sm">
-                            ✓
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className={`text-sm font-medium truncate ${isSelected ? 'text-primary' : 'text-slate-700'}`}>
+                            {content.title || content.name}
+                          </h4>
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <span className="capitalize">{content.type}</span>
+                            <span>•</span>
+                            <span className="capitalize">{content.category}</span>
                           </div>
-                        )}
+                        </div>
+
+                        {/* Checkbox */}
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-slate-300'
+                          }`}>
+                          {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                        </div>
                       </div>
                     );
                   })}

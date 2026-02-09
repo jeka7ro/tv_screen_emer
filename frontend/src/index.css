@@ -22,11 +22,11 @@ code {
 }
 
 .glass-panel {
-    @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)];
+    @apply bg-white/60 backdrop-blur-xl border border-white/40 shadow-[0_8px_30px_rgb(0, 0, 0, 0.04)];
 }
 
 .glass-card {
-    @apply rounded-3xl bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300;
+    @apply rounded-3xl bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_8px_30px_rgb(0, 0, 0, 0.04)] transition-all duration-300;
 }
 
 .glass-input {
@@ -41,7 +41,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 50%, #E9D5FF 100%);
+    background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 50%, #FECACA 100%);
     opacity: 0.5;
     z-index: -1;
     pointer-events: none;
@@ -55,19 +55,19 @@ body::before {
         --card-foreground: 222.2 84% 4.9%;
         --popover: 0 0% 100%;
         --popover-foreground: 222.2 84% 4.9%;
-        --primary: 238 83% 67%;
+        --primary: 350 89% 60%;
         --primary-foreground: 0 0% 100%;
-        --secondary: 210 40% 96.1%;
-        --secondary-foreground: 222.2 47.4% 11.2%;
-        --muted: 210 40% 96.1%;
-        --muted-foreground: 215.4 16.3% 46.9%;
-        --accent: 238 83% 67%;
+        --secondary: 0 0% 96.1%;
+        --secondary-foreground: 0 0% 9%;
+        --muted: 0 0% 96.1%;
+        --muted-foreground: 0 0% 45%;
+        --accent: 350 89% 60%;
         --accent-foreground: 0 0% 100%;
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 0 0% 98%;
-        --border: 214.3 31.8% 91.4%;
-        --input: 214.3 31.8% 91.4%;
-        --ring: 238 83% 67%;
+        --border: 0 0% 89.8%;
+        --input: 0 0% 89.8%;
+        --ring: 350 89% 60%;
         --radius: 0.75rem;
     }
 }
@@ -76,10 +76,17 @@ body::before {
     * {
         @apply border-border;
     }
+
     body {
         @apply bg-background text-foreground;
     }
-    h1, h2, h3, h4, h5, h6 {
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
         font-family: 'Outfit', sans-serif;
     }
 }
@@ -94,6 +101,7 @@ body::before {
         opacity: 0;
         transform: translateY(1rem);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
