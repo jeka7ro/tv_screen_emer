@@ -26,7 +26,8 @@ export const Content = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewItem, setPreviewItem] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [viewMode, setViewMode] = useState('grid');
+  const [viewMode, setViewMode] = useState('list');
+  const [selectedItems, setSelectedItems] = useState(new Set());
 
   useEffect(() => {
     loadContent();
@@ -141,6 +142,41 @@ export const Content = () => {
     );
   }
 
+  const toggleSelectAll = (items) => {
+    if (selectedItems.size === items.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(items.map(i => i.id)));
+    }
+  };
+
+  const toggleSelectItem = (id) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Sigur dorești să ștergi ${selectedItems.size} elemente?`)) return;
+
+    try {
+      // Execute deletions (Promise.all for now)
+      const deletePromises = Array.from(selectedItems).map(id => api.delete(`/content/${id}`));
+      await Promise.all(deletePromises);
+
+      toast.success(`${selectedItems.size} elemente șterse!`);
+      setSelectedItems(new Set());
+      loadContent();
+    } catch (error) {
+      console.error('Bulk delete error', error);
+      toast.error('Eroare la ștergerea multiplă');
+    }
+  };
+
   const renderView = (items) => {
     if (items.length === 0) {
       return (
@@ -162,6 +198,14 @@ export const Content = () => {
           <table className="w-full text-left">
             <thead className="bg-slate-50/50 border-b border-slate-100">
               <tr>
+                <th className="p-4 w-10">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    checked={items.length > 0 && selectedItems.size === items.length}
+                    onChange={() => toggleSelectAll(items)}
+                  />
+                </th>
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase">Preview</th>
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase">Titlu</th>
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase">Tip</th>
@@ -172,7 +216,15 @@ export const Content = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.map((item) => (
-                <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
+                <tr key={item.id} className={`group hover:bg-slate-50/50 transition-colors ${selectedItems.has(item.id) ? 'bg-indigo-50/30' : ''}`}>
+                  <td className="p-4">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      checked={selectedItems.has(item.id)}
+                      onChange={() => toggleSelectItem(item.id)}
+                    />
+                  </td>
                   <td className="p-4 w-24">
                     <div
                       className="w-16 h-10 rounded-lg overflow-hidden bg-slate-100 cursor-pointer"
@@ -283,6 +335,27 @@ export const Content = () => {
             <h1 className="text-4xl font-bold text-slate-800 mb-2">Bibliotecă Conținut</h1>
             <p className="text-slate-500">Gestionează imagini și video-uri</p>
           </div>
+
+          {selectedItems.size > 0 && (
+            <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-xl z-50 flex items-center gap-4 animate-in slide-in-from-bottom-4">
+              <span className="font-medium">{selectedItems.size} selectate</span>
+              <div className="h-4 w-px bg-slate-700"></div>
+              <button
+                onClick={handleBulkDelete}
+                className="text-white hover:text-red-400 font-medium flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Șterge
+              </button>
+              <button
+                onClick={() => setSelectedItems(new Set())}
+                className="text-slate-400 hover:text-white ml-2 text-sm"
+              >
+                Anulează
+              </button>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <div className="bg-white/50 p-1 rounded-lg flex border border-slate-200/50 mr-4">
               <button
