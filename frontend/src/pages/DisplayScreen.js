@@ -237,19 +237,28 @@ export const DisplayScreen = () => {
                 alt={currentItem.title}
                 className={`max-w-full max-h-full shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
                 style={{ objectFit: 'contain' }}
+                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
               />
             ) : (
-              <video
-                src={getFullUrl(currentItem.file_url)}
-                autoPlay={playlist.autoplay}
-                loop={playlist.loop || currentItem.loop}
-                muted
-                playsInline
-                className={`max-w-full max-h-full shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
-                style={{ objectFit: 'contain' }}
-              >
-                Browser-ul nu suportă video.
-              </video>
+              <>
+                <video
+                  src={getFullUrl(currentItem.file_url)}
+                  autoPlay={playlist.autoplay}
+                  loop={playlist.loop || currentItem.loop}
+                  muted
+                  playsInline
+                  className={`max-w-full max-h-full shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
+                  style={{ objectFit: 'contain' }}
+                  onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
+                >
+                  Browser-ul nu suportă video.
+                </video>
+                <div className="hidden text-white text-center p-4 bg-red-900/50 rounded-xl backdrop-blur-sm border border-red-500/30">
+                  <div className="text-4xl mb-2">⚠️</div>
+                  <div className="text-xl font-bold">Video indisponibil</div>
+                  <div className="text-sm opacity-75">Fișierul a fost șters sau mutat.</div>
+                </div>
+              </>
             )}
           </div>
 
@@ -318,25 +327,34 @@ export const DisplayScreen = () => {
                   maxWidth: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%',
                   maxHeight: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%'
                 }}
+                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
               />
             ) : (
-              <video
-                src={getFullUrl(content.file_url)}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className={`shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
-                style={{
-                  objectFit: displayData?.sync_info?.sync_type?.startsWith('matrix') ? 'cover' : 'contain',
-                  width: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : 'auto',
-                  height: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : 'auto',
-                  maxWidth: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%',
-                  maxHeight: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%'
-                }}
-              >
-                Browser-ul nu suportă video.
-              </video>
+              <>
+                <video
+                  src={getFullUrl(content.file_url)}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className={`shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
+                  style={{
+                    objectFit: displayData?.sync_info?.sync_type?.startsWith('matrix') ? 'cover' : 'contain',
+                    width: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : 'auto',
+                    height: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : 'auto',
+                    maxWidth: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%',
+                    maxHeight: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%'
+                  }}
+                  onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
+                >
+                  Browser-ul nu suportă video.
+                </video>
+                <div className="hidden text-white text-center p-4 bg-red-900/50 rounded-xl backdrop-blur-sm border border-red-500/30">
+                  <div className="text-4xl mb-2">⚠️</div>
+                  <div className="text-xl font-bold">Video indisponibil</div>
+                  <div className="text-sm opacity-75">Fișierul a fost ștears de pe server. Te rog reîncarcă-l.</div>
+                </div>
+              </>
             )}
           </div>
 
