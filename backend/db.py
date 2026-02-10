@@ -223,6 +223,12 @@ async def user_get_by_email_no_password(email: str) -> Optional[Dict[str, Any]]:
     )
 
 
+async def user_get_email_by_id(user_id: str) -> Optional[str]:
+    """Get user email by ID for notifications"""
+    result = await _fetch_one("SELECT email FROM users WHERE id = $1", user_id)
+    return result.get("email") if result else None
+
+
 async def user_insert(row: Dict[str, Any]) -> None:
     await _execute(
         """INSERT INTO users (id, email, full_name, hashed_password, is_super_admin, role, location_id, status, created_at)

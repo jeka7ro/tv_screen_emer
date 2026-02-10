@@ -619,6 +619,28 @@ async def register(user_data: UserCreate):
     )
     user_dict = user.model_dump()
     await user_insert(user_dict)
+    
+    # Send notification email to invitation creator (non-blocking)
+    if not is_first_user and invitation:
+        try:
+            creator_id = invitation.get("created_by")
+            if creator_id:
+                from db import user_get_email_by_id
+                creator_email = await user_get_email_by_id(creator_id)
+                if creator_email:
+                    # Fire and forget - don't block registration
+                    asyncio.create_task(
+                        send_registration_notification(
+                            creator_email,
+                            user.full_name,
+                            user.email,
+                            user_data.invitation_code
+                        )
+                    )
+        except Exception as e:
+            # Log but don't fail registration
+            print(f"⚠️ Could not send registration notification: {e}")
+    
     access_token = create_access_token(data={"sub": user.email})
     return Token(
         access_token=access_token,
@@ -953,6 +975,76 @@ async def send_reset_email(email: str, token: str):
         # Log to console
         print(f"🔗 RESET LINK for {email}: {reset_link}")
         return "SMTP not configured (Logged to console)"
+
+
+async def send_registration_notification(admin_email: str, new_user_name: str, new_user_email: str, invitation_code: str):
+    """Send email notification to admin when someone registers via invitation"""
+    if not SMTP_USER or not SMTP_PASSWORD:
+        print(f"📧 [NOTIFICATION] New registration: {new_user_name} ({new_user_email}) via code {invitation_code}")
+        return "SMTP not configured (Logged to console)"
+    
+    import smtplib
+    from email.message import EmailMessage
+    import asyncio
+    
+    msg = EmailMessage()
+    msg.set_content(f"""Bună,
+
+Un utilizator nou s-a înregistrat folosind link-ul tău de invitație!
+
+📧 Email: {new_user_email}
+👤 Nume: {new_user_name}
+🔑 Cod invitație: {invitation_code}
+
+Poți gestiona utilizatorii în panoul de administrare la:
+https://tvscreener.netlify.app/users
+
+Cu respect,
+Echipa SushiMaster TV Screen
+""")
+    msg["Subject"] = "🎉 Înregistrare nouă prin invitația ta - SushiMaster TV"
+    msg["From"] = FROM_EMAIL
+    msg["To"] = admin_email
+    
+    try:
+        # Run blocking SMTP call in a thread (reuse same logic as send_reset_email)
+        def _send():
+            import socket
+            original_getaddrinfo = socket.getaddrinfo
+            def getaddrinfo_ipv4_only(*args, **kwargs):
+                new_args = list(args)
+                if len(new_args) >= 3:
+                    new_args[2] = socket.AF_INET
+                elif 'family' in kwargs:
+                    kwargs['family'] = socket.AF_INET
+                else:
+                    while len(new_args) < 2:
+                        new_args.append(0)
+                    if len(new_args) == 2:
+                        new_args.append(socket.AF_INET)
+                return original_getaddrinfo(*new_args, **kwargs)
+            
+            try:
+                socket.getaddrinfo = getaddrinfo_ipv4_only
+                with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
+                    server.starttls()
+                    server.login(SMTP_USER, SMTP_PASSWORD)
+                    server.send_message(msg)
+            except Exception as e1:
+                # Fallback to SSL port 465
+                with smtplib.SMTP_SSL(SMTP_HOST, 465, timeout=10) as server:
+                    server.login(SMTP_USER, SMTP_PASSWORD)
+                    server.send_message(msg)
+            finally:
+                socket.getaddrinfo = original_getaddrinfo
+        
+        await asyncio.to_thread(_send)
+        print(f"📧 Registration notification sent to {admin_email}")
+        return "Notification sent"
+    except Exception as e:
+        print(f"⚠️ Failed to send registration notification: {e}")
+        # Don't raise - we don't want to block registration if email fails
+        return f"Failed: {str(e)}"
 
 
 @api_router.post("/auth/forgot-password")
