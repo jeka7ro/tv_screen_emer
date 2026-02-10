@@ -345,20 +345,22 @@ class Content(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
-    type: str  # image, video
-    file_url: str
+    type: str  # image, video, youtube, web
+    source_type: str = "file"  # file, url
+    file_url: str  # This will hold the URL for both local files and external links
     duration: int = 10  # seconds
-    category: str = "other"  # menu, promo, drinks, desserts, other
+    category: str = "other"
     tags: List[str] = []
     thumbnail_url: Optional[str] = None
     autoplay: bool = True
     loop: bool = True
-    playlist_urls: List[str] = []  # For video playlists
+    playlist_urls: List[str] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ContentCreate(BaseModel):
     title: str
     type: str
+    source_type: Optional[str] = "url"
     file_url: Optional[str] = None
     duration: Optional[int] = 10
     category: Optional[str] = "other"

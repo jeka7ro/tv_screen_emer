@@ -76,6 +76,7 @@ export const Content = () => {
         await api.post('/content/external', {
           title: formData.title,
           type: formData.type,
+          source_type: 'url',
           file_url: formData.file_url,
           category: formData.category,
           duration: parseInt(formData.duration)
@@ -230,7 +231,11 @@ export const Content = () => {
                       className="w-16 h-10 rounded-lg overflow-hidden bg-slate-100 cursor-pointer"
                       onClick={() => handlePreview(item)}
                     >
-                      {item.type === 'image' ? (
+                      {item.type === 'youtube' ? (
+                        <div className="w-full h-full bg-red-600 flex items-center justify-center text-white font-bold text-[8px]">YT</div>
+                      ) : item.type === 'web' ? (
+                        <div className="w-full h-full bg-blue-600 flex items-center justify-center text-white font-bold text-[8px]">WEB</div>
+                      ) : item.type === 'image' ? (
                         <img src={getFileUrl(item.file_url)} className="w-full h-full object-cover" alt="" />
                       ) : (
                         <video src={getFileUrl(item.file_url)} className="w-full h-full object-cover" />
@@ -268,7 +273,17 @@ export const Content = () => {
               onClick={() => handlePreview(item)}
               data-testid={`preview-content-${item.id}`}
             >
-              {item.type === 'image' ? (
+              {item.type === 'youtube' ? (
+                <div className="w-full h-40 bg-red-900 rounded-xl flex items-center justify-center">
+                  <Film className="w-12 h-12 text-white/50" />
+                  <div className="absolute bottom-2 right-2 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">YOUTUBE</div>
+                </div>
+              ) : item.type === 'web' ? (
+                <div className="w-full h-40 bg-blue-900 rounded-xl flex items-center justify-center">
+                  <LayoutGrid className="w-12 h-12 text-white/50" />
+                  <div className="absolute bottom-2 right-2 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">WEB</div>
+                </div>
+              ) : item.type === 'image' ? (
                 <img
                   src={getFileUrl(item.file_url)}
                   alt={item.title}
@@ -418,19 +433,7 @@ export const Content = () => {
                     </TabsContent>
                     <TabsContent value="external" className="space-y-4 mt-4">
                       <div>
-                        <Label>URL conținut</Label>
-                        <Input
-                          value={formData.file_url}
-                          onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
-                          placeholder="https://..."
-                          data-testid="content-url-input"
-                        />
-                        <p className="text-xs text-slate-500 mt-1">
-                          Google Drive, OneDrive, Dropbox, etc.
-                        </p>
-                      </div>
-                      <div>
-                        <Label>Tip</Label>
+                        <Label>Tip Conținut Extern</Label>
                         <Select
                           value={formData.type}
                           onValueChange={(value) => setFormData({ ...formData, type: value })}
@@ -439,10 +442,26 @@ export const Content = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="image">Imagine</SelectItem>
-                            <SelectItem value="video">Video</SelectItem>
+                            <SelectItem value="image">Imagine (Link Direct)</SelectItem>
+                            <SelectItem value="video">Video (Link Direct)</SelectItem>
+                            <SelectItem value="youtube">YouTube (Link/Embed)</SelectItem>
+                            <SelectItem value="web">Pagină Web (URL)</SelectItem>
                           </SelectContent>
                         </Select>
+                      </div>
+                      <div>
+                        <Label>URL conținut</Label>
+                        <Input
+                          value={formData.file_url}
+                          onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
+                          placeholder={formData.type === 'youtube' ? "https://youtube.com/watch?v=..." : "https://..."}
+                          data-testid="content-url-input"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">
+                          {formData.type === 'youtube'
+                            ? "Pastează link-ul YouTube (normal sau embed)."
+                            : "Direct link către fișier (Dropbox, Drive cu 'direct download link')."}
+                        </p>
                       </div>
                     </TabsContent>
                   </Tabs>
@@ -545,8 +564,22 @@ export const Content = () => {
             </DialogHeader>
             {previewItem && (
               <div className="space-y-4">
-                <div className="bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center" style={{ minHeight: '400px', maxHeight: '600px' }}>
-                  {previewItem.type === 'image' ? (
+                <div className="bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center relative" style={{ minHeight: '400px', maxHeight: '600px' }}>
+                  {previewItem.type === 'youtube' ? (
+                    <div className="w-full aspect-video">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${(previewItem.file_url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/) || [])[1]}`}
+                        className="w-full h-full border-0"
+                        allow="autoplay; encrypted-media"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : previewItem.type === 'web' ? (
+                    <iframe
+                      src={previewItem.file_url}
+                      className="w-full h-[500px] border-0 bg-white"
+                    />
+                  ) : previewItem.type === 'image' ? (
                     <img
                       src={getFileUrl(previewItem.file_url)}
                       alt={previewItem.title}

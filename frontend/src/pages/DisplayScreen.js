@@ -15,6 +15,26 @@ const getFileUrl = (url) => {
   return url;
 };
 
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return null;
+  let videoId = '';
+  const patterns = [
+    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/,
+    /^[a-zA-Z0-9_-]{11}$/
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      videoId = match[1] || match[0];
+      break;
+    }
+  }
+  if (videoId) {
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&modestbranding=1&rel=0`;
+  }
+  return url;
+};
+
 export const DisplayScreen = () => {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
@@ -326,7 +346,9 @@ export const DisplayScreen = () => {
         <div className={`w-full h-full relative ${parallaxEnabled ? 'parallax-container' : ''}`}>
           {/* Blurred Background Layer */}
           <div className="absolute inset-0 z-0">
-            {content.type === 'image' ? (
+            {content.type === 'youtube' || content.type === 'web' ? (
+              <div className="w-full h-full bg-slate-900" />
+            ) : content.type === 'image' ? (
               <img
                 src={getFullUrl(content.file_url)}
                 className="w-full h-full object-cover opacity-50 blur-xl scale-110"
@@ -346,7 +368,21 @@ export const DisplayScreen = () => {
 
           {/* Foreground Content Layer */}
           <div className="absolute inset-0 z-10 flex items-center justify-center">
-            {content.type === 'image' ? (
+            {content.type === 'youtube' ? (
+              <iframe
+                src={getYouTubeEmbedUrl(content.file_url)}
+                className="w-full h-full border-0"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+                title={content.title}
+              />
+            ) : content.type === 'web' ? (
+              <iframe
+                src={content.file_url}
+                className="w-full h-full border-0 bg-white"
+                title={content.title}
+              />
+            ) : content.type === 'image' ? (
               <img
                 src={getFullUrl(content.file_url)}
                 alt={content.title}

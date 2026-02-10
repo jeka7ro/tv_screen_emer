@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS content (
   autoplay BOOLEAN DEFAULT TRUE,
   loop BOOLEAN DEFAULT TRUE,
   playlist_urls JSONB DEFAULT '[]',
+  source_type TEXT DEFAULT 'file',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
