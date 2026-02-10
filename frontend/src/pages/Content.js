@@ -277,6 +277,22 @@ export const Content = () => {
     }
   };
 
+  const handleBulkMoveToFolder = async (folderId) => {
+    try {
+      const movePromises = Array.from(selectedItems).map(id =>
+        api.patch(`/content/${id}/folder`, { folder_id: folderId })
+      );
+      await Promise.all(movePromises);
+
+      toast.success(`${selectedItems.size} elemente mutate!`);
+      setSelectedItems(new Set());
+      loadContent();
+    } catch (error) {
+      console.error('Bulk move error', error);
+      toast.error('Eroare la mutarea multiplă');
+    }
+  };
+
   const renderView = (items) => {
     if (items.length === 0) {
       return (
@@ -311,6 +327,8 @@ export const Content = () => {
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase">Tip</th>
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase">Categorie</th>
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase">Durată</th>
+                <th className="p-4 font-medium text-slate-500 text-xs uppercase">Dimensiune</th>
+                <th className="p-4 font-medium text-slate-500 text-xs uppercase">Încărcat de</th>
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase text-right">Acțiuni</th>
               </tr>
             </thead>
@@ -345,6 +363,12 @@ export const Content = () => {
                   <td className="p-4 capitalize text-slate-600">{item.type}</td>
                   <td className="p-4 capitalize text-slate-600">{item.category}</td>
                   <td className="p-4 text-slate-600">{item.type === 'image' ? `${item.duration}s` : '-'}</td>
+                  <td className="p-4 text-slate-600 text-sm">
+                    {item.file_size ? `${(item.file_size / 1024 / 1024).toFixed(2)} MB` : '-'}
+                  </td>
+                  <td className="p-4 text-slate-600 text-sm">
+                    {item.uploaded_by || 'Admin'}
+                  </td>
                   <td className="p-4 text-right">
                     <div className="flex justify-end gap-2">
                       <Button className="btn-ghost p-2 h-auto" onClick={() => handlePreview(item)}>
@@ -455,19 +479,38 @@ export const Content = () => {
           </div>
 
           {isAdmin() && selectedItems.size > 0 && (
-            <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-xl z-50 flex items-center gap-4 animate-in slide-in-from-bottom-4">
-              <span className="font-medium">{selectedItems.size} selectate</span>
-              <div className="h-4 w-px bg-slate-700"></div>
+            <div className="mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
+              <span className="font-semibold text-lg">{selectedItems.size} selectate</span>
+              <div className="h-6 w-px bg-white/30"></div>
+
+              {/* Move to Folder Dropdown */}
+              <Select onValueChange={(value) => handleBulkMoveToFolder(value === 'none' ? null : value)}>
+                <SelectTrigger className="w-48 bg-white/20 border-white/30 text-white hover:bg-white/30">
+                  <SelectValue placeholder="Mută în folder..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">📁 Root (Niciun folder)</SelectItem>
+                  {folders.map(folder => (
+                    <SelectItem key={folder.id} value={folder.id}>
+                      <div className="flex items-center gap-2">
+                        <Folder className="w-4 h-4" style={{ color: folder.color }} />
+                        {folder.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <button
                 onClick={handleBulkDelete}
-                className="text-white hover:text-red-400 font-medium flex items-center gap-2"
+                className="ml-auto bg-white/20 hover:bg-red-500 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
                 Șterge
               </button>
               <button
                 onClick={() => setSelectedItems(new Set())}
-                className="text-slate-400 hover:text-white ml-2 text-sm"
+                className="text-white/80 hover:text-white text-sm"
               >
                 Anulează
               </button>
