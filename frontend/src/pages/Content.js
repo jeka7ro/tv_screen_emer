@@ -713,39 +713,49 @@ export const Content = () => {
           handleUpdateFolder={handleUpdateFolder}
         />
 
-        {/* Main Content with Folder Sidebar */}
-        <div className="flex gap-6">
-          <FolderSidebar
-            folders={folders}
-            selectedFolder={selectedFolder}
-            setSelectedFolder={setSelectedFolder}
-            content={content}
-            isAdmin={isAdmin}
-            openFolderDialog={openFolderDialog}
-            handleDeleteFolder={handleDeleteFolder}
-          />
-          <div className="flex-1">
-            <Tabs defaultValue="all" className="space-y-6">
-              <TabsList>
-                <TabsTrigger value="all">Toate ({content.length})</TabsTrigger>
-                <TabsTrigger value="images">Imagini ({images.length})</TabsTrigger>
-                <TabsTrigger value="videos">Video-uri ({videos.length})</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="all">
-                {renderView(content)}
-              </TabsContent>
-
-              <TabsContent value="images">
-                {renderView(images)}
-              </TabsContent>
-
-              <TabsContent value="videos">
-                {renderView(videos)}
-              </TabsContent>
-            </Tabs>
+        <Tabs defaultValue="all" className="space-y-6">
+          <div className="flex items-center">
+            <TabsList className="bg-slate-100 p-1 rounded-xl">
+              <TabsTrigger value="all" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Toate ({content.length})</TabsTrigger>
+              <TabsTrigger value="images" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Imagini ({images.length})</TabsTrigger>
+              <TabsTrigger value="videos" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Video-uri ({videos.length})</TabsTrigger>
+            </TabsList>
           </div>
-        </div>
+
+          {/* Main Content with Folder Sidebar */}
+          <div className="flex gap-6 items-stretch">
+            <div className="w-64 shrink-0">
+              <div className="h-full bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col">
+                <FolderSidebar
+                  folders={folders}
+                  selectedFolder={selectedFolder}
+                  setSelectedFolder={setSelectedFolder}
+                  content={content}
+                  isAdmin={isAdmin}
+                  openFolderDialog={openFolderDialog}
+                  handleDeleteFolder={handleDeleteFolder}
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col">
+              <div className="p-6 flex-1">
+
+                <TabsContent value="all">
+                  {renderView(content)}
+                </TabsContent>
+
+                <TabsContent value="images">
+                  {renderView(images)}
+                </TabsContent>
+
+                <TabsContent value="videos">
+                  {renderView(videos)}
+                </TabsContent>
+              </div>
+            </div>
+          </div>
+        </Tabs>
 
         {/* Preview Modal */}
         <Dialog open={showPreview} onOpenChange={setShowPreview}>
