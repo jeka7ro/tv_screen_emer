@@ -19,7 +19,7 @@ Pillow
 
 # Utils
 httpx
-pydantic[email]
+pydantic[email]>=2.0.0
 email-validator
 requests
 pytz
