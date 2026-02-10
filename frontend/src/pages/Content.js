@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
-import { Upload, Link as LinkIcon, FileImage, Film, Trash2, Plus, LayoutGrid, List as ListIcon, Eye } from 'lucide-react';
+import { Upload, Link as LinkIcon, FileImage, Film, Trash2, Plus, LayoutGrid, List as ListIcon, Eye, Folder, FolderPlus, Edit2, FolderOpen } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 import { toast } from 'sonner';
@@ -14,8 +14,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 export const Content = () => {
   const { isAdmin } = useAuth();
   const [content, setContent] = useState([]);
+  const [folders, setFolders] = useState([]);
+  const [selectedFolder, setSelectedFolder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
+  const [showFolderDialog, setShowFolderDialog] = useState(false);
+  const [editingFolder, setEditingFolder] = useState(null);
   const [uploadMethod, setUploadMethod] = useState('file');
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,7 +27,13 @@ export const Content = () => {
     type: 'image',
     category: 'other',
     duration: '10',
-    file_url: ''
+    file_url: '',
+    folder_id: null
+  });
+  const [folderFormData, setFolderFormData] = useState({
+    name: '',
+    description: '',
+    color: '#6366f1'
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewItem, setPreviewItem] = useState(null);
@@ -33,6 +43,7 @@ export const Content = () => {
 
   useEffect(() => {
     loadContent();
+    loadFolders();
   }, []);
 
   const loadContent = async () => {
@@ -43,6 +54,15 @@ export const Content = () => {
       toast.error('Eroare la încărcarea conținutului');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFolders = async () => {
+    try {
+      const response = await api.get('/content/folders');
+      setFolders(response.data);
+    } catch (error) {
+      console.error('Error loading folders:', error);
     }
   };
 
