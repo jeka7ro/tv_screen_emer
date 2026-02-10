@@ -655,22 +655,6 @@ export const Content = () => {
                 </DialogContent>
 
                 {/* Main Content with Folder Sidebar */}
-                <div className="flex gap-6">
-                  <FolderSidebar
-                    folders={folders}
-                    selectedFolder={selectedFolder}
-                    setSelectedFolder={setSelectedFolder}
-                    content={content}
-                    isAdmin={isAdmin}
-                    openFolderDialog={openFolderDialog}
-                    handleDeleteFolder={handleDeleteFolder}
-                  />
-                  <div className="flex-1">
-
-                  </Dialog>
-            )}
-                </div>
-              </div>
 
       {/* Main Content with Folder Sidebar */}
             <div className="flex gap-6">
