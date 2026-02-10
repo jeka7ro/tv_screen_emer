@@ -1,4 +1,13 @@
 /* Parallax Effect */
+/* Sharpening for high-res displays */
+.display-fullscreen img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  /* Hardware acceleration */
+}
+
 .parallax-container {
   position: relative;
   overflow: hidden;

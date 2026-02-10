@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
-import { Shuffle, Tv, Image as ImageIcon, Film, Type, Edit } from 'lucide-react';
+import { Shuffle, Tv, Image as ImageIcon, Film, Type, Edit, ChevronUp, ChevronDown } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
@@ -302,7 +302,16 @@ export const ScreenSync = () => {
       [newScreens[index], newScreens[index + 1]] = [newScreens[index + 1], newScreens[index]];
     }
     setSelectedScreens(newScreens);
-    setSelectedScreens(newScreens);
+  };
+
+  const moveEditScreen = (index, direction) => {
+    const newScreens = [...editSelectedScreens];
+    if (direction === 'up' && index > 0) {
+      [newScreens[index], newScreens[index - 1]] = [newScreens[index - 1], newScreens[index]];
+    } else if (direction === 'down' && index < newScreens.length - 1) {
+      [newScreens[index], newScreens[index + 1]] = [newScreens[index + 1], newScreens[index]];
+    }
+    setEditSelectedScreens(newScreens);
   };
 
   const getLocationName = (locationId) => {
@@ -802,18 +811,22 @@ export const ScreenSync = () => {
                       (() => {
                         const cols = editGridCols || 1;
                         const rows = editGridRows || 1;
-                        const previewCont = contents.find(c => c.id === editContentId);
+                        const previewCont = contents.find(c => c.id === editContentId) || contents.find(c => editingGroup && editingGroup.current_content_id === c.id);
                         const prevUrl = previewCont ? `${BACKEND_URL}${previewCont.thumbnail_url || previewCont.file_url}` : null;
 
                         return (
-                          <div className="relative w-full aspect-video bg-slate-800 border border-slate-700 rounded shadow-2xl overflow-hidden">
+                          <div className="relative w-full aspect-video bg-black border border-slate-700 rounded shadow-2xl overflow-hidden flex items-center justify-center">
                             {previewCont?.type === 'image' && prevUrl && (
-                              <img src={prevUrl} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                              <img
+                                src={prevUrl}
+                                className="absolute inset-0 w-full h-full transition-all duration-300"
+                                style={{ objectFit: editFitMode }}
+                              />
                             )}
-                            <div className="absolute inset-0 grid gap-0.5" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }}>
+                            <div className="absolute inset-0 grid gap-0.5 pointer-events-none" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }}>
                               {Array.from({ length: cols * rows }).map((_, idx) => (
-                                <div key={idx} className={`border border-white/5 flex items-center justify-center ${idx < editSelectedScreens.length ? 'bg-indigo-500/40' : 'bg-slate-700/30'}`}>
-                                  <span className="text-[7px] text-white/40 font-bold">{idx + 1}</span>
+                                <div key={idx} className={`border border-white/20 flex items-center justify-center ${idx < editSelectedScreens.length ? 'bg-indigo-500/20' : 'bg-slate-700/40'}`}>
+                                  <span className="text-[7px] text-white/60 font-bold">{idx + 1}</span>
                                 </div>
                               ))}
                             </div>
@@ -821,12 +834,19 @@ export const ScreenSync = () => {
                         );
                       })()
                     ) : (
-                      <div className="flex gap-1 overflow-x-auto pb-1 justify-center">
-                        {editSelectedScreens.length > 0 ? editSelectedScreens.map((id, idx) => (
-                          <div key={id} className="flex-shrink-0 w-12 aspect-video bg-indigo-600 border border-indigo-400 rounded-sm flex items-center justify-center shadow-lg">
-                            <span className="text-white text-[9px] font-bold">{idx + 1}</span>
-                          </div>
-                        )) : (
+                      <div className="flex gap-1 overflow-x-auto pb-1 justify-center w-full">
+                        {editSelectedScreens.length > 0 ? editSelectedScreens.map((id, idx) => {
+                          const previewCont = contents.find(c => c.id === editContentId) || contents.find(c => editingGroup && editingGroup.current_content_id === c.id);
+                          const prevUrl = previewCont ? `${BACKEND_URL}${previewCont.thumbnail_url || previewCont.file_url}` : null;
+                          return (
+                            <div key={id} className="relative flex-shrink-0 w-16 aspect-video bg-indigo-600 border border-indigo-400 rounded-sm flex items-center justify-center shadow-lg overflow-hidden">
+                              {previewCont?.type === 'image' && prevUrl && (
+                                <img src={prevUrl} className="absolute inset-0 w-full h-full object-cover opacity-50" />
+                              )}
+                              <span className="relative z-10 text-white text-[9px] font-bold">{idx + 1}</span>
+                            </div>
+                          );
+                        }) : (
                           <div className="w-32 aspect-video bg-slate-800 border border-slate-700 border-dashed rounded flex items-center justify-center">
                             <span className="text-[10px] text-slate-500 italic">Previzualizare...</span>
                           </div>
@@ -889,8 +909,26 @@ export const ScreenSync = () => {
                                   <span className={`text-[13px] ${isSelected ? 'font-bold text-indigo-900' : 'text-slate-600'}`}>{screen.name}</span>
                                 </div>
                                 {isSelected && (
-                                  <div className="text-[9px] text-indigo-600 font-bold px-1.5 py-0.5 bg-indigo-100 rounded">
-                                    POS {selectedIndex + 1}
+                                  <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex flex-col">
+                                      <button
+                                        className="p-0.5 hover:bg-white rounded transition-colors disabled:opacity-30"
+                                        onClick={() => moveEditScreen(selectedIndex, 'up')}
+                                        disabled={selectedIndex === 0}
+                                      >
+                                        <ChevronUp className="w-3 h-3 text-indigo-600" />
+                                      </button>
+                                      <button
+                                        className="p-0.5 hover:bg-white rounded transition-colors disabled:opacity-30"
+                                        onClick={() => moveEditScreen(selectedIndex, 'down')}
+                                        disabled={selectedIndex === editSelectedScreens.length - 1}
+                                      >
+                                        <ChevronDown className="w-3 h-3 text-indigo-600" />
+                                      </button>
+                                    </div>
+                                    <div className="text-[9px] text-indigo-600 font-bold px-1.5 py-0.5 bg-indigo-100 rounded">
+                                      POS {selectedIndex + 1}
+                                    </div>
                                   </div>
                                 )}
                               </div>
