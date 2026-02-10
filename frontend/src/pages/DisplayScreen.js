@@ -472,11 +472,13 @@ export const DisplayScreen = () => {
       matrixStyle = {
         width: `${cols * 100}%`,
         height: `${rows * 100}%`,
-        transform: `translate(-${(myCol * 100) / cols}%, -${(myRow * 100) / rows}%)`,
+        transform: `translate3d(-${(myCol * 100) / cols}%, -${(myRow * 100) / rows}%, 0)`,
         position: 'absolute',
         left: 0,
         top: 0,
-        transformOrigin: 'top left'
+        transformOrigin: 'top left',
+        willChange: 'transform',
+        backfaceVisibility: 'hidden'
       };
     }
 

@@ -411,20 +411,6 @@ export const LivePreviewDashboard = () => {
                                             }}
                                         >
                                             {groupScreens.map(screen => {
-                                                // Calculate matrix portion
-                                                let matrixTransform = {};
-                                                if (isMatrix) {
-                                                    const myIndex = screen.cascade_offset || 0;
-                                                    const myRow = Math.floor(myIndex / cols);
-                                                    const myCol = myIndex % cols;
-                                                    matrixTransform = {
-                                                        width: `${cols * 100}%`,
-                                                        height: `${rows * 100}%`,
-                                                        transform: `translate(-${(myCol * 100) / cols}%, -${(myRow * 100) / rows}%)`,
-                                                        transformOrigin: 'top left'
-                                                    };
-                                                }
-
                                                 return (
                                                     <div
                                                         key={screen.id}
@@ -438,10 +424,11 @@ export const LivePreviewDashboard = () => {
                                                         <iframe
                                                             src={`/display/${screen.slug}`}
                                                             title={screen.name}
-                                                            className="absolute inset-0 border-0"
+                                                            className="absolute inset-0 border-0 w-[1920px] h-[1080px]"
                                                             style={{
                                                                 pointerEvents: 'none',
-                                                                ...matrixTransform
+                                                                transform: `scale(${isMatrix ? 260 / 1920 : 320 / 1920})`,
+                                                                transformOrigin: 'top left'
                                                             }}
                                                         />
                                                         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
