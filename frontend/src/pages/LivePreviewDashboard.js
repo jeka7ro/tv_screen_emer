@@ -313,9 +313,14 @@ export const LivePreviewDashboard = () => {
                                 <SelectContent>
                                     <SelectItem value="all">Toate grupurile</SelectItem>
                                     <SelectItem value="none">Fără sincronizare</SelectItem>
-                                    {syncGroups.map(group => (
-                                        <SelectItem key={group} value={group}>Grup: {group.substring(0, 8)}</SelectItem>
-                                    ))}
+                                    {syncGroups.map(group => {
+                                        const groupName = screens.find(s => s.sync_group === group)?.sync_group_name;
+                                        return (
+                                            <SelectItem key={group} value={group}>
+                                                {groupName || `Grup: ${group.substring(0, 8)}`}
+                                            </SelectItem>
+                                        );
+                                    })}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -362,61 +367,105 @@ export const LivePreviewDashboard = () => {
                 {/* Screen Grid / Seamless Wall */}
                 <div className={
                     layoutMode === 'seamless'
-                        ? "flex flex-wrap justify-center bg-slate-900 p-8 rounded-xl overflow-hidden gap-0"
+                        ? "bg-slate-950 p-12 rounded-2xl overflow-y-auto space-y-12 min-h-[600px] border border-slate-800 shadow-2xl flex flex-col items-center"
                         : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                 }>
-                    {filteredScreens.map((screen) => {
-                        // Calculate matrix position for seamless mode
-                        let matrixTransform = {};
-                        if (layoutMode === 'seamless' && screen.sync_group && screen.sync_type?.startsWith('matrix')) {
-                            // Get all screens in this sync group
-                            const groupScreens = screens
-                                .filter(s => s.sync_group === screen.sync_group)
-                                .sort((a, b) => (a.cascade_offset || 0) - (b.cascade_offset || 0));
+                    {layoutMode === 'seamless' ? (
+                        (() => {
+                            // In seamless mode, group screens by their sync_group
+                            const groups = {};
+                            filteredScreens.forEach(s => {
+                                const gid = s.sync_group || 'un-synced';
+                                if (!groups[gid]) groups[gid] = [];
+                                groups[gid].push(s);
+                            });
 
-                            const totalScreens = groupScreens.length;
-                            const myIndex = screen.cascade_offset || 0;
+                            return Object.keys(groups).map(gid => {
+                                const groupScreens = groups[gid].sort((a, b) => (a.cascade_offset || 0) - (b.cascade_offset || 0));
+                                const sample = groupScreens[0];
+                                const isMatrix = sample.sync_type?.startsWith('matrix');
 
-                            // Parse grid dimensions from sync_type (e.g., "matrix:3x1")
-                            let cols = 3, rows = 1;
-                            if (screen.sync_type.includes(':')) {
-                                const dims = screen.sync_type.split(':')[1].split('x');
-                                cols = parseInt(dims[0]) || 3;
-                                rows = parseInt(dims[1]) || 1;
-                            } else {
-                                // Fallback heuristics
-                                if (totalScreens === 3) { cols = 3; rows = 1; }
-                                else if (totalScreens === 4) { cols = 2; rows = 2; }
-                                else if (totalScreens === 2) { cols = 2; rows = 1; }
-                                else {
-                                    cols = Math.ceil(Math.sqrt(totalScreens));
-                                    rows = Math.ceil(totalScreens / cols);
+                                let cols = groupScreens.length, rows = 1;
+                                if (isMatrix) {
+                                    const dims = sample.sync_type.split(':')[1].split('x');
+                                    cols = parseInt(dims[0]) || 2;
+                                    rows = parseInt(dims[1]) || 1;
                                 }
-                            }
 
-                            const myRow = Math.floor(myIndex / cols);
-                            const myCol = myIndex % cols;
+                                return (
+                                    <div key={gid} className="flex flex-col items-center">
+                                        <div className="mb-4 flex items-center gap-3">
+                                            <div className="h-px w-12 bg-slate-700"></div>
+                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                                {gid === 'un-synced' ? 'Ecrane Individuale' : `Grup: ${sample.sync_group_name || gid.substring(0, 8)}`}
+                                            </span>
+                                            <div className="h-px w-12 bg-slate-700"></div>
+                                        </div>
 
-                            // Transform to show only this screen's portion
-                            matrixTransform = {
-                                width: `${cols * 100}%`,
-                                height: `${rows * 100}%`,
-                                transform: `translate(-${(myCol * 100) / cols}%, -${(myRow * 100) / rows}%)`,
-                                transformOrigin: 'top left'
-                            };
-                        }
+                                        <div
+                                            className="grid gap-1 bg-black p-1 rounded-lg shadow-2xl border border-slate-800"
+                                            style={{
+                                                gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                                                width: 'fit-content',
+                                                maxWidth: '100%'
+                                            }}
+                                        >
+                                            {groupScreens.map(screen => {
+                                                // Calculate matrix portion
+                                                let matrixTransform = {};
+                                                if (isMatrix) {
+                                                    const myIndex = screen.cascade_offset || 0;
+                                                    const myRow = Math.floor(myIndex / cols);
+                                                    const myCol = myIndex % cols;
+                                                    matrixTransform = {
+                                                        width: `${cols * 100}%`,
+                                                        height: `${rows * 100}%`,
+                                                        transform: `translate(-${(myCol * 100) / cols}%, -${(myRow * 100) / rows}%)`,
+                                                        transformOrigin: 'top left'
+                                                    };
+                                                }
+
+                                                return (
+                                                    <div
+                                                        key={screen.id}
+                                                        className="relative aspect-video bg-black overflow-hidden group cursor-pointer border border-white/5"
+                                                        style={{ width: isMatrix ? '260px' : '320px' }}
+                                                        onClick={() => {
+                                                            setSelectedScreen(screen);
+                                                            setShowFullscreen(true);
+                                                        }}
+                                                    >
+                                                        <iframe
+                                                            src={`/display/${screen.slug}`}
+                                                            title={screen.name}
+                                                            className="absolute inset-0 border-0"
+                                                            style={{
+                                                                pointerEvents: 'none',
+                                                                ...matrixTransform
+                                                            }}
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
+                                                        <div className="absolute bottom-1 left-1 z-20 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                            <span className="text-[9px] font-bold text-white px-1 bg-black/60 rounded">
+                                                                {screen.name}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            });
+                        })()
+                    ) : filteredScreens.map((screen) => {
 
                         return (
                             <div
                                 key={screen.id}
-                                className={
-                                    layoutMode === 'seamless'
-                                        ? "cursor-pointer relative group transition-all"
-                                        : "glass-card p-4 cursor-pointer hover:shadow-xl transition-all"
-                                }
+                                className="glass-card p-4 cursor-pointer hover:shadow-xl transition-all"
                                 style={{
-                                    borderLeft: layoutMode === 'grid' && screen.sync_group ? `4px solid ${getSyncGroupColor(screen.sync_group)}` : 'none',
-                                    width: layoutMode === 'seamless' ? '300px' : 'auto',
+                                    borderLeft: screen.sync_group ? `4px solid ${getSyncGroupColor(screen.sync_group)}` : 'none',
                                     aspectRatio: '16/9'
                                 }}
                                 onClick={() => {
@@ -425,47 +474,25 @@ export const LivePreviewDashboard = () => {
                                 }}
                             >
                                 {/* LIVE PREVIEW */}
-                                <div className={
-                                    layoutMode === 'seamless'
-                                        ? "w-full h-full bg-black overflow-hidden relative border-[0.5px] border-slate-800/50"
-                                        : "relative aspect-video bg-slate-900 rounded-lg overflow-hidden mb-3"
-                                }>
+                                <div className="relative aspect-video bg-slate-900 rounded-lg overflow-hidden mb-3">
                                     <iframe
                                         src={`/display/${screen.slug}`}
                                         title={screen.name}
-                                        className="absolute inset-0 border-0"
-                                        style={{
-                                            pointerEvents: 'none',
-                                            ...(layoutMode === 'seamless' && Object.keys(matrixTransform).length > 0
-                                                ? matrixTransform
-                                                : { width: '100%', height: '100%' })
-                                        }}
+                                        className="absolute inset-0 border-0 w-full h-full"
+                                        style={{ pointerEvents: 'none' }}
                                     />
 
                                     {/* Fullscreen icon */}
-                                    <div className={
-                                        layoutMode === 'seamless'
-                                            ? "absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 p-1 rounded z-20"
-                                            : "absolute top-2 right-2 bg-black/70 p-1.5 rounded-lg z-20"
-                                    }>
-                                        <Maximize2 className={layoutMode === 'seamless' ? "w-3 h-3 text-white" : "w-4 h-4 text-white"} />
+                                    <div className="absolute top-2 right-2 bg-black/70 p-1.5 rounded-lg z-20">
+                                        <Maximize2 className="w-4 h-4 text-white" />
                                     </div>
 
-                                    {/* Status badge - Minimal in seamless */}
-                                    {layoutMode === 'seamless' ? (
-                                        <div className="absolute bottom-2 left-2 z-20">
-                                            <span className="text-[10px] font-bold text-white drop-shadow-md bg-black/50 px-1.5 py-0.5 rounded backdrop-blur-sm">
-                                                {screen.name}
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <div className="absolute top-2 left-2 z-20">
-                                            <span className={screen.status === 'online' ? 'status-active' : 'status-offline'}>
-                                                <Circle className="w-2 h-2 fill-current" />
-                                                {screen.status}
-                                            </span>
-                                        </div>
-                                    )}
+                                    <div className="absolute top-2 left-2 z-20">
+                                        <span className={screen.status === 'online' ? 'status-active' : 'status-offline'}>
+                                            <Circle className="w-2 h-2 fill-current" />
+                                            {screen.status}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 {/* Detailed Info only in Grid Mode */}

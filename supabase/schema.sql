@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS screens (
   cascade_offset INT DEFAULT 0,
   sync_type TEXT DEFAULT 'simple',
   sync_group_name TEXT,
+  sync_fit_mode TEXT DEFAULT 'cover',
   status TEXT DEFAULT 'offline',
   last_active TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

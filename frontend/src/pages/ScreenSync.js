@@ -25,6 +25,7 @@ export const ScreenSync = () => {
   const [syncType, setSyncType] = useState('simple');
   const [gridCols, setGridCols] = useState(2);
   const [gridRows, setGridRows] = useState(1);
+  const [fitMode, setFitMode] = useState('cover'); // cover, contain
   const [manualOrder, setManualOrder] = useState(false);
 
   const [activeGroups, setActiveGroups] = useState([]);
@@ -35,6 +36,7 @@ export const ScreenSync = () => {
   const [editGroupName, setEditGroupName] = useState('');
   const [editContentId, setEditContentId] = useState('');
   const [editSelectedScreens, setEditSelectedScreens] = useState([]);
+  const [editFitMode, setEditFitMode] = useState('cover');
 
   // ... (keep createModalOpen)
 
@@ -106,7 +108,8 @@ export const ScreenSync = () => {
         screen_ids: orderedScreens,
         sync_type: syncType,
         content_id: selectedContentId,
-        group_name: groupName || undefined
+        group_name: groupName || undefined,
+        fit_mode: fitMode
       };
 
       if (syncType === 'matrix') {
@@ -146,6 +149,42 @@ export const ScreenSync = () => {
   const [editGridCols, setEditGridCols] = useState(2);
   const [editGridRows, setEditGridRows] = useState(1);
 
+  // Bulk Selection Helpers
+  const bulkSelectLocation = (locationId, isEdit = false) => {
+    const screensInLocation = screens
+      .filter(s => s.location_id === locationId)
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
+      .map(s => s.id);
+
+    const currentSelected = isEdit ? editSelectedScreens : selectedScreens;
+    const setFn = isEdit ? setEditSelectedScreens : setSelectedScreens;
+
+    const allPresent = screensInLocation.every(id => currentSelected.includes(id));
+
+    if (allPresent) {
+      // Remove all of them
+      setFn(currentSelected.filter(id => !screensInLocation.includes(id)));
+    } else {
+      // Add missing ones (preserving order of existing, appending new)
+      const toAdd = screensInLocation.filter(id => !currentSelected.includes(id));
+      setFn([...currentSelected, ...toAdd]);
+    }
+  };
+
+  const selectAllScreens = (isEdit = false) => {
+    const allScreenIds = screens
+      .sort((a, b) => {
+        const locA = locations.find(l => l.id === a.location_id)?.name || '';
+        const locB = locations.find(l => l.id === b.location_id)?.name || '';
+        if (locA !== locB) return locA.localeCompare(locB);
+        return a.name.localeCompare(b.name, undefined, { numeric: true });
+      })
+      .map(s => s.id);
+
+    const setFn = isEdit ? setEditSelectedScreens : setSelectedScreens;
+    setFn(allScreenIds);
+  };
+
   const openEditGroup = (group) => {
     setEditingGroup(group);
     setEditGroupName(group.name || '');
@@ -163,6 +202,8 @@ export const ScreenSync = () => {
       setEditGridCols(2);
       setEditGridRows(1);
     }
+
+    setEditFitMode(group.fit_mode || 'cover');
 
     // Initialize Ordered Screen List
     // We trust screen_ids if available for order.
@@ -207,6 +248,7 @@ export const ScreenSync = () => {
         content_id: editContentId || undefined,
         screen_ids: editSelectedScreens,
         sync_type: editSyncType,
+        fit_mode: editFitMode
       };
 
       if (editSyncType === 'matrix') {
@@ -388,13 +430,23 @@ export const ScreenSync = () => {
                 <Label className="text-base font-semibold text-slate-800 mb-2 block border-b pb-2">1. Selectează Ecranele ({selectedScreens.length})</Label>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-slate-500 italic">
-                    Click pe ecran pentru a-l adăuga în ordine (1, 2, 3...). Click din nou pentru a-l elimina.
+                    Click pe ecran pentru a-l adăuga în ordine.
                   </span>
-                  {syncType === 'matrix' && (
-                    <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">
-                      Necesar: {parseInt(gridCols) * parseInt(gridRows)}
-                    </span>
-                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      className="text-[10px] h-7 bg-white hover:bg-slate-100"
+                      onClick={() => selectAllScreens(false)}
+                    >
+                      Selectează absolut toate ecranele
+                    </Button>
+                    {syncType === 'matrix' && (
+                      <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">
+                        Necesar: {parseInt(gridCols) * parseInt(gridRows)}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
@@ -404,12 +456,22 @@ export const ScreenSync = () => {
 
                     return (
                       <div key={location.id} className="bg-slate-50/50 rounded-xl p-4 border border-slate-100">
-                        <h3 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
-                          {location.name}
-                          <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded-full border border-slate-200">
-                            {locationScreens.length} ecrane
-                          </span>
-                        </h3>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                            {location.name}
+                            <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded-full border border-slate-200">
+                              {locationScreens.length} ecrane
+                            </span>
+                          </h3>
+                          <Button
+                            variant="outline"
+                            size="xs"
+                            className="text-[10px] h-6 px-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                            onClick={() => bulkSelectLocation(location.id, false)}
+                          >
+                            {locationScreens.every(s => selectedScreens.includes(s.id)) ? 'Deselectează locația' : 'Selectează locația'}
+                          </Button>
+                        </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-2">
                           {locationScreens.sort((a, b) => a.name.localeCompare(b.name)).map((screen) => {
@@ -449,90 +511,22 @@ export const ScreenSync = () => {
               </div>
 
               {/* SECTION 2: Name & Config */}
-              <div className="grid grid-cols-1 gap-6 pt-4 border-t border-slate-100">
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-base font-semibold text-slate-800 mb-2 block">2. Detalii Grup</Label>
-                    <Label className="text-xs text-slate-500 mb-1 block">Nume Grup (Opțional)</Label>
-                    <Input
-                      placeholder="ex: Video Wall Recepție"
-                      value={groupName}
-                      onChange={(e) => setGroupName(e.target.value)}
-                      className="mt-1"
-                    />
-                  </div>
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <div>
+                  <Label className="text-sm font-semibold text-slate-700 mb-1.5 block">2. Nume Grup (Opțional)</Label>
+                  <Input
+                    placeholder="ex: Video Wall Recepție"
+                    value={groupName}
+                    onChange={(e) => setGroupName(e.target.value)}
+                    className="bg-white"
+                  />
+                </div>
 
-                  <div>
-                    <Label className="text-base font-semibold text-slate-800 mb-3 block mt-4">3. Alege Conținutul</Label>
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
-                      {contents.length === 0 && (
-                        <div className="text-center py-8 text-slate-500 text-sm">
-                          Nu există conținut disponibil.
-                        </div>
-                      )}
-                      {contents.map(content => {
-                        const isSelected = selectedContentId === content.id;
-                        const imageUrl = content.thumbnail_url || content.file_url;
-                        const fullUrl = imageUrl ? `${BACKEND_URL}${imageUrl}` : null;
-
-                        return (
-                          <div
-                            key={content.id}
-                            onClick={() => setSelectedContentId(content.id)}
-                            className={`relative flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-sm group ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 hover:border-primary/50 bg-white'
-                              }`}
-                          >
-                            {/* Thumbnail */}
-                            <div className="w-20 h-12 flex-shrink-0 bg-slate-900 rounded overflow-hidden relative">
-                              {content.type === 'video' ? (
-                                <video
-                                  src={fullUrl}
-                                  className="w-full h-full object-cover"
-                                  muted
-                                  playsInline
-                                  onMouseOver={e => e.target.play()}
-                                  onMouseOut={e => { e.target.pause(); e.target.currentTime = 0; }}
-                                />
-                              ) : (
-                                <img
-                                  src={fullUrl}
-                                  alt={content.title}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => { e.target.style.display = 'none'; }}
-                                />
-                              )}
-                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                {content.type === 'video' && <Film className="w-4 h-4 text-white/70" />}
-                              </div>
-                            </div>
-
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                              <h4 className={`text-sm font-medium truncate ${isSelected ? 'text-primary' : 'text-slate-700'}`}>
-                                {content.title || content.name}
-                              </h4>
-                              <div className="flex items-center gap-2 text-xs text-slate-500">
-                                <span className="capitalize">{content.type}</span>
-                                <span>•</span>
-                                <span className="capitalize">{content.category}</span>
-                              </div>
-                            </div>
-
-                            {/* Checkbox */}
-                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-slate-300'
-                              }`}>
-                              {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Tip sincronizare</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-semibold text-slate-700 block">3. Tip sincronizare</Label>
                     <Select value={syncType} onValueChange={setSyncType}>
-                      <SelectTrigger data-testid="sync-type-select">
+                      <SelectTrigger data-testid="sync-type-select" className="bg-white">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -541,188 +535,195 @@ export const ScreenSync = () => {
                         <SelectItem value="matrix">Matrix (Video Wall)</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {syncType === 'simple'
-                        ? 'Aceeași imagine pe toate ecranele'
-                        : syncType === 'cascade'
-                          ? 'Redare secvențială (înșiruire)'
-                          : 'Imagine împărțită pe grilă (Video Wall)'}
-                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-semibold text-slate-700 block">4. Mod Potrivire</Label>
+                    <Select value={fitMode} onValueChange={setFitMode}>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cover">Acoperă (Fit to Screen)</SelectItem>
+                        <SelectItem value="contain">Conține (Show All)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  {syncType === 'matrix' && (
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
-                      <div>
-                        <Label className="text-xs uppercase text-indigo-900 font-bold mb-1 block">Coloane</Label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={gridCols}
-                          onChange={(e) => setGridCols(e.target.value)}
-                          className="w-full p-2 rounded-md border border-indigo-200 text-center"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs uppercase text-indigo-900 font-bold mb-1 block">Rânduri</Label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="10"
-                          value={gridRows}
-                          onChange={(e) => setGridRows(e.target.value)}
-                          className="w-full p-2 rounded-md border border-indigo-200 text-center"
-                        />
-                      </div>
-                      <p className="col-span-2 text-[10px] text-center text-indigo-700">
-                        Total grid: {gridCols * gridRows} zone
-                      </p>
+                <p className="text-[11px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 italic">
+                  {syncType === 'simple'
+                    ? 'Aceeași imagine pe toate ecranele.'
+                    : syncType === 'cascade'
+                      ? 'Redare secvențială (înșiruire) pe mai multe ecrane.'
+                      : 'Imagine împărțită pe grilă (Video Wall).'}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {syncType === 'matrix' && (
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                    <div>
+                      <Label className="text-xs uppercase text-indigo-900 font-bold mb-1 block">Coloane</Label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={gridCols}
+                        onChange={(e) => setGridCols(e.target.value)}
+                        className="w-full p-2 rounded-md border border-indigo-200 text-center"
+                      />
                     </div>
-                  )}
+                    <div>
+                      <Label className="text-xs uppercase text-indigo-900 font-bold mb-1 block">Rânduri</Label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={gridRows}
+                        onChange={(e) => setGridRows(e.target.value)}
+                        className="w-full p-2 rounded-md border border-indigo-200 text-center"
+                      />
+                    </div>
+                    <p className="col-span-2 text-[10px] text-center text-indigo-700">
+                      Total grid: {gridCols * gridRows} zone
+                    </p>
+                  </div>
+                )}
 
-                  {/* Layout Preview in Modal */}
-                  {selectedContentId && (
-                    <div className="pt-2">
-                      <Label className="mb-2 block">Preview</Label>
-                      <div className="bg-slate-900 rounded-xl p-4 flex items-center justify-center min-h-[160px] max-h-[200px]">
-                        {syncType === 'matrix' ? (
-                          (() => {
-                            const userCols = parseInt(gridCols) || 1;
-                            const userRows = parseInt(gridRows) || 1;
-                            const cols = userCols;
-                            const rows = userRows;
+                <div className="bg-slate-900 rounded-xl p-4 flex items-center justify-center">
+                  <div className="w-full max-w-[400px]">
+                    {syncType === 'matrix' ? (
+                      (() => {
+                        const userCols = parseInt(gridCols) || 1;
+                        const userRows = parseInt(gridRows) || 1;
+                        const cols = userCols;
+                        const rows = userRows;
 
-                            return (
-                              <div className="relative w-full aspect-video bg-slate-800 border border-slate-700 overflow-hidden">
-                                {previewContent?.type === 'image' && (
-                                  <img
-                                    src={previewContent.url}
-                                    className="absolute inset-0 w-full h-full object-cover opacity-50"
-                                    alt="Preview"
-                                  />
-                                )}
-                                {previewContent?.type === 'video' && (
-                                  <video
-                                    src={previewContent.url}
-                                    className="absolute inset-0 w-full h-full object-cover opacity-50"
-                                    muted
-                                    loop
-                                    autoPlay
-                                  />
-                                )}
+                        return (
+                          <div className="relative w-full aspect-video bg-slate-800 border border-slate-700 overflow-hidden">
+                            {previewContent?.type === 'image' && (
+                              <img
+                                src={previewContent.url}
+                                className="absolute inset-0 w-full h-full object-cover opacity-50"
+                                alt="Preview"
+                              />
+                            )}
+                            {previewContent?.type === 'video' && (
+                              <video
+                                src={previewContent.url}
+                                className="absolute inset-0 w-full h-full object-cover opacity-50"
+                                muted
+                                loop
+                                autoPlay
+                              />
+                            )}
 
-                                <div className="absolute inset-0 flex items-center justify-center text-slate-100/30 text-[10px] font-mono tracking-widest z-0 -rotate-12">
-                                  {`VIDEO WALL (${cols}x${rows})`}
-                                </div>
-                                <div
-                                  className="absolute inset-0 grid gap-0 overflow-hidden" // Removed gap to simulate seamless video wall
-                                  style={{
-                                    gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                                    gridTemplateRows: `repeat(${rows}, 1fr)`
-                                  }}
-                                >
-                                  {Array.from({ length: cols * rows }).map((_, slotIdx) => {
-                                    let displayOrder = [...selectedScreens];
+                            <div className="absolute inset-0 flex items-center justify-center text-slate-100/30 text-[10px] font-mono tracking-widest z-0 -rotate-12">
+                              {`VIDEO WALL (${cols}x${rows})`}
+                            </div>
+                            <div
+                              className="absolute inset-0 grid gap-0 overflow-hidden" // Removed gap to simulate seamless video wall
+                              style={{
+                                gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                                gridTemplateRows: `repeat(${rows}, 1fr)`
+                              }}
+                            >
+                              {Array.from({ length: cols * rows }).map((_, slotIdx) => {
+                                let displayOrder = [...selectedScreens];
 
-                                    const screenId = displayOrder[slotIdx];
-                                    const screen = screens.find(s => s.id === screenId);
+                                const screenId = displayOrder[slotIdx];
+                                const screen = screens.find(s => s.id === screenId);
 
-                                    if (!screenId) {
-                                      return (
-                                        <div key={`empty-${slotIdx}`} className="bg-slate-800/50 border border-slate-700/30 flex items-center justify-center">
-                                          <span className="text-[8px] text-slate-600">Emp</span>
-                                        </div>
-                                      );
-                                    }
+                                if (!screenId) {
+                                  return (
+                                    <div key={`empty-${slotIdx}`} className="bg-slate-800/50 border border-slate-700/30 flex items-center justify-center">
+                                      <span className="text-[8px] text-slate-600">Emp</span>
+                                    </div>
+                                  );
+                                }
 
-                                    return (
-                                      <div key={screenId} className="flex items-center justify-center relative backdrop-blur-[2px] bg-indigo-500/10 border-indigo-500/50 border">
-                                        <div className="text-center">
-                                          <span className="text-white font-bold text-shadow text-xs drop-shadow-md block leading-none">{slotIdx + 1}</span>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            );
-                          })()
-                        ) : (
-                          <div className="flex gap-2 overflow-x-auto pb-2 w-full justify-center">
-                            {selectedScreens.map((id, idx) => (
-                              <div key={id} className="flex-shrink-0 w-12 aspect-video bg-slate-800 border-2 border-slate-600 rounded flex items-center justify-center relative">
-                                <span className="text-white text-xs font-bold">
-                                  {idx + 1}
-                                </span>
-                              </div>
-                            ))}
+                                return (
+                                  <div key={screenId} className="flex items-center justify-center relative backdrop-blur-[2px] bg-indigo-500/10 border-indigo-500/50 border">
+                                    <div className="text-center">
+                                      <span className="text-white font-bold text-shadow text-xs drop-shadow-md block leading-none">{slotIdx + 1}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
-                        )}
+                        );
+                      })()
+                    ) : (
+                      <div className="flex gap-2 overflow-x-auto pb-2 w-full justify-center">
+                        {selectedScreens.map((id, idx) => (
+                          <div key={id} className="flex-shrink-0 w-12 aspect-video bg-slate-800 border-2 border-slate-600 rounded flex items-center justify-center relative">
+                            <span className="text-white text-xs font-bold">
+                              {idx + 1}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
-                <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
-                  Anulează
-                </Button>
-                <Button
-                  onClick={() => {
-                    handleSync();
-                    setCreateModalOpen(false);
-                  }}
-                  disabled={syncing || selectedScreens.length < 2 || !selectedContentId}
-                  className="btn-primary"
-                >
-                  {syncing ? (
-                    <div className="flex items-center gap-2">
-                      <div className="spinner w-4 h-4"></div>
-                      Se aplică...
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Shuffle className="w-5 h-5" />
-                      Aplică Sincronizarea
-                    </div>
-                  )}
-                </Button>
-              </div>
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
+              <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
+                Anulează
+              </Button>
+              <Button
+                onClick={() => {
+                  handleSync();
+                  setCreateModalOpen(false);
+                }}
+                disabled={syncing || selectedScreens.length < 2 || !selectedContentId}
+                className="btn-primary"
+              >
+                {syncing ? (
+                  <div className="flex items-center gap-2">
+                    <div className="spinner w-4 h-4"></div>
+                    Se aplică...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Shuffle className="w-5 h-5" />
+                    Aplică Sincronizarea
+                  </div>
+                )}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
 
         {/* Edit Group Modal */}
         <Dialog open={!!editingGroup} onOpenChange={(open) => !open && setEditingGroup(null)}>
-          <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Editează Grup Sincronizare</DialogTitle>
             </DialogHeader>
             <div className="space-y-6 py-4">
 
               {/* 1. Name */}
-              <div>
-                <Label className="mb-2 block font-semibold text-slate-700">Nume Grup</Label>
+              <div className="pt-2">
+                <Label className="text-sm font-semibold text-slate-700 mb-1.5 block">1. Nume Grup</Label>
                 <Input
                   value={editGroupName}
                   onChange={(e) => setEditGroupName(e.target.value)}
-                  className="bg-white border-slate-300 focus:border-indigo-500"
+                  className="bg-white border-slate-300 focus:border-indigo-500 shadow-sm"
+                  placeholder="ex: Video Wall Recepție"
                 />
               </div>
 
               {/* 2. Sync Configuration */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="mb-2 block font-semibold text-slate-700">Tip Sincronizare</Label>
-                  <Select
-                    value={editSyncType}
-                    onValueChange={setEditSyncType}
-                  // disabled={!editingGroup}
-                  >
-                    <SelectTrigger className="bg-white">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-semibold text-slate-700 block text-xs uppercase tracking-wider">2. Tip Sincronizare</Label>
+                  <Select value={editSyncType} onValueChange={setEditSyncType}>
+                    <SelectTrigger className="bg-white border-slate-200 shadow-sm">
                       <SelectValue placeholder="Selectează tipul..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -732,54 +733,145 @@ export const ScreenSync = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                {editSyncType === 'matrix' && (
-                  <div className="flex gap-2">
-                    <div>
-                      <Label className="mb-2 block font-semibold text-slate-700">Coloane</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={editGridCols}
-                        onChange={(e) => setEditGridCols(parseInt(e.target.value) || 1)}
-                        className="bg-white"
-                      />
-                    </div>
-                    <div>
-                      <Label className="mb-2 block font-semibold text-slate-700">Rânduri</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        value={editGridRows}
-                        onChange={(e) => setEditGridRows(parseInt(e.target.value) || 1)}
-                        className="bg-white"
-                      />
-                    </div>
-                  </div>
-                )}
+
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-semibold text-slate-700 block text-xs uppercase tracking-wider">3. Mod Potrivire (Fit)</Label>
+                  <Select value={editFitMode} onValueChange={setEditFitMode}>
+                    <SelectTrigger className="bg-white border-slate-200 shadow-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cover">Acoperă (Fit to Screen)</SelectItem>
+                      <SelectItem value="contain">Conține (Show All)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              {/* 3. Screen Selection (Ordered) */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <Label className="block font-semibold text-slate-700">Selectează Ecranele (În Ordine!)</Label>
-                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                    {editSelectedScreens.length} selectate
-                    {editSyncType === 'matrix' && ` / ${editGridCols * editGridRows} necesare`}
-                  </span>
+              {/* 3. Matrix & Preview Preview Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                <div className="space-y-4">
+                  <Label className="text-[10px] uppercase text-slate-400 font-bold block mb-1">Configurare Extra & Info</Label>
+
+                  {editSyncType === 'matrix' && (
+                    <div className="grid grid-cols-2 gap-3 p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] uppercase text-indigo-600 font-bold block">Coloane</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={editGridCols}
+                          onChange={(e) => setEditGridCols(parseInt(e.target.value) || 1)}
+                          className="h-9 bg-slate-50 border-slate-200 text-center font-bold"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-[10px] uppercase text-indigo-600 font-bold block">Rânduri</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={editGridRows}
+                          onChange={(e) => setEditGridRows(parseInt(e.target.value) || 1)}
+                          className="h-9 bg-slate-50 border-slate-200 text-center font-bold"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-slate-500 uppercase font-bold text-[10px]">Ecrane selectate:</span>
+                      <span className={`font-bold ${editSelectedScreens.length === (editSyncType === 'matrix' ? editGridCols * editGridRows : editSelectedScreens.length) ? 'text-emerald-600' : 'text-amber-500'}`}>
+                        {editSelectedScreens.length} {editSyncType === 'matrix' && ` / ${editGridCols * editGridRows}`}
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 ${editSelectedScreens.length === (editSyncType === 'matrix' ? editGridCols * editGridRows : editSelectedScreens.length) ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                        style={{ width: `${Math.min(100, (editSelectedScreens.length / (editSyncType === 'matrix' ? editGridCols * editGridRows : editSelectedScreens.length || 1)) * 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 border border-slate-200 rounded-lg p-3 bg-slate-50">
+                {/* Live Preview Wall */}
+                <div className="bg-slate-900 rounded-2xl p-4 flex items-center justify-center min-h-[140px] shadow-lg relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-50"></div>
+                  <div className="w-full max-w-[240px] relative z-10 transition-transform duration-500">
+                    {editSyncType === 'matrix' ? (
+                      (() => {
+                        const cols = editGridCols || 1;
+                        const rows = editGridRows || 1;
+                        const previewCont = contents.find(c => c.id === editContentId);
+                        const prevUrl = previewCont ? `${BACKEND_URL}${previewCont.thumbnail_url || previewCont.file_url}` : null;
+
+                        return (
+                          <div className="relative w-full aspect-video bg-slate-800 border border-slate-700 rounded shadow-2xl overflow-hidden">
+                            {previewCont?.type === 'image' && prevUrl && (
+                              <img src={prevUrl} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                            )}
+                            <div className="absolute inset-0 grid gap-0.5" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }}>
+                              {Array.from({ length: cols * rows }).map((_, idx) => (
+                                <div key={idx} className={`border border-white/5 flex items-center justify-center ${idx < editSelectedScreens.length ? 'bg-indigo-500/40' : 'bg-slate-700/30'}`}>
+                                  <span className="text-[7px] text-white/40 font-bold">{idx + 1}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <div className="flex gap-1 overflow-x-auto pb-1 justify-center">
+                        {editSelectedScreens.length > 0 ? editSelectedScreens.map((id, idx) => (
+                          <div key={id} className="flex-shrink-0 w-12 aspect-video bg-indigo-600 border border-indigo-400 rounded-sm flex items-center justify-center shadow-lg">
+                            <span className="text-white text-[9px] font-bold">{idx + 1}</span>
+                          </div>
+                        )) : (
+                          <div className="w-32 aspect-video bg-slate-800 border border-slate-700 border-dashed rounded flex items-center justify-center">
+                            <span className="text-[10px] text-slate-500 italic">Previzualizare...</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Screen Selection (Ordered) */}
+              <div className="pt-2">
+                <div className="flex justify-between items-center mb-2">
+                  <Label className="text-sm font-semibold text-slate-700 block">4. Selectează Ecranele (În Ordine!)</Label>
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    className="text-[10px] h-6 bg-white hover:bg-slate-50 text-indigo-600 border-indigo-100"
+                    onClick={() => selectAllScreens(true)}
+                  >
+                    Selectează toate
+                  </Button>
+                </div>
+
+                <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 border border-slate-200 rounded-xl p-3 bg-slate-50/30">
                   {locations.map(location => {
                     const locScreens = screens.filter(s => s.location_id === location.id);
                     if (locScreens.length === 0) return null;
 
                     return (
-                      <div key={location.id} className="mb-3 last:mb-0">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2 px-1 flex items-center gap-2">
-                          {location.name}
-                          <div className="h-px flex-1 bg-slate-200"></div>
-                        </h4>
-                        <div className="grid grid-cols-1 gap-2">
+                      <div key={location.id} className="mb-4 last:mb-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-white px-2 py-0.5 rounded border border-slate-100">
+                            {location.name}
+                          </h4>
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            className="h-5 text-[9px] text-indigo-500 hover:text-indigo-700 p-0 px-2"
+                            onClick={() => bulkSelectLocation(location.id, true)}
+                          >
+                            {locScreens.every(s => editSelectedScreens.includes(s.id)) ? 'Deselectează' : 'Selectează tot'}
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {locScreens.map(screen => {
                             const selectedIndex = editSelectedScreens.indexOf(screen.id);
                             const isSelected = selectedIndex !== -1;
@@ -788,17 +880,17 @@ export const ScreenSync = () => {
                               <div
                                 key={screen.id}
                                 onClick={() => toggleEditScreen(screen.id)}
-                                className={`flex items-center justify-between p-2 rounded border cursor-pointer transition-all select-none ${isSelected ? 'bg-indigo-50 border-indigo-500 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                                className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all select-none ${isSelected ? 'bg-indigo-50 border-indigo-400 shadow-sm ring-1 ring-indigo-400/20' : 'bg-white border-slate-200 hover:border-slate-300'}`}
                               >
-                                <div className="flex items-center gap-3">
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                                    {isSelected ? selectedIndex + 1 : <Tv className="w-4 h-4" />}
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] transition-colors ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                    {isSelected ? selectedIndex + 1 : <Tv className="w-3 h-3" />}
                                   </div>
-                                  <span className={`text-sm ${isSelected ? 'font-medium text-slate-900' : 'text-slate-600'}`}>{screen.name}</span>
+                                  <span className={`text-[13px] ${isSelected ? 'font-bold text-indigo-900' : 'text-slate-600'}`}>{screen.name}</span>
                                 </div>
                                 {isSelected && (
-                                  <div className="text-xs text-indigo-600 font-medium px-2 py-1 bg-indigo-100 rounded">
-                                    Poziția {selectedIndex + 1}
+                                  <div className="text-[9px] text-indigo-600 font-bold px-1.5 py-0.5 bg-indigo-100 rounded">
+                                    POS {selectedIndex + 1}
                                   </div>
                                 )}
                               </div>
@@ -809,15 +901,12 @@ export const ScreenSync = () => {
                     );
                   })}
                 </div>
-                <p className="text-[11px] text-slate-500 mt-2">
-                  * Ordinea selectării determină poziția în grid/cascadă. Deselectează pentru a schimba ordinea.
-                </p>
               </div>
 
-              {/* 3. Content Selection */}
-              <div>
-                <Label className="mb-3 block font-semibold text-slate-700">Schimbă Conținutul (Opțional)</Label>
-                <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2 border border-slate-100 rounded-lg p-3 bg-slate-50/50">
+              {/* 5. Content Selection */}
+              <div className="pt-2">
+                <Label className="text-sm font-semibold text-slate-700 mb-2 block">5. Schimbă Conținutul (Opțional)</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 border border-slate-200 rounded-xl p-3 bg-slate-50/30">
                   {contents.map(content => {
                     const isSelected = editContentId === content.id;
                     const imageUrl = content.thumbnail_url || content.file_url;
@@ -827,15 +916,19 @@ export const ScreenSync = () => {
                       <div
                         key={content.id}
                         onClick={() => setEditContentId(content.id === editContentId ? '' : content.id)}
-                        className={`relative flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-sm ${isSelected ? 'border-indigo-500 bg-indigo-50/30' : 'border-slate-200 bg-white'}`}
+                        className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 bg-white'}`}
                       >
-                        <div className="w-16 h-10 flex-shrink-0 bg-slate-900 rounded overflow-hidden">
-                          {content.type === 'video' ? <video src={fullUrl} className="w-full h-full object-cover" muted /> : <img src={fullUrl} className="w-full h-full object-cover" />}
+                        <div className="w-14 h-9 flex-shrink-0 bg-slate-900 rounded overflow-hidden relative shadow-inner">
+                          {content.type === 'video' ? (
+                            <Film className="absolute inset-0 m-auto w-3 h-3 text-white/40 z-10" />
+                          ) : null}
+                          <img src={fullUrl} className="w-full h-full object-cover opacity-80" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className={`text-sm font-medium truncate ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>{content.title || content.name}</h4>
+                          <h4 className={`text-[11px] font-bold truncate ${isSelected ? 'text-primary' : 'text-slate-700'}`}>{content.title || content.name}</h4>
+                          <p className="text-[9px] text-slate-400 uppercase font-medium">{content.type}</p>
                         </div>
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'}`}>
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary' : 'border-slate-300'}`}>
                           {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                         </div>
                       </div>
@@ -844,15 +937,27 @@ export const ScreenSync = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <Button variant="outline" onClick={() => setEditingGroup(null)}>Anulează</Button>
-                <Button onClick={handleUpdateGroup} className="bg-indigo-600 hover:bg-indigo-700 text-white">Salvează Modificările</Button>
+              {/* 6. Action Buttons */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingGroup(null)}
+                  className="font-medium text-slate-600"
+                >
+                  Anulează
+                </Button>
+                <Button
+                  onClick={handleUpdateGroup}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 shadow-indigo-200 shadow-lg"
+                >
+                  Salvează Modificările
+                </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
-      </div>
-    </DashboardLayout>
+      </div >
+    </DashboardLayout >
   );
 };
 

@@ -259,7 +259,11 @@ export const DisplayScreen = () => {
                 src={getFullUrl(currentItem.file_url)}
                 alt={currentItem.title}
                 className={`max-w-full max-h-full shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
-                style={{ objectFit: 'contain' }}
+                style={{
+                  objectFit: displayData?.sync_info?.fit_mode || (displayData?.sync_info?.sync_type?.startsWith('matrix') ? 'cover' : 'contain'),
+                  width: (displayData?.sync_info?.fit_mode === 'cover' || displayData?.sync_info?.sync_type?.startsWith('matrix')) ? '100%' : 'auto',
+                  height: (displayData?.sync_info?.fit_mode === 'cover' || displayData?.sync_info?.sync_type?.startsWith('matrix')) ? '100%' : 'auto'
+                }}
                 onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
               />
             ) : (
@@ -271,7 +275,11 @@ export const DisplayScreen = () => {
                   muted
                   playsInline
                   className={`max-w-full max-h-full shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
-                  style={{ objectFit: 'contain' }}
+                  style={{
+                    objectFit: displayData?.sync_info?.fit_mode || (displayData?.sync_info?.sync_type?.startsWith('matrix') ? 'cover' : 'contain'),
+                    width: (displayData?.sync_info?.fit_mode === 'cover' || displayData?.sync_info?.sync_type?.startsWith('matrix')) ? '100%' : 'auto',
+                    height: (displayData?.sync_info?.fit_mode === 'cover' || displayData?.sync_info?.sync_type?.startsWith('matrix')) ? '100%' : 'auto'
+                  }}
                   onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
                 >
                   Browser-ul nu suportă video.
@@ -344,11 +352,11 @@ export const DisplayScreen = () => {
                 alt={content.title}
                 className={`shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
                 style={{
-                  objectFit: displayData?.sync_info?.sync_type?.startsWith('matrix') ? 'cover' : 'contain',
-                  width: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : 'auto',
-                  height: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : 'auto',
-                  maxWidth: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%',
-                  maxHeight: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%'
+                  objectFit: displayData?.sync_info?.fit_mode || (displayData?.sync_info?.sync_type?.startsWith('matrix') ? 'cover' : 'contain'),
+                  width: (displayData?.sync_info?.fit_mode === 'cover' || displayData?.sync_info?.sync_type?.startsWith('matrix')) ? '100%' : 'auto',
+                  height: (displayData?.sync_info?.fit_mode === 'cover' || displayData?.sync_info?.sync_type?.startsWith('matrix')) ? '100%' : 'auto',
+                  maxWidth: '100%',
+                  maxHeight: '100%'
                 }}
                 onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
               />
@@ -362,11 +370,11 @@ export const DisplayScreen = () => {
                   playsInline
                   className={`shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
                   style={{
-                    objectFit: displayData?.sync_info?.sync_type?.startsWith('matrix') ? 'cover' : 'contain',
-                    width: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : 'auto',
-                    height: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : 'auto',
-                    maxWidth: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%',
-                    maxHeight: displayData?.sync_info?.sync_type?.startsWith('matrix') ? '100%' : '100%'
+                    objectFit: displayData?.sync_info?.fit_mode || (displayData?.sync_info?.sync_type?.startsWith('matrix') ? 'cover' : 'contain'),
+                    width: (displayData?.sync_info?.fit_mode === 'cover' || displayData?.sync_info?.sync_type?.startsWith('matrix')) ? '100%' : 'auto',
+                    height: (displayData?.sync_info?.fit_mode === 'cover' || displayData?.sync_info?.sync_type?.startsWith('matrix')) ? '100%' : 'auto',
+                    maxWidth: '100%',
+                    maxHeight: '100%'
                   }}
                   onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
                 >
