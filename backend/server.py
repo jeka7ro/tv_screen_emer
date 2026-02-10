@@ -94,9 +94,6 @@ from db import (
     screens_by_sync_group,
     sync_groups_list,
     sync_groups_list,
-    sync_group_delete,
-    password_reset_create,
-    password_reset_get,
     password_reset_delete,
     user_update_password,
     folder_list,
@@ -1372,9 +1369,8 @@ async def create_folder(folder_data: ContentFolderCreate, current_user: User = D
             "color": folder_data.color or "#6366f1",
             "icon": folder_data.icon or "folder"
         }
-        
         # Use simple dict for insert, mirroring verify_backend.py interaction
-        await db.folder_insert(folder_dict)
+        await folder_insert(folder_dict)
         
         # Return what client expects (ID will be null but verify works)
         return ContentFolder(**folder_dict)
@@ -1385,34 +1381,49 @@ async def create_folder(folder_data: ContentFolderCreate, current_user: User = D
 
 @api_router.patch("/content/folders/{folder_id}", response_model=ContentFolder)
 async def update_folder(folder_id: str, folder_data: ContentFolderUpdate, current_user: User = Depends(require_admin)):
-    existing = await db.folder_get_by_id(folder_id)
-    if not existing:
-        raise HTTPException(status_code=404, detail="Folder not found")
-    update_data = folder_data.model_dump(exclude_unset=True)
-    if update_data:
-        await db.folder_update(folder_id, update_data)
-    updated = await db.folder_get_by_id(folder_id)
-    return updated
+    try:
+        existing = await folder_get_by_id(int(folder_id))
+        if not existing:
+            raise HTTPException(status_code=404, detail="Folder not found")
+        update_data = folder_data.model_dump(exclude_unset=True)
+        if update_data:
+            await folder_update(int(folder_id), update_data)
+        updated = await folder_get_by_id(int(folder_id))
+        if not updated:
+             raise HTTPException(status_code=404, detail="Folder not found after update")
+        return updated
+    except Exception as e:
+        logger.error(f"Update Folder Error: {e}")
+        raise HTTPException(status_code=400, detail=f"Update Error: {str(e)}")
 
 @api_router.delete("/content/folders/{folder_id}")
 async def delete_folder(folder_id: str, current_user: User = Depends(require_admin)):
-    existing = await db.folder_get_by_id(folder_id)
-    if not existing:
-        raise HTTPException(status_code=404, detail="Folder not found")
-    await db.folder_delete(folder_id)
-    return JSONResponse(content={"message": "Folder deleted, content moved to root"}, status_code=200)
+    try:
+        existing = await folder_get_by_id(int(folder_id))
+        if not existing:
+            raise HTTPException(status_code=404, detail="Folder not found")
+        await folder_delete(int(folder_id))
+        return JSONResponse(content={"message": "Folder deleted, content moved to root"}, status_code=200)
+    except Exception as e:
+        logger.error(f"Delete Folder Error: {e}")
+        raise HTTPException(status_code=400, detail=f"Delete Error: {str(e)}") 
 
 @api_router.patch("/content/{content_id}/folder")
 async def move_content_to_folder(content_id: str, move_data: MoveToFolder, current_user: User = Depends(require_admin)):
-    content = await db.content_get(content_id)
+    content = await content_get(content_id)
     if not content:
         raise HTTPException(status_code=404, detail="Content not found")
     if move_data.folder_id:
-        folder = await db.folder_get_by_id(move_data.folder_id)
+        folder = await folder_get_by_id(int(move_data.folder_id))
         if not folder:
             raise HTTPException(status_code=404, detail="Folder not found")
-    await db.content_update_folder(content_id, move_data.folder_id)
+    await content_update_folder(content_id, int(move_data.folder_id) if move_data.folder_id else None)
     return JSONResponse(content={"message": "Content moved successfully"}, status_code=200)
+
+@api_router.get("/content/folders", response_model=List[ContentFolder])
+async def list_folders(current_user: User = Depends(get_current_user)):
+    folders = await folder_list()
+    return folders
 
 # ============ PLAYLISTS ROUTES ============
 
