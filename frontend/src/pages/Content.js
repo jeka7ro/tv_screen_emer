@@ -229,8 +229,8 @@ export const Content = () => {
     return fileUrl;
   };
 
-  const images = content.filter(c => c.type === 'image');
-  const videos = content.filter(c => c.type === 'video');
+  const images = filteredContent.filter(c => c.type === 'image');
+  const videos = filteredContent.filter(c => c.type === 'video');
 
   if (loading) {
     return (
@@ -653,6 +653,20 @@ export const Content = () => {
                     </div>
                   </form>
                 </DialogContent>
+
+      {/* Main Content with Folder Sidebar */}
+      <div className="flex gap-6">
+        <FolderSidebar
+          folders={folders}
+          selectedFolder={selectedFolder}
+          setSelectedFolder={setSelectedFolder}
+          content={content}
+          isAdmin={isAdmin}
+          openFolderDialog={openFolderDialog}
+          handleDeleteFolder={handleDeleteFolder}
+        />
+        <div className="flex-1">
+
               </Dialog>
             )}
           </div>
@@ -677,6 +691,18 @@ export const Content = () => {
             {renderView(videos)}
           </TabsContent>
         </Tabs>
+
+      {/* Folder Dialog */}
+      <FolderDialog
+        showFolderDialog={showFolderDialog}
+        setShowFolderDialog={setShowFolderDialog}
+        editingFolder={editingFolder}
+        folderFormData={folderFormData}
+        setFolderFormData={setFolderFormData}
+        handleCreateFolder={handleCreateFolder}
+        handleUpdateFolder={handleUpdateFolder}
+      />
+
 
         {/* Preview Modal */}
         <Dialog open={showPreview} onOpenChange={setShowPreview}>
@@ -741,6 +767,9 @@ export const Content = () => {
                     <a
                       href={getFileUrl(previewItem.file_url)}
                       target="_blank"
+        </div> {/* Close flex-1 */}
+      </div> {/* Close flex gap-6 */}
+
                       rel="noopener noreferrer"
                       className="text-sm text-indigo-600 hover:text-indigo-700 truncate block"
                     >
