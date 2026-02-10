@@ -334,7 +334,15 @@ export const Content = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.map((item) => (
-                <tr key={item.id} className={`group hover:bg-slate-50/50 transition-colors ${selectedItems.has(item.id) ? 'bg-indigo-50/30' : ''}`}>
+                <tr
+                  key={item.id}
+                  className={`group hover:bg-slate-50/50 transition-colors ${selectedItems.has(item.id) ? 'bg-indigo-50/30' : ''} cursor-move active:opacity-50 active:scale-[0.99] transform`}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('contentId', item.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                  }}
+                >
                   <td className="p-4">
                     <input
                       type="checkbox"
@@ -345,17 +353,24 @@ export const Content = () => {
                   </td>
                   <td className="p-4 w-24">
                     <div
-                      className="w-16 h-10 rounded-lg overflow-hidden bg-slate-100 cursor-pointer"
+                      className="w-16 h-10 rounded-lg overflow-hidden bg-slate-100 cursor-pointer flex items-center justify-center border border-slate-200 shadow-sm"
                       onClick={() => handlePreview(item)}
                     >
                       {item.type === 'youtube' ? (
-                        <div className="w-full h-full bg-red-600 flex items-center justify-center text-white font-bold text-[8px]">YT</div>
+                        <div className="w-full h-full bg-red-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
+                          <Film className="w-4 h-4 mr-0.5" /> YT
+                        </div>
                       ) : item.type === 'web' ? (
-                        <div className="w-full h-full bg-blue-600 flex items-center justify-center text-white font-bold text-[8px]">WEB</div>
+                        <div className="w-full h-full bg-indigo-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
+                          <LayoutGrid className="w-4 h-4 mr-0.5" /> WEB
+                        </div>
                       ) : item.type === 'image' ? (
                         <img src={getFileUrl(item.file_url)} className="w-full h-full object-cover" alt="" />
                       ) : (
-                        <video src={getFileUrl(item.file_url)} className="w-full h-full object-cover" />
+                        <div className="relative w-full h-full bg-slate-900 flex items-center justify-center">
+                          <video src={getFileUrl(item.file_url)} className="w-full h-full object-cover opacity-60" />
+                          <Film className="absolute w-4 h-4 text-white" />
+                        </div>
                       )}
                     </div>
                   </td>
@@ -691,9 +706,9 @@ export const Content = () => {
           </div>
 
           {/* Main Content with Folder Sidebar */}
-          <div className="flex gap-6 items-stretch">
-            <div className="w-64 shrink-0">
-              <div className="h-full bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col">
+          <div className="flex flex-col lg:flex-row gap-6 items-start min-h-[600px]">
+            <div className="w-full lg:w-72 shrink-0 lg:sticky lg:top-24">
+              <div className="h-full bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col p-1">
                 <FolderSidebar
                   folders={folders}
                   selectedFolder={selectedFolder}
