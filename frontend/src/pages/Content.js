@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
+import { FolderSidebar } from '../components/FolderSidebar';
+import { FolderDialog } from '../components/FolderDialog';
 import { Upload, Link as LinkIcon, FileImage, Film, Trash2, Plus, LayoutGrid, List as ListIcon, Eye, Folder, FolderPlus, Edit2, FolderOpen } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
@@ -65,6 +67,81 @@ export const Content = () => {
       console.error('Error loading folders:', error);
     }
   };
+
+  const handleCreateFolder = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/content/folders', folderFormData);
+      toast.success('Folder creat!');
+      setShowFolderDialog(false);
+      resetFolderForm();
+      loadFolders();
+    } catch (error) {
+      toast.error('Eroare la crearea folderului');
+    }
+  };
+
+  const handleUpdateFolder = async (e) => {
+    e.preventDefault();
+    try {
+      await api.patch(`/content/folders/${editingFolder.id}`, folderFormData);
+      toast.success('Folder actualizat!');
+      setShowFolderDialog(false);
+      resetFolderForm();
+      loadFolders();
+    } catch (error) {
+      toast.error('Eroare la actualizarea folderului');
+    }
+  };
+
+  const handleDeleteFolder = async (folderId) => {
+    if (!window.confirm('Sigur dorești să ștergi acest folder? Conținutul va fi mutat în "Toate fișierele".')) return;
+    try {
+      await api.delete(`/content/folders/${folderId}`);
+      toast.success('Folder șters!');
+      if (selectedFolder?.id === folderId) {
+        setSelectedFolder(null);
+      }
+      loadFolders();
+      loadContent();
+    } catch (error) {
+      toast.error('Eroare la ștergerea folderului');
+    }
+  };
+
+  const handleMoveToFolder = async (contentId, folderId) => {
+    try {
+      await api.patch(`/content/${contentId}/folder`, { folder_id: folderId });
+      toast.success('Conținut mutat!');
+      loadContent();
+    } catch (error) {
+      toast.error('Eroare la mutarea conținutului');
+    }
+  };
+
+  const openFolderDialog = (folder = null) => {
+    if (folder) {
+      setEditingFolder(folder);
+      setFolderFormData({
+        name: folder.name,
+        description: folder.description || '',
+        color: folder.color
+      });
+    } else {
+      resetFolderForm();
+    }
+    setShowFolderDialog(true);
+  };
+
+  const resetFolderForm = () => {
+    setFolderFormData({ name: '', description: '', color: '#6366f1' });
+    setEditingFolder(null);
+  };
+
+  // Filter content by selected folder
+  const filteredContent = selectedFolder
+    ? content.filter(item => item.folder_id === selectedFolder.id)
+    : content;
 
   const handleFileUpload = async (e) => {
     e.preventDefault();
