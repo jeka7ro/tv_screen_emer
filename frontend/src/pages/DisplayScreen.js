@@ -390,7 +390,9 @@ export const DisplayScreen = () => {
                 style={{
                   objectFit: displayData?.sync_info?.fit_mode || (displayData?.sync_info?.sync_type?.startsWith('matrix') ? 'cover' : 'contain'),
                   width: '100%',
-                  height: '100%'
+                  height: '100%',
+                  imageRendering: 'auto',
+                  WebkitFontSmoothing: 'antialiased',
                 }}
                 onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
               />
@@ -405,10 +407,9 @@ export const DisplayScreen = () => {
                   className={`shadow-2xl ${parallaxEnabled ? 'parallax-layer' : ''}`}
                   style={{
                     objectFit: displayData?.sync_info?.fit_mode || (displayData?.sync_info?.sync_type?.startsWith('matrix') ? 'cover' : 'contain'),
-                    width: (displayData?.sync_info?.fit_mode === 'cover' || displayData?.sync_info?.sync_type?.startsWith('matrix')) ? '100%' : 'auto',
-                    height: (displayData?.sync_info?.fit_mode === 'cover' || displayData?.sync_info?.sync_type?.startsWith('matrix')) ? '100%' : 'auto',
-                    maxWidth: '100%',
-                    maxHeight: '100%'
+                    width: '100%',
+                    height: '100%',
+                    imageRendering: 'auto'
                   }}
                   onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
                 >
@@ -478,7 +479,9 @@ export const DisplayScreen = () => {
         top: 0,
         transformOrigin: 'top left',
         willChange: 'transform',
-        backfaceVisibility: 'hidden'
+        backfaceVisibility: 'hidden',
+        imageRendering: 'pixelated', // Helpful for high-zoom matrix
+        msInterpolationMode: 'nearest-neighbor'
       };
     }
 

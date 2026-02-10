@@ -553,8 +553,9 @@ export const ScreenSync = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="cover">Acoperă (Fit to Screen)</SelectItem>
-                        <SelectItem value="contain">Conține (Show All)</SelectItem>
+                        <SelectItem value="cover">Acoperă (Crop - Umple tot)</SelectItem>
+                        <SelectItem value="contain">Conține (Întreg - Cu margini)</SelectItem>
+                        <SelectItem value="fill">Întinde (Stretch - Tot conținutul)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -750,8 +751,9 @@ export const ScreenSync = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="cover">Acoperă (Fit to Screen)</SelectItem>
-                      <SelectItem value="contain">Conține (Show All)</SelectItem>
+                      <SelectItem value="cover">Acoperă (Crop - Umple tot)</SelectItem>
+                      <SelectItem value="contain">Conține (Întreg - Cu margini)</SelectItem>
+                      <SelectItem value="fill">Întinde (Stretch - Tot conținutul)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
