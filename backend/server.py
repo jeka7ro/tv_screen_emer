@@ -1,6 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, status, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
@@ -152,7 +152,7 @@ security = HTTPBearer()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        await asyncio.wait_for(init_db(), timeout=20.0)
+        await asyncio.wait_for(init_db(), timeout=60.0)
     except asyncio.TimeoutError:
         logging.getLogger("uvicorn.error").error(
             "Conectare la Supabase expirată. Posibil IPv4: folosește Session Pooler în Connect (Supabase)."
@@ -180,24 +180,45 @@ allowed_origins = [
 if cors_origins_env:
     # Handle both comma-separated and space-separated origins
     # Strip whitespace and trailing slashes to be more robust
-    extra_origins = [o.strip().rstrip("/") for o in cors_origins_env.replace(",", " ").split() if o.strip()]
-    allowed_origins.extend(extra_origins)
+    raw_origins = [o.strip().rstrip("/") for o in cors_origins_env.replace(",", " ").split() if o.strip()]
+    
+    # Auto-add www variations to be helpful
+    enhanced_origins = []
+    for o in raw_origins:
+        enhanced_origins.append(o)
+        if "://" in o:
+            proto, domain = o.split("://", 1)
+            if domain.startswith("www."):
+                root = f"{proto}://{domain[4:]}"
+                if root not in enhanced_origins: enhanced_origins.append(root)
+            else:
+                www = f"{proto}://www.{domain}"
+                if www not in enhanced_origins: enhanced_origins.append(www)
+    
+    allowed_origins.extend(list(set(enhanced_origins)))
 else:
     # Fallback to wildcard ONLY if no origins are specified in env
     allowed_origins.append("*")
 
-print(f"DEBUG: Allowed CORS origins: {allowed_origins}")
+print(f"DEBUG: Final Allowed CORS origins on service: {allowed_origins}")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_credentials=True if "*" not in allowed_origins else False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+@app.middleware("http")
+async def log_origin_middleware(request: Request, call_next):
+    origin = request.headers.get("origin")
+    if origin:
+        logging.getLogger("uvicorn.error").info(f"DEBUG: Incoming request from Origin: {origin}")
+    return await call_next(request)
 
 # Ensure upload directories exist
 UPLOAD_DIR = ROOT_DIR / "uploads"
@@ -459,14 +480,12 @@ class ScreenZoneContentCreate(BaseModel):
 class ScreenSync(BaseModel):
     screen_ids: List[str]
     sync_type: str  # simple, cascade, matrix
-class ScreenSync(BaseModel):
-    screen_ids: List[str]
-    sync_type: str  # simple, cascade, matrix
     master_screen_id: Optional[str] = None
     content_id: Optional[str] = None  # Direct content selection
     group_name: Optional[str] = None  # Sync group name
     grid_cols: Optional[int] = None
     grid_rows: Optional[int] = None
+    fit_mode: Optional[str] = 'cover'  # cover, contain
 
 class ScreenSyncUpdate(BaseModel):
     group_name: Optional[str] = None
@@ -475,8 +494,11 @@ class ScreenSyncUpdate(BaseModel):
     sync_type: Optional[str] = None
     grid_cols: Optional[int] = None
     grid_rows: Optional[int] = None
+    fit_mode: Optional[str] = None
 
 # ============ AUTH HELPERS ============
+def verify_password(plain_password, hashed_password):
+    return bcrypt.checkpw(
         plain_password.encode("utf-8"),
         hashed_password.encode("utf-8") if isinstance(hashed_password, str) else hashed_password,
     )
@@ -1295,7 +1317,7 @@ async def sync_screens(sync_data: ScreenSync, current_user: User = Depends(get_c
     if sync_data.sync_type == "simple":
         for sid in sync_data.screen_ids:
             # Skip update if logic requires, but usually we just sync all
-            await screen_update_sync(sid, sync_group, 0, tpl, "simple", group_name)
+            await screen_update_sync(sid, sync_group, 0, tpl, "simple", group_name, sync_data.fit_mode)
             
             # Copy zones from leader (if sid is leader, it just rewrites same zones, or skip)
             if sid != leader_screen_id:
@@ -1307,11 +1329,11 @@ async def sync_screens(sync_data: ScreenSync, current_user: User = Depends(get_c
         
         # Ensure leader also gets sync info updated
         if leader_screen_id in sync_data.screen_ids:
-             await screen_update_sync(leader_screen_id, sync_group, 0, tpl, "simple", group_name)
+             await screen_update_sync(leader_screen_id, sync_group, 0, tpl, "simple", group_name, sync_data.fit_mode)
 
     elif sync_data.sync_type == "cascade":
         for idx, sid in enumerate(sync_data.screen_ids):
-            await screen_update_sync(sid, sync_group, idx, tpl, "cascade", group_name)
+            await screen_update_sync(sid, sync_group, idx, tpl, "cascade", group_name, sync_data.fit_mode)
             if sid != leader_screen_id:
                 master_zones = await screen_zones_list(leader_screen_id)
                 await screen_zones_delete_by_screen(sid)
@@ -1329,7 +1351,7 @@ async def sync_screens(sync_data: ScreenSync, current_user: User = Depends(get_c
             actual_sync_type = f"matrix:{sync_data.grid_cols}x{sync_data.grid_rows}"
             
         for idx, sid in enumerate(sync_data.screen_ids):
-            await screen_update_sync(sid, sync_group, idx, tpl, actual_sync_type, group_name)
+            await screen_update_sync(sid, sync_group, idx, tpl, actual_sync_type, group_name, sync_data.fit_mode)
             if sid != leader_screen_id:
                 master_zones = await screen_zones_list(leader_screen_id)
                 await screen_zones_delete_by_screen(sid)
@@ -1430,7 +1452,6 @@ async def update_sync_group(group_id: str, data: ScreenSyncUpdate, current_user:
     current_group_name = data.group_name if data.group_name is not None else (existing_leader.get("sync_group_name") if existing_leader else f"Group {group_id[:8]}")
 
     # 2. Update Group Name & Sync Config
-    # 2. Update Group Name & Sync Config
     for idx, s in enumerate(group_screens):
         await screen_update_sync(
             s["id"], 
@@ -1438,7 +1459,8 @@ async def update_sync_group(group_id: str, data: ScreenSyncUpdate, current_user:
             idx, 
             current_template_id, 
             final_sync_type, 
-            current_group_name
+            current_group_name,
+            data.fit_mode if data.fit_mode is not None else s.get("sync_fit_mode", "cover")
         )
 
     # 3. Update Content
@@ -1533,6 +1555,7 @@ async def get_display_data(slug: str, security_code: Optional[str] = None):
             "total_screens": len(group_screens),
             "sync_type": screen.get("sync_type", "simple"),
             "my_index": screen.get("cascade_offset", 0),
+            "fit_mode": screen.get("sync_fit_mode", "cover"),
             "screens": [{"id": s["id"], "index": s.get("cascade_offset", 0)} for s in group_screens]
         }
         

@@ -87,30 +87,44 @@ async def init_db() -> None:
         if "sslmode=disable" in query_str:
             ssl_mode = "disable"
             
-        pool = await asyncpg.create_pool(
-            user=username,
-            password=password,
-            host=hostname,
-            port=port,
-            database=database,
-            ssl=ssl_mode if ssl_mode != "disable" else None,
-            min_size=1, 
-            max_size=10, 
-            command_timeout=60, 
-            timeout=15,
-            statement_cache_size=0
-        )
-    except Exception as e:
-        print(f"Manual parsing failed: {e}. Falling back to default.")
-        # Fallback for simple URLs or if parsing fails
-        pool = await asyncpg.create_pool(
-            url, 
-            min_size=1, 
-            max_size=10, 
-            command_timeout=60, 
-            timeout=15,
-            statement_cache_size=0
-        )
+    import logging
+    import asyncio
+    logger = logging.getLogger("uvicorn.error")
+    
+    attempts = 3
+    for i in range(attempts):
+        logger.info(f"DEBUG: Încercarea {i+1}/{attempts} de conectare la host: {hostname}:{port} (DB: {database})")
+        try:
+            pool = await asyncpg.create_pool(
+                user=username,
+                password=password,
+                host=hostname,
+                port=port,
+                database=database,
+                ssl=ssl_mode if ssl_mode != "disable" else None,
+                min_size=1, 
+                max_size=10, 
+                command_timeout=15,
+                timeout=10,
+                statement_cache_size=0
+            )
+            logger.info("DEBUG: Pool asyncpg creat cu succes!")
+            break
+        except Exception as e:
+            logger.error(f"EROARE la încercarea {i+1}: {str(e)}")
+            if i < attempts - 1:
+                logger.info("Se așteaptă 2 secunde înainte de reîncercare...")
+                await asyncio.sleep(2)
+            else:
+                logger.error("TIP: Verifică dacă Render are access IPv4 sau dacă pooler-ul Supabase este configurat corect pe portul 5432.")
+                # Final fallback attempt with the raw URL just in case parsing logic has a bug
+                try:
+                    logger.info("Ultima încercare disperată folosind URL-ul brut...")
+                    pool = await asyncpg.create_pool(url, min_size=1, max_size=10, command_timeout=30)
+                    logger.info("DEBUG: Conexiune reușită prin fallback URL!")
+                except Exception as final_e:
+                    logger.error(f"Fallback URL a eșuat și el: {str(final_e)}")
+                    raise e
 
     
     # Initialize tables if needed
@@ -303,7 +317,11 @@ async def screens_by_sync_group(sync_group: str) -> List[Dict[str, Any]]:
 
 async def sync_groups_list() -> List[Dict[str, Any]]:
     return await _fetch_all("""
-        SELECT sync_group as id, sync_type, MAX(sync_group_name) as name, array_agg(name) as screen_names, array_agg(id) as screen_ids, count(id) as screen_count
+        SELECT sync_group as id, sync_type, MAX(sync_group_name) as name, 
+               MAX(sync_fit_mode) as fit_mode,
+               array_agg(name ORDER BY cascade_offset ASC) as screen_names, 
+               array_agg(id ORDER BY cascade_offset ASC) as screen_ids, 
+               count(id) as screen_count
         FROM screens
         WHERE sync_group IS NOT NULL
         GROUP BY sync_group, sync_type
@@ -325,13 +343,13 @@ async def screen_exists_by_slug(slug: str) -> bool:
 async def screen_insert(row: Dict[str, Any]) -> None:
     await _execute(
         """INSERT INTO screens (id, location_id, name, slug, resolution, orientation, template_id,
-           sync_group, cascade_offset, status, last_active, sync_type, created_at, sync_group_name)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)""",
+           sync_group, cascade_offset, status, last_active, sync_type, created_at, sync_group_name, sync_fit_mode)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)""",
         row["id"], row["location_id"], row["name"], row["slug"],
         row.get("resolution", "1920x1080"), row.get("orientation", "landscape"),
         row.get("template_id"), row.get("sync_group"), row.get("cascade_offset", 0),
         row.get("status", "offline"), row.get("last_active"), row.get("sync_type", "simple"), 
-        row["created_at"], row.get("sync_group_name"),
+        row["created_at"], row.get("sync_group_name"), row.get("sync_fit_mode", "cover"),
     )
 
 
@@ -339,20 +357,19 @@ async def screen_update(id: str, data: Dict[str, Any]) -> None:
     await _execute(
         """UPDATE screens SET location_id = $1, name = $2, slug = $3, resolution = $4, orientation = $5,
            template_id = $6, sync_group = $7, cascade_offset = $8, status = $9, last_active = $10, 
-           sync_type = $11, sync_group_name = $12
-           WHERE id = $13""",
+           sync_type = $11, sync_group_name = $12, sync_fit_mode = $13 WHERE id = $14""",
         data["location_id"], data["name"], data["slug"],
         data.get("resolution", "1920x1080"), data.get("orientation", "landscape"),
         data.get("template_id"), data.get("sync_group"), data.get("cascade_offset", 0),
         data.get("status", "offline"), data.get("last_active"), data.get("sync_type", "simple"), 
-        data.get("sync_group_name"), id,
+        data.get("sync_group_name"), data.get("sync_fit_mode", "cover"), id,
     )
 
 
-async def screen_update_sync(id: str, sync_group: str, cascade_offset: int, template_id: Optional[str], sync_type: str = "simple", sync_group_name: Optional[str] = None) -> None:
+async def screen_update_sync(id: str, group_id: Optional[str], offset: int, template_id: Optional[str], sync_type: str, group_name: Optional[str] = None, fit_mode: Optional[str] = 'cover') -> None:
     await _execute(
-        "UPDATE screens SET sync_group = $1, cascade_offset = $2, template_id = $3, sync_type = $4, sync_group_name = $5 WHERE id = $6",
-        sync_group, cascade_offset, template_id, sync_type, sync_group_name, id,
+        "UPDATE screens SET sync_group = $2, cascade_offset = $3, template_id = $4, sync_type = $5, sync_group_name = $6, sync_fit_mode = $7 WHERE id = $1",
+        id, group_id, offset, template_id, sync_type, group_name, fit_mode
     )
 
 
