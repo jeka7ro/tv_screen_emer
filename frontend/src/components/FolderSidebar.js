@@ -1,5 +1,6 @@
 import React from 'react';
 import { Folder, FolderPlus, FolderOpen, Edit2, Trash2 } from 'lucide-react';
+import api from '../utils/api';
 
 export const FolderSidebar = ({
     folders,
@@ -8,7 +9,8 @@ export const FolderSidebar = ({
     content,
     isAdmin,
     openFolderDialog,
-    handleDeleteFolder
+    handleDeleteFolder,
+    onRefresh
 }) => {
     return (
         <div className="w-64 flex-shrink-0">
@@ -49,6 +51,26 @@ export const FolderSidebar = ({
                             >
                                 <button
                                     onClick={() => setSelectedFolder(folder)}
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        e.currentTarget.classList.add('bg-indigo-200');
+                                    }}
+                                    onDragLeave={(e) => {
+                                        e.currentTarget.classList.remove('bg-indigo-200');
+                                    }}
+                                    onDrop={async (e) => {
+                                        e.preventDefault();
+                                        e.currentTarget.classList.remove('bg-indigo-200');
+                                        const contentId = e.dataTransfer.getData('contentId');
+                                        if (contentId) {
+                                            try {
+                                                await api.patch(`/content/${contentId}/folder`, { folder_id: folder.id });
+                                                if (onRefresh) onRefresh();
+                                            } catch (error) {
+                                                console.error('Error moving item:', error);
+                                            }
+                                        }
+                                    }}
                                     className="flex-1 flex items-center gap-3 text-left"
                                 >
                                     <Folder className="w-4 h-4" style={{ color: folder.color }} />
