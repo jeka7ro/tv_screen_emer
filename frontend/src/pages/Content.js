@@ -701,25 +701,51 @@ export const Content = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="all">Toate ({content.length})</TabsTrigger>
-            <TabsTrigger value="images">Imagini ({images.length})</TabsTrigger>
-            <TabsTrigger value="videos">Video-uri ({videos.length})</TabsTrigger>
-          </TabsList>
 
-          <TabsContent value="all">
-            {renderView(content)}
-          </TabsContent>
+        {/* Folder Dialog */}
+        <FolderDialog
+          showFolderDialog={showFolderDialog}
+          setShowFolderDialog={setShowFolderDialog}
+          editingFolder={editingFolder}
+          folderFormData={folderFormData}
+          setFolderFormData={setFolderFormData}
+          handleCreateFolder={handleCreateFolder}
+          handleUpdateFolder={handleUpdateFolder}
+        />
 
-          <TabsContent value="images">
-            {renderView(images)}
-          </TabsContent>
+        {/* Main Content with Folder Sidebar */}
+        <div className="flex gap-6">
+          <FolderSidebar
+            folders={folders}
+            selectedFolder={selectedFolder}
+            setSelectedFolder={setSelectedFolder}
+            content={content}
+            isAdmin={isAdmin}
+            openFolderDialog={openFolderDialog}
+            handleDeleteFolder={handleDeleteFolder}
+          />
+          <div className="flex-1">
+            <Tabs defaultValue="all" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="all">Toate ({content.length})</TabsTrigger>
+                <TabsTrigger value="images">Imagini ({images.length})</TabsTrigger>
+                <TabsTrigger value="videos">Video-uri ({videos.length})</TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="videos">
-            {renderView(videos)}
-          </TabsContent>
-        </Tabs>
+              <TabsContent value="all">
+                {renderView(content)}
+              </TabsContent>
+
+              <TabsContent value="images">
+                {renderView(images)}
+              </TabsContent>
+
+              <TabsContent value="videos">
+                {renderView(videos)}
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
 
         {/* Preview Modal */}
         <Dialog open={showPreview} onOpenChange={setShowPreview}>
