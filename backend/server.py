@@ -191,6 +191,16 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down...")
     await close_db()
 
+# Create the main app with increased file size limit
+app = FastAPI(title="TV Screen Emergency API", lifespan=lifespan)
+
+@app.get("/api/version")
+async def get_version():
+    return {"version": "1.0.1", "features": ["folders", "db_fix"]}
+
+# Increase max request body size to 500MB for video uploads
+app.router.route_class = type('CustomRoute', (app.router.route_class,), {
+})
 
 # FINAL PERMISSIVE CORS SETUP
 allowed_origins = [
