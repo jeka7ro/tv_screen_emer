@@ -437,23 +437,40 @@ export const Content = () => {
                       </TabsList>
                       <TabsContent value="file" className="space-y-4 mt-4">
                         <div>
-                          <Label>Selectează fișier</Label>
-                          <Input
-                            type="file"
-                            accept="image/*,video/*"
-                            multiple
-                            onChange={(e) => {
-                              const files = e.target.files;
-                              setSelectedFiles(files);
-                              if (files.length > 0) {
-                                const file = files[0];
-                                const type = file.type.startsWith('video') ? 'video' : 'image';
-                                setFormData({ ...formData, type, title: formData.title || file.name }); // Set title from first file if empty
-                              }
-                            }}
-                            data-testid="content-file-input"
-                          />
-                          <p className="text-xs text-slate-500 mt-1">
+                          <Label className="text-base font-semibold">Selectează fișier(e)</Label>
+                          <div className="mt-3 border-2 border-dashed border-indigo-300 rounded-xl p-6 bg-gradient-to-br from-indigo-50/50 to-blue-50/30 hover:from-indigo-50 hover:to-blue-50 transition-all">
+                            <div className="flex flex-col items-center mb-4">
+                              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
+                                <Upload className="w-8 h-8 text-indigo-600" />
+                              </div>
+                              <p className="text-sm font-semibold text-slate-700 mb-1">Click pentru a selecta fișiere</p>
+                              <p className="text-xs text-slate-500">sau drag & drop aici</p>
+                            </div>
+                            <Input
+                              type="file"
+                              accept="image/*,video/*"
+                              multiple
+                              onChange={(e) => {
+                                const files = e.target.files;
+                                setSelectedFiles(files);
+                                if (files.length > 0) {
+                                  const file = files[0];
+                                  const type = file.type.startsWith('video') ? 'video' : 'image';
+                                  setFormData({ ...formData, type, title: formData.title || file.name }); // Set title from first file if empty
+                                }
+                              }}
+                              data-testid="content-file-input"
+                              className="cursor-pointer"
+                            />
+                            {selectedFiles.length > 0 && (
+                              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <p className="text-sm text-green-700 font-semibold flex items-center gap-2">
+                                  <span className="text-green-600">✓</span> {selectedFiles.length} fișier(e) selectat(e)
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-500 mt-2">
                             Poți selecta mai multe fișiere. Max 200MB/fișier.
                           </p>
                         </div>
