@@ -488,6 +488,78 @@ async def content_count() -> int:
     return r["c"] if r else 0
 
 
+# ========== CONTENT FOLDERS ==========
+
+async def folder_list() -> List[Dict[str, Any]]:
+    return await _fetch_all("SELECT * FROM content_folders ORDER BY created_at DESC")
+
+
+async def folder_get_by_id(folder_id: str) -> Optional[Dict[str, Any]]:
+    return await _fetch_one("SELECT * FROM content_folders WHERE id = $1", folder_id)
+
+
+async def folder_insert(row: Dict[str, Any]) -> None:
+    await _execute(
+        """INSERT INTO content_folders (id, name, description, color, icon, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)""",
+        row["id"], row["name"], row.get("description"), row.get("color", "#6366f1"),
+        row.get("icon", "folder"), row["created_at"], row.get("updated_at")
+    )
+
+
+async def folder_update(folder_id: str, data: Dict[str, Any]) -> None:
+    # Build dynamic UPDATE query based on provided fields
+    fields = []
+    values = []
+    param_idx = 1
+    
+    if "name" in data:
+        fields.append(f"name = ${param_idx}")
+        values.append(data["name"])
+        param_idx += 1
+    if "description" in data:
+        fields.append(f"description = ${param_idx}")
+        values.append(data["description"])
+        param_idx += 1
+    if "color" in data:
+        fields.append(f"color = ${param_idx}")
+        values.append(data["color"])
+        param_idx += 1
+    if "icon" in data:
+        fields.append(f"icon = ${param_idx}")
+        values.append(data["icon"])
+        param_idx += 1
+    
+    # Always update updated_at
+    fields.append(f"updated_at = NOW()")
+    
+    if not fields:
+        return
+    
+    query = f"UPDATE content_folders SET {', '.join(fields)} WHERE id = ${param_idx}"
+    values.append(folder_id)
+    
+    await _execute(query, *values)
+
+
+async def folder_delete(folder_id: str) -> bool:
+    # First, set folder_id to NULL for all content in this folder
+    await _execute("UPDATE content SET folder_id = NULL WHERE folder_id = $1", folder_id)
+    # Then delete the folder
+    await _execute("DELETE FROM content_folders WHERE id = $1", folder_id)
+    return True
+
+
+async def content_update_folder(content_id: str, folder_id: Optional[str]) -> None:
+    """Move content to a folder (or to root if folder_id is None)"""
+    await _execute("UPDATE content SET folder_id = $1 WHERE id = $2", folder_id, content_id)
+
+
+async def folder_get_content_count(folder_id: str) -> int:
+    """Get count of content items in a folder"""
+    return await _fetch_val("SELECT COUNT(*) FROM content WHERE folder_id = $1", folder_id)
+
+
 # ---------- playlists ----------
 
 async def playlist_get(id: str) -> Optional[Dict[str, Any]]:

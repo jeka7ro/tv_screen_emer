@@ -413,6 +413,36 @@ class ContentCreate(BaseModel):
     autoplay: Optional[bool] = True
     loop: Optional[bool] = True
     playlist_urls: Optional[List[str]] = []
+    folder_id: Optional[str] = None
+
+
+class ContentFolder(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: Optional[str] = None
+    color: str = "#6366f1"
+    icon: str = "folder"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = None
+
+
+class ContentFolderCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    color: Optional[str] = "#6366f1"
+    icon: Optional[str] = "folder"
+
+
+class ContentFolderUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
+
+
+class MoveToFolder(BaseModel):
+    folder_id: Optional[str] = None  # None = move to root
 
 class Playlist(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -1312,6 +1342,50 @@ async def serve_upload(file_type: str, filename: str):
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(file_path)
+
+# ========== CONTENT FOLDERS ENDPOINTS ==========
+
+@api_router.get("/content/folders", response_model=List[ContentFolder])
+async def list_folders(current_user: User = Depends(get_current_user)):
+    folders = await db.folder_list()
+    return folders
+
+@api_router.post("/content/folders", response_model=ContentFolder)
+async def create_folder(folder_data: ContentFolderCreate, current_user: User = Depends(require_admin)):
+    folder = ContentFolder(name=folder_data.name, description=folder_data.description, color=folder_data.color or "#6366f1", icon=folder_data.icon or "folder")
+    await db.folder_insert(folder.model_dump())
+    return folder
+
+@api_router.patch("/content/folders/{folder_id}", response_model=ContentFolder)
+async def update_folder(folder_id: str, folder_data: ContentFolderUpdate, current_user: User = Depends(require_admin)):
+    existing = await db.folder_get_by_id(folder_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    update_data = folder_data.model_dump(exclude_unset=True)
+    if update_data:
+        await db.folder_update(folder_id, update_data)
+    updated = await db.folder_get_by_id(folder_id)
+    return updated
+
+@api_router.delete("/content/folders/{folder_id}")
+async def delete_folder(folder_id: str, current_user: User = Depends(require_admin)):
+    existing = await db.folder_get_by_id(folder_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    await db.folder_delete(folder_id)
+    return JSONResponse(content={"message": "Folder deleted, content moved to root"}, status_code=200)
+
+@api_router.patch("/content/{content_id}/folder")
+async def move_content_to_folder(content_id: str, move_data: MoveToFolder, current_user: User = Depends(require_admin)):
+    content = await db.content_get(content_id)
+    if not content:
+        raise HTTPException(status_code=404, detail="Content not found")
+    if move_data.folder_id:
+        folder = await db.folder_get_by_id(move_data.folder_id)
+        if not folder:
+            raise HTTPException(status_code=404, detail="Folder not found")
+    await db.content_update_folder(content_id, move_data.folder_id)
+    return JSONResponse(content={"message": "Content moved successfully"}, status_code=200)
 
 # ============ PLAYLISTS ROUTES ============
 
