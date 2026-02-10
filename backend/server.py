@@ -192,46 +192,26 @@ async def lifespan(app: FastAPI):
     await close_db()
 
 
-# Create the main app with increased file size limit
-app = FastAPI(title="TV Screen Emergency API", lifespan=lifespan)
-
-@app.get("/api/version")
-async def get_version():
-    return {"version": "1.0.1", "features": ["folders", "db_fix"]}
-
-# Increase max request body size to 500MB for video uploads
-app.router.route_class = type('CustomRoute', (app.router.route_class,), {
-})
-
-# Get CORS origins from environment
+# FINAL PERMISSIVE CORS SETUP
 allowed_origins = [
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:8000",
     "https://smr.onl",
     "https://www.smr.onl",
     "https://tv-screen-emer.onrender.com",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",
 ]
 
-cors_origins_env = os.getenv("CORS_ORIGINS", "")
-if cors_origins_env:
-    raw_origins = [o.strip().rstrip("/") for o in cors_origins_env.replace(",", " ").split() if o.strip()]
-    allowed_origins.extend(raw_origins)
-
-# Determine if we should allow credentials (required for cookies/auth headers)
-# Starlette doesn't allow allow_credentials=True with allow_origins=["*"]
-allow_all = "*" in allowed_origins or not allowed_origins
-
+# Allow any origin that ends with smr.onl or onrender.com
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins if not allow_all else ["*"],
-    allow_credentials=True if not allow_all else False,
+    allow_origin_regex=r"https?://.*(smr\.onl|onrender\.com|localhost|127\.0\.0\.1)(:[0-9]+)?",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-print(f"DEBUG: CORS Initialized. Allow All: {allow_all}. Origins: {allowed_origins}")
+import traceback # For deep error reporting
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -1208,22 +1188,23 @@ async def get_screen_templates(current_user: User = Depends(get_current_user)):
 
 # ========== CONTENT FOLDERS ENDPOINTS ==========
 
-@api_router.get("/content/folders") # Removed response_model for debug
+@api_router.get("/content/folders")
 async def list_folders(current_user: User = Depends(get_current_user)):
     try:
+        logger.info("FETCHING FOLDERS...")
         folders = await folder_list()
-        logger.info(f"Loaded {len(folders)} folders from DB")
         return folders
     except Exception as e:
-        logger.error(f"List Folders CRASH: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"List Error: {str(e)}")
+        tb = traceback.format_exc()
+        logger.error(f"LIST FOLDERS FATAL: {e}\n{tb}")
+        return JSONResponse(status_code=500, content={"error": str(e), "traceback": tb})
 
-@api_router.post("/content/folders") # Removed response_model for debug
+@api_router.post("/content/folders")
 async def create_folder(folder_data: ContentFolderCreate, current_user: User = Depends(require_admin)):
     try:
-        logger.info(f"Creating folder with data: {folder_data}")
+        logger.info(f"CREATING FOLDER: {folder_data.name}")
         folder_id = str(uuid.uuid4())
-        folder_dict = {
+        f_dict = {
             "id": folder_id,
             "name": folder_data.name,
             "description": folder_data.description,
@@ -1231,12 +1212,12 @@ async def create_folder(folder_data: ContentFolderCreate, current_user: User = D
             "icon": folder_data.icon or "folder",
             "created_at": datetime.now(timezone.utc)
         }
-        await folder_insert(folder_dict)
-        logger.info(f"Folder created successfully with ID: {folder_id}")
-        return folder_dict
+        await folder_insert(f_dict)
+        return f_dict
     except Exception as e:
-        logger.error(f"Create Folder CRASH: {e}", exc_info=True)
-        raise HTTPException(status_code=400, detail=f"Create Error: {str(e)}")
+        tb = traceback.format_exc()
+        logger.error(f"CREATE FOLDER FATAL: {e}\n{tb}")
+        return JSONResponse(status_code=400, content={"error": str(e), "traceback": tb})
 
 @api_router.patch("/content/folders/{folder_id}", response_model=ContentFolder)
 async def update_folder(folder_id: str, folder_data: ContentFolderUpdate, current_user: User = Depends(require_admin)):
@@ -2071,5 +2052,5 @@ async def get_public_player_data(playlist_id: str):
 
 # Include the router in the main app
 app.include_router(api_router)
-# Force rebuild Tue Feb 10 20:25:00 EET 2026
-# DEEP DEBUG BUILD Tue Feb 10 20:25:00 EET 2026
+# FINAL DEBUG Wed Feb 11 00:00:00 2026
+# TRACEBACK ENABLED BUILD
