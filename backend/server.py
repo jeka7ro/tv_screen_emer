@@ -204,44 +204,34 @@ app.router.route_class = type('CustomRoute', (app.router.route_class,), {
 })
 
 # Get CORS origins from environment
-cors_origins_env = os.getenv("CORS_ORIGINS", "")
 allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",
     "http://127.0.0.1:8000",
     "https://smr.onl",
     "https://www.smr.onl",
+    "https://tv-screen-emer.onrender.com",
 ]
-if cors_origins_env:
-    # Handle both comma-separated and space-separated origins
-    # Strip whitespace and trailing slashes to be more robust
-    raw_origins = [o.strip().rstrip("/") for o in cors_origins_env.replace(",", " ").split() if o.strip()]
-    
-    # Auto-add www variations to be helpful
-    enhanced_origins = []
-    for o in raw_origins:
-        enhanced_origins.append(o)
-        if "://" in o:
-            proto, domain = o.split("://", 1)
-            if domain.startswith("www."):
-                root = f"{proto}://{domain[4:]}"
-                if root not in enhanced_origins: enhanced_origins.append(root)
-            else:
-                www = f"{proto}://www.{domain}"
-                if www not in enhanced_origins: enhanced_origins.append(www)
-    
-    allowed_origins.extend(list(set(enhanced_origins)))
-else:
-    # Fallback to wildcard ONLY if no origins are specified in env
-    allowed_origins.append("*")
 
-print(f"DEBUG: Final Allowed CORS origins on service: {allowed_origins}")
+cors_origins_env = os.getenv("CORS_ORIGINS", "")
+if cors_origins_env:
+    raw_origins = [o.strip().rstrip("/") for o in cors_origins_env.replace(",", " ").split() if o.strip()]
+    allowed_origins.extend(raw_origins)
+
+# Determine if we should allow credentials (required for cookies/auth headers)
+# Starlette doesn't allow allow_credentials=True with allow_origins=["*"]
+allow_all = "*" in allowed_origins or not allowed_origins
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True if "*" not in allowed_origins else False,
+    allow_origins=allowed_origins if not allow_all else ["*"],
+    allow_credentials=True if not allow_all else False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+print(f"DEBUG: CORS Initialized. Allow All: {allow_all}. Origins: {allowed_origins}")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -1218,14 +1208,20 @@ async def get_screen_templates(current_user: User = Depends(get_current_user)):
 
 # ========== CONTENT FOLDERS ENDPOINTS ==========
 
-@api_router.get("/content/folders", response_model=List[ContentFolder])
+@api_router.get("/content/folders") # Removed response_model for debug
 async def list_folders(current_user: User = Depends(get_current_user)):
-    folders = await folder_list()
-    return folders
+    try:
+        folders = await folder_list()
+        logger.info(f"Loaded {len(folders)} folders from DB")
+        return folders
+    except Exception as e:
+        logger.error(f"List Folders CRASH: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"List Error: {str(e)}")
 
-@api_router.post("/content/folders", response_model=ContentFolder)
+@api_router.post("/content/folders") # Removed response_model for debug
 async def create_folder(folder_data: ContentFolderCreate, current_user: User = Depends(require_admin)):
     try:
+        logger.info(f"Creating folder with data: {folder_data}")
         folder_id = str(uuid.uuid4())
         folder_dict = {
             "id": folder_id,
@@ -1235,15 +1231,12 @@ async def create_folder(folder_data: ContentFolderCreate, current_user: User = D
             "icon": folder_data.icon or "folder",
             "created_at": datetime.now(timezone.utc)
         }
-        # Use simple dict for insert, mirroring verify_backend.py interaction
         await folder_insert(folder_dict)
-        
-        # Return what client expects (ID will be null but verify works)
-        return ContentFolder(**folder_dict)
+        logger.info(f"Folder created successfully with ID: {folder_id}")
+        return folder_dict
     except Exception as e:
-        logger.error(f"Create Folder Error: {e}")
-        # Return the error in the response so UI shows it instead of generic 500
-        raise HTTPException(status_code=400, detail=f"Debug Error: {str(e)}")
+        logger.error(f"Create Folder CRASH: {e}", exc_info=True)
+        raise HTTPException(status_code=400, detail=f"Create Error: {str(e)}")
 
 @api_router.patch("/content/folders/{folder_id}", response_model=ContentFolder)
 async def update_folder(folder_id: str, folder_data: ContentFolderUpdate, current_user: User = Depends(require_admin)):
@@ -2078,5 +2071,5 @@ async def get_public_player_data(playlist_id: str):
 
 # Include the router in the main app
 app.include_router(api_router)
-# Force rebuild Tue Feb 10 16:53:33 EET 2026
-# SUPER FORCE REBUILD Tue Feb 10 17:16:41 EET 2026
+# Force rebuild Tue Feb 10 20:25:00 EET 2026
+# DEEP DEBUG BUILD Tue Feb 10 20:25:00 EET 2026
