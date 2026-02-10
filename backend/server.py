@@ -276,13 +276,13 @@ class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     email: EmailStr
-    full_name: str
+    full_name: Optional[str] = "Unknown"
     hashed_password: str
     is_super_admin: bool = False
     role: str = "admin"  # admin, manager
     location_id: Optional[str] = None
     status: str = "active"  # active, suspended
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_login: Optional[datetime] = None
 
 class InvitationLink(BaseModel):
