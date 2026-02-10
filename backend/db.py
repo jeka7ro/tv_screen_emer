@@ -846,12 +846,14 @@ async def folder_list() -> List[Dict[str, Any]]:
 async def folder_get_by_id(id: int) -> Optional[Dict[str, Any]]:
     return await _fetch_one("SELECT * FROM content_folders WHERE id = $1", id)
 
-async def folder_insert(data: Dict[str, Any]) -> None:
-    await _execute(
+async def folder_insert(data: Dict[str, Any]) -> int:
+    row = await _fetch_one(
         """INSERT INTO content_folders (name, description, color, icon)
-           VALUES ($1, $2, $3, $4)""",
+           VALUES ($1, $2, $3, $4)
+           RETURNING id""",
         data["name"], data.get("description"), data.get("color", "#6366f1"), data.get("icon", "folder")
     )
+    return row["id"]
 
 async def folder_update(id: int, data: Dict[str, Any]) -> None:
     # Build dynamic update query

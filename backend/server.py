@@ -1370,7 +1370,8 @@ async def create_folder(folder_data: ContentFolderCreate, current_user: User = D
             "icon": folder_data.icon or "folder"
         }
         # Use simple dict for insert, mirroring verify_backend.py interaction
-        await folder_insert(folder_dict)
+        new_id = await folder_insert(folder_dict)
+        folder_dict["id"] = new_id
         
         # Return what client expects (ID will be null but verify works)
         return ContentFolder(**folder_dict)
