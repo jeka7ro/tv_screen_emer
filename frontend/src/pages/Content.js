@@ -654,134 +654,148 @@ export const Content = () => {
                   </form>
                 </DialogContent>
 
-      {/* Main Content with Folder Sidebar */}
-      <div className="flex gap-6">
-        <FolderSidebar
-          folders={folders}
-          selectedFolder={selectedFolder}
-          setSelectedFolder={setSelectedFolder}
-          content={content}
-          isAdmin={isAdmin}
-          openFolderDialog={openFolderDialog}
-          handleDeleteFolder={handleDeleteFolder}
-        />
-        <div className="flex-1">
+                {/* Main Content with Folder Sidebar */}
+                <div className="flex gap-6">
+                  <FolderSidebar
+                    folders={folders}
+                    selectedFolder={selectedFolder}
+                    setSelectedFolder={setSelectedFolder}
+                    content={content}
+                    isAdmin={isAdmin}
+                    openFolderDialog={openFolderDialog}
+                    handleDeleteFolder={handleDeleteFolder}
+                  />
+                  <div className="flex-1">
 
-              </Dialog>
+                  </Dialog>
             )}
-          </div>
-        </div>
-
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="all">Toate ({content.length})</TabsTrigger>
-            <TabsTrigger value="images">Imagini ({images.length})</TabsTrigger>
-            <TabsTrigger value="videos">Video-uri ({videos.length})</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all">
-            {renderView(content)}
-          </TabsContent>
-
-          <TabsContent value="images">
-            {renderView(images)}
-          </TabsContent>
-
-          <TabsContent value="videos">
-            {renderView(videos)}
-          </TabsContent>
-        </Tabs>
-
-      {/* Folder Dialog */}
-      <FolderDialog
-        showFolderDialog={showFolderDialog}
-        setShowFolderDialog={setShowFolderDialog}
-        editingFolder={editingFolder}
-        folderFormData={folderFormData}
-        setFolderFormData={setFolderFormData}
-        handleCreateFolder={handleCreateFolder}
-        handleUpdateFolder={handleUpdateFolder}
-      />
-
-
-        {/* Preview Modal */}
-        <Dialog open={showPreview} onOpenChange={setShowPreview}>
-          <DialogContent className="glass-panel max-w-5xl max-h-[90vh] overflow-hidden">
-            <DialogHeader>
-              <DialogTitle>{previewItem?.title}</DialogTitle>
-            </DialogHeader>
-            {previewItem && (
-              <div className="space-y-4">
-                <div className="bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center relative" style={{ minHeight: '400px', maxHeight: '600px' }}>
-                  {previewItem.type === 'youtube' ? (
-                    <div className="w-full aspect-video">
-                      <iframe
-                        src={`https://www.youtube.com/embed/${(previewItem.file_url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/) || [])[1]}`}
-                        className="w-full h-full border-0"
-                        allow="autoplay; encrypted-media"
-                        allowFullScreen
-                      />
-                    </div>
-                  ) : previewItem.type === 'web' ? (
-                    <iframe
-                      src={previewItem.file_url}
-                      className="w-full h-[500px] border-0 bg-white"
-                    />
-                  ) : previewItem.type === 'image' ? (
-                    <img
-                      src={getFileUrl(previewItem.file_url)}
-                      alt={previewItem.title}
-                      className="max-w-full max-h-full object-contain"
-                      data-testid="preview-image"
-                    />
-                  ) : (
-                    <video
-                      src={getFileUrl(previewItem.file_url)}
-                      controls
-                      autoPlay
-                      className="max-w-full max-h-full"
-                      data-testid="preview-video"
-                    >
-                      Browser-ul tău nu suportă redarea video.
-                    </video>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 p-4 bg-white/40 rounded-xl">
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Tip</p>
-                    <p className="text-sm font-medium text-slate-800 capitalize">{previewItem.type}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Categorie</p>
-                    <p className="text-sm font-medium text-slate-800 capitalize">{previewItem.category}</p>
-                  </div>
-                  {previewItem.type === 'image' && (
-                    <div>
-                      <p className="text-xs text-slate-500 mb-1">Durată afișare</p>
-                      <p className="text-sm font-medium text-slate-800">{previewItem.duration} secunde</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">URL fișier</p>
-                    <a
-                      href={getFileUrl(previewItem.file_url)}
-                      target="_blank"
-        </div> {/* Close flex-1 */}
-      </div> {/* Close flex gap-6 */}
-
-                      rel="noopener noreferrer"
-                      className="text-sm text-indigo-600 hover:text-indigo-700 truncate block"
-                    >
-                      Deschide în tab nou →
-                    </a>
-                  </div>
                 </div>
               </div>
+
+      {/* Main Content with Folder Sidebar */}
+            <div className="flex gap-6">
+              <FolderSidebar
+                folders={folders}
+                selectedFolder={selectedFolder}
+                setSelectedFolder={setSelectedFolder}
+                content={content}
+                isAdmin={isAdmin}
+                openFolderDialog={openFolderDialog}
+                handleDeleteFolder={handleDeleteFolder}
+              />
+              <div className="flex-1">
+                <Tabs defaultValue="all" className="space-y-6">
+                  <TabsList>
+                    <TabsTrigger value="all">Toate ({content.length})</TabsTrigger>
+                    <TabsTrigger value="images">Imagini ({images.length})</TabsTrigger>
+                    <TabsTrigger value="videos">Video-uri ({videos.length})</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="all">
+                    {renderView(content)}
+                  </TabsContent>
+
+                  <TabsContent value="images">
+                    {renderView(images)}
+                  </TabsContent>
+
+                  <TabsContent value="videos">
+                    {renderView(videos)}
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </div>
+
+            {/* Folder Dialog */}
+            <FolderDialog
+              showFolderDialog={showFolderDialog}
+              setShowFolderDialog={setShowFolderDialog}
+              editingFolder={editingFolder}
+              folderFormData={folderFormData}
+              setFolderFormData={setFolderFormData}
+              handleCreateFolder={handleCreateFolder}
+              handleUpdateFolder={handleUpdateFolder}
+            />
+
+
+            {/* Preview Modal */}
+            <Dialog open={showPreview} onOpenChange={setShowPreview}>
+              <DialogContent className="glass-panel max-w-5xl max-h-[90vh] overflow-hidden">
+                <DialogHeader>
+                  <DialogTitle>{previewItem?.title}</DialogTitle>
+                </DialogHeader>
+                {previewItem && (
+                  <div className="space-y-4">
+                    <div className="bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center relative" style={{ minHeight: '400px', maxHeight: '600px' }}>
+                      {previewItem.type === 'youtube' ? (
+                        <div className="w-full aspect-video">
+                          <iframe
+                            src={`https://www.youtube.com/embed/${(previewItem.file_url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/) || [])[1]}`}
+                            className="w-full h-full border-0"
+                            allow="autoplay; encrypted-media"
+                            allowFullScreen
+                          />
+                        </div>
+                      ) : previewItem.type === 'web' ? (
+                        <iframe
+                          src={previewItem.file_url}
+                          className="w-full h-[500px] border-0 bg-white"
+                        />
+                      ) : previewItem.type === 'image' ? (
+                        <img
+                          src={getFileUrl(previewItem.file_url)}
+                          alt={previewItem.title}
+                          className="max-w-full max-h-full object-contain"
+                          data-testid="preview-image"
+                        />
+                      ) : (
+                        <video
+                          src={getFileUrl(previewItem.file_url)}
+                          controls
+                          autoPlay
+                          className="max-w-full max-h-full"
+                          data-testid="preview-video"
+                        >
+                          Browser-ul tău nu suportă redarea video.
+                        </video>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 p-4 bg-white/40 rounded-xl">
+                      <div>
+                        <p className="text-xs text-slate-500 mb-1">Tip</p>
+                        <p className="text-sm font-medium text-slate-800 capitalize">{previewItem.type}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 mb-1">Categorie</p>
+                        <p className="text-sm font-medium text-slate-800 capitalize">{previewItem.category}</p>
+                      </div>
+                      {previewItem.type === 'image' && (
+                        <div>
+                          <p className="text-xs text-slate-500 mb-1">Durată afișare</p>
+                          <p className="text-sm font-medium text-slate-800">{previewItem.duration} secunde</p>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-xs text-slate-500 mb-1">URL fișier</p>
+                        <a
+                          href={getFileUrl(previewItem.file_url)}
+                          target="_blank"
+        </div> {/* Close flex-1 */}
+                    </div> {/* Close flex gap-6 */}
+
+                    rel="noopener noreferrer"
+                    className="text-sm text-indigo-600 hover:text-indigo-700 truncate block"
+                    >
+                    Deschide în tab nou →
+                  </a>
+                  </div>
+          </div>
+        </div>
             )}
-          </DialogContent>
-        </Dialog>
-      </div>
-    </DashboardLayout>
+      </DialogContent>
+    </Dialog>
+      </div >
+    </DashboardLayout >
   );
 };
