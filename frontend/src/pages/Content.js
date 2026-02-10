@@ -775,7 +775,6 @@ export const Content = () => {
             )}
       </DialogContent>
     </Dialog>
-      </div >
     </DashboardLayout >
   );
 };
