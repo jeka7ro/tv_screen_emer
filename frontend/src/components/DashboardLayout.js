@@ -24,12 +24,12 @@ const menuItems = [
   { path: '/live-preview', icon: Eye, label: 'Live Preview' },
   { path: '/locations', icon: MapPin, label: 'Locații' },
   { path: '/screens', icon: Tv, label: 'Ecrane' },
+  { path: '/screen-sync', icon: Shuffle, label: 'Sincronizare' },
   { path: '/content', icon: FileImage, label: 'Conținut' },
   { path: '/products', icon: ShoppingBag, label: 'Produse' },
   { path: '/digital-menus', icon: Menu, label: 'Meniuri Digitale' },
   { path: '/playlists', icon: List, label: 'Playlist-uri' },
   { path: '/audio', icon: Music, label: 'Muzică & Reclame' },
-  { path: '/screen-sync', icon: Shuffle, label: 'Sincronizare' },
 ];
 
 const adminMenuItems = [

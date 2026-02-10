@@ -420,8 +420,8 @@ export const Content = () => {
                 if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
-                  <Button className="btn-primary" data-testid="add-content-button">
-                    <Plus className="w-5 h-5 mr-2" />
+                  <Button className="btn-primary px-6 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all" data-testid="add-content-button">
+                    <Plus className="w-6 h-6 mr-2" />
                     Adăugă conținut
                   </Button>
                 </DialogTrigger>
