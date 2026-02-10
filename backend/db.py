@@ -837,3 +837,42 @@ async def audio_tracks_by_playlist(playlist_id: str) -> List[Dict[str, Any]]:
 async def audio_track_delete(id: str) -> bool:
     res = await _execute_many("DELETE FROM audio_tracks WHERE id = $1", id)
     return "DELETE 1" in res
+
+# ========== CONTENT FOLDERS FUNCTIONS ==========
+
+async def folder_list() -> List[Dict[str, Any]]:
+    return await _fetch_all("SELECT * FROM content_folders ORDER BY name ASC")
+
+async def folder_get_by_id(id: int) -> Optional[Dict[str, Any]]:
+    return await _fetch_one("SELECT * FROM content_folders WHERE id = $1", id)
+
+async def folder_insert(data: Dict[str, Any]) -> None:
+    await _execute(
+        """INSERT INTO content_folders (name, description, color, icon)
+           VALUES ($1, $2, $3, $4)""",
+        data["name"], data.get("description"), data.get("color", "#6366f1"), data.get("icon", "folder")
+    )
+
+async def folder_update(id: int, data: Dict[str, Any]) -> None:
+    # Build dynamic update query
+    set_clauses = []
+    values = []
+    for i, (key, value) in enumerate(data.items(), start=1):
+        set_clauses.append(f"{key} = ${i}")
+        values.append(value)
+    
+    values.append(id)
+    query = f"UPDATE content_folders SET {', '.join(set_clauses)}, updated_at = NOW() WHERE id = ${len(values)}"
+    await _execute(query, *values)
+
+async def folder_delete(id: int) -> None:
+    # First move content to root
+    await _execute("UPDATE content SET folder_id = NULL WHERE folder_id = $1", id)
+    # Then delete folder
+    await _execute("DELETE FROM content_folders WHERE id = $1", id)
+
+async def content_update_folder(content_id: int, folder_id: Optional[int]) -> None:
+    await _execute("UPDATE content SET folder_id = $1 WHERE id = $2", folder_id, content_id)
+
+async def folder_get_content_count(folder_id: int) -> int:
+    return await _fetch_val("SELECT COUNT(*) FROM content WHERE folder_id = $1", folder_id)
