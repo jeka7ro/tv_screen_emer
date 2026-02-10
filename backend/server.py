@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
+from pathlib import Path
 
 # Determine upload directory (Render uses /opt/render/project/src/backend/uploads usually, or absolute path)
 # We'll use absolute path relative to this file to be safe
