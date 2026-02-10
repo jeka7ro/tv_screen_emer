@@ -1275,6 +1275,7 @@ async def delete_folder(folder_id: str, current_user: User = Depends(require_adm
 
 @api_router.patch("/content/{content_id}/folder")
 async def move_content_to_folder(content_id: str, move_data: MoveToFolder, current_user: User = Depends(require_admin)):
+    if move_data.folder_id:
         folder = await folder_get_by_id(move_data.folder_id)
         if not folder:
             raise HTTPException(status_code=404, detail="Folder not found")
