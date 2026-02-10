@@ -326,7 +326,7 @@ export const Content = () => {
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase">Titlu</th>
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase">Tip</th>
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase">Categorie</th>
-                <th className="p-4 font-medium text-slate-500 text-xs uppercase">Durată</th>
+
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase">Dimensiune</th>
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase">Încărcat de</th>
                 <th className="p-4 font-medium text-slate-500 text-xs uppercase text-right">Acțiuni</th>
@@ -362,7 +362,7 @@ export const Content = () => {
                   <td className="p-4 font-medium text-slate-800">{item.title}</td>
                   <td className="p-4 capitalize text-slate-600">{item.type}</td>
                   <td className="p-4 capitalize text-slate-600">{item.category}</td>
-                  <td className="p-4 text-slate-600">{item.type === 'image' ? `${item.duration}s` : '-'}</td>
+
                   <td className="p-4 text-slate-600 text-sm">
                     {item.file_size ? `${(item.file_size / 1024 / 1024).toFixed(2)} MB` : '-'}
                   </td>
