@@ -402,6 +402,7 @@ class Content(BaseModel):
     type: str  # image, video, youtube, web
     source_type: str = "file"  # file, url
     file_url: str  # This will hold the URL for both local files and external links
+    file_size: Optional[int] = 0
     duration: int = 10  # seconds
     category: str = "other"
     tags: List[str] = []
@@ -409,6 +410,7 @@ class Content(BaseModel):
     autoplay: bool = True
     loop: bool = True
     playlist_urls: List[str] = []
+    folder_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ContentCreate(BaseModel):
@@ -1214,149 +1216,11 @@ async def get_screen_templates(current_user: User = Depends(get_current_user)):
     ]
     return templates
 
-# ============ CONTENT ROUTES ============
-
-@api_router.get("/content", response_model=List[Content])
-async def get_content(current_user: User = Depends(get_current_user)):
-    return await content_list()
-
-@api_router.get("/content/{content_id}", response_model=Content)
-async def get_content_item(content_id: str, current_user: User = Depends(get_current_user)):
-    item = await content_get(content_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="Content not found")
-    return item
-
-@api_router.post("/content")
-async def create_content(
-    files: List[UploadFile] = File(...),
-    title: str = Form(...),
-    type: str = Form(...), # image, video
-    duration: int = Form(10),
-    category: str = Form("other"),
-    current_user: User = Depends(require_admin)
-):
-    created_items = []
-    
-    for file in files:
-        try:
-            # Validate file type
-            allowed_image_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
-            allowed_video_types = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm']
-            
-            if type == "image" and file.content_type not in allowed_image_types:
-                # Skip invalid files or raise error? raising error aborts all. 
-                # For now let's raise to be safe, or just log and continue. 
-                # User expects all or nothing usually, or at least feedback.
-                raise HTTPException(status_code=400, detail=f"Tip fișier imagine invalid: {file.content_type}")
-            if type == "video" and file.content_type not in allowed_video_types:
-                raise HTTPException(status_code=400, detail=f"Tip fișier video invalid: {file.content_type}")
-            
-            # Determine save directory and path
-            file_type_folder = "images" if type == "image" else "videos"
-            
-            # Generate unique filename
-            file_ext = Path(file.filename).suffix.lower()
-            if not file_ext:
-                file_ext = '.mp4' if type == "video" else '.jpg'
-            unique_filename = f"{uuid.uuid4()}{file_ext}"
-            
-            # Read file bytes
-            file_bytes = await file.read()
-            
-            # Upload to Supabase Storage
-            supabase_path = f"{file_type_folder}/{unique_filename}"
-            file_url = await upload_to_supabase(file_bytes, supabase_path, file.content_type)
-            
-            # Create content record
-            # Use original filename as title if multiple files are uploaded
-            content_title = title if len(files) == 1 else Path(file.filename).stem
-
-            content_id = str(uuid.uuid4())
-            new_content = {
-                "id": content_id,
-                "title": content_title, 
-                "type": type,
-                "file_url": file_url,  # Supabase public URL
-                "duration": duration,
-                "category": category,
-                "tags": [],
-                "thumbnail_url": file_url if type == "image" else None,
-                "autoplay": True,
-                "loop": True,
-                "playlist_urls": [],
-                "created_at": datetime.now(timezone.utc)
-            }
-            
-            await content_insert(new_content)
-            created_items.append(new_content)
-            
-        except Exception as e:
-            # If one fails, we probably should report it. 
-            # For simplicity in this iteration, we raise.
-            logging.error(f"Error uploading file {file.filename}: {e}")
-            raise HTTPException(status_code=500, detail=f"Eroare la procesarea fișierului {file.filename}: {str(e)}")
-
-    return created_items
-
-@api_router.post("/content/external", response_model=Content)
-async def create_external_content(content_data: ContentCreate, current_user: User = Depends(require_admin)):
-    content = Content(**content_data.model_dump())
-    await content_insert(content.model_dump())
-    return content
-
-@api_router.get("/content/{content_id}", response_model=Content)
-async def get_content_by_id(content_id: str, current_user: User = Depends(get_current_user)):
-    content = await content_get(content_id)
-    if not content:
-        raise HTTPException(status_code=404, detail="Content not found")
-    return content
-
-@api_router.delete("/content/{content_id}")
-async def delete_content(content_id: str, current_user: User = Depends(require_admin)):
-    content = await content_get(content_id)
-    if not content:
-        raise HTTPException(status_code=404, detail="Content not found")
-    
-    # Delete file from storage
-    file_url = content.get("file_url", "")
-    
-    # For Supabase URLs, extract path and delete
-    if "supabase.co/storage" in file_url:
-        # Extract path from URL: https://.../storage/v1/object/public/content/images/file.jpg
-        # We want: images/file.jpg
-        try:
-            path_parts = file_url.split("/content/")
-            if len(path_parts) > 1:
-                file_path = path_parts[1]
-                await delete_from_supabase(file_path)
-        except Exception as e:
-            print(f"Error deleting from Supabase: {e}")
-    
-    # Legacy: Delete old local files if they exist
-    elif file_url.startswith("/api/uploads/"):
-        file_path = ROOT_DIR / file_url.replace("/api/uploads/", "uploads/")
-        if file_path.exists():
-            file_path.unlink()
-    
-    await content_delete(content_id)
-    return {"message": "Content deleted"}
-
-# Serve uploaded files
-from fastapi.responses import FileResponse
-
-@api_router.get("/uploads/{file_type}/{filename}")
-async def serve_upload(file_type: str, filename: str):
-    file_path = UPLOAD_DIR / file_type / filename
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path)
-
 # ========== CONTENT FOLDERS ENDPOINTS ==========
 
 @api_router.get("/content/folders", response_model=List[ContentFolder])
 async def list_folders(current_user: User = Depends(get_current_user)):
-    folders = await db.folder_list()
+    folders = await folder_list()
     return folders
 
 @api_router.post("/content/folders", response_model=ContentFolder)
@@ -1421,10 +1285,138 @@ async def move_content_to_folder(content_id: str, move_data: MoveToFolder, curre
     await content_update_folder(content_id, int(move_data.folder_id) if move_data.folder_id else None)
     return JSONResponse(content={"message": "Content moved successfully"}, status_code=200)
 
-@api_router.get("/content/folders", response_model=List[ContentFolder])
-async def list_folders(current_user: User = Depends(get_current_user)):
-    folders = await folder_list()
-    return folders
+# ============ CONTENT ROUTES ============
+
+@api_router.get("/content", response_model=List[Content])
+async def get_content(current_user: User = Depends(get_current_user)):
+    return await content_list()
+
+@api_router.get("/content/{content_id}", response_model=Content)
+async def get_content_item(content_id: str, current_user: User = Depends(get_current_user)):
+    item = await content_get(content_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Content not found")
+    return item
+
+@api_router.post("/content")
+async def create_content(
+    files: List[UploadFile] = File(...),
+    type: str = Form(...), # image, video
+    category: str = Form("other"),
+    current_user: User = Depends(require_admin)
+):
+    created_items = []
+    
+    for file in files:
+        try:
+            # Validate file type
+            allowed_image_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+            allowed_video_types = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm']
+            
+            if type == "image" and file.content_type not in allowed_image_types:
+                raise HTTPException(status_code=400, detail=f"Tip fișier imagine invalid: {file.content_type}")
+            if type == "video" and file.content_type not in allowed_video_types:
+                raise HTTPException(status_code=400, detail=f"Tip fișier video invalid: {file.content_type}")
+            
+            # Determine save directory and path
+            file_type_folder = "images" if type == "image" else "videos"
+            
+            # Generate unique filename
+            file_ext = Path(file.filename).suffix.lower()
+            if not file_ext:
+                file_ext = '.mp4' if type == "video" else '.jpg'
+            unique_filename = f"{uuid.uuid4()}{file_ext}"
+            
+            # Read file bytes & get size
+            file_bytes = await file.read()
+            file_size = len(file_bytes)
+            
+            # Upload to Supabase Storage
+            supabase_path = f"{file_type_folder}/{unique_filename}"
+            file_url = await upload_to_supabase(file_bytes, supabase_path, file.content_type)
+            
+            # Create content record - Title from filename
+            content_title = Path(file.filename).stem
+
+            content_id = str(uuid.uuid4())
+            new_content = {
+                "id": content_id,
+                "title": content_title, 
+                "type": type,
+                "file_url": file_url,
+                "file_size": file_size,
+                "duration": 10,
+                "category": category,
+                "tags": [],
+                "thumbnail_url": file_url if type == "image" else None,
+                "autoplay": True,
+                "loop": True,
+                "playlist_urls": [],
+                "created_at": datetime.now(timezone.utc)
+            }
+            
+            await content_insert(new_content)
+            created_items.append(new_content)
+            
+        except Exception as e:
+            logging.error(f"Error uploading file {file.filename}: {e}")
+            raise HTTPException(status_code=500, detail=f"Eroare la procesarea fișierului {file.filename}: {str(e)}")
+
+    return created_items
+
+@api_router.post("/content/external", response_model=Content)
+async def create_external_content(content_data: ContentCreate, current_user: User = Depends(require_admin)):
+    content = Content(**content_data.model_dump())
+    await content_insert(content.model_dump())
+    return content
+
+@api_router.get("/content/{content_id}", response_model=Content)
+async def get_content_by_id(content_id: str, current_user: User = Depends(get_current_user)):
+    content = await content_get(content_id)
+    if not content:
+        raise HTTPException(status_code=404, detail="Content not found")
+    return content
+
+@api_router.delete("/content/{content_id}")
+async def delete_content(content_id: str, current_user: User = Depends(require_admin)):
+    content = await content_get(content_id)
+    if not content:
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    # Delete file from storage
+    file_url = content.get("file_url", "")
+    
+    # For Supabase URLs, extract path and delete
+    if "supabase.co/storage" in file_url:
+        # Extract path from URL: https://.../storage/v1/object/public/content/images/file.jpg
+        # We want: images/file.jpg
+        try:
+            path_parts = file_url.split("/content/")
+            if len(path_parts) > 1:
+                file_path = path_parts[1]
+                await delete_from_supabase(file_path)
+        except Exception as e:
+            print(f"Error deleting from Supabase: {e}")
+    
+    # Legacy: Delete old local files if they exist
+    elif file_url.startswith("/api/uploads/"):
+        file_path = ROOT_DIR / file_url.replace("/api/uploads/", "uploads/")
+        if file_path.exists():
+            file_path.unlink()
+    
+    await content_delete(content_id)
+    return {"message": "Content deleted"}
+
+# Serve uploaded files
+from fastapi.responses import FileResponse
+
+@api_router.get("/uploads/{file_type}/{filename}")
+async def serve_upload(file_type: str, filename: str):
+    file_path = UPLOAD_DIR / file_type / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(file_path)
+
 
 # ============ PLAYLISTS ROUTES ============
 

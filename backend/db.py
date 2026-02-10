@@ -469,12 +469,12 @@ async def content_insert(row: Dict[str, Any]) -> None:
     playlist_urls = json.dumps(row.get("playlist_urls") or [])
     await _execute(
         """INSERT INTO content (id, title, type, file_url, duration, category, tags, thumbnail_url,
-           autoplay, loop, playlist_urls, created_at, source_type)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)""",
+           autoplay, loop, playlist_urls, created_at, source_type, file_size)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)""",
         row["id"], row["title"], row["type"], row["file_url"], row.get("duration", 10),
         row.get("category", "other"), tags, row.get("thumbnail_url"),
         row.get("autoplay", True), row.get("loop", True), playlist_urls, row["created_at"],
-        row.get("source_type", "file")
+        row.get("source_type", "file"), row.get("file_size", 0)
     )
 
 
