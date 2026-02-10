@@ -326,14 +326,29 @@ async def screens_by_sync_group(sync_group: str) -> List[Dict[str, Any]]:
 
 async def sync_groups_list() -> List[Dict[str, Any]]:
     return await _fetch_all("""
-        SELECT sync_group as id, sync_type, MAX(sync_group_name) as name, 
-               MAX(sync_fit_mode) as fit_mode,
-               array_agg(name ORDER BY cascade_offset ASC) as screen_names, 
-               array_agg(id ORDER BY cascade_offset ASC) as screen_ids, 
-               count(id) as screen_count
-        FROM screens
-        WHERE sync_group IS NOT NULL
-        GROUP BY sync_group, sync_type
+        WITH GroupData AS (
+            SELECT 
+                sync_group,
+                sync_type,
+                MAX(sync_group_name) as name,
+                MAX(sync_fit_mode) as fit_mode,
+                array_agg(name ORDER BY cascade_offset ASC) as names,
+                array_agg(id ORDER BY cascade_offset ASC) as ids,
+                count(id) as counts
+            FROM screens
+            WHERE sync_group IS NOT NULL
+            GROUP BY sync_group, sync_type
+        )
+        SELECT 
+            gd.sync_group as id,
+            gd.sync_type,
+            gd.name,
+            gd.fit_mode,
+            gd.names as screen_names,
+            gd.ids as screen_ids,
+            gd.counts as screen_count,
+            (SELECT content_id FROM screen_zones WHERE screen_id = gd.ids[1] AND zone_id = 'main' LIMIT 1) as current_content_id
+        FROM GroupData gd
     """)
 
 
