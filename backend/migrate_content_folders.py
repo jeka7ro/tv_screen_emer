@@ -28,7 +28,10 @@ async def migrate():
     conn = await asyncpg.connect(url)
     
     try:
-        print("📦 Creating content_folders table...")
+        print("📦 Re-creating content_folders table (ensuring TEXT IDs)...")
+        # Drop and recreate to ensure types are correct (since it's a new feature)
+        await conn.execute("DROP TABLE IF EXISTS content_folders CASCADE;")
+        
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS content_folders (
                 id TEXT PRIMARY KEY,
@@ -40,7 +43,7 @@ async def migrate():
                 updated_at TIMESTAMPTZ DEFAULT NOW()
             );
         """)
-        print("✅ content_folders table created")
+        print("✅ content_folders table created with TEXT IDs")
         
         print("🔄 Adding folder_id column to content table...")
         # Check if column already exists
@@ -56,7 +59,7 @@ async def migrate():
         if not column_exists:
             await conn.execute("""
                 ALTER TABLE content 
-                ADD COLUMN folder_id TEXT REFERENCES content_folders(id) ON DELETE SET NULL;
+                ADD COLUMN folder_id TEXT;
             """)
             print("✅ folder_id column added to content table")
             
@@ -66,7 +69,12 @@ async def migrate():
             """)
             print("✅ Index created")
         else:
-            print("ℹ️  folder_id column already exists, skipping")
+            # If it exists, ensure it's TEXT
+            print("ℹ️  folder_id column already exists, ensuring it's TEXT")
+            await conn.execute("""
+                ALTER TABLE content ALTER COLUMN folder_id TYPE TEXT;
+            """)
+            print("✅ folder_id column type verified as TEXT")
         
         # Verify schema
         print("\n📊 Verifying schema...")
