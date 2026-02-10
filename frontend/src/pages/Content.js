@@ -66,7 +66,7 @@ export const Content = () => {
         formDataToSend.append('duration', formData.duration);
 
         // Increase timeout for large files
-        await api.post('/content/upload', formDataToSend, {
+        await api.post('/content', formDataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' },
           timeout: 300000, // 5 minutes for large video files
           onUploadProgress: (progressEvent) => {
