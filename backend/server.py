@@ -7,9 +7,6 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
-@app.get("/api/version")
-async def get_version():
-    return {"version": "1.0.1", "features": ["folders", "db_fix"]}
 
 # Determine upload directory (Render uses /opt/render/project/src/backend/uploads usually, or absolute path)
 # We'll use absolute path relative to this file to be safe
@@ -197,7 +194,11 @@ async def lifespan(app: FastAPI):
 
 
 # Create the main app with increased file size limit
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(title="TV Screen Emergency API", lifespan=lifespan)
+
+@app.get("/api/version")
+async def get_version():
+    return {"version": "1.0.1", "features": ["folders", "db_fix"]}
 
 # Increase max request body size to 500MB for video uploads
 app.router.route_class = type('CustomRoute', (app.router.route_class,), {
