@@ -391,86 +391,87 @@ export const Content = () => {
 
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        <div
-          key={item.id}
-          className="glass-card p-4 group"
-          data-testid={`content-card-${item.id}`}
-          draggable
-          onDragStart={(e) => {
-            e.dataTransfer.setData('contentId', item.id);
-          }}
-        >
+        {items.map((item) => (
           <div
-            className="relative mb-3 cursor-pointer"
-            onClick={() => handlePreview(item)}
-            data-testid={`preview-content-${item.id}`}
+            key={item.id}
+            className="glass-card p-4 group"
+            data-testid={`content-card-${item.id}`}
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData('contentId', item.id);
+            }}
           >
-            {item.type === 'youtube' ? (
-              <div className="w-full h-40 bg-red-900 rounded-xl flex items-center justify-center">
-                <Film className="w-12 h-12 text-white" />
-                <div className="absolute bottom-2 right-2 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">YOUTUBE</div>
-              </div>
-            ) : item.type === 'web' ? (
-              <div className="w-full h-40 bg-blue-900 rounded-xl flex items-center justify-center">
-                <LayoutGrid className="w-12 h-12 text-white" />
-                <div className="absolute bottom-2 right-2 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">WEB</div>
-              </div>
-            ) : item.type === 'image' ? (
-              <img
-                src={getFileUrl(item.file_url)}
-                alt={item.title}
-                className="w-full h-40 object-cover rounded-xl"
-              />
-            ) : (
-              <div className="w-full h-40 bg-slate-900 rounded-xl overflow-hidden relative group">
-                <video
+            <div
+              className="relative mb-3 cursor-pointer"
+              onClick={() => handlePreview(item)}
+              data-testid={`preview-content-${item.id}`}
+            >
+              {item.type === 'youtube' ? (
+                <div className="w-full h-40 bg-red-900 rounded-xl flex items-center justify-center">
+                  <Film className="w-12 h-12 text-white" />
+                  <div className="absolute bottom-2 right-2 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">YOUTUBE</div>
+                </div>
+              ) : item.type === 'web' ? (
+                <div className="w-full h-40 bg-blue-900 rounded-xl flex items-center justify-center">
+                  <LayoutGrid className="w-12 h-12 text-white" />
+                  <div className="absolute bottom-2 right-2 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">WEB</div>
+                </div>
+              ) : item.type === 'image' ? (
+                <img
                   src={getFileUrl(item.file_url)}
-                  className="w-full h-full object-cover"
-                  muted
-                  preload="metadata"
+                  alt={item.title}
+                  className="w-full h-40 object-cover rounded-xl"
                 />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <div className="bg-white/90 rounded-full p-4">
-                    <Film className="w-8 h-8 text-slate-800" />
+              ) : (
+                <div className="w-full h-40 bg-slate-900 rounded-xl overflow-hidden relative group">
+                  <video
+                    src={getFileUrl(item.file_url)}
+                    className="w-full h-full object-cover"
+                    muted
+                    preload="metadata"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div className="bg-white/90 rounded-full p-4">
+                      <Film className="w-8 h-8 text-slate-800" />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                    VIDEO
                   </div>
                 </div>
-                <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                  VIDEO
+              )}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <div className="bg-white/90 text-slate-800 px-3 py-2 rounded-lg text-sm font-medium">
+                  👁️ Preview
                 </div>
               </div>
-            )}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-              <div className="bg-white/90 text-slate-800 px-3 py-2 rounded-lg text-sm font-medium">
-                👁️ Preview
-              </div>
+              {isAdmin() && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(item.id);
+                  }}
+                  className="absolute top-2 right-2 p-2 bg-rose-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  data-testid={`delete-content-${item.id}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </div>
-            {isAdmin() && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(item.id);
-                }}
-                className="absolute top-2 right-2 p-2 bg-rose-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                data-testid={`delete-content-${item.id}`}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          <h3 className="text-sm font-medium text-slate-800 mb-1 truncate">
-            {item.title}
-          </h3>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full">
-              {item.category}
-            </span>
-            {item.type === 'image' && (
-              <span className="text-xs text-slate-500">
-                {item.duration}s
+            <h3 className="text-sm font-medium text-slate-800 mb-1 truncate">
+              {item.title}
+            </h3>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full">
+                {item.category}
               </span>
-            )}
+              {item.type === 'image' && (
+                <span className="text-xs text-slate-500">
+                  {item.duration}s
+                </span>
+              )}
+            </div>
           </div>
-        </div>
         ))}
       </div>
     );
