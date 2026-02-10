@@ -498,13 +498,14 @@ async def folder_get_by_id(folder_id: str) -> Optional[Dict[str, Any]]:
     return await _fetch_one("SELECT * FROM content_folders WHERE id = $1", folder_id)
 
 
-async def folder_insert(row: Dict[str, Any]) -> None:
-    await _execute(
+async def folder_insert(row: Dict[str, Any]) -> str:
+    res = await _fetch_one(
         """INSERT INTO content_folders (id, name, description, color, icon, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)""",
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id""",
         row["id"], row["name"], row.get("description"), row.get("color", "#6366f1"),
         row.get("icon", "folder"), row["created_at"], row.get("updated_at")
     )
+    return res["id"]
 
 
 async def folder_update(folder_id: str, data: Dict[str, Any]) -> None:

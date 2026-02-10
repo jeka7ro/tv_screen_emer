@@ -205,10 +205,9 @@ app.router.route_class = type('CustomRoute', (app.router.route_class,), {
 # Get CORS origins from environment
 cors_origins_env = os.getenv("CORS_ORIGINS", "")
 allowed_origins = [
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:3000",
     "http://127.0.0.1:8000",
+    "https://smr.onl",
+    "https://www.smr.onl",
 ]
 if cors_origins_env:
     # Handle both comma-separated and space-separated origins
@@ -1226,16 +1225,17 @@ async def list_folders(current_user: User = Depends(get_current_user)):
 @api_router.post("/content/folders", response_model=ContentFolder)
 async def create_folder(folder_data: ContentFolderCreate, current_user: User = Depends(require_admin)):
     try:
-        # Explicitly map fields to avoid Pydantic/Dict mismatch issues
+        folder_id = str(uuid.uuid4())
         folder_dict = {
+            "id": folder_id,
             "name": folder_data.name,
             "description": folder_data.description,
             "color": folder_data.color or "#6366f1",
-            "icon": folder_data.icon or "folder"
+            "icon": folder_data.icon or "folder",
+            "created_at": datetime.now(timezone.utc)
         }
         # Use simple dict for insert, mirroring verify_backend.py interaction
-        new_id = await folder_insert(folder_dict)
-        folder_dict["id"] = new_id
+        await folder_insert(folder_dict)
         
         # Return what client expects (ID will be null but verify works)
         return ContentFolder(**folder_dict)
@@ -1247,13 +1247,13 @@ async def create_folder(folder_data: ContentFolderCreate, current_user: User = D
 @api_router.patch("/content/folders/{folder_id}", response_model=ContentFolder)
 async def update_folder(folder_id: str, folder_data: ContentFolderUpdate, current_user: User = Depends(require_admin)):
     try:
-        existing = await folder_get_by_id(int(folder_id))
+        existing = await folder_get_by_id(folder_id)
         if not existing:
             raise HTTPException(status_code=404, detail="Folder not found")
         update_data = folder_data.model_dump(exclude_unset=True)
         if update_data:
-            await folder_update(int(folder_id), update_data)
-        updated = await folder_get_by_id(int(folder_id))
+            await folder_update(folder_id, update_data)
+        updated = await folder_get_by_id(folder_id)
         if not updated:
              raise HTTPException(status_code=404, detail="Folder not found after update")
         return updated
@@ -1264,10 +1264,10 @@ async def update_folder(folder_id: str, folder_data: ContentFolderUpdate, curren
 @api_router.delete("/content/folders/{folder_id}")
 async def delete_folder(folder_id: str, current_user: User = Depends(require_admin)):
     try:
-        existing = await folder_get_by_id(int(folder_id))
+        existing = await folder_get_by_id(folder_id)
         if not existing:
             raise HTTPException(status_code=404, detail="Folder not found")
-        await folder_delete(int(folder_id))
+        await folder_delete(folder_id)
         return JSONResponse(content={"message": "Folder deleted, content moved to root"}, status_code=200)
     except Exception as e:
         logger.error(f"Delete Folder Error: {e}")
@@ -1275,14 +1275,10 @@ async def delete_folder(folder_id: str, current_user: User = Depends(require_adm
 
 @api_router.patch("/content/{content_id}/folder")
 async def move_content_to_folder(content_id: str, move_data: MoveToFolder, current_user: User = Depends(require_admin)):
-    content = await content_get(content_id)
-    if not content:
-        raise HTTPException(status_code=404, detail="Content not found")
-    if move_data.folder_id:
-        folder = await folder_get_by_id(int(move_data.folder_id))
+        folder = await folder_get_by_id(move_data.folder_id)
         if not folder:
             raise HTTPException(status_code=404, detail="Folder not found")
-    await content_update_folder(content_id, int(move_data.folder_id) if move_data.folder_id else None)
+    await content_update_folder(content_id, move_data.folder_id)
     return JSONResponse(content={"message": "Content moved successfully"}, status_code=200)
 
 # ============ CONTENT ROUTES ============
