@@ -86,7 +86,16 @@ async def init_db() -> None:
         ssl_mode = "require"
         if "sslmode=disable" in query_str:
             ssl_mode = "disable"
-            
+    except Exception as e:
+        print(f"Manual parsing failed: {e}. High risk of connection failure.")
+        # We need these variables even if parsing fails partially
+        hostname = hostname if 'hostname' in locals() else "localhost"
+        port = port if 'port' in locals() else 5432
+        database = database if 'database' in locals() else "postgres"
+        username = username if 'username' in locals() else None
+        password = password if 'password' in locals() else None
+        ssl_mode = "require"
+
     import logging
     import asyncio
     logger = logging.getLogger("uvicorn.error")
