@@ -8,6 +8,9 @@ CREATE TABLE IF NOT EXISTS users (
   full_name TEXT NOT NULL,
   hashed_password TEXT NOT NULL,
   is_super_admin BOOLEAN DEFAULT FALSE,
+  role TEXT DEFAULT 'admin', -- admin, manager
+  location_id TEXT, -- For managers
+  status TEXT DEFAULT 'active', -- active, suspended
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   last_login TIMESTAMPTZ
 );
@@ -21,6 +24,8 @@ CREATE TABLE IF NOT EXISTS invitations (
   expires_at TIMESTAMPTZ NOT NULL,
   max_uses INT DEFAULT 1,
   uses INT DEFAULT 0,
+  role TEXT DEFAULT 'admin',
+  location_id TEXT,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

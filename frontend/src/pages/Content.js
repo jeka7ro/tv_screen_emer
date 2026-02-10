@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { Upload, Link as LinkIcon, FileImage, Film, Trash2, Plus, LayoutGrid, List as ListIcon, Eye } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
@@ -11,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 export const Content = () => {
+  const { isAdmin } = useAuth();
   const [content, setContent] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
@@ -251,9 +253,11 @@ export const Content = () => {
                       <Button className="btn-ghost p-2 h-auto" onClick={() => handlePreview(item)}>
                         <Eye className="w-4 h-4 text-slate-500" />
                       </Button>
-                      <Button className="btn-ghost p-2 h-auto" onClick={() => handleDelete(item.id)}>
-                        <Trash2 className="w-4 h-4 text-rose-500" />
-                      </Button>
+                      {isAdmin() && (
+                        <Button className="btn-ghost p-2 h-auto" onClick={() => handleDelete(item.id)}>
+                          <Trash2 className="w-4 h-4 text-rose-500" />
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -312,16 +316,18 @@ export const Content = () => {
                   👁️ Preview
                 </div>
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(item.id);
-                }}
-                className="absolute top-2 right-2 p-2 bg-rose-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                data-testid={`delete-content-${item.id}`}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              {isAdmin() && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(item.id);
+                  }}
+                  className="absolute top-2 right-2 p-2 bg-rose-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  data-testid={`delete-content-${item.id}`}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
             </div>
             <h3 className="text-sm font-medium text-slate-800 mb-1 truncate">
               {item.title}
@@ -351,7 +357,7 @@ export const Content = () => {
             <p className="text-slate-500">Gestionează imagini și video-uri</p>
           </div>
 
-          {selectedItems.size > 0 && (
+          {isAdmin() && selectedItems.size > 0 && (
             <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-xl z-50 flex items-center gap-4 animate-in slide-in-from-bottom-4">
               <span className="font-medium">{selectedItems.size} selectate</span>
               <div className="h-4 w-px bg-slate-700"></div>
@@ -388,151 +394,153 @@ export const Content = () => {
                 <ListIcon className="w-5 h-5" />
               </button>
             </div>
-            <Dialog open={showDialog} onOpenChange={(open) => {
-              setShowDialog(open);
-              if (!open) resetForm();
-            }}>
-              <DialogTrigger asChild>
-                <Button className="btn-primary" data-testid="add-content-button">
-                  <Plus className="w-5 h-5 mr-2" />
-                  Adăugă conținut
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="glass-panel">
-                <DialogHeader>
-                  <DialogTitle>Adăugă conținut nou</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleFileUpload} className="space-y-4">
-                  <Tabs value={uploadMethod} onValueChange={setUploadMethod}>
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="file">Upload Fișier</TabsTrigger>
-                      <TabsTrigger value="external">Link Extern</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="file" className="space-y-4 mt-4">
-                      <div>
-                        <Label>Selectează fișier</Label>
-                        <Input
-                          type="file"
-                          accept="image/*,video/*"
-                          multiple
-                          onChange={(e) => {
-                            const files = e.target.files;
-                            setSelectedFiles(files);
-                            if (files.length > 0) {
-                              const file = files[0];
-                              const type = file.type.startsWith('video') ? 'video' : 'image';
-                              setFormData({ ...formData, type, title: formData.title || file.name }); // Set title from first file if empty
-                            }
-                          }}
-                          data-testid="content-file-input"
-                        />
-                        <p className="text-xs text-slate-500 mt-1">
-                          Poți selecta mai multe fișiere. Max 200MB/fișier.
-                        </p>
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="external" className="space-y-4 mt-4">
-                      <div>
-                        <Label>Tip Conținut Extern</Label>
-                        <Select
-                          value={formData.type}
-                          onValueChange={(value) => setFormData({ ...formData, type: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="image">Imagine (Link Direct)</SelectItem>
-                            <SelectItem value="video">Video (Link Direct)</SelectItem>
-                            <SelectItem value="youtube">YouTube (Link/Embed)</SelectItem>
-                            <SelectItem value="web">Pagină Web (URL)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>URL conținut</Label>
-                        <Input
-                          value={formData.file_url}
-                          onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
-                          placeholder={formData.type === 'youtube' ? "https://youtube.com/watch?v=..." : "https://..."}
-                          data-testid="content-url-input"
-                        />
-                        <p className="text-xs text-slate-500 mt-1">
-                          {formData.type === 'youtube'
-                            ? "Pastează link-ul YouTube (normal sau embed)."
-                            : "Direct link către fișier (Dropbox, Drive cu 'direct download link')."}
-                        </p>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
+            {isAdmin() && (
+              <Dialog open={showDialog} onOpenChange={(open) => {
+                setShowDialog(open);
+                if (!open) resetForm();
+              }}>
+                <DialogTrigger asChild>
+                  <Button className="btn-primary" data-testid="add-content-button">
+                    <Plus className="w-5 h-5 mr-2" />
+                    Adăugă conținut
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="glass-panel">
+                  <DialogHeader>
+                    <DialogTitle>Adăugă conținut nou</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleFileUpload} className="space-y-4">
+                    <Tabs value={uploadMethod} onValueChange={setUploadMethod}>
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="file">Upload Fișier</TabsTrigger>
+                        <TabsTrigger value="external">Link Extern</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="file" className="space-y-4 mt-4">
+                        <div>
+                          <Label>Selectează fișier</Label>
+                          <Input
+                            type="file"
+                            accept="image/*,video/*"
+                            multiple
+                            onChange={(e) => {
+                              const files = e.target.files;
+                              setSelectedFiles(files);
+                              if (files.length > 0) {
+                                const file = files[0];
+                                const type = file.type.startsWith('video') ? 'video' : 'image';
+                                setFormData({ ...formData, type, title: formData.title || file.name }); // Set title from first file if empty
+                              }
+                            }}
+                            data-testid="content-file-input"
+                          />
+                          <p className="text-xs text-slate-500 mt-1">
+                            Poți selecta mai multe fișiere. Max 200MB/fișier.
+                          </p>
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="external" className="space-y-4 mt-4">
+                        <div>
+                          <Label>Tip Conținut Extern</Label>
+                          <Select
+                            value={formData.type}
+                            onValueChange={(value) => setFormData({ ...formData, type: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="image">Imagine (Link Direct)</SelectItem>
+                              <SelectItem value="video">Video (Link Direct)</SelectItem>
+                              <SelectItem value="youtube">YouTube (Link/Embed)</SelectItem>
+                              <SelectItem value="web">Pagină Web (URL)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>URL conținut</Label>
+                          <Input
+                            value={formData.file_url}
+                            onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
+                            placeholder={formData.type === 'youtube' ? "https://youtube.com/watch?v=..." : "https://..."}
+                            data-testid="content-url-input"
+                          />
+                          <p className="text-xs text-slate-500 mt-1">
+                            {formData.type === 'youtube'
+                              ? "Pastează link-ul YouTube (normal sau embed)."
+                              : "Direct link către fișier (Dropbox, Drive cu 'direct download link')."}
+                          </p>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
 
-                  <div>
-                    <Label>Titlu</Label>
-                    <Input
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="Nume conținut"
-                      required
-                      data-testid="content-title-input"
-                    />
-                  </div>
-                  <div>
-                    <Label>Categorie</Label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(value) => setFormData({ ...formData, category: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="menu">Meniu</SelectItem>
-                        <SelectItem value="promo">Promo</SelectItem>
-                        <SelectItem value="drinks">Băuturi</SelectItem>
-                        <SelectItem value="desserts">Deserturi</SelectItem>
-                        <SelectItem value="other">Altele</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {formData.type === 'image' && (
                     <div>
-                      <Label>Durată afișare (secunde)</Label>
+                      <Label>Titlu</Label>
                       <Input
-                        type="number"
-                        value={formData.duration}
-                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                        min="1"
-                        data-testid="content-duration-input"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="Nume conținut"
+                        required
+                        data-testid="content-title-input"
                       />
                     </div>
-                  )}
-                  <div className="flex gap-3 pt-4">
-                    <Button
-                      type="submit"
-                      disabled={uploading}
-                      className="btn-primary flex-1"
-                      data-testid="save-content-button"
-                    >
-                      {uploading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="spinner w-4 h-4"></div>
-                          Se încarcă...
-                        </div>
-                      ) : (
-                        'Adăugă'
-                      )}
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => setShowDialog(false)}
-                      className="btn-secondary"
-                    >
-                      Anulează
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                    <div>
+                      <Label>Categorie</Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) => setFormData({ ...formData, category: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="menu">Meniu</SelectItem>
+                          <SelectItem value="promo">Promo</SelectItem>
+                          <SelectItem value="drinks">Băuturi</SelectItem>
+                          <SelectItem value="desserts">Deserturi</SelectItem>
+                          <SelectItem value="other">Altele</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {formData.type === 'image' && (
+                      <div>
+                        <Label>Durată afișare (secunde)</Label>
+                        <Input
+                          type="number"
+                          value={formData.duration}
+                          onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                          min="1"
+                          data-testid="content-duration-input"
+                        />
+                      </div>
+                    )}
+                    <div className="flex gap-3 pt-4">
+                      <Button
+                        type="submit"
+                        disabled={uploading}
+                        className="btn-primary flex-1"
+                        data-testid="save-content-button"
+                      >
+                        {uploading ? (
+                          <div className="flex items-center gap-2">
+                            <div className="spinner w-4 h-4"></div>
+                            Se încarcă...
+                          </div>
+                        ) : (
+                          'Adăugă'
+                        )}
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => setShowDialog(false)}
+                        className="btn-secondary"
+                      >
+                        Anulează
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
 

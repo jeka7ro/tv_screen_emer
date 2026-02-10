@@ -66,7 +66,14 @@ export const DashboardLayout = ({ children }) => {
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto hide-scrollbar">
-          {menuItems.map((item) => {
+          {menuItems.filter(item => {
+            if (user?.role === 'manager') {
+              // Limited set for manager
+              const managerPaths = ['/dashboard', '/live-preview', '/locations', '/screens'];
+              return managerPaths.includes(item.path);
+            }
+            return true;
+          }).map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             return (
@@ -117,6 +124,11 @@ export const DashboardLayout = ({ children }) => {
               {isSuperAdmin() && (
                 <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-medium rounded">
                   Admin
+                </span>
+              )}
+              {user?.role === 'manager' && (
+                <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-medium rounded">
+                  Manager
                 </span>
               )}
             </div>

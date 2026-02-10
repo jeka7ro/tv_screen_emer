@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  UserPlus, Link2, Copy, Trash2, Clock, Users, 
+import {
+  UserPlus, Link2, Copy, Trash2, Clock, Users,
   CheckCircle, XCircle, Plus, Calendar, RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,12 +23,25 @@ export const Invitations = () => {
   const [creating, setCreating] = useState(false);
   const [newInvitation, setNewInvitation] = useState({
     expires_in_days: 7,
-    max_uses: 1
+    max_uses: 1,
+    role: 'admin',
+    location_id: ''
   });
+  const [locations, setLocations] = useState([]);
 
   useEffect(() => {
     loadInvitations();
+    loadLocations();
   }, []);
+
+  const loadLocations = async () => {
+    try {
+      const response = await api.get('/locations');
+      setLocations(response.data);
+    } catch (error) {
+      console.error('Error loading locations:', error);
+    }
+  };
 
   const loadInvitations = async () => {
     try {
@@ -49,7 +62,7 @@ export const Invitations = () => {
       const response = await api.post('/invitations', newInvitation);
       setInvitations([response.data, ...invitations]);
       setShowCreateDialog(false);
-      setNewInvitation({ expires_in_days: 7, max_uses: 1 });
+      setNewInvitation({ expires_in_days: 7, max_uses: 1, role: 'admin', location_id: '' });
       toast.success('Invitație creată cu succes!');
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Eroare la crearea invitației');
@@ -61,7 +74,7 @@ export const Invitations = () => {
   const handleDeleteInvitation = async (id) => {
     try {
       await api.delete(`/invitations/${id}`);
-      setInvitations(invitations.map(inv => 
+      setInvitations(invitations.map(inv =>
         inv.id === id ? { ...inv, is_active: false } : inv
       ));
       toast.success('Invitație dezactivată');
@@ -73,7 +86,7 @@ export const Invitations = () => {
   const copyInvitationLink = (code) => {
     const baseUrl = window.location.origin;
     const link = `${baseUrl}/login?invite=${code}`;
-    
+
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(link)
         .then(() => toast.success('Link copiat în clipboard!'))
@@ -234,10 +247,10 @@ export const Invitations = () => {
               const exhausted = invitation.uses >= invitation.max_uses;
               const inactive = !invitation.is_active;
               const status = inactive ? 'inactive' : expired ? 'expired' : exhausted ? 'exhausted' : 'active';
-              
+
               return (
-                <div 
-                  key={invitation.id} 
+                <div
+                  key={invitation.id}
                   className={`glass-card p-5 ${status !== 'active' ? 'opacity-60' : ''}`}
                   data-testid={`invitation-${invitation.code}`}
                 >
@@ -281,6 +294,16 @@ export const Invitations = () => {
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
                             <span>Creat: {formatDate(invitation.created_at)}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <UserPlus className="w-4 h-4" />
+                          <span className="capitalize">Rol: {invitation.role || 'Admin'}</span>
+                        </div>
+                        {invitation.location_id && (
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            <span>Locație: {locations.find(l => l.id === invitation.location_id)?.name || 'Anumită locație'}</span>
                           </div>
                         )}
                       </div>
@@ -355,9 +378,42 @@ export const Invitations = () => {
                   <option value={50}>50 utilizări</option>
                 </select>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Rol Utilizator
+                </label>
+                <select
+                  value={newInvitation.role}
+                  onChange={(e) => setNewInvitation({ ...newInvitation, role: e.target.value })}
+                  className="w-full glass-input px-4 py-3"
+                >
+                  <option value="admin">Admin (Acces Total)</option>
+                  <option value="manager">Manager (Limitat la Locație)</option>
+                </select>
+              </div>
+
+              {newInvitation.role === 'manager' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Locație Atribuită
+                  </label>
+                  <select
+                    value={newInvitation.location_id}
+                    onChange={(e) => setNewInvitation({ ...newInvitation, location_id: e.target.value })}
+                    className="w-full glass-input px-4 py-3"
+                    required={newInvitation.role === 'manager'}
+                  >
+                    <option value="">Selectează locația...</option>
+                    {locations.map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.name} - {loc.city}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="p-4 bg-slate-50 rounded-xl">
                 <p className="text-sm text-slate-600">
-                  Link-ul generat va fi valid timp de <strong>{newInvitation.expires_in_days} zile</strong> și 
+                  Link-ul generat va fi valid timp de <strong>{newInvitation.expires_in_days} zile</strong> și
                   poate fi folosit de <strong>{newInvitation.max_uses} {newInvitation.max_uses === 1 ? 'persoană' : 'persoane'}</strong>.
                 </p>
               </div>

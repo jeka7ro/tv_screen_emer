@@ -34,6 +34,10 @@ from db import (
     user_update_last_login,
     users_count,
     users_list,
+    user_delete,
+    user_update,
+    user_update_status,
+    user_update_password_by_id,
     invitation_get_by_code,
     invitation_insert,
     invitation_increment_uses,
@@ -263,6 +267,9 @@ class User(BaseModel):
     full_name: str
     hashed_password: str
     is_super_admin: bool = False
+    role: str = "admin"  # admin, manager
+    location_id: Optional[str] = None
+    status: str = "active"  # active, suspended
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_login: Optional[datetime] = None
 
@@ -274,12 +281,16 @@ class InvitationLink(BaseModel):
     expires_at: datetime
     max_uses: int = 1
     uses: int = 0
+    role: str = "admin"
+    location_id: Optional[str] = None
     is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class InvitationCreate(BaseModel):
     expires_in_days: int = 7
     max_uses: int = 1
+    role: str = "admin"
+    location_id: Optional[str] = None
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -296,12 +307,26 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     is_super_admin: bool = False
+    role: str = "admin"
+    location_id: Optional[str] = None
+    status: str = "active"
     last_login: Optional[datetime] = None
+
+class UserStatusUpdate(BaseModel):
+    status: str
+
+class UserResetPassword(BaseModel):
+    new_password: str = Field(min_length=6)
 
 class Token(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    role: Optional[str] = None
+    location_id: Optional[str] = None
 
 class Location(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -574,36 +599,26 @@ async def register(user_data: UserCreate):
             raise HTTPException(status_code=403, detail="Cod de invitație expirat")
         if invitation.get("uses", 0) >= invitation.get("max_uses", 1):
             raise HTTPException(status_code=403, detail="Codul de invitație a atins limita maximă de utilizări")
+        
+        # User inherits role and location from invitation
+        invite_role = invitation.get("role", "admin")
+        invite_location = invitation.get("location_id")
         await invitation_increment_uses(user_data.invitation_code)
+    else:
+        # First user is super admin
+        invite_role = "admin"
+        invite_location = None
+
     user = User(
         email=user_data.email,
         full_name=user_data.full_name,
         hashed_password=get_password_hash(user_data.password),
         is_super_admin=is_first_user,
+        role=invite_role,
+        location_id=invite_location
     )
     user_dict = user.model_dump()
     await user_insert(user_dict)
-    access_token = create_access_token(data={"sub": user.email})
-    return Token(
-        access_token=access_token,
-        token_type="bearer",
-        user=UserResponse(id=user.id, email=user.email, full_name=user.full_name, is_super_admin=user.is_super_admin),
-    )
-
-@api_router.post("/auth/login", response_model=Token)
-async def login(credentials: UserLogin):
-    user_doc = await user_get_by_email(credentials.email)
-    if not user_doc:
-        raise HTTPException(status_code=401, detail="Email sau parolă incorectă")
-    if isinstance(user_doc.get("created_at"), str):
-        user_doc["created_at"] = datetime.fromisoformat(user_doc["created_at"])
-    user = User(**user_doc)
-    if not verify_password(credentials.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Email sau parolă incorectă")
-    
-    # Update last_login
-    await user_update_last_login(user.email)
-    
     access_token = create_access_token(data={"sub": user.email})
     return Token(
         access_token=access_token,
@@ -613,6 +628,53 @@ async def login(credentials: UserLogin):
             email=user.email, 
             full_name=user.full_name, 
             is_super_admin=user.is_super_admin,
+            role=user.role,
+            location_id=user.location_id
+        ),
+    )
+
+@api_router.post("/auth/login", response_model=Token)
+async def login(credentials: UserLogin):
+    import time
+    start = time.time()
+    
+    user_doc = await user_get_by_email(credentials.email)
+    if not user_doc:
+        raise HTTPException(status_code=401, detail="Email sau parolă incorectă")
+    
+    db_time = time.time() - start
+    
+    if user_doc.get("status") == "suspended":
+        raise HTTPException(status_code=403, detail="Contul tau este suspendat. Contacteaza administratorul.")
+
+    if isinstance(user_doc.get("created_at"), str):
+        user_doc["created_at"] = datetime.fromisoformat(user_doc["created_at"])
+    user = User(**user_doc)
+    
+    verify_start = time.time()
+    if not verify_password(credentials.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Email sau parolă incorectă")
+    verify_time = time.time() - verify_start
+    
+    # Update last_login
+    await user_update_last_login(user.email)
+    
+    access_token = create_access_token(data={"sub": user.email})
+    
+    total_time = time.time() - start
+    print(f"Login timing - DB: {db_time:.3f}s, Password verify: {verify_time:.3f}s, Total: {total_time:.3f}s")
+    
+    return Token(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse(
+            id=user.id, 
+            email=user.email, 
+            full_name=user.full_name, 
+            is_super_admin=user.is_super_admin,
+            role=user.role,
+            location_id=user.location_id,
+            status=user.status,
             last_login=datetime.now(timezone.utc)
         ),
     )
@@ -624,6 +686,8 @@ async def get_me(current_user: User = Depends(get_current_user)):
         email=current_user.email, 
         full_name=current_user.full_name, 
         is_super_admin=current_user.is_super_admin,
+        role=current_user.role,
+        location_id=current_user.location_id,
         last_login=current_user.last_login
     )
 
@@ -635,12 +699,20 @@ async def get_super_admin(current_user: User = Depends(get_current_user)) -> Use
         raise HTTPException(status_code=403, detail="Acces permis doar pentru Super Admin")
     return current_user
 
+async def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    """Dependency that requires admin role"""
+    if current_user.role != "admin" and not current_user.is_super_admin:
+        raise HTTPException(status_code=403, detail="Acces permis doar pentru Admin")
+    return current_user
+
 @api_router.post("/invitations")
 async def create_invitation(invitation_data: InvitationCreate, current_user: User = Depends(get_super_admin)):
     invitation = InvitationLink(
         created_by=current_user.id,
         expires_at=datetime.now(timezone.utc) + timedelta(days=invitation_data.expires_in_days),
         max_uses=invitation_data.max_uses,
+        role=invitation_data.role,
+        location_id=invitation_data.location_id,
     )
     inv_dict = invitation.model_dump()
     await invitation_insert(inv_dict)
@@ -668,6 +740,37 @@ async def delete_invitation(invitation_id: str, current_user: User = Depends(get
 async def get_users(current_user: User = Depends(get_super_admin)):
     return await users_list(exclude_password=True)
 
+@api_router.delete("/users/{user_id}")
+async def delete_user_endpoint(user_id: str, current_user: User = Depends(get_super_admin)):
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Nu te poți șterge pe tine însuți")
+    ok = await user_delete(user_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Utilizator negăsit")
+    return {"message": "Utilizator șters"}
+
+@api_router.patch("/users/{user_id}/status")
+async def update_user_status_endpoint(user_id: str, data: UserStatusUpdate, current_user: User = Depends(get_super_admin)):
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Nu poți schimba propriul status")
+    await user_update_status(user_id, data.status)
+    return {"message": f"Status actualizat la {data.status}"}
+
+@api_router.post("/users/{user_id}/reset-password")
+async def reset_user_password_endpoint(user_id: str, data: UserResetPassword, current_user: User = Depends(get_super_admin)):
+    hashed = get_password_hash(data.new_password)
+    await user_update_password_by_id(user_id, hashed)
+    return {"message": "Parolă resetată cu succes"}
+
+@api_router.patch("/users/{user_id}")
+async def update_user_endpoint(user_id: str, data: UserUpdate, current_user: User = Depends(get_super_admin)):
+    update_data = data.model_dump(exclude_unset=True)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Nu există date de actualizat")
+    
+    await user_update(user_id, update_data)
+    return {"message": "Utilizator actualizat cu succes"}
+
 @api_router.get("/invitations/validate/{code}")
 async def validate_invitation(code: str):
     invitation = await invitation_get_by_code(code)
@@ -690,10 +793,13 @@ async def check_registration_open():
 
 @api_router.get("/locations", response_model=List[Location])
 async def get_locations(current_user: User = Depends(get_current_user)):
-    return await locations_list()
+    all_locations = await locations_list()
+    if current_user.role == "manager" and current_user.location_id:
+        return [l for l in all_locations if l["id"] == current_user.location_id]
+    return all_locations
 
 @api_router.post("/locations", response_model=Location)
-async def create_location(location_data: LocationCreate, current_user: User = Depends(get_current_user)):
+async def create_location(location_data: LocationCreate, current_user: User = Depends(require_admin)):
     location = Location(**location_data.model_dump())
     await location_insert(location.model_dump())
     return location
@@ -706,7 +812,7 @@ async def get_location(location_id: str, current_user: User = Depends(get_curren
     return location
 
 @api_router.put("/locations/{location_id}", response_model=Location)
-async def update_location(location_id: str, location_data: LocationCreate, current_user: User = Depends(get_current_user)):
+async def update_location(location_id: str, location_data: LocationCreate, current_user: User = Depends(require_admin)):
     existing = await location_get(location_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Location not found")
@@ -716,7 +822,7 @@ async def update_location(location_id: str, location_data: LocationCreate, curre
     return updated
 
 @api_router.delete("/locations/{location_id}")
-async def delete_location(location_id: str, current_user: User = Depends(get_current_user)):
+async def delete_location(location_id: str, current_user: User = Depends(require_admin)):
     ok = await location_delete(location_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Location not found")
@@ -726,10 +832,13 @@ async def delete_location(location_id: str, current_user: User = Depends(get_cur
 
 @api_router.get("/screens", response_model=List[Screen])
 async def get_screens(current_user: User = Depends(get_current_user)):
-    return await screens_list()
+    all_screens = await screens_list()
+    if current_user.role == "manager" and current_user.location_id:
+        return [s for s in all_screens if s["location_id"] == current_user.location_id]
+    return all_screens
 
 @api_router.post("/screens", response_model=Screen)
-async def create_screen(screen_data: ScreenCreate, current_user: User = Depends(get_current_user)):
+async def create_screen(screen_data: ScreenCreate, current_user: User = Depends(require_admin)):
     if await screen_exists_by_slug(screen_data.slug):
         raise HTTPException(status_code=400, detail="Slug already exists")
     screen = Screen(**screen_data.model_dump())
@@ -744,7 +853,7 @@ async def get_screen(screen_id: str, current_user: User = Depends(get_current_us
     return screen
 
 @api_router.put("/screens/{screen_id}", response_model=Screen)
-async def update_screen(screen_id: str, screen_data: ScreenCreate, current_user: User = Depends(get_current_user)):
+async def update_screen(screen_id: str, screen_data: ScreenCreate, current_user: User = Depends(require_admin)):
     existing = await screen_get(screen_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Screen not found")
@@ -753,7 +862,7 @@ async def update_screen(screen_id: str, screen_data: ScreenCreate, current_user:
     return updated
 
 @api_router.delete("/screens/{screen_id}")
-async def delete_screen(screen_id: str, current_user: User = Depends(get_current_user)):
+async def delete_screen(screen_id: str, current_user: User = Depends(require_admin)):
     ok = await screen_delete(screen_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Screen not found")
@@ -987,14 +1096,14 @@ async def get_content_item(content_id: str, current_user: User = Depends(get_cur
         raise HTTPException(status_code=404, detail="Content not found")
     return item
 
-@api_router.post("/content/upload")
-async def upload_content(
-    title: str = Form(...),
-    type: str = Form(...),
-    category: str = Form("other"),
-    duration: int = Form(10),
+@api_router.post("/content")
+async def create_content(
     files: List[UploadFile] = File(...),
-    current_user: User = Depends(get_current_user)
+    title: str = Form(...),
+    type: str = Form(...), # image, video
+    duration: int = Form(10),
+    category: str = Form("other"),
+    current_user: User = Depends(require_admin)
 ):
     created_items = []
     
@@ -1060,7 +1169,7 @@ async def upload_content(
     return created_items
 
 @api_router.post("/content/external", response_model=Content)
-async def create_external_content(content_data: ContentCreate, current_user: User = Depends(get_current_user)):
+async def create_external_content(content_data: ContentCreate, current_user: User = Depends(require_admin)):
     content = Content(**content_data.model_dump())
     await content_insert(content.model_dump())
     return content
@@ -1073,7 +1182,7 @@ async def get_content_by_id(content_id: str, current_user: User = Depends(get_cu
     return content
 
 @api_router.delete("/content/{content_id}")
-async def delete_content(content_id: str, current_user: User = Depends(get_current_user)):
+async def delete_content(content_id: str, current_user: User = Depends(require_admin)):
     content = await content_get(content_id)
     if not content:
         raise HTTPException(status_code=404, detail="Content not found")
@@ -1119,7 +1228,7 @@ async def get_playlists(current_user: User = Depends(get_current_user)):
     return await playlists_list()
 
 @api_router.post("/playlists", response_model=Playlist)
-async def create_playlist(playlist_data: PlaylistCreate, current_user: User = Depends(get_current_user)):
+async def create_playlist(playlist_data: PlaylistCreate, current_user: User = Depends(require_admin)):
     playlist = Playlist(**playlist_data.model_dump())
     await playlist_insert(playlist.model_dump())
     return playlist
@@ -1132,7 +1241,7 @@ async def get_playlist(playlist_id: str, current_user: User = Depends(get_curren
     return playlist
 
 @api_router.put("/playlists/{playlist_id}", response_model=Playlist)
-async def update_playlist(playlist_id: str, playlist_data: PlaylistCreate, current_user: User = Depends(get_current_user)):
+async def update_playlist(playlist_id: str, playlist_data: PlaylistCreate, current_user: User = Depends(require_admin)):
     existing = await playlist_get(playlist_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Playlist not found")
@@ -1141,7 +1250,7 @@ async def update_playlist(playlist_id: str, playlist_data: PlaylistCreate, curre
     return updated
 
 @api_router.delete("/playlists/{playlist_id}")
-async def delete_playlist(playlist_id: str, current_user: User = Depends(get_current_user)):
+async def delete_playlist(playlist_id: str, current_user: User = Depends(require_admin)):
     ok = await playlist_delete(playlist_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Playlist not found")
@@ -1154,7 +1263,7 @@ async def get_products(current_user: User = Depends(get_current_user)):
     return await products_list()
 
 @api_router.post("/products", response_model=Product)
-async def create_product(product_data: ProductCreate, current_user: User = Depends(get_current_user)):
+async def create_product(product_data: ProductCreate, current_user: User = Depends(require_admin)):
     product = Product(**product_data.model_dump())
     await product_insert(product.model_dump())
     return product
@@ -1167,7 +1276,7 @@ async def get_product(product_id: str, current_user: User = Depends(get_current_
     return product
 
 @api_router.put("/products/{product_id}", response_model=Product)
-async def update_product(product_id: str, product_data: ProductCreate, current_user: User = Depends(get_current_user)):
+async def update_product(product_id: str, product_data: ProductCreate, current_user: User = Depends(require_admin)):
     existing = await product_get(product_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -1177,7 +1286,7 @@ async def update_product(product_id: str, product_data: ProductCreate, current_u
 @api_router.post("/products/import-batch", response_model=List[Product])
 async def import_products_batch(
     products_data: List[ProductCreate],
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
 ):
     imported = []
     for d in products_data:
@@ -1187,7 +1296,7 @@ async def import_products_batch(
     return imported
 
 @api_router.delete("/products/{product_id}")
-async def delete_product(product_id: str, current_user: User = Depends(get_current_user)):
+async def delete_product(product_id: str, current_user: User = Depends(require_admin)):
     ok = await product_delete(product_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -1235,7 +1344,7 @@ async def get_digital_menus(current_user: User = Depends(get_current_user)):
     return await digital_menus_list()
 
 @api_router.post("/digital-menus", response_model=DigitalMenu)
-async def create_digital_menu(menu_data: DigitalMenuCreate, current_user: User = Depends(get_current_user)):
+async def create_digital_menu(menu_data: DigitalMenuCreate, current_user: User = Depends(require_admin)):
     menu = DigitalMenu(**menu_data.model_dump())
     await digital_menu_insert(menu.model_dump())
     return menu
@@ -1248,7 +1357,7 @@ async def get_digital_menu(menu_id: str, current_user: User = Depends(get_curren
     return menu
 
 @api_router.put("/digital-menus/{menu_id}", response_model=DigitalMenu)
-async def update_digital_menu(menu_id: str, menu_data: DigitalMenuCreate, current_user: User = Depends(get_current_user)):
+async def update_digital_menu(menu_id: str, menu_data: DigitalMenuCreate, current_user: User = Depends(require_admin)):
     existing = await digital_menu_get(menu_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Digital menu not found")
@@ -1256,7 +1365,7 @@ async def update_digital_menu(menu_id: str, menu_data: DigitalMenuCreate, curren
     return await digital_menu_get(menu_id)
 
 @api_router.delete("/digital-menus/{menu_id}")
-async def delete_digital_menu(menu_id: str, current_user: User = Depends(get_current_user)):
+async def delete_digital_menu(menu_id: str, current_user: User = Depends(require_admin)):
     ok = await digital_menu_delete(menu_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Digital menu not found")
@@ -1269,14 +1378,14 @@ async def get_screen_zones(screen_id: str, current_user: User = Depends(get_curr
     return await screen_zones_list(screen_id)
 
 @api_router.post("/screen-zones", response_model=ScreenZoneContent)
-async def create_screen_zone(zone_data: ScreenZoneContentCreate, current_user: User = Depends(get_current_user)):
+async def create_screen_zone(zone_data: ScreenZoneContentCreate, current_user: User = Depends(require_admin)):
     await screen_zones_delete_by_screen_and_zone(zone_data.screen_id, zone_data.zone_id)
     zone = ScreenZoneContent(**zone_data.model_dump())
     await screen_zone_insert(zone.model_dump())
     return zone
 
 @api_router.delete("/screen-zones/{zone_id}")
-async def delete_screen_zone(zone_id: str, current_user: User = Depends(get_current_user)):
+async def delete_screen_zone(zone_id: str, current_user: User = Depends(require_admin)):
     ok = await screen_zone_delete(zone_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Zone configuration not found")
@@ -1285,7 +1394,7 @@ async def delete_screen_zone(zone_id: str, current_user: User = Depends(get_curr
 # ============ SCREEN SYNC ROUTES ============
 
 @api_router.post("/screen-sync")
-async def sync_screens(sync_data: ScreenSync, current_user: User = Depends(get_current_user)):
+async def sync_screens(sync_data: ScreenSync, current_user: User = Depends(require_admin)):
     sync_group = str(uuid.uuid4())
     
     # Logic for leader screen
@@ -1385,7 +1494,24 @@ async def sync_screens(sync_data: ScreenSync, current_user: User = Depends(get_c
 
 @api_router.get("/screen-sync/groups")
 async def get_sync_groups(current_user: User = Depends(get_current_user)):
-    return await sync_groups_list()
+    groups = await sync_groups_list()
+    if current_user.role == "manager" and current_user.location_id:
+        # A bit more complex: filter groups where all screens belong to the manager's location
+        # or at least the manager has access to them.
+        # For simplicity, filtering by group screens if we could know their location.
+        # But groups usually have screen_names or screen_ids.
+        # Let's fetch screens to check locations.
+        all_screens = await screens_list()
+        manager_screen_ids = [s["id"] for s in all_screens if s["location_id"] == current_user.location_id]
+        
+        filtered_groups = []
+        for g in groups:
+            # Check if group['screen_ids'] subset of manager_screen_ids
+            g_ids = g.get("screen_ids") or []
+            if g_ids and all(sid in manager_screen_ids for sid in g_ids):
+                filtered_groups.append(g)
+        return filtered_groups
+    return groups
 
 @api_router.delete("/screen-sync/groups/{group_id}")
 async def unsync_group(group_id: str, current_user: User = Depends(get_current_user)):
@@ -1596,10 +1722,12 @@ async def get_display_data(slug: str, security_code: Optional[str] = None):
 
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
+    location_id = current_user.location_id if current_user.role == "manager" else None
+    
     return {
-        "locations": await locations_count(),
-        "screens": await screens_count(),
-        "online_screens": await screens_count_online(),
+        "locations": await locations_count(location_id),
+        "screens": await screens_count(location_id),
+        "online_screens": await screens_count_online(location_id),
         "products": await products_count(),
         "content": await content_count(),
     }
@@ -1649,7 +1777,7 @@ class AudioPlaylist(BaseModel):
 # ============ AUDIO ROUTES ============
 
 @api_router.post("/audio/playlists", response_model=AudioPlaylist)
-async def create_audio_playlist_endpoint(data: AudioPlaylistCreate, current_user: User = Depends(get_current_user)):
+async def create_audio_playlist_endpoint(data: AudioPlaylistCreate, current_user: User = Depends(require_admin)):
     playlist = AudioPlaylist(**data.model_dump())
     await audio_playlist_create(playlist.model_dump())
     return playlist
@@ -1668,7 +1796,7 @@ async def get_audio_playlist_details(id: str, current_user: User = Depends(get_c
     return pl
 
 @api_router.put("/audio/playlists/{id}")
-async def update_audio_playlist_endpoint(id: str, data: AudioPlaylistCreate, current_user: User = Depends(get_current_user)):
+async def update_audio_playlist_endpoint(id: str, data: AudioPlaylistCreate, current_user: User = Depends(require_admin)):
     existing = await audio_playlist_get(id)
     if not existing:
         raise HTTPException(status_code=404, detail="Playlist not found")
@@ -1676,7 +1804,7 @@ async def update_audio_playlist_endpoint(id: str, data: AudioPlaylistCreate, cur
     return {"message": "Updated"}
 
 @api_router.delete("/audio/playlists/{id}")
-async def delete_audio_playlist_endpoint(id: str, current_user: User = Depends(get_current_user)):
+async def delete_audio_playlist_endpoint(id: str, current_user: User = Depends(require_admin)):
     tracks = await audio_tracks_by_playlist(id)
     for track in tracks:
         url = track.get("url", "")
@@ -1698,7 +1826,7 @@ async def upload_audio_track_endpoint(
     type: str = Form("music"), # music / ad
     file: UploadFile = File(None),
     youtube_url: str = Form(None),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_admin)
 ):
     pl = await audio_playlist_get(playlist_id)
     if not pl:
@@ -1738,7 +1866,7 @@ async def upload_audio_track_endpoint(
     return track_data
 
 @api_router.delete("/audio/tracks/{track_id}")
-async def delete_audio_track_endpoint(track_id: str, current_user: User = Depends(get_current_user)):
+async def delete_audio_track_endpoint(track_id: str, current_user: User = Depends(require_admin)):
     ok = await audio_track_delete(track_id)
     if not ok:
          raise HTTPException(status_code=404, detail="Track not found")

@@ -116,11 +116,11 @@ async def init_db() -> None:
                 port=port,
                 database=database,
                 ssl=ssl_mode if ssl_mode != "disable" else None,
-                min_size=1, 
-                max_size=5, # Reduced for free tier efficiency
-                command_timeout=15,
-                timeout=10,
-                statement_cache_size=0
+                min_size=2, 
+                max_size=10, # Increased for better concurrency
+                command_timeout=20,
+                timeout=15,
+                statement_cache_size=100  # Enable statement caching for performance
             )
             logger.info("Database connection established successfully via parameters.")
             break
@@ -218,17 +218,18 @@ async def user_get_by_email(email: str) -> Optional[Dict[str, Any]]:
 
 async def user_get_by_email_no_password(email: str) -> Optional[Dict[str, Any]]:
     return await _fetch_one(
-        "SELECT id, email, full_name, is_super_admin, created_at, last_login FROM users WHERE email = $1",
+        "SELECT id, email, full_name, is_super_admin, role, location_id, status, created_at, last_login FROM users WHERE email = $1",
         email,
     )
 
 
 async def user_insert(row: Dict[str, Any]) -> None:
     await _execute(
-        """INSERT INTO users (id, email, full_name, hashed_password, is_super_admin, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6)""",
+        """INSERT INTO users (id, email, full_name, hashed_password, is_super_admin, role, location_id, status, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)""",
         row["id"], row["email"], row["full_name"], row["hashed_password"],
-        row.get("is_super_admin", False), row["created_at"],
+        row.get("is_super_admin", False), row.get("role", "admin"), row.get("location_id"), 
+        row.get("status", "active"), row["created_at"],
     )
 
 
@@ -238,12 +239,42 @@ async def users_count() -> int:
 
 
 async def users_list(exclude_password: bool = True) -> List[Dict[str, Any]]:
-    cols = "id, email, full_name, is_super_admin, created_at, last_login" if exclude_password else "*"
+    cols = "id, email, full_name, is_super_admin, role, location_id, status, created_at, last_login" if exclude_password else "*"
     return await _fetch_all(f"SELECT {cols} FROM users ORDER BY created_at DESC LIMIT 500")
+
+
+async def user_get_by_id(user_id: str) -> Optional[Dict[str, Any]]:
+    return await _fetch_one("SELECT * FROM users WHERE id = $1", user_id)
+
+
+async def user_delete(user_id: str) -> bool:
+    res = await _execute_many("DELETE FROM users WHERE id = $1", user_id)
+    return "DELETE 1" in res
+
+
+async def user_update_status(user_id: str, status: str) -> None:
+    await _execute("UPDATE users SET status = $1 WHERE id = $2", status, user_id)
+
+
+async def user_update_password_by_id(user_id: str, hashed_password: str) -> None:
+    await _execute("UPDATE users SET hashed_password = $1 WHERE id = $2", hashed_password, user_id)
 
 
 async def user_update_last_login(email: str) -> None:
     await _execute("UPDATE users SET last_login = NOW() WHERE email = $1", email)
+
+
+async def user_update(user_id: str, data: Dict[str, Any]) -> None:
+    if not data:
+        return
+    fields = []
+    values = []
+    for i, (k, v) in enumerate(data.items(), 1):
+        fields.append(f"{k} = ${i}")
+        values.append(v)
+    values.append(user_id)
+    query = f"UPDATE users SET {', '.join(fields)} WHERE id = ${len(values)}"
+    await _execute(query, *values)
 
 
 # ---------- invitations ----------
@@ -256,10 +287,11 @@ async def invitation_get_by_code(code: str) -> Optional[Dict[str, Any]]:
 
 async def invitation_insert(row: Dict[str, Any]) -> None:
     await _execute(
-        """INSERT INTO invitations (id, code, created_by, expires_at, max_uses, uses, is_active, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)""",
+        """INSERT INTO invitations (id, code, created_by, expires_at, max_uses, uses, is_active, role, location_id, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)""",
         row["id"], row["code"], row["created_by"], row["expires_at"],
-        row.get("max_uses", 1), row.get("uses", 0), row.get("is_active", True), row["created_at"],
+        row.get("max_uses", 1), row.get("uses", 0), row.get("is_active", True),
+        row.get("role", "admin"), row.get("location_id"), row["created_at"],
     )
 
 
@@ -626,19 +658,27 @@ async def screen_zones_delete_by_screen(screen_id: str) -> None:
 
 # ---------- dashboard ----------
 
-async def locations_count() -> int:
+async def locations_count(location_id: Optional[str] = None) -> int:
+    if location_id:
+        return 1
     r = await _fetch_one("SELECT count(*)::int AS c FROM locations")
     return r["c"] if r else 0
 
 
-async def screens_count() -> int:
-    r = await _fetch_one("SELECT count(*)::int AS c FROM screens")
+async def screens_count(location_id: Optional[str] = None) -> int:
+    if location_id:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM screens WHERE location_id = $1", location_id)
+    else:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM screens")
     return r["c"] if r else 0
 
 
 
-async def screens_count_online() -> int:
-    r = await _fetch_one("SELECT count(*)::int AS c FROM screens WHERE status = 'online'")
+async def screens_count_online(location_id: Optional[str] = None) -> int:
+    if location_id:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM screens WHERE status = 'online' AND location_id = $1", location_id)
+    else:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM screens WHERE status = 'online'")
     return r["c"] if r else 0
 
 

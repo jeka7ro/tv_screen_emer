@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
-    
+
     if (token && savedUser) {
       setUser(JSON.parse(savedUser));
       // Verify token is still valid
@@ -53,9 +53,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isSuperAdmin = () => user?.is_super_admin || false;
+  const isAdmin = () => user?.role === 'admin' || isSuperAdmin();
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isSuperAdmin }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, isSuperAdmin, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

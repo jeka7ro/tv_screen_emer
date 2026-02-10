@@ -11,6 +11,7 @@ import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
 
 export const Locations = () => {
+  const { isAdmin } = useAuth();
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
@@ -109,80 +110,82 @@ export const Locations = () => {
             <h1 className="text-4xl font-bold text-slate-800 mb-2">Locații</h1>
             <p className="text-slate-500">Gestionează restaurantele și punctele de vânzare</p>
           </div>
-          <Dialog open={showDialog} onOpenChange={(open) => {
-            setShowDialog(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button className="btn-primary" data-testid="add-location-button">
-                <Plus className="w-5 h-5 mr-2" />
-                Adaugă locație
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="glass-panel">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingLocation ? 'Editează locația' : 'Adaugă locație nouă'}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label>Nume locație</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="SushiMaster Centru"
-                    required
-                    data-testid="location-name-input"
-                  />
-                </div>
-                <div>
-                  <Label>Adresă</Label>
-                  <Input
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Strada Principală nr. 123"
-                    required
-                    data-testid="location-address-input"
-                  />
-                </div>
-                <div>
-                  <Label>Oraș</Label>
-                  <Input
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    placeholder="București"
-                    required
-                    data-testid="location-city-input"
-                  />
-                </div>
-                <div>
-                  <Label>Cod de securitate (opțional)</Label>
-                  <Input
-                    value={formData.security_code}
-                    onChange={(e) => setFormData({ ...formData, security_code: e.target.value })}
-                    placeholder="1234"
-                    data-testid="location-security-input"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    Va fi cerut la accesarea ecranelor din această locație
-                  </p>
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <Button type="submit" className="btn-primary flex-1" data-testid="save-location-button">
-                    {editingLocation ? 'Actualizează' : 'Creează'}
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setShowDialog(false)}
-                    className="btn-secondary"
-                  >
-                    Anulează
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          {isAdmin() && (
+            <Dialog open={showDialog} onOpenChange={(open) => {
+              setShowDialog(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button className="btn-primary" data-testid="add-location-button">
+                  <Plus className="w-5 h-5 mr-2" />
+                  Adaugă locație
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="glass-panel">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingLocation ? 'Editează locația' : 'Adaugă locație nouă'}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label>Nume locație</Label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="SushiMaster Centru"
+                      required
+                      data-testid="location-name-input"
+                    />
+                  </div>
+                  <div>
+                    <Label>Adresă</Label>
+                    <Input
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="Strada Principală nr. 123"
+                      required
+                      data-testid="location-address-input"
+                    />
+                  </div>
+                  <div>
+                    <Label>Oraș</Label>
+                    <Input
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      placeholder="București"
+                      required
+                      data-testid="location-city-input"
+                    />
+                  </div>
+                  <div>
+                    <Label>Cod de securitate (opțional)</Label>
+                    <Input
+                      value={formData.security_code}
+                      onChange={(e) => setFormData({ ...formData, security_code: e.target.value })}
+                      placeholder="1234"
+                      data-testid="location-security-input"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      Va fi cerut la accesarea ecranelor din această locație
+                    </p>
+                  </div>
+                  <div className="flex gap-3 pt-4">
+                    <Button type="submit" className="btn-primary flex-1" data-testid="save-location-button">
+                      {editingLocation ? 'Actualizează' : 'Creează'}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => setShowDialog(false)}
+                      className="btn-secondary"
+                    >
+                      Anulează
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
           <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
         </div>
 
@@ -205,7 +208,7 @@ export const Locations = () => {
                     <th className="px-6 py-4">Nume</th>
                     <th className="px-6 py-4">Adresă / Oraș</th>
                     <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Acțiuni</th>
+                    <th className="px-6 py-4 text-right">{isAdmin() && 'Acțiuni'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -238,20 +241,22 @@ export const Locations = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleEdit(location)}
-                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(location.id)}
-                            className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all text-slate-500 hover:text-rose-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        {isAdmin() && (
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleEdit(location)}
+                              className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(location.id)}
+                              className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all text-slate-500 hover:text-rose-600"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -267,22 +272,24 @@ export const Locations = () => {
                   <div className="bg-indigo-100 p-3 rounded-2xl">
                     <MapPin className="w-6 h-6 text-indigo-600" />
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(location)}
-                      className="p-2 hover:bg-white/50 rounded-lg transition-colors"
-                      data-testid={`edit-location-${location.id}`}
-                    >
-                      <Edit className="w-4 h-4 text-slate-600" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(location.id)}
-                      className="p-2 hover:bg-rose-100/50 rounded-lg transition-colors"
-                      data-testid={`delete-location-${location.id}`}
-                    >
-                      <Trash2 className="w-4 h-4 text-rose-600" />
-                    </button>
-                  </div>
+                  {isAdmin() && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(location)}
+                        className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                        data-testid={`edit-location-${location.id}`}
+                      >
+                        <Edit className="w-4 h-4 text-slate-600" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(location.id)}
+                        className="p-2 hover:bg-rose-100/50 rounded-lg transition-colors"
+                        data-testid={`delete-location-${location.id}`}
+                      >
+                        <Trash2 className="w-4 h-4 text-rose-600" />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <h3 className="text-lg font-semibold text-slate-800 mb-2">
                   {location.name}

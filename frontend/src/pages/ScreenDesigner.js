@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/DashboardLayout';
+import { useAuth } from '../contexts/AuthContext';
 import { Save, ArrowLeft, Eye } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
@@ -22,6 +23,7 @@ const getFileUrl = (url) => {
 };
 
 export const ScreenDesigner = () => {
+  const { isAdmin } = useAuth();
   const { screenId } = useParams();
   const navigate = useNavigate();
   const [screen, setScreen] = useState(null);
@@ -184,24 +186,26 @@ export const ScreenDesigner = () => {
                 Preview Sync
               </Button>
             )}
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="btn-primary"
-              data-testid="save-config-button"
-            >
-              {saving ? (
-                <div className="flex items-center gap-2">
-                  <div className="spinner w-4 h-4"></div>
-                  Se salvează...
-                </div>
-              ) : (
-                <>
-                  <Save className="w-5 h-5 mr-2" />
-                  Salvează configurarea
-                </>
-              )}
-            </Button>
+            {isAdmin() && (
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                className="btn-primary"
+                data-testid="save-config-button"
+              >
+                {saving ? (
+                  <div className="flex items-center gap-2">
+                    <div className="spinner w-4 h-4"></div>
+                    Se salvează...
+                  </div>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5 mr-2" />
+                    Salvează configurarea
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -213,6 +217,7 @@ export const ScreenDesigner = () => {
               <Select
                 value={selectedTemplate?.id}
                 onValueChange={handleTemplateChange}
+                disabled={!isAdmin()}
               >
                 <SelectTrigger data-testid="template-select">
                   <SelectValue />
@@ -315,6 +320,7 @@ export const ScreenDesigner = () => {
                       <Select
                         value={config.content_type || 'digital_menu'}
                         onValueChange={(value) => updateZoneConfig(zone.id, 'content_type', value)}
+                        disabled={!isAdmin()}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -333,6 +339,7 @@ export const ScreenDesigner = () => {
                         <Select
                           value={config.digital_menu_id || ''}
                           onValueChange={(value) => updateZoneConfig(zone.id, 'digital_menu_id', value)}
+                          disabled={!isAdmin()}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Selectează meniu" />
@@ -370,6 +377,7 @@ export const ScreenDesigner = () => {
                         <Select
                           value={config.playlist_id || ''}
                           onValueChange={(value) => updateZoneConfig(zone.id, 'playlist_id', value)}
+                          disabled={!isAdmin()}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Selectează playlist" />
@@ -416,6 +424,7 @@ export const ScreenDesigner = () => {
                         <Select
                           value={config.content_id || ''}
                           onValueChange={(value) => updateZoneConfig(zone.id, 'content_id', value)}
+                          disabled={!isAdmin()}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Selectează conținut" />

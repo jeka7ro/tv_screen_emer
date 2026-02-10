@@ -10,7 +10,17 @@ import {
   RefreshCw,
   XCircle,
   Clock,
+  Trash2,
+  Key,
+  Ban,
+  CheckCircle,
+  Edit,
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import api from '../utils/api';
 import { useViewMode } from '../hooks/useViewMode';
@@ -21,10 +31,32 @@ export const Users = () => {
   const [users, setUsers] = useState([]);
   const [viewMode, setViewMode] = useViewMode('view_mode_users', 'list');
   const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [locations, setLocations] = useState([]);
+  const [editFormData, setEditFormData] = useState({
+    full_name: '',
+    role: 'admin',
+    location_id: ''
+  });
 
   useEffect(() => {
     loadUsers();
+    loadLocations();
   }, []);
+
+  const loadLocations = async () => {
+    try {
+      const response = await api.get('/locations');
+      setLocations(response.data);
+    } catch (error) {
+      console.error('Error loading locations', error);
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -36,6 +68,75 @@ export const Users = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Ești sigur că vrei să ștergi acest utilizator? Această acțiune este ireversibilă.')) return;
+    try {
+      await api.delete(`/users/${userId}`);
+      toast.success('Utilizator șters cu succes');
+      loadUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Eroare la ștergere');
+    }
+  };
+
+  const handleUpdateStatus = async (userId, currentStatus) => {
+    const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+    try {
+      await api.patch(`/users/${userId}/status`, { status: newStatus });
+      toast.success(`Utilizator ${newStatus === 'active' ? 'activat' : 'suspendat'}`);
+      loadUsers();
+    } catch (error) {
+      toast.error('Eroare la actualizarea statusului');
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (newPassword.length < 6) {
+      toast.error('Parola trebuie să aibă cel puțin 6 caractere');
+      return;
+    }
+    setResetting(true);
+    try {
+      await api.post(`/users/${selectedUser.id}/reset-password`, { new_password: newPassword });
+      toast.success('Parolă resetată cu succes');
+      setShowPasswordDialog(false);
+      setNewPassword('');
+    } catch (error) {
+      toast.error('Eroare la resetarea parolei');
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const handleEditClick = (user) => {
+    setSelectedUser(user);
+    setEditFormData({
+      full_name: user.full_name || '',
+      role: user.role || 'admin',
+      location_id: user.location_id || ''
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateUser = async (e) => {
+    e.preventDefault();
+    setUpdating(true);
+    try {
+      const payload = { ...editFormData };
+      if (payload.location_id === 'none') payload.location_id = null;
+
+      await api.patch(`/users/${selectedUser.id}`, payload);
+      toast.success('Utilizator actualizat cu succes');
+      setShowEditDialog(false);
+      loadUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Eroare la actualizarea utilizatorului');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -153,7 +254,10 @@ export const Users = () => {
                       Înregistrat
                     </th>
                     <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 uppercase tracking-wider">
-                      Ultima logare
+                      Status
+                    </th>
+                    <th className="text-right py-4 px-5 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                      Acțiuni
                     </th>
                   </tr>
                 </thead>
@@ -198,6 +302,58 @@ export const Users = () => {
                         <div className="flex items-center gap-2 text-slate-500 text-sm">
                           <Clock className="w-4 h-4 text-slate-400" />
                           {formatDate(u.last_login)}
+                        </div>
+                      </td>
+                      <td className="py-4 px-5">
+                        {u.status === 'suspended' ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-full">
+                            <Ban className="w-3 h-3" />
+                            Suspendat
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
+                            <CheckCircle className="w-3 h-3" />
+                            Activ
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-4 px-5 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedUser(u);
+                              setShowPasswordDialog(true);
+                            }}
+                            className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-500 hover:text-indigo-600"
+                            title="Resetare parolă"
+                          >
+                            <Key className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleEditClick(u)}
+                            className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-500 hover:text-indigo-600"
+                            title="Editează utilizator"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleUpdateStatus(u.id, u.status)}
+                            className={`p-2 rounded-lg transition-colors ${u.status === 'active'
+                              ? 'hover:bg-amber-50 text-slate-500 hover:text-amber-600'
+                              : 'hover:bg-emerald-50 text-slate-500 hover:text-emerald-600'
+                              }`}
+                            title={u.status === 'active' ? 'Suspendă' : 'Activează'}
+                          >
+                            {u.status === 'active' ? <Ban className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(u.id)}
+                            className="p-2 hover:bg-red-50 rounded-lg transition-colors text-slate-500 hover:text-red-600"
+                            title="Șterge utilizator"
+                            disabled={u.is_super_admin && users.filter(usr => usr.is_super_admin).length === 1}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -252,10 +408,144 @@ export const Users = () => {
                     <span className="font-medium text-slate-700">{formatDate(u.last_login).split(',')[0]}</span>
                   </div>
                 </div>
+
+                <div className="w-full grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-100">
+                  <button
+                    onClick={() => {
+                      setSelectedUser(u);
+                      setShowPasswordDialog(true);
+                    }}
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-500 hover:text-indigo-600"
+                  >
+                    <Key className="w-4 h-4" />
+                    <span className="text-[10px] font-medium">Parolă</span>
+                  </button>
+                  <button
+                    onClick={() => handleEditClick(u)}
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-500 hover:text-indigo-600"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span className="text-[10px] font-medium">Editează</span>
+                  </button>
+                  <button
+                    onClick={() => handleUpdateStatus(u.id, u.status)}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${u.status === 'active'
+                      ? 'hover:bg-amber-50 text-slate-500 hover:text-amber-600'
+                      : 'hover:bg-emerald-50 text-slate-500 hover:text-emerald-600'
+                      }`}
+                  >
+                    {u.status === 'active' ? <Ban className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                    <span className="text-[10px] font-medium">{u.status === 'active' ? 'Suspendă' : 'Activ'}</span>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteUser(u.id)}
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-red-50 rounded-xl transition-colors text-slate-500 hover:text-red-600"
+                    disabled={u.is_super_admin && users.filter(usr => usr.is_super_admin).length === 1}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="text-[10px] font-medium">Șterge</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
+
+        <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+          <DialogContent className="glass-panel">
+            <DialogHeader>
+              <DialogTitle>Resetare parolă pentru {selectedUser?.full_name}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleResetPassword} className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Parolă nouă</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Introduceți parola nouă (min. 6 caractere)"
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button type="submit" disabled={resetting} className="flex-1 btn-primary">
+                  {resetting ? 'Se resetează...' : 'Resetează parola'}
+                </Button>
+                <Button type="button" onClick={() => setShowPasswordDialog(false)} variant="outline">
+                  Anulează
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+          <DialogContent className="glass-panel">
+            <DialogHeader>
+              <DialogTitle>Editează Utilizator: {selectedUser?.full_name}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUpdateUser} className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label>Nume Complet</Label>
+                <Input
+                  value={editFormData.full_name}
+                  onChange={(e) => setEditFormData({ ...editFormData, full_name: e.target.value })}
+                  placeholder="Nume Prenume"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Rol</Label>
+                <Select
+                  value={editFormData.role}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, role: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin (Toate locațiile)</SelectItem>
+                    <SelectItem value="manager">Manager (Locație specifică)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Locație</Label>
+                <Select
+                  value={editFormData.location_id || 'none'}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, location_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selectează locația" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nicio locație</SelectItem>
+                    {locations.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-500">
+                  Managerii pot vedea doar ecranele din locația atribuită.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button type="submit" disabled={updating} className="flex-1 btn-primary">
+                  {updating ? 'Se salvează...' : 'Salvează modificările'}
+                </Button>
+                <Button type="button" onClick={() => setShowEditDialog(false)} variant="outline">
+                  Anulează
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout >
   );

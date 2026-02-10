@@ -13,6 +13,7 @@ import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
 
 export const Screens = () => {
+  const { isAdmin } = useAuth();
   const [screens, setScreens] = useState([]);
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -188,111 +189,113 @@ export const Screens = () => {
             <h1 className="text-4xl font-bold text-slate-800 mb-2">Ecrane</h1>
             <p className="text-slate-500">Gestionează ecranele digitale</p>
           </div>
-          <Dialog open={showDialog} onOpenChange={(open) => {
-            setShowDialog(open);
-            if (!open) resetForm();
-          }}>
-            <DialogTrigger asChild>
-              <Button className="btn-primary" data-testid="add-screen-button">
-                <Plus className="w-5 h-5 mr-2" />
-                Adaugă ecran
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="glass-panel">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingScreen ? 'Editează ecranul' : 'Adaugă ecran nou'}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label>Locație</Label>
-                  <Select
-                    value={formData.location_id}
-                    onValueChange={(value) => setFormData({ ...formData, location_id: value })}
-                    required
-                  >
-                    <SelectTrigger data-testid="location-select">
-                      <SelectValue placeholder="Selectează locația" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.map(location => (
-                        <SelectItem key={location.id} value={location.id}>
-                          {location.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Nume ecran</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ecran Principal"
-                    required
-                    data-testid="screen-name-input"
-                  />
-                </div>
-                <div>
-                  <Label>Slug (link scurt)</Label>
-                  <Input
-                    value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-                    placeholder="c1"
-                    required
-                    data-testid="screen-slug-input"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    ⚡ Recomandare: Folosește 2-3 caractere (ex: c1, tv1, s2) pentru link foarte scurt pe TV
-                  </p>
-                </div>
-                <div>
-                  <Label>Rezoluție</Label>
-                  <Select
-                    value={formData.resolution}
-                    onValueChange={(value) => setFormData({ ...formData, resolution: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1920x1080">1920x1080 (Full HD)</SelectItem>
-                      <SelectItem value="3840x2160">3840x2160 (4K)</SelectItem>
-                      <SelectItem value="1280x720">1280x720 (HD)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Orientare</Label>
-                  <Select
-                    value={formData.orientation}
-                    onValueChange={(value) => setFormData({ ...formData, orientation: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="landscape">Landscape</SelectItem>
-                      <SelectItem value="portrait">Portrait</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex gap-3 pt-4">
-                  <Button type="submit" className="btn-primary flex-1" data-testid="save-screen-button">
-                    {editingScreen ? 'Actualizează' : 'Creează'}
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => setShowDialog(false)}
-                    className="btn-secondary"
-                  >
-                    Anulează
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+          {isAdmin() && (
+            <Dialog open={showDialog} onOpenChange={(open) => {
+              setShowDialog(open);
+              if (!open) resetForm();
+            }}>
+              <DialogTrigger asChild>
+                <Button className="btn-primary" data-testid="add-screen-button">
+                  <Plus className="w-5 h-5 mr-2" />
+                  Adaugă ecran
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="glass-panel">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingScreen ? 'Editează ecranul' : 'Adaugă ecran nou'}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label>Locație</Label>
+                    <Select
+                      value={formData.location_id}
+                      onValueChange={(value) => setFormData({ ...formData, location_id: value })}
+                      required
+                    >
+                      <SelectTrigger data-testid="location-select">
+                        <SelectValue placeholder="Selectează locația" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map(location => (
+                          <SelectItem key={location.id} value={location.id}>
+                            {location.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Nume ecran</Label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Ecran Principal"
+                      required
+                      data-testid="screen-name-input"
+                    />
+                  </div>
+                  <div>
+                    <Label>Slug (link scurt)</Label>
+                    <Input
+                      value={formData.slug}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                      placeholder="c1"
+                      required
+                      data-testid="screen-slug-input"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      ⚡ Recomandare: Folosește 2-3 caractere (ex: c1, tv1, s2) pentru link foarte scurt pe TV
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Rezoluție</Label>
+                    <Select
+                      value={formData.resolution}
+                      onValueChange={(value) => setFormData({ ...formData, resolution: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1920x1080">1920x1080 (Full HD)</SelectItem>
+                        <SelectItem value="3840x2160">3840x2160 (4K)</SelectItem>
+                        <SelectItem value="1280x720">1280x720 (HD)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Orientare</Label>
+                    <Select
+                      value={formData.orientation}
+                      onValueChange={(value) => setFormData({ ...formData, orientation: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="landscape">Landscape</SelectItem>
+                        <SelectItem value="portrait">Portrait</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex gap-3 pt-4">
+                    <Button type="submit" className="btn-primary flex-1" data-testid="save-screen-button">
+                      {editingScreen ? 'Actualizează' : 'Creează'}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => setShowDialog(false)}
+                      className="btn-secondary"
+                    >
+                      Anulează
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {screens.length === 0 ? (
@@ -368,24 +371,30 @@ export const Screens = () => {
                           >
                             <LinkIcon className="w-4 h-4" />
                           </button>
-                          <Link
-                            to={`/screens/${screen.id}/design`}
-                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
-                          >
-                            <Settings className="w-4 h-4" />
-                          </Link>
-                          <button
-                            onClick={() => handleEdit(screen)}
-                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(screen.id)}
-                            className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all text-slate-500 hover:text-rose-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {isAdmin() && (
+                            <>
+                              <Link
+                                to={`/screens/${screen.id}/design`}
+                                className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                              >
+                                <Settings className="w-4 h-4" />
+                              </Link>
+                              <button
+                                onClick={() => handleEdit(screen)}
+                                className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                          {isAdmin() && (
+                            <button
+                              onClick={() => handleDelete(screen.id)}
+                              className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all text-slate-500 hover:text-rose-600"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -403,27 +412,37 @@ export const Screens = () => {
                     <Tv className="w-6 h-6 text-blue-600" />
                   </div>
                   <div className="flex gap-2">
-                    <Link
-                      to={`/screens/${screen.id}/design`}
-                      className="p-2 hover:bg-white/50 rounded-lg transition-colors border border-transparent hover:border-slate-200"
-                      data-testid={`design-screen-${screen.id}`}
-                    >
-                      <Settings className="w-4 h-4 text-slate-600" />
-                    </Link>
                     <button
-                      onClick={() => handleEdit(screen)}
+                      onClick={() => handleShowLink(screen)}
                       className="p-2 hover:bg-white/50 rounded-lg transition-colors border border-transparent hover:border-slate-200"
-                      data-testid={`edit-screen-${screen.id}`}
                     >
-                      <Edit className="w-4 h-4 text-slate-600" />
+                      <LinkIcon className="w-4 h-4 text-slate-600" />
                     </button>
-                    <button
-                      onClick={() => handleDelete(screen.id)}
-                      className="p-2 hover:bg-rose-100/50 rounded-lg transition-colors border border-transparent hover:border-rose-100"
-                      data-testid={`delete-screen-${screen.id}`}
-                    >
-                      <Trash2 className="w-4 h-4 text-rose-600" />
-                    </button>
+                    {isAdmin() && (
+                      <>
+                        <Link
+                          to={`/screens/${screen.id}/design`}
+                          className="p-2 hover:bg-white/50 rounded-lg transition-colors border border-transparent hover:border-slate-200"
+                          data-testid={`design-screen-${screen.id}`}
+                        >
+                          <Settings className="w-4 h-4 text-slate-600" />
+                        </Link>
+                        <button
+                          onClick={() => handleEdit(screen)}
+                          className="p-2 hover:bg-white/50 rounded-lg transition-colors border border-transparent hover:border-slate-200"
+                          data-testid={`edit-screen-${screen.id}`}
+                        >
+                          <Edit className="w-4 h-4 text-slate-600" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(screen.id)}
+                          className="p-2 hover:bg-rose-100/50 rounded-lg transition-colors border border-transparent hover:border-rose-100"
+                          data-testid={`delete-screen-${screen.id}`}
+                        >
+                          <Trash2 className="w-4 h-4 text-rose-600" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
