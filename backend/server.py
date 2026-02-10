@@ -7,9 +7,13 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
-from pathlib import Path
+@app.get("/api/version")
+async def get_version():
+    return {"version": "1.0.1", "features": ["folders", "db_fix"]}
 
-# Configure logging IMMEDIATELY to capture startup issues
+# Determine upload directory (Render uses /opt/render/project/src/backend/uploads usually, or absolute path)
+# We'll use absolute path relative to this file to be safe
+BASE_DIR = Path(__file__).resolve().parent
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'

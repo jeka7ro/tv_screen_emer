@@ -3,7 +3,7 @@ fastapi
 uvicorn
 
 # Database and Env
-asyncpg==0.30.0
+asyncpg==0.29.0
 Pillow==11.1.0
 supabase==2.27.3
 python-dotenv
