@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
+import { useAuth } from '../contexts/AuthContext';
 import { Plus, Edit, Trash2, MapPin } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
