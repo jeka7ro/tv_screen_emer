@@ -763,8 +763,6 @@ export const Content = () => {
                         <a
                           href={getFileUrl(previewItem.file_url)}
                           target="_blank"
-        </div> {/* Close flex-1 */}
-                    </div> {/* Close flex gap-6 */}
 
                     rel="noopener noreferrer"
                     className="text-sm text-indigo-600 hover:text-indigo-700 truncate block"
