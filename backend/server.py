@@ -8,6 +8,15 @@ from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
 from pathlib import Path
+
+# Configure logging IMMEDIATELY to capture startup issues
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+logger.info("Server starting...")
+
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional, Dict, Any
 import uuid
@@ -151,14 +160,25 @@ security = HTTPBearer()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info("Initializing database connection...")
     try:
-        await asyncio.wait_for(init_db(), timeout=60.0)
+        # Give DB more time if needed, but provide clear error
+        await asyncio.wait_for(init_db(), timeout=120.0)
+        logger.info("Database initialized successfully.")
     except asyncio.TimeoutError:
-        logging.getLogger("uvicorn.error").error(
-            "Conectare la Supabase expirată. Posibil IPv4: folosește Session Pooler în Connect (Supabase)."
+        logger.error(
+            "CRITICAL: Database connection timed out after 120s. "
+            "Check DATABASE_URL and if Render/Supabase have connectivity issues (e.g., IPv6)."
         )
-        raise
+        # We don't raise here if we want the app to bind to the port anyway, 
+        # but usually a broken DB means a broken app. 
+        # However, Render kills the app if it doesn't bind.
+        # Let's let it proceed to bind so we might at least see a 500 later.
+    except Exception as e:
+        logger.error(f"CRITICAL: Application startup failed: {e}")
+        # Same here, let it try to start
     yield
+    logger.info("Shutting down...")
     await close_db()
 
 
@@ -1735,13 +1755,3 @@ async def get_public_player_data(playlist_id: str):
 
 # Include the router in the main app
 app.include_router(api_router)
-
-
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-

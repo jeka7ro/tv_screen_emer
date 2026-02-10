@@ -100,10 +100,15 @@ async def init_db() -> None:
     import asyncio
     logger = logging.getLogger("uvicorn.error")
     
+    # 7. Final preparation for connection
+    logger.info(f"Connecting to database at {hostname}:{port}/{database} (SSL: {ssl_mode})")
+    
     attempts = 3
+    last_error = None
     for i in range(attempts):
-        logger.info(f"DEBUG: Încercarea {i+1}/{attempts} de conectare la host: {hostname}:{port} (DB: {database})")
+        logger.info(f"Connection attempt {i+1}/{attempts}...")
         try:
+            # Try connecting with parsed parameters
             pool = await asyncpg.create_pool(
                 user=username,
                 password=password,
@@ -112,28 +117,33 @@ async def init_db() -> None:
                 database=database,
                 ssl=ssl_mode if ssl_mode != "disable" else None,
                 min_size=1, 
-                max_size=10, 
+                max_size=5, # Reduced for free tier efficiency
                 command_timeout=15,
                 timeout=10,
                 statement_cache_size=0
             )
-            logger.info("DEBUG: Pool asyncpg creat cu succes!")
+            logger.info("Database connection established successfully via parameters.")
             break
         except Exception as e:
-            logger.error(f"EROARE la încercarea {i+1}: {str(e)}")
+            last_error = e
+            logger.error(f"Attempt {i+1} failed: {e}")
+            
+            # If it's a connection refused or timeout, wait a bit
             if i < attempts - 1:
-                logger.info("Se așteaptă 2 secunde înainte de reîncercare...")
                 await asyncio.sleep(2)
             else:
-                logger.error("TIP: Verifică dacă Render are access IPv4 sau dacă pooler-ul Supabase este configurat corect pe portul 5432.")
-                # Final fallback attempt with the raw URL just in case parsing logic has a bug
+                # Last resort: try the raw URL
                 try:
-                    logger.info("Ultima încercare disperată folosind URL-ul brut...")
-                    pool = await asyncpg.create_pool(url, min_size=1, max_size=10, command_timeout=30)
-                    logger.info("DEBUG: Conexiune reușită prin fallback URL!")
+                    logger.info("Attempting connection via raw DATABASE_URL string...")
+                    pool = await asyncpg.create_pool(url, min_size=1, max_size=5, command_timeout=20)
+                    logger.info("Database connection established successfully via URL string.")
+                    break
                 except Exception as final_e:
-                    logger.error(f"Fallback URL a eșuat și el: {str(final_e)}")
-                    raise e
+                    logger.error(f"Raw URL connection also failed: {final_e}")
+                    raise last_error # Raise the original more descriptive error
+
+    if not pool:
+        raise RuntimeError("Failed to initialize database pool.")
 
     
     # Initialize tables if needed
