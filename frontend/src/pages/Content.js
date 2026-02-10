@@ -654,8 +654,6 @@ export const Content = () => {
                   </form>
                 </DialogContent>
 
-                {/* Main Content with Folder Sidebar */}
-
       {/* Main Content with Folder Sidebar */}
             <div className="flex gap-6">
               <FolderSidebar
