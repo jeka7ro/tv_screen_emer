@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
+import { useAuth } from '../contexts/AuthContext';
 import { Plus, Edit, Trash2, Tv, ExternalLink, Settings, Link as LinkIcon, QrCode } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
