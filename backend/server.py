@@ -2049,3 +2049,4 @@ async def get_public_player_data(playlist_id: str):
 
 # Include the router in the main app
 app.include_router(api_router)
+# Force rebuild Tue Feb 10 16:53:33 EET 2026
