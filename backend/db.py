@@ -365,7 +365,20 @@ async def screen_get_by_slug(slug: str) -> Optional[Dict[str, Any]]:
 
 
 async def screens_list() -> List[Dict[str, Any]]:
-    return await _fetch_all("SELECT * FROM screens LIMIT 1000")
+    return await _fetch_all("""
+        SELECT 
+            s.*,
+            l.city,
+            l.name as location_name,
+            c.title as current_content_title,
+            c.type as current_content_type
+        FROM screens s
+        LEFT JOIN locations l ON s.location_id = l.id
+        LEFT JOIN screen_zones sz ON s.id = sz.screen_id AND sz.zone_id = 'zone1'
+        LEFT JOIN content c ON sz.content_id = c.id
+        ORDER BY l.city ASC, l.name ASC, s.name ASC
+        LIMIT 1000
+    """)
 
 
 async def screens_by_sync_group(sync_group: str) -> List[Dict[str, Any]]:
