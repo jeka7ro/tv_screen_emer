@@ -44,7 +44,11 @@ export const Content = () => {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    const saved = localStorage.getItem('contentItemsPerPage');
+    if (saved === 'all') return 'all';
+    return saved ? parseInt(saved) : 50;
+  });
   const [typeFilter, setTypeFilter] = useState('all');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -487,6 +491,12 @@ export const Content = () => {
                     </td>
                   </tr>
                 ))}
+                {/* Padding Empty Rows */}
+                {Array.from({ length: Math.max(0, 25 - items.length) }).map((_, i) => (
+                  <tr key={`empty-${i}`} className="h-[65px] bg-white/40">
+                    <td colSpan={7} className="p-4"></td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -501,7 +511,9 @@ export const Content = () => {
                   value={itemsPerPage}
                   onChange={(e) => {
                     const val = e.target.value;
-                    setItemsPerPage(val === 'all' ? 'all' : parseInt(val));
+                    const newItemsPerPage = val === 'all' ? 'all' : parseInt(val);
+                    setItemsPerPage(newItemsPerPage);
+                    localStorage.setItem('contentItemsPerPage', val);
                     setCurrentPage(1);
                   }}
                 >
