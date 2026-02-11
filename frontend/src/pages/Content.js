@@ -229,8 +229,8 @@ export const Content = () => {
     return fileUrl;
   };
 
-  const images = content.filter(c => c.type === 'image');
-  const videos = content.filter(c => c.type === 'video');
+  const images = filteredContent.filter(c => c.type === 'image');
+  const videos = filteredContent.filter(c => c.type === 'video');
 
   if (loading) {
     return (
@@ -699,7 +699,7 @@ export const Content = () => {
         <Tabs defaultValue="all" className="space-y-6">
           <div className="flex items-center">
             <TabsList className="bg-slate-100 p-1 rounded-xl">
-              <TabsTrigger value="all" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Toate ({content.length})</TabsTrigger>
+              <TabsTrigger value="all" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Toate ({filteredContent.length})</TabsTrigger>
               <TabsTrigger value="images" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Imagini ({images.length})</TabsTrigger>
               <TabsTrigger value="videos" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Video-uri ({videos.length})</TabsTrigger>
             </TabsList>
@@ -729,7 +729,7 @@ export const Content = () => {
               <div className="p-6 flex-1">
 
                 <TabsContent value="all">
-                  {renderView(content)}
+                  {renderView(filteredContent)}
                 </TabsContent>
 
                 <TabsContent value="images">
