@@ -1000,7 +1000,7 @@ export const Content = () => {
           {/* Main Content with Folder Sidebar */}
           <div className="flex flex-col lg:flex-row gap-6 items-start min-h-[600px]">
             <div className="w-full lg:w-96 shrink-0 lg:sticky lg:top-24">
-              <div className="h-full bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col p-1">
+              <div className="h-full flex flex-col">
                 <FolderSidebar
                   folders={folders}
                   selectedFolder={selectedFolder}

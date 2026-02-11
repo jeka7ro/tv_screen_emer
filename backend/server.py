@@ -111,7 +111,13 @@ from db import (
     audio_track_insert,
     audio_tracks_by_playlist,
     audio_track_delete,
-    audio_playlist_update
+    audio_playlist_update,
+    happy_hour_list,
+    happy_hour_get,
+    happy_hour_insert,
+    happy_hour_update,
+    happy_hour_delete,
+    happy_hours_active_now
 ,
 )
 
@@ -353,6 +359,12 @@ class Screen(BaseModel):
     last_active: Optional[datetime] = None
     sync_group_name: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    
+    # Extra fields from JOINs
+    city: Optional[str] = None
+    location_name: Optional[str] = None
+    current_content_title: Optional[str] = None
+    current_content_type: Optional[str] = None
 
 class ScreenCreate(BaseModel):
     location_id: str
@@ -448,6 +460,8 @@ class Playlist(BaseModel):
     autoplay: bool = True
     loop: bool = True
     status: str = "active"  # active, inactive
+    brand: Optional[str] = None
+    created_by: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class PlaylistCreate(BaseModel):
@@ -457,6 +471,9 @@ class PlaylistCreate(BaseModel):
     autoplay: Optional[bool] = True
     loop: Optional[bool] = True
     status: Optional[str] = "active"
+    brand: Optional[str] = None
+    created_by: Optional[str] = None
+    model_config = ConfigDict(extra="ignore")
 
 class Product(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -1374,7 +1391,8 @@ async def create_content(
                 "autoplay": True,
                 "loop": True,
                 "playlist_urls": [],
-                "created_at": datetime.now(timezone.utc)
+                "created_at": datetime.now(timezone.utc),
+                "created_by": current_user.id
             }
             
             await content_insert(new_content)
@@ -1445,10 +1463,11 @@ async def serve_upload(file_type: str, filename: str):
 @api_router.get("/playlists", response_model=List[Playlist])
 async def get_playlists(current_user: User = Depends(get_current_user)):
     return await playlists_list()
-
 @api_router.post("/playlists", response_model=Playlist)
 async def create_playlist(playlist_data: PlaylistCreate, current_user: User = Depends(require_admin)):
-    playlist = Playlist(**playlist_data.model_dump())
+    playlist_dict = playlist_data.model_dump()
+    playlist_dict["created_by"] = current_user.id
+    playlist = Playlist(**playlist_dict)
     await playlist_insert(playlist.model_dump())
     return playlist
 
@@ -2100,7 +2119,60 @@ async def get_public_player_data(playlist_id: str):
     return {"playlist": pl, "tracks": tracks}
 
 
-# Include the router in the main app
-app.include_router(api_router)
-# FINAL DEBUG Wed Feb 11 00:00:00 2026
+
+# FINAL DEBUG Wed Feb 11 16:00:00 2026
 # TRACEBACK ENABLED BUILD
+# Happy Hour API Endpoints
+
+@api_router.get("/happy-hours")
+async def get_happy_hours(current_user: dict = Depends(get_current_user)):
+    """Get all happy hour schedules"""
+    schedules = await happy_hour_list()
+    return schedules
+
+@api_router.get("/happy-hours/active")
+async def get_active_happy_hours():
+    """Get currently active happy hour schedules (public endpoint)"""
+    schedules = await happy_hours_active_now()
+    return schedules
+
+@api_router.get("/happy-hours/{schedule_id}")
+async def get_happy_hour(schedule_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a single happy hour schedule"""
+    schedule = await happy_hour_get(schedule_id)
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Happy hour schedule not found")
+    return schedule
+
+@api_router.post("/happy-hours")
+async def create_happy_hour(data: dict, current_user: User = Depends(get_current_user)):
+    """Create a new happy hour schedule"""
+    if current_user.role not in ["super_admin", "admin"]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    data['created_by'] = current_user.id
+    schedule = await happy_hour_insert(data)
+    return schedule
+
+@api_router.put("/happy-hours/{schedule_id}")
+async def update_happy_hour(schedule_id: str, data: dict, current_user: User = Depends(get_current_user)):
+    """Update an existing happy hour schedule"""
+    if current_user.role not in ["super_admin", "admin"]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    schedule = await happy_hour_update(schedule_id, data)
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Happy hour schedule not found")
+    return schedule
+
+@api_router.delete("/happy-hours/{schedule_id}")
+async def delete_happy_hour(schedule_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a happy hour schedule"""
+    if current_user.get("role") not in ["super_admin", "admin"]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await happy_hour_delete(schedule_id)
+    return {"message": "Happy hour schedule deleted successfully"}
+
+# Include the router in the main app AFTER all routes are defined
+app.include_router(api_router)

@@ -116,8 +116,8 @@ async def init_db() -> None:
                 port=port,
                 database=database,
                 ssl=ssl_mode if ssl_mode != "disable" else None,
-                min_size=2, 
-                max_size=10, # Increased for better concurrency
+                min_size=1, 
+                max_size=3, # Reduced for testing stability
                 command_timeout=20,
                 timeout=15,
                 statement_cache_size=100  # Enable statement caching for performance
@@ -147,15 +147,14 @@ async def init_db() -> None:
 
     
     # Initialize tables if needed
-    async with pool.acquire() as conn:
-        await conn.execute("""
-            CREATE TABLE IF NOT EXISTS password_resets (
-                email TEXT PRIMARY KEY,
-                token TEXT NOT NULL,
-                expires_at TIMESTAMP NOT NULL,
-                created_at TIMESTAMP DEFAULT NOW()
-            );
-        """)
+    await pool.execute("""
+        CREATE TABLE IF NOT EXISTS password_resets (
+            email TEXT PRIMARY KEY,
+            token TEXT NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+    """)
 
 
 async def close_db() -> None:
@@ -186,28 +185,24 @@ def _rows(rows: List[asyncpg.Record]) -> List[Dict[str, Any]]:
 
 async def _fetch_one(q: str, *a: Any) -> Optional[Dict[str, Any]]:
     assert pool
-    async with pool.acquire() as c:
-        r = await c.fetchrow(q, *a)
-        return _row(r)
+    r = await pool.fetchrow(q, *a)
+    return _row(r)
 
 
 async def _fetch_all(q: str, *a: Any) -> List[Dict[str, Any]]:
     assert pool
-    async with pool.acquire() as c:
-        rows = await c.fetch(q, *a)
-        return _rows(rows)
+    rows = await pool.fetch(q, *a)
+    return _rows(rows)
 
 
 async def _execute(q: str, *a: Any) -> None:
     assert pool
-    async with pool.acquire() as c:
-        await c.execute(q, *a)
+    await pool.execute(q, *a)
 
 
 async def _execute_many(q: str, *a: Any) -> str:
     assert pool
-    async with pool.acquire() as c:
-        return await c.execute(q, *a)
+    return await pool.execute(q, *a)
 
 
 # ---------- users ----------
@@ -428,13 +423,14 @@ async def screen_exists_by_slug(slug: str) -> bool:
 async def screen_insert(row: Dict[str, Any]) -> None:
     await _execute(
         """INSERT INTO screens (id, location_id, name, slug, resolution, orientation, template_id,
-           sync_group, cascade_offset, status, last_active, sync_type, created_at, sync_group_name, sync_fit_mode)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)""",
+           sync_group, cascade_offset, status, last_active, sync_type, created_at, sync_group_name, sync_fit_mode, brand, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)""",
         row["id"], row["location_id"], row["name"], row["slug"],
         row.get("resolution", "1920x1080"), row.get("orientation", "landscape"),
         row.get("template_id"), row.get("sync_group"), row.get("cascade_offset", 0),
         row.get("status", "offline"), row.get("last_active"), row.get("sync_type", "simple"), 
         row["created_at"], row.get("sync_group_name"), row.get("sync_fit_mode", "cover"),
+        row.get("brand"), row.get("created_by")
     )
 
 
@@ -442,12 +438,13 @@ async def screen_update(id: str, data: Dict[str, Any]) -> None:
     await _execute(
         """UPDATE screens SET location_id = $1, name = $2, slug = $3, resolution = $4, orientation = $5,
            template_id = $6, sync_group = $7, cascade_offset = $8, status = $9, last_active = $10, 
-           sync_type = $11, sync_group_name = $12, sync_fit_mode = $13 WHERE id = $14""",
+           sync_type = $11, sync_group_name = $12, sync_fit_mode = $13, brand = $14 WHERE id = $15""",
         data["location_id"], data["name"], data["slug"],
         data.get("resolution", "1920x1080"), data.get("orientation", "landscape"),
         data.get("template_id"), data.get("sync_group"), data.get("cascade_offset", 0),
         data.get("status", "offline"), data.get("last_active"), data.get("sync_type", "simple"), 
-        data.get("sync_group_name"), data.get("sync_fit_mode", "cover"), id,
+        data.get("sync_group_name"), data.get("sync_fit_mode", "cover"), 
+        data.get("brand"), id,
     )
 
 
@@ -592,20 +589,22 @@ async def playlists_list() -> List[Dict[str, Any]]:
 async def playlist_insert(row: Dict[str, Any]) -> None:
     items = json.dumps(row.get("items") or [])
     await _execute(
-        """INSERT INTO playlists (id, name, description, items, autoplay, loop, status, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)""",
+        """INSERT INTO playlists (id, name, description, items, autoplay, loop, status, created_at, brand, created_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)""",
         row["id"], row["name"], row.get("description"), items,
         row.get("autoplay", True), row.get("loop", True), row.get("status", "active"), row["created_at"],
+        row.get("brand"), row.get("created_by")
     )
 
 
 async def playlist_update(id: str, data: Dict[str, Any]) -> None:
     items = json.dumps(data.get("items") or [])
     await _execute(
-        """UPDATE playlists SET name = $1, description = $2, items = $3, autoplay = $4, loop = $5, status = $6
-           WHERE id = $7""",
+        """UPDATE playlists SET name = $1, description = $2, items = $3, autoplay = $4, loop = $5, status = $6, brand = $7
+           WHERE id = $8""",
         data["name"], data.get("description"), items,
-        data.get("autoplay", True), data.get("loop", True), data.get("status", "active"), id,
+        data.get("autoplay", True), data.get("loop", True), data.get("status", "active"), 
+        data.get("brand"), id,
     )
 
 
@@ -858,3 +857,95 @@ async def audio_track_delete(id: str) -> bool:
     return "DELETE 1" in res
 
 
+# ============================================================================
+# HAPPY HOUR SCHEDULES
+# ============================================================================
+
+async def happy_hour_list():
+    """Get all happy hour schedules"""
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT * FROM happy_hour_schedules
+            ORDER BY created_at DESC
+        """)
+        return [dict(r) for r in rows]
+
+async def happy_hour_get(schedule_id: str):
+    """Get a single happy hour schedule by ID"""
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            SELECT * FROM happy_hour_schedules
+            WHERE id = $1
+        """, schedule_id)
+        return dict(row) if row else None
+
+async def happy_hour_insert(data: dict):
+    """Create a new happy hour schedule"""
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            INSERT INTO happy_hour_schedules (
+                name, city, screen_ids, start_time, end_time,
+                content_type, content_id, playlist_id, active, days_of_week, created_by, location_ids
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING *
+        """,
+            data.get('name'),
+            data.get('city'),
+            data.get('screen_ids', []),
+            data.get('start_time'),
+            data.get('end_time'),
+            data.get('content_type'),
+            data.get('content_id'),
+            data.get('playlist_id'),
+            data.get('active', True),
+            data.get('days_of_week', [1, 2, 3, 4, 5, 6, 7]),
+            data.get('created_by'),
+            data.get('location_ids', [])
+        )
+        return dict(row)
+
+async def happy_hour_update(schedule_id: str, data: dict):
+    """Update an existing happy hour schedule"""
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("""
+            UPDATE happy_hour_schedules
+            SET name = $2, city = $3, screen_ids = $4, start_time = $5,
+                end_time = $6, content_type = $7, content_id = $8,
+                playlist_id = $9, active = $10, days_of_week = $11,
+                location_ids = $12, updated_at = NOW()
+            WHERE id = $1
+            RETURNING *
+        """,
+            schedule_id,
+            data.get('name'),
+            data.get('city'),
+            data.get('screen_ids', []),
+            data.get('start_time'),
+            data.get('end_time'),
+            data.get('content_type'),
+            data.get('content_id'),
+            data.get('playlist_id'),
+            data.get('active', True),
+            data.get('days_of_week', [1, 2, 3, 4, 5, 6, 7]),
+            data.get('location_ids', [])
+        )
+        return dict(row) if row else None
+
+async def happy_hour_delete(schedule_id: str):
+    """Delete a happy hour schedule"""
+    async with pool.acquire() as conn:
+        await conn.execute("""
+            DELETE FROM happy_hour_schedules
+            WHERE id = $1
+        """, schedule_id)
+
+async def happy_hours_active_now():
+    """Get currently active happy hour schedules based on time and day"""
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT * FROM happy_hour_schedules
+            WHERE active = true
+            AND CURRENT_TIME BETWEEN start_time AND end_time
+            AND EXTRACT(ISODOW FROM CURRENT_DATE) = ANY(days_of_week)
+        """)
+        return [dict(r) for r in rows]
