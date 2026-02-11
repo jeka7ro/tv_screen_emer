@@ -1,9 +1,16 @@
 import pytest
+import pytest_asyncio
 import asyncio
-from httpx import AsyncClient
-from server import app, User, get_super_admin
-from db import user_get_by_email, user_insert, user_delete
+from httpx import AsyncClient, ASGITransport
 import uuid
+import sys
+import os
+
+# Ensure backend is in path
+sys.path.append(os.path.join(os.getcwd(), 'backend'))
+
+from server import app, User, get_super_admin
+from db import init_db, user_get_by_email, user_insert, user_delete
 
 # Mock a super admin user
 mock_super_admin = User(
@@ -18,10 +25,16 @@ mock_super_admin = User(
 async def override_get_super_admin():
     return mock_super_admin
 
-@pytest.fixture
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def setup_db():
+    await init_db()
+    yield
+
+@pytest_asyncio.fixture
 async def client():
     app.dependency_overrides[get_super_admin] = override_get_super_admin
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
     app.dependency_overrides = {}
 
@@ -36,8 +49,10 @@ async def test_user_management_workflow(client):
         "hashed_password": "fake_hash",
         "is_super_admin": False,
         "role": "admin",
-        "status": "active"
+        "status": "active",
+        "created_at": "2024-01-01T00:00:00Z"
     }
+    
     await user_insert(test_user_data)
     user_id = test_user_data["id"]
 
@@ -46,13 +61,13 @@ async def test_user_management_workflow(client):
         response = await client.patch(f"/users/{user_id}/status", json={"status": "suspended"})
         assert response.status_code == 200
         
+        await asyncio.sleep(0.5) # Give it a moment
         updated_user = await user_get_by_email(test_user_email)
         assert updated_user["status"] == "suspended"
 
         # 3. Test POST /users/{user_id}/reset-password
         response = await client.post(f"/users/{user_id}/reset-password", json={"new_password": "newpassword123"})
         assert response.status_code == 200
-        # Verification that password changed would require checking hashed_password in DB
 
         # 4. Test PATCH /users/{user_id} (Edit Role/Location)
         response = await client.patch(f"/users/{user_id}", json={
@@ -62,6 +77,7 @@ async def test_user_management_workflow(client):
         })
         assert response.status_code == 200
         
+        await asyncio.sleep(0.5)
         updated_user = await user_get_by_email(test_user_email)
         assert updated_user["full_name"] == "Updated Name"
         assert updated_user["role"] == "manager"
@@ -71,9 +87,13 @@ async def test_user_management_workflow(client):
         response = await client.delete(f"/users/{user_id}")
         assert response.status_code == 200
         
+        await asyncio.sleep(0.5)
         deleted_user = await user_get_by_email(test_user_email)
         assert deleted_user is None
 
     finally:
         # Cleanup if test failed before deletion
-        await user_delete(user_id)
+        try:
+            await user_delete(user_id)
+        except:
+            pass

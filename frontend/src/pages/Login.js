@@ -99,7 +99,7 @@ export const Login = () => {
         <div className="glass-card p-8">
           <div className="flex justify-center mb-8">
             <div className="bg-indigo-100 p-4 rounded-2xl">
-              <Monitor className="w-12 h-12 text-indigo-600" data-testid="logo-icon" />
+              <img src="/favicon.png" alt="Logo" className="w-12 h-12" data-testid="logo-icon" />
             </div>
           </div>
 

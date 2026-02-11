@@ -156,6 +156,37 @@ async def init_db() -> None:
         );
     """)
 
+    await pool.execute("""
+        CREATE TABLE IF NOT EXISTS brands (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            address TEXT,
+            logo_url TEXT,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+    """)
+
+    await pool.execute("""
+        CREATE TABLE IF NOT EXISTS content (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            type TEXT NOT NULL,
+            file_url TEXT NOT NULL,
+            duration INT DEFAULT 10,
+            category TEXT DEFAULT 'other',
+            tags JSONB DEFAULT '[]',
+            thumbnail_url TEXT,
+            autoplay BOOLEAN DEFAULT TRUE,
+            loop BOOLEAN DEFAULT TRUE,
+            playlist_urls JSONB DEFAULT '[]',
+            source_type TEXT DEFAULT 'file',
+            file_size BIGINT DEFAULT 0,
+            folder_id TEXT,
+            brand JSONB DEFAULT '[]',
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+    """)
+
 
 async def close_db() -> None:
     global pool
@@ -172,7 +203,7 @@ def _row(r: Optional[asyncpg.Record]) -> Optional[Dict[str, Any]]:
     for k, v in list(d.items()):
         if hasattr(v, "isoformat"):  # datetime
             d[k] = v.isoformat()
-        if k in ["tags", "playlist_urls", "items", "selected_products", "selected_categories", "promo_products"] and isinstance(v, str):
+        if k in ["tags", "playlist_urls", "items", "selected_products", "selected_categories", "promo_products", "brand"] and isinstance(v, str):
             try:
                 d[k] = json.loads(v)
             except:
@@ -479,12 +510,13 @@ async def content_insert(row: Dict[str, Any]) -> None:
     playlist_urls = json.dumps(row.get("playlist_urls") or [])
     await _execute(
         """INSERT INTO content (id, title, type, file_url, duration, category, tags, thumbnail_url,
-           autoplay, loop, playlist_urls, created_at, source_type, file_size, folder_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)""",
+           autoplay, loop, playlist_urls, created_at, source_type, file_size, folder_id, brand)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)""",
         row["id"], row["title"], row["type"], row["file_url"], row.get("duration", 10),
         row.get("category", "other"), tags, row.get("thumbnail_url"),
         row.get("autoplay", True), row.get("loop", True), playlist_urls, row["created_at"],
-        row.get("source_type", "file"), row.get("file_size", 0), row.get("folder_id")
+        row.get("source_type", "file"), row.get("file_size", 0), row.get("folder_id"),
+        json.dumps(row.get("brand") or [])
     )
 
 
@@ -501,6 +533,9 @@ async def content_count() -> int:
 async def content_update_title(content_id: str, title: str) -> None:
     """Update content title (rename)"""
     await _execute("UPDATE content SET title = $1 WHERE id = $2", title, content_id)
+
+async def content_update_brand(content_id: str, brand: List[str]) -> None:
+    await _execute("UPDATE content SET brand = $1 WHERE id = $2", json.dumps(brand), content_id)
 
 
 # ========== CONTENT FOLDERS ==========
@@ -940,6 +975,48 @@ async def happy_hour_delete(schedule_id: str):
         """, schedule_id)
 
 async def happy_hours_active_now():
+    """Get currently active happy hour schedules"""
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    current_day = now.isoweekday() # 1-7
+    
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT * FROM happy_hour_schedules
+            WHERE active = true 
+              AND $1 = ANY(days_of_week)
+              AND start_time <= $2
+              AND end_time >= $3
+        """, current_day, current_time, current_time)
+        return _rows(rows)
+
+# ---------- brands ----------
+
+async def brand_insert(row: Dict[str, Any]) -> None:
+    await _execute(
+        """INSERT INTO brands (id, name, address, logo_url, created_at)
+           VALUES ($1, $2, $3, $4, $5)""",
+        row["id"], row["name"], row.get("address"), row.get("logo_url"), row["created_at"]
+    )
+
+async def brands_list() -> List[Dict[str, Any]]:
+    return await _fetch_all("SELECT * FROM brands ORDER BY name ASC")
+
+async def brand_get(brand_id: str) -> Optional[Dict[str, Any]]:
+    return await _fetch_one("SELECT * FROM brands WHERE id = $1", brand_id)
+
+async def brand_update(brand_id: str, row: Dict[str, Any]) -> None:
+    await _execute(
+        "UPDATE brands SET name=$1, address=$2, logo_url=$3 WHERE id=$4",
+        row["name"], row.get("address"), row.get("logo_url"), brand_id
+    )
+
+async def brand_delete(brand_id: str) -> bool:
+    count = await _fetch_one("SELECT count(*) as c FROM brands WHERE id = $1", brand_id)
+    if count["c"] == 0:
+        return False
+    await _execute("DELETE FROM brands WHERE id = $1", brand_id)
+    return True
     """Get currently active happy hour schedules based on time and day"""
     async with pool.acquire() as conn:
         rows = await conn.fetch("""

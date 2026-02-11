@@ -10,8 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'; import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { SlideshowConfigDialog } from '../components/SlideshowConfigDialog';
 
 export const Content = () => {
   const { isAdmin } = useAuth();
@@ -30,7 +30,8 @@ export const Content = () => {
     category: 'other',
     duration: '10',
     file_url: '',
-    folder_id: selectedFolder?.id || 'none'
+    folder_id: selectedFolder?.id || 'none',
+    brand: []
   });
   const [folderFormData, setFolderFormData] = useState({
     name: '',
@@ -47,6 +48,7 @@ export const Content = () => {
   const [screens, setScreens] = useState([]);
   const [renamingItem, setRenamingItem] = useState(null);
   const [newTitle, setNewTitle] = useState('');
+  const [editBrands, setEditBrands] = useState([]);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(() => {
@@ -55,11 +57,16 @@ export const Content = () => {
     return saved ? parseInt(saved) : 10; // Default to 10
   });
   const [typeFilter, setTypeFilter] = useState('all');
+  const [brandFilter, setBrandFilter] = useState('all');
+  const [brands, setBrands] = useState([]);
+  const [showSlideshowDialog, setShowSlideshowDialog] = useState(false);
+  const [pendingSlideshowScreen, setPendingSlideshowScreen] = useState(null);
 
   useEffect(() => {
     loadContent();
     loadFolders();
     loadScreens();
+    loadBrands();
   }, []);
 
   const loadContent = async () => {
@@ -89,6 +96,19 @@ export const Content = () => {
     } catch (error) {
       console.error('Error loading screens:', error);
     }
+  };
+  const loadBrands = async () => {
+    try {
+      const response = await api.get('/brands');
+      setBrands(response.data);
+    } catch (error) {
+      console.error('Error loading brands:', error);
+    }
+  };
+
+  const getBrandLogo = (brandName) => {
+    const brand = brands.find(b => b.name === brandName);
+    return brand?.logo_url;
   };
 
   const handleCreateFolder = async (e) => {
@@ -180,15 +200,22 @@ export const Content = () => {
     setEditingFolder(null);
   };
 
-  // Filter content by selected folder
-  const filteredContent = selectedFolder
+  // 1. Filter by folder
+  const folderFilteredContent = selectedFolder
     ? content.filter(item => String(item.folder_id) === String(selectedFolder.id))
     : content.filter(item => !item.folder_id);
 
-  // Filter by type
+  // 2. Filter by brand
+  const brandFilteredContent = brandFilter === 'all'
+    ? folderFilteredContent
+    : folderFilteredContent.filter(item =>
+      Array.isArray(item.brand) && item.brand.includes(brandFilter)
+    );
+
+  // 3. Filter by type (for display)
   const typeFilteredContent = typeFilter === 'all'
-    ? filteredContent
-    : filteredContent.filter(item => {
+    ? brandFilteredContent
+    : brandFilteredContent.filter(item => {
       if (typeFilter === 'images') return item.type === 'image';
       if (typeFilter === 'videos') return item.type === 'video';
       return true;
@@ -212,8 +239,8 @@ export const Content = () => {
     return 0;
   });
 
-  const images = filteredContent.filter(c => c.type === 'image');
-  const videos = filteredContent.filter(c => c.type === 'video');
+  const images = brandFilteredContent.filter(c => c.type === 'image');
+  const videos = brandFilteredContent.filter(c => c.type === 'video');
 
   // Pagination Logic
   const totalPages = itemsPerPage === 'all' ? 1 : Math.ceil(sortedContent.length / itemsPerPage);
@@ -250,6 +277,9 @@ export const Content = () => {
         if (formData.folder_id && formData.folder_id !== 'none') {
           formDataToSend.append('folder_id', formData.folder_id);
         }
+        if (formData.brand && Array.isArray(formData.brand) && formData.brand.length > 0) {
+          formDataToSend.append('brand', formData.brand.join(','));
+        }
 
         // Increase timeout for large files
         await api.post('/content', formDataToSend, {
@@ -268,7 +298,8 @@ export const Content = () => {
           file_url: formData.file_url,
           category: formData.category,
           duration: parseInt(formData.duration),
-          folder_id: formData.folder_id === 'none' ? null : formData.folder_id
+          folder_id: formData.folder_id === 'none' ? null : formData.folder_id,
+          brand: Array.isArray(formData.brand) ? formData.brand : []
         });
       }
       toast.success('Conținut adăugat!');
@@ -301,7 +332,8 @@ export const Content = () => {
       category: 'other',
       duration: '10',
       file_url: '',
-      folder_id: selectedFolder?.id || 'none'
+      folder_id: selectedFolder?.id || 'none',
+      brand: []
     });
     setSelectedFiles([]);
   };
@@ -314,7 +346,8 @@ export const Content = () => {
       category: 'other',
       duration: '10',
       file_url: '',
-      folder_id: folder.id
+      folder_id: folder?.id || 'none',
+      brand: []
     });
     setSelectedFolder(folder); // Auto-switch to destination folder
     setShowDialog(true);
@@ -330,18 +363,33 @@ export const Content = () => {
     if (!newTitle.trim()) return;
 
     try {
-      await api.patch(`/content/${renamingItem.id}/title`, { title: newTitle });
-      toast.success('Conținut redenumit!');
+      // 1. Update Title if changed
+      if (newTitle !== renamingItem.title) {
+        await api.patch(`/content/${renamingItem.id}/title`, { title: newTitle });
+      }
+
+      // 2. Update Brands
+      await api.patch(`/content/${renamingItem.id}/brand`, { brand: editBrands });
+
+      toast.success('Conținut actualizat!');
       setShowRenameDialog(false);
       loadContent();
     } catch (error) {
-      toast.error('Eroare la redenumire');
+      toast.error('Eroare la actualizare');
     }
   };
-
   const handleAssignToScreen = async (contentId, screenId) => {
+    // Check if we are dragging a selection (multi-select)
+    // If contentId matches one of the selected items, and we have multiple selected
+    if (selectedItems.has(contentId) && selectedItems.size > 1) {
+      // Open Slideshow Dialog
+      setPendingSlideshowScreen(screenId);
+      setShowSlideshowDialog(true);
+      return;
+    }
+
+    // Sigle item assignment
     try {
-      // Create zone content assignment (to zone1 by default)
       await api.post('/screen-zones', {
         screen_id: screenId,
         zone_id: 'zone1',
@@ -351,6 +399,42 @@ export const Content = () => {
       toast.success('Conținut asignat ecranului!');
     } catch (error) {
       toast.error('Eroare la asignarea conținutului');
+    }
+  };
+
+  const handleCreateSlideshow = async (config) => {
+    if (!pendingSlideshowScreen || selectedItems.size === 0) return;
+
+    try {
+      // 1. Create Playlist
+      const playlistResponse = await api.post('/playlists', {
+        name: `Slideshow Screen ${pendingSlideshowScreen} - ${new Date().toLocaleTimeString()}`,
+        items: Array.from(selectedItems).map(id => ({
+          content_id: id,
+          duration: config.duration,
+          transition: config.transition // Backend might need schema update for this if not in JSONB
+        })),
+        autoplay: true,
+        loop: true
+      });
+
+      const playlistId = playlistResponse.data.id;
+
+      // 2. Assign Playlist to Screen
+      await api.post('/screen-zones', {
+        screen_id: pendingSlideshowScreen,
+        zone_id: 'zone1',
+        content_type: 'playlist',
+        playlist_id: playlistId
+      });
+
+      toast.success('Slideshow creat și asignat!');
+      setSelectedItems(new Set()); // Clear selection
+    } catch (error) {
+      console.error('Slideshow creation failed:', error);
+      toast.error('Eroare la crearea slideshow-ului');
+    } finally {
+      setPendingSlideshowScreen(null);
     }
   };
 
@@ -461,6 +545,7 @@ export const Content = () => {
                       {sortConfig.key === 'title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </div>
                   </th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Branduri</th>
                   <th
                     className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-indigo-600 transition-colors"
                     onClick={() => requestSort('type')}
@@ -479,6 +564,7 @@ export const Content = () => {
                       {sortConfig.key === 'file_size' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </div>
                   </th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Creat de</th>
                   <th
                     className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-indigo-600 transition-colors"
                     onClick={() => requestSort('created_at')}
@@ -526,17 +612,42 @@ export const Content = () => {
                         ) : item.type === 'image' ? (
                           <img src={getFileUrl(item.file_url)} className="w-full h-full object-cover" alt="" />
                         ) : (
-                          <div className="relative w-full h-full bg-slate-900 flex items-center justify-center">
-                            <video src={getFileUrl(item.file_url)} className="w-full h-full object-cover opacity-60" />
-                            <Film className="absolute w-4 h-4 text-white" />
+                          <div className="relative w-full h-full bg-slate-900 flex items-center justify-center text-white">
+                            <Film className="w-4 h-4" />
                           </div>
                         )}
                       </div>
                     </td>
                     <td className="p-4">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-slate-800">{item.title}</span>
-                        <span className="text-[10px] text-slate-400 font-mono uppercase">{item.id.substring(0, 8)}</span>
+                      <div className="text-sm font-semibold text-slate-800">{item.title}</div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex -space-x-2 overflow-hidden">
+                          {Array.isArray(item.brand) && item.brand.slice(0, 3).map((brandName, idx) => (
+                            getBrandLogo(brandName) && (
+                              <div
+                                key={idx}
+                                className="w-8 h-8 rounded border border-slate-100 bg-white overflow-hidden shrink-0 shadow-sm ring-2 ring-white"
+                                title={brandName}
+                              >
+                                <img src={getBrandLogo(brandName)} className="w-full h-full object-contain" alt="" />
+                              </div>
+                            )
+                          ))}
+                          {Array.isArray(item.brand) && item.brand.length > 3 && (
+                            <div className="w-8 h-8 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500 ring-2 ring-white">
+                              +{item.brand.length - 3}
+                            </div>
+                          )}
+                        </div>
+                        {Array.isArray(item.brand) && item.brand.length > 0 ? (
+                          <div className="text-[10px] text-indigo-500 font-bold uppercase truncate max-w-[120px]">
+                            {item.brand.join(', ')}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-slate-300 italic">Fără brand</span>
+                        )}
                       </div>
                     </td>
                     <td className="p-4">
@@ -555,8 +666,13 @@ export const Content = () => {
                     <td className="p-4 text-slate-600 text-sm">
                       {item.file_size ? `${(item.file_size / 1024 / 1024).toFixed(2)} MB` : '-'}
                     </td>
+                    <td className="p-4">
+                      <div className="flex flex-col text-xs">
+                        <span className="text-slate-700 font-medium">{item.created_by_name || 'System'}</span>
+                      </div>
+                    </td>
                     <td className="p-4 text-slate-600 text-sm">
-                      {item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}
+                      {item.created_at ? new Date(item.created_at).toLocaleDateString('ro-RO') : '-'}
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex justify-end gap-1">
@@ -589,7 +705,7 @@ export const Content = () => {
                 {/* Padding Empty Rows */}
                 {Array.from({ length: Math.max(0, 10 - items.length) }).map((_, i) => (
                   <tr key={`empty-${i}`} className="h-[65px] bg-white/40">
-                    <td colSpan={7} className="p-4"></td>
+                    <td colSpan={9} className="p-4"></td>
                   </tr>
                 ))}
               </tbody>
@@ -645,7 +761,7 @@ export const Content = () => {
               </Button>
             </div>
           </div>
-        </div>
+        </div >
       );
     }
 
@@ -677,28 +793,60 @@ export const Content = () => {
                   <div className="absolute bottom-2 right-2 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">WEB</div>
                 </div>
               ) : item.type === 'image' ? (
-                <img
-                  src={getFileUrl(item.file_url)}
-                  alt={item.title}
-                  className="w-full h-40 object-cover rounded-xl"
-                />
-              ) : (
-                <div className="w-full h-40 bg-slate-900 rounded-xl overflow-hidden relative group">
-                  <video
+                <div className="relative group">
+                  <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 shadow-sm cursor-pointer"
+                      checked={selectedItems.has(item.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleSelectItem(item.id);
+                      }}
+                    />
+                  </div>
+                  <img
                     src={getFileUrl(item.file_url)}
-                    className="w-full h-full object-cover"
-                    muted
-                    preload="metadata"
+                    alt={item.title}
+                    className={`w-full h-40 object-cover rounded-xl ${selectedItems.has(item.id) ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}`}
                   />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <div className="bg-white/90 rounded-full p-4">
-                      <Film className="w-8 h-8 text-slate-800" />
+                </div>
+              ) : (
+                <>
+                  <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 shadow-sm cursor-pointer"
+                      checked={selectedItems.has(item.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleSelectItem(item.id);
+                      }}
+                    />
+                  </div>
+                  <div
+                    className={`aspect-video bg-slate-100 relative group overflow-hidden ${selectedItems.has(item.id) ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}`}
+                    onClick={() => {
+                      // Optional: Allow selection on card click if needed, or keep preview
+                      // For now keep preview on main click, checkbox for selection
+                    }}
+                  >
+                    <video
+                      src={getFileUrl(item.file_url)}
+                      className="w-full h-full object-cover"
+                      muted
+                      preload="metadata"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <div className="bg-white/90 rounded-full p-4">
+                        <Film className="w-8 h-8 text-slate-800" />
+                      </div>
+                    </div>
+                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                      VIDEO
                     </div>
                   </div>
-                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                    VIDEO
-                  </div>
-                </div>
+                </>
               )}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
                 <div className="bg-white/90 text-slate-800 px-3 py-2 rounded-lg text-sm font-medium">
@@ -712,6 +860,7 @@ export const Content = () => {
                       e.stopPropagation();
                       setRenamingItem(item);
                       setNewTitle(item.title);
+                      setEditBrands(Array.isArray(item.brand) ? item.brand : []);
                       setShowRenameDialog(true);
                     }}
                     className="p-2 bg-indigo-500 text-white rounded-lg"
@@ -730,7 +879,25 @@ export const Content = () => {
                 </div>
               )}
             </div>
-            <h3 className="text-sm font-medium text-slate-800 mb-1 truncate">
+            <h3 className="text-sm font-medium text-slate-800 mb-1 truncate flex items-center gap-2">
+              <div className="flex -space-x-1 overflow-hidden">
+                {Array.isArray(item.brand) && item.brand.slice(0, 2).map((brandName, idx) => (
+                  getBrandLogo(brandName) && (
+                    <div
+                      key={idx}
+                      className="w-5 h-5 rounded border border-slate-100 bg-white overflow-hidden shrink-0 shadow-sm ring-2 ring-white"
+                      title={brandName}
+                    >
+                      <img src={getBrandLogo(brandName)} className="w-full h-full object-contain" alt="" />
+                    </div>
+                  )
+                ))}
+                {Array.isArray(item.brand) && item.brand.length > 2 && (
+                  <div className="w-5 h-5 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-[8px] font-bold text-slate-500 ring-2 ring-white">
+                    +{item.brand.length - 2}
+                  </div>
+                )}
+              </div>
               {item.title}
             </h3>
             <div className="flex items-center gap-2">
@@ -816,39 +983,75 @@ export const Content = () => {
           setTypeFilter(val);
           setCurrentPage(1);
         }} className="space-y-6">
-          <div className="flex items-center justify-between gap-4">
-            <TabsList className="bg-slate-100 p-1 rounded-xl">
-              <TabsTrigger value="all" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Toate ({filteredContent.length})</TabsTrigger>
-              <TabsTrigger value="images" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Imagini ({images.length})</TabsTrigger>
-              <TabsTrigger value="videos" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Video-uri ({videos.length})</TabsTrigger>
+          {/* Header Row: Tabs (Left) + Actions (Right) */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm mb-6">
+            <TabsList className="bg-slate-100 p-1 rounded-xl w-full sm:w-auto grid grid-cols-3 sm:flex">
+              <TabsTrigger value="all" className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
+                Toate ({brandFilteredContent.length})
+              </TabsTrigger>
+              <TabsTrigger value="images" className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
+                Imagini ({images.length})
+              </TabsTrigger>
+              <TabsTrigger value="videos" className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
+                Video ({videos.length})
+              </TabsTrigger>
             </TabsList>
 
-            <div className="flex items-center gap-2">
-              <div className="bg-white p-1 rounded-lg flex border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-2 mr-auto ml-4">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Brand:</span>
+              <Select value={brandFilter} onValueChange={(val) => {
+                setBrandFilter(val);
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-[180px] h-8 text-xs bg-slate-50 border-slate-100 rounded-lg">
+                  <SelectValue placeholder="Toate brandurile" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toate brandurile</SelectItem>
+                  {brands.map(brand => (
+                    <SelectItem key={brand.id} value={brand.name}>
+                      <div className="flex items-center gap-2">
+                        {brand.logo_url && (
+                          <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0 border border-slate-100 bg-white">
+                            <img src={brand.logo_url} className="w-full h-full object-contain" alt="" />
+                          </div>
+                        )}
+                        {brand.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {/* View Mode Switcher */}
+              <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                   title="Grid View"
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                   title="List View"
                 >
                   <ListIcon className="w-4 h-4" />
                 </button>
               </div>
 
+              {/* Add Content Button & Dialog */}
               {isAdmin() && (
                 <Dialog open={showDialog} onOpenChange={(open) => {
                   setShowDialog(open);
                   if (!open) resetForm();
                 }}>
                   <DialogTrigger asChild>
-                    <Button className="btn-red px-6 py-2.5 rounded-full text-base font-semibold shadow-lg hover:shadow-xl transition-all h-auto" data-testid="add-content-button">
-                      <Plus className="w-5 h-5 mr-2" />
+                    <Button className="btn-red px-6 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]">
+                      <Plus className="w-4 h-4 mr-2" />
                       Adăugă conținut
                     </Button>
                   </DialogTrigger>
@@ -886,6 +1089,49 @@ export const Content = () => {
                         </Select>
                       </div>
 
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Branduri (Clienți)</Label>
+                        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl max-h-40 overflow-y-auto">
+                          {brands.length === 0 ? (
+                            <p className="text-xs text-slate-400 italic">Niciun brand creat încă.</p>
+                          ) : (
+                            brands.map(brand => (
+                              <label
+                                key={brand.id}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all ${formData.brand?.includes(brand.name)
+                                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                                  }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="hidden"
+                                  checked={formData.brand?.includes(brand.name)}
+                                  onChange={() => {
+                                    const currentBrands = formData.brand || [];
+                                    const newBrands = currentBrands.includes(brand.name)
+                                      ? currentBrands.filter(b => b !== brand.name)
+                                      : [...currentBrands, brand.name];
+                                    setFormData({ ...formData, brand: newBrands });
+                                  }}
+                                />
+                                {brand.logo_url && (
+                                  <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0 border border-slate-100 bg-white">
+                                    <img src={brand.logo_url} className="w-full h-full object-contain" alt="" />
+                                  </div>
+                                )}
+                                <span className="text-xs font-medium">{brand.name}</span>
+                              </label>
+                            ))
+                          )}
+                        </div>
+                        {formData.brand?.length > 0 && (
+                          <p className="text-[10px] text-slate-400">
+                            {formData.brand.length} branduri selectate
+                          </p>
+                        )}
+                      </div>
+
                       <Tabs value={uploadMethod} onValueChange={setUploadMethod}>
                         <TabsList className="grid w-full grid-cols-2">
                           <TabsTrigger value="file">Upload Fișier</TabsTrigger>
@@ -912,10 +1158,9 @@ export const Content = () => {
                                   if (files.length > 0) {
                                     const file = files[0];
                                     const type = file.type.startsWith('video') ? 'video' : 'image';
-                                    setFormData({ ...formData, type, title: formData.title || file.name }); // Set title from first file if empty
+                                    setFormData({ ...formData, type, title: formData.title || file.name });
                                   }
                                 }}
-                                data-testid="content-file-input"
                                 className="cursor-pointer"
                               />
                               {selectedFiles.length > 0 && (
@@ -926,9 +1171,6 @@ export const Content = () => {
                                 </div>
                               )}
                             </div>
-                            <p className="text-xs text-slate-500 mt-2">
-                              Poți selecta mai multe fișiere. Max 200MB/fișier.
-                            </p>
                           </div>
                         </TabsContent>
                         <TabsContent value="external" className="space-y-4 mt-4">
@@ -955,38 +1197,16 @@ export const Content = () => {
                               value={formData.file_url}
                               onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
                               placeholder={formData.type === 'youtube' ? "https://youtube.com/watch?v=..." : "https://..."}
-                              data-testid="content-url-input"
                             />
-                            <p className="text-xs text-slate-500 mt-1">
-                              {formData.type === 'youtube'
-                                ? "Pastează link-ul YouTube (normal sau embed)."
-                                : "Direct link către fișier (Dropbox, Drive cu 'direct download link')."}
-                            </p>
                           </div>
                         </TabsContent>
                       </Tabs>
 
                       <div className="flex gap-3 pt-4">
-                        <Button
-                          type="submit"
-                          disabled={uploading}
-                          className="btn-primary flex-1"
-                          data-testid="save-content-button"
-                        >
-                          {uploading ? (
-                            <div className="flex items-center gap-2">
-                              <div className="spinner w-4 h-4"></div>
-                              Se încarcă...
-                            </div>
-                          ) : (
-                            'Adăugă'
-                          )}
+                        <Button type="submit" disabled={uploading} className="btn-primary flex-1">
+                          {uploading ? 'Se încarcă...' : 'Adăugă'}
                         </Button>
-                        <Button
-                          type="button"
-                          onClick={() => setShowDialog(false)}
-                          className="btn-secondary"
-                        >
+                        <Button type="button" onClick={() => setShowDialog(false)} className="btn-secondary">
                           Anulează
                         </Button>
                       </div>
@@ -997,50 +1217,50 @@ export const Content = () => {
             </div>
           </div>
 
-          {/* Main Content with Folder Sidebar */}
+          {/* Main Layout Body */}
           <div className="flex flex-col lg:flex-row gap-6 items-start min-h-[600px]">
-            <div className="w-full lg:w-96 shrink-0 lg:sticky lg:top-24">
-              <div className="h-full flex flex-col">
-                <FolderSidebar
-                  folders={folders}
-                  selectedFolder={selectedFolder}
-                  setSelectedFolder={setSelectedFolder}
-                  content={content}
-                  isAdmin={isAdmin}
-                  openFolderDialog={openFolderDialog}
-                  handleDeleteFolder={handleDeleteFolder}
-                  handleMoveToFolder={handleMoveToFolder}
-                  onAddContent={openUploadDialogWithFolder}
-                  screens={screens}
-                  onAssignToScreen={handleAssignToScreen}
-                  onRefresh={() => {
-                    loadFolders();
-                    loadContent();
-                  }}
-                />
-              </div>
+            {/* Sidebar Column (Left) */}
+            <div className="w-full lg:w-80 shrink-0 lg:sticky lg:top-24">
+              <FolderSidebar
+                folders={folders}
+                selectedFolder={selectedFolder}
+                setSelectedFolder={setSelectedFolder}
+                content={content}
+                isAdmin={isAdmin}
+                openFolderDialog={openFolderDialog}
+                handleDeleteFolder={handleDeleteFolder}
+                handleMoveToFolder={handleMoveToFolder}
+                onAddContent={openUploadDialogWithFolder}
+                screens={screens}
+                onAssignToScreen={handleAssignToScreen}
+                onRefresh={() => {
+                  loadFolders();
+                  loadContent();
+                }}
+              />
             </div>
 
-            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col">
-              <div className="p-6 flex-1">
-                <TabsContent value="all">
-                  {renderView(currentItems)}
-                </TabsContent>
-
-                <TabsContent value="images">
-                  {renderView(currentItems)}
-                </TabsContent>
-
-                <TabsContent value="videos">
-                  {renderView(currentItems)}
-                </TabsContent>
+            {/* Right Column (Content) */}
+            <div className="flex-1 flex flex-col w-full min-w-0">
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col">
+                <div className="p-6 flex-1">
+                  <TabsContent value="all" className="mt-0">
+                    {renderView(currentItems)}
+                  </TabsContent>
+                  <TabsContent value="images" className="mt-0">
+                    {renderView(currentItems)}
+                  </TabsContent>
+                  <TabsContent value="videos" className="mt-0">
+                    {renderView(currentItems)}
+                  </TabsContent>
+                </div>
               </div>
             </div>
           </div>
         </Tabs>
 
         {/* Preview Modal */}
-        <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        < Dialog open={showPreview} onOpenChange={setShowPreview} >
           <DialogContent className="glass-panel max-w-5xl max-h-[90vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>{previewItem?.title}</DialogTitle>
@@ -1112,36 +1332,81 @@ export const Content = () => {
               </div>
             )}
           </DialogContent>
-        </Dialog>
+        </Dialog >
 
         {/* Rename Dialog */}
-        <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        < Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog} >
           <DialogContent className="glass-panel">
             <DialogHeader>
-              <DialogTitle>Redenumește fișierul</DialogTitle>
+              <DialogTitle>Editează conținutul</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleRenameContent} className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label>Titlu Nou</Label>
+                <Label className="text-sm font-semibold">Titlu</Label>
                 <Input
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Introdu noul nume..."
+                  placeholder="Introdu titlul..."
                   required
-                  autoFocus
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Branduri (Clienți)</Label>
+                <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl max-h-48 overflow-y-auto">
+                  {brands.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic">Niciun brand creat încă.</p>
+                  ) : (
+                    brands.map(brand => (
+                      <label
+                        key={brand.id}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all ${editBrands.includes(brand.name)
+                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
+                          : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                          }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={editBrands.includes(brand.name)}
+                          onChange={() => {
+                            const newBrands = editBrands.includes(brand.name)
+                              ? editBrands.filter(b => b !== brand.name)
+                              : [...editBrands, brand.name];
+                            setEditBrands(newBrands);
+                          }}
+                        />
+                        {brand.logo_url && (
+                          <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0 border border-slate-100 bg-white">
+                            <img src={brand.logo_url} className="w-full h-full object-contain" alt="" />
+                          </div>
+                        )}
+                        <span className="text-xs font-medium">{brand.name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+              </div>
+
               <div className="flex justify-end gap-3 pt-4">
                 <Button type="button" variant="outline" onClick={() => setShowRenameDialog(false)}>
                   Anulează
                 </Button>
-                <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex-1">
-                  Salvează
+                <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex-1 shadow-md">
+                  Salvează modificările
                 </Button>
               </div>
             </form>
           </DialogContent>
-        </Dialog>
+        </Dialog >
+
+        <SlideshowConfigDialog
+          open={showSlideshowDialog}
+          onOpenChange={setShowSlideshowDialog}
+          onConfirm={handleCreateSlideshow}
+          count={selectedItems.size}
+          selectedContent={content.filter(item => selectedItems.has(item.id))}
+        />
       </div >
     </DashboardLayout >
   );

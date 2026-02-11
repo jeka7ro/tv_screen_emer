@@ -19,14 +19,14 @@ export const Playlists = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
     autoplay: true,
     loop: true,
     brand: ''
   });
+  const [brands, setBrands] = useState([]);
   const [playlistItems, setPlaylistItems] = useState([]);
   const [viewMode, setViewMode] = useViewMode('view_mode_playlists', 'grid');
-  const [brandFilter, setBrandFilter] = useState('all');
+  const [brandFilter, setBrandFilter] = useState('all_brands');
   const [selectedPlaylists, setSelectedPlaylists] = useState([]);
   const [editingPlaylist, setEditingPlaylist] = useState(null);
 
@@ -36,12 +36,14 @@ export const Playlists = () => {
 
   const loadData = async () => {
     try {
-      const [playlistsRes, contentRes] = await Promise.all([
+      const [playlistsRes, contentRes, brandsRes] = await Promise.all([
         api.get('/playlists'),
-        api.get('/content')
+        api.get('/content'),
+        api.get('/brands')
       ]);
       setPlaylists(playlistsRes.data);
       setContent(contentRes.data);
+      setBrands(brandsRes.data);
     } catch (error) {
       toast.error('Eroare la încărcarea datelor');
     } finally {
@@ -79,7 +81,6 @@ export const Playlists = () => {
     setEditingPlaylist(playlist);
     setFormData({
       name: playlist.name,
-      description: playlist.description || '',
       autoplay: playlist.autoplay,
       loop: playlist.loop,
       brand: playlist.brand || ''
@@ -103,7 +104,6 @@ export const Playlists = () => {
     try {
       const duplicatedData = {
         name: `${playlist.name} (Copie)`,
-        description: playlist.description || '',
         autoplay: playlist.autoplay,
         loop: playlist.loop,
         brand: playlist.brand || '',
@@ -123,10 +123,6 @@ export const Playlists = () => {
   };
 
   const addContentToPlaylist = (contentId) => {
-    if (playlistItems.some(item => item.content_id === contentId)) {
-      toast.error('Conținutul este deja în playlist');
-      return;
-    }
     setPlaylistItems([...playlistItems, {
       content_id: contentId,
       order: playlistItems.length,
@@ -159,7 +155,6 @@ export const Playlists = () => {
   const resetForm = () => {
     setFormData({
       name: '',
-      description: '',
       autoplay: true,
       loop: true,
       brand: ''
@@ -168,9 +163,34 @@ export const Playlists = () => {
     setEditingPlaylist(null);
   };
 
+  const getBrandLogo = (brandName) => {
+    const brand = brands.find(b => b.name === brandName);
+    return brand?.logo_url;
+  };
+
+  const calculateTotalDuration = (items) => {
+    if (!items || !Array.isArray(items)) return 0;
+    return items.reduce((total, item) => {
+      // Use item.duration if set, otherwise try to find content default duration
+      const itemDuration = parseInt(item.duration) || 10;
+      return total + itemDuration;
+    }, 0);
+  };
+
+  const formatDuration = (seconds) => {
+    if (!seconds) return '00:00';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+
+    if (h > 0) {
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   // Brands logic
-  const brands = [...new Set(playlists.map(p => p.brand).filter(Boolean))].sort();
-  const filteredPlaylists = brandFilter === 'all'
+  const filteredPlaylists = brandFilter === 'all_brands'
     ? playlists
     : playlists.filter(p => p.brand === brandFilter);
 
@@ -240,23 +260,23 @@ export const Playlists = () => {
                       </div>
                       <div>
                         <Label>Brand</Label>
-                        <Input
+                        <Select
                           value={formData.brand}
-                          onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                          placeholder="Ex: Sushi Master"
-                          data-testid="playlist-brand-input"
-                        />
+                          onValueChange={(value) => setFormData({ ...formData, brand: value })}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Selectează brand" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Fără brand</SelectItem>
+                            {brands.map((b) => (
+                              <SelectItem key={b.id} value={b.name || "unknown"}>
+                                {b.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </div>
-                    <div>
-                      <Label>Descriere (opțional)</Label>
-                      <Textarea
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        placeholder="Descriere playlist..."
-                        rows={2}
-                        data-testid="playlist-description-input"
-                      />
                     </div>
                     <div className="flex gap-4">
                       <label className="flex items-center gap-2">
@@ -292,13 +312,26 @@ export const Playlists = () => {
                               className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:border-indigo-200 hover:shadow-md transition-all group"
                             >
                               <div className="flex items-center gap-4 flex-1">
-                                <div className="w-16 h-12 rounded-lg border border-slate-100 overflow-hidden shrink-0 bg-slate-50 flex items-center justify-center shadow-sm">
-                                  {item.thumbnail_url || (item.type === 'image' && item.file_url) ? (
-                                    <img src={item.thumbnail_url || item.file_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                                <div className="w-20 h-14 rounded-lg border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center shadow-sm relative group/thumb">
+                                  {item.type === 'video' ? (
+                                    <>
+                                      {item.thumbnail_url ? (
+                                        <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover group-hover:hidden" />
+                                      ) : null}
+                                      <video
+                                        src={item.file_url}
+                                        className={`w-full h-full object-cover ${item.thumbnail_url ? 'hidden group-hover:block' : ''}`}
+                                        muted
+                                        playsInline
+                                        onMouseOver={(e) => e.target.play()}
+                                        onMouseOut={(e) => { e.target.pause(); e.target.currentTime = 0; }}
+                                      />
+                                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-100 group-hover:opacity-0 transition-opacity">
+                                        <Film className="w-4 h-4 text-white shadow-sm" />
+                                      </div>
+                                    </>
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                      {item.type === 'video' ? <Film className="w-6 h-6" /> : <ImageIcon className="w-6 h-6" />}
-                                    </div>
+                                    <img src={item.thumbnail_url || item.file_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                                   )}
                                 </div>
                                 <div>
@@ -321,7 +354,7 @@ export const Playlists = () => {
                       <div className="space-y-3">
                         <Label className="text-base font-bold text-slate-700 flex items-center gap-2">
                           <ListIcon className="w-4 h-4 text-indigo-500" />
-                          Playlist ({playlistItems.length} elemente)
+                          Playlist ({playlistItems.length} elemente • {formatDuration(calculateTotalDuration(playlistItems))})
                         </Label>
                         <div className="max-h-[500px] overflow-y-auto space-y-3 border border-slate-100 rounded-2xl p-4 bg-slate-50 shadow-inner">
                           {playlistItems.length === 0 ? (
@@ -359,7 +392,7 @@ export const Playlists = () => {
                                     </div>
 
                                     {/* Thumbnail */}
-                                    <div className="w-20 h-14 rounded-xl border-2 border-slate-50 overflow-hidden shrink-0 bg-slate-100 shadow-inner">
+                                    <div className="w-24 h-16 rounded-xl border-2 border-slate-50 overflow-hidden shrink-0 bg-slate-100 shadow-inner">
                                       {contentItem?.thumbnail_url || (contentItem?.type === 'image' && contentItem?.file_url) ? (
                                         <img src={contentItem.thumbnail_url || contentItem.file_url} alt="" className="w-full h-full object-cover" />
                                       ) : (
@@ -370,7 +403,7 @@ export const Playlists = () => {
                                     </div>
 
                                     {/* Info */}
-                                    <div className="flex-1 min-w-0">
+                                    <div className="flex-1 min-w-0 pr-8">
                                       <p className="text-sm font-black text-slate-800 line-clamp-1 flex items-center gap-2">
                                         <span className="text-indigo-500 font-black">#{index + 1}</span>
                                         {contentItem?.title || 'Unknown'}
@@ -395,11 +428,12 @@ export const Playlists = () => {
                                       </div>
                                     </div>
 
-                                    {/* Delete button */}
+                                    {/* Delete button (Absolute) */}
                                     <button
                                       type="button"
                                       onClick={() => removeFromPlaylist(index)}
-                                      className="p-2.5 bg-rose-50 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl transition-all shadow-sm"
+                                      className="absolute top-2 right-2 p-1.5 bg-rose-50 hover:bg-rose-500 text-rose-500 hover:text-white rounded-lg transition-all shadow-sm"
+                                      title="Șterge element"
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </button>
@@ -439,9 +473,16 @@ export const Playlists = () => {
                   <SelectValue placeholder="Toate brandurile" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toate brandurile</SelectItem>
+                  <SelectItem value="all_brands">Toate brandurile</SelectItem>
                   {brands.map(brand => (
-                    <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                    <SelectItem key={brand.id} value={brand.name || "unknown"}>
+                      <div className="flex items-center gap-2">
+                        {brand.logo_url && (
+                          <img src={brand.logo_url} alt="" className="w-4 h-4 object-contain" />
+                        )}
+                        <span>{brand.name}</span>
+                      </div>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -516,9 +557,16 @@ export const Playlists = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 font-semibold text-slate-800">
-                        <div className="flex flex-col">
-                          {playlist.brand && <span className="text-[10px] font-bold text-indigo-600 uppercase mb-0.5">{playlist.brand}</span>}
-                          <span>{playlist.name}</span>
+                        <div className="flex items-center gap-3">
+                          {playlist.brand && getBrandLogo(playlist.brand) && (
+                            <div className="w-8 h-8 rounded-lg border border-slate-100 flex items-center justify-center bg-white overflow-hidden shrink-0 shadow-sm">
+                              <img src={getBrandLogo(playlist.brand)} alt="" className="w-full h-full object-contain" />
+                            </div>
+                          )}
+                          <div className="flex flex-col">
+                            {playlist.brand && <span className="text-[10px] font-bold text-indigo-600 uppercase mb-0.5">{playlist.brand}</span>}
+                            <span>{playlist.name}</span>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -531,7 +579,7 @@ export const Playlists = () => {
                       </td>
                       <td className="px-6 py-4">
                         <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-tight">
-                          {playlist.items?.length || 0} elemente
+                          {playlist.items?.length || 0} elemente • {formatDuration(calculateTotalDuration(playlist.items))}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -586,9 +634,16 @@ export const Playlists = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex flex-col">
                     {playlist.brand && (
-                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1 underline decoration-2 decoration-indigo-200 underline-offset-4">
-                        {playlist.brand}
-                      </span>
+                      <div className="flex items-center gap-2 mb-1">
+                        {getBrandLogo(playlist.brand) && (
+                          <div className="w-6 h-6 rounded-md border border-slate-100 flex items-center justify-center bg-white overflow-hidden shrink-0">
+                            <img src={getBrandLogo(playlist.brand)} alt="" className="w-full h-full object-contain" />
+                          </div>
+                        )}
+                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest underline decoration-2 decoration-indigo-200 underline-offset-4">
+                          {playlist.brand}
+                        </span>
+                      </div>
                     )}
                     <h3 className="text-xl font-bold text-slate-800 leading-tight">
                       {playlist.name}
@@ -619,21 +674,45 @@ export const Playlists = () => {
                   </div>
                 </div>
 
-                <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-4 mb-5 flex-1">
-                  {playlist.description ? (
-                    <p className="text-sm text-slate-500 mb-4 line-clamp-2 italic">"{playlist.description}"</p>
-                  ) : (
-                    <p className="text-xs text-slate-400 mb-4 italic">Fără descriere</p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-indigo-600 text-white text-[10px] font-black px-2 py-1 rounded-md uppercase">
-                        {playlist.items?.length || 0} fișiere
+                <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-4 mb-5 flex-1 flex flex-col items-center justify-center min-h-[120px]">
+                  <div className="text-center mb-4">
+                    <div className="flex items-baseline justify-center">
+                      <span className="text-4xl font-black text-slate-700 tracking-tighter">
+                        {formatDuration(calculateTotalDuration(playlist.items))}
                       </span>
                     </div>
-                    <div className="flex gap-1">
-                      {playlist.loop && <div className="w-2 h-2 rounded-full bg-indigo-400" title="Loop activ"></div>}
-                      {playlist.autoplay && <div className="w-2 h-2 rounded-full bg-emerald-400" title="Autoplay activ"></div>}
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Durată totală</p>
+                  </div>
+
+                  <div className="flex items-center justify-between w-full mt-auto">
+                    <div className="flex -space-x-4 overflow-hidden py-1 pl-1">
+                      {playlist.items?.slice(0, 3).map((item, idx) => {
+                        const itemContent = content.find(c => c.id === item.content_id);
+                        if (!itemContent) return null;
+                        return (
+                          <div key={idx} className="inline-block h-12 w-12 rounded-full ring-2 ring-white bg-slate-100 overflow-hidden relative shadow-sm">
+                            {itemContent.type === 'video' ? (
+                              <video src={itemContent.file_url} className="h-full w-full object-cover" muted />
+                            ) : (itemContent.thumbnail_url || itemContent.file_url) ? (
+                              <img src={itemContent.thumbnail_url || itemContent.file_url} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center text-[10px] font-bold text-slate-400">?</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {(playlist.items?.length || 0) > 3 && (
+                        <div className="inline-block h-12 w-12 rounded-full ring-2 ring-white bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500 shadow-sm">
+                          +{playlist.items.length - 3}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-1.5 items-center">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mr-1">
+                        {playlist.items?.length || 0} fișiere
+                      </span>
+                      {playlist.loop && <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 ring-2 ring-white" title="Loop activ"></div>}
+                      {playlist.autoplay && <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" title="Autoplay activ"></div>}
                     </div>
                   </div>
                 </div>
@@ -655,6 +734,6 @@ export const Playlists = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </DashboardLayout >
   );
 };

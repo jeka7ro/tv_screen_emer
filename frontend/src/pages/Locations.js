@@ -25,6 +25,7 @@ export const Locations = () => {
     security_code: '',
     status: 'active'
   });
+  const [selectedItems, setSelectedItems] = useState(new Set());
 
   useEffect(() => {
     loadLocations();
@@ -82,6 +83,38 @@ export const Locations = () => {
     }
   };
 
+  const toggleSelectAll = (items) => {
+    if (selectedItems.size === items.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(items.map(i => i.id)));
+    }
+  };
+
+  const toggleSelectItem = (id) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Sigur dorești să ștergi ${selectedItems.size} locații?`)) return;
+
+    try {
+      const deletePromises = Array.from(selectedItems).map(id => api.delete(`/locations/${id}`));
+      await Promise.all(deletePromises);
+      toast.success(`${selectedItems.size} locații șterse!`);
+      setSelectedItems(new Set());
+      loadLocations();
+    } catch (error) {
+      toast.error('Eroare la ștergerea în masă');
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -123,13 +156,13 @@ export const Locations = () => {
                 <DialogTrigger asChild>
                   <Button className="btn-red px-6 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]" data-testid="add-location-button">
                     <Plus className="w-4 h-4 mr-2" />
-                    Adaugă locație
+                    Adăugă locație
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="glass-panel">
                   <DialogHeader>
                     <DialogTitle>
-                      {editingLocation ? 'Editează locația' : 'Adaugă locație nouă'}
+                      {editingLocation ? 'Editează locația' : 'Adăugă locație nouă'}
                     </DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
@@ -194,6 +227,26 @@ export const Locations = () => {
           </div>
         </div>
 
+        {isAdmin() && selectedItems.size > 0 && (
+          <div className="mb-6 bg-gradient-to-r from-red-600 to-rose-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
+            <span className="font-semibold text-lg">{selectedItems.size} selectate</span>
+            <div className="h-6 w-px bg-white/30"></div>
+            <button
+              onClick={handleBulkDelete}
+              className="ml-auto bg-white text-rose-600 hover:bg-slate-100 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm"
+            >
+              <Trash2 className="w-4 h-4" />
+              Șterge
+            </button>
+            <button
+              onClick={() => setSelectedItems(new Set())}
+              className="text-white hover:underline text-sm font-medium transition-all"
+            >
+              Anulează
+            </button>
+          </div>
+        )}
+
         {locations.length === 0 ? (
           <div className="glass-card p-12 text-center" data-testid="no-locations">
             <MapPin className="w-16 h-16 text-slate-300 mx-auto mb-4" />
@@ -210,6 +263,16 @@ export const Locations = () => {
               <table className="w-full text-left text-sm text-slate-600">
                 <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-semibold text-slate-500">
                   <tr>
+                    {isAdmin() && (
+                      <th className="px-6 py-4 w-10">
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.size === locations.length && locations.length > 0}
+                          onChange={() => toggleSelectAll(locations)}
+                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        />
+                      </th>
+                    )}
                     <th className="px-6 py-4">Nume</th>
                     <th className="px-6 py-4">Adresă / Oraș</th>
                     <th className="px-6 py-4">Status</th>
@@ -218,7 +281,17 @@ export const Locations = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {locations.map((location) => (
-                    <tr key={location.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={location.id} className={`hover:bg-slate-50/50 transition-colors ${selectedItems.has(location.id) ? 'bg-indigo-50/30' : ''}`}>
+                      {isAdmin() && (
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.has(location.id)}
+                            onChange={() => toggleSelectItem(location.id)}
+                            className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          />
+                        </td>
+                      )}
                       <td className="px-6 py-4 font-medium text-slate-800">
                         <div className="flex items-center gap-3">
                           <div className="bg-indigo-100 p-2 rounded-lg">
@@ -276,7 +349,20 @@ export const Locations = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {locations.map((location) => (
-              <div key={location.id} className="glass-card p-6" data-testid={`location-card-${location.id}`}>
+              <div key={location.id} className={`glass-card p-6 relative group ${selectedItems.has(location.id) ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}`} data-testid={`location-card-${location.id}`}>
+                {isAdmin() && (
+                  <div className="absolute top-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 shadow-sm cursor-pointer"
+                      checked={selectedItems.has(location.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleSelectItem(location.id);
+                      }}
+                    />
+                  </div>
+                )}
                 <div className="flex items-start justify-between mb-4">
                   <div className="bg-indigo-100 p-3 rounded-2xl">
                     <MapPin className="w-6 h-6 text-indigo-600" />

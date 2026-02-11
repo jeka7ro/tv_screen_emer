@@ -288,6 +288,16 @@ export const Users = () => {
                             <Shield className="w-3.5 h-3.5" />
                             Super Admin
                           </span>
+                        ) : u.role === 'admin' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-100 text-indigo-700 text-sm font-medium rounded-full">
+                            <Shield className="w-3.5 h-3.5" />
+                            Admin
+                          </span>
+                        ) : u.role === 'manager' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full">
+                            <User className="w-3.5 h-3.5" />
+                            Manager
+                          </span>
                         ) : (
                           <span className="text-slate-400 text-sm">Utilizator</span>
                         )}
@@ -384,6 +394,16 @@ export const Users = () => {
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-700 text-sm font-medium rounded-full border border-amber-200">
                       <Shield className="w-3.5 h-3.5" />
                       Super Admin
+                    </span>
+                  ) : u.role === 'admin' ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-medium rounded-full border border-indigo-200">
+                      <Shield className="w-3.5 h-3.5" />
+                      Admin
+                    </span>
+                  ) : u.role === 'manager' ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full border border-blue-200">
+                      <User className="w-3.5 h-3.5" />
+                      Manager
                     </span>
                   ) : (
                     <span className="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-600 text-sm font-medium rounded-full border border-slate-200">

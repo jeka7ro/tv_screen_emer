@@ -25,6 +25,8 @@ import { ResetPassword } from './pages/ResetPassword';
 import AudioStreaming from './pages/AudioStreaming';
 import AudioPlayer from './pages/AudioPlayer';
 import { ShortLinkRedirect } from './components/ShortLinkRedirect';
+import { HappyHour } from './pages/HappyHour';
+import { Brands } from './pages/Brands';
 
 function App() {
   return (
@@ -117,6 +119,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <AudioStreaming />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/happy-hour"
+            element={
+              <ProtectedRoute>
+                <HappyHour />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/brands"
+            element={
+              <ProtectedRoute>
+                <Brands />
               </ProtectedRoute>
             }
           />

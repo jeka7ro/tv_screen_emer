@@ -104,6 +104,7 @@ from db import (
     folder_update,
     folder_delete,
     content_update_folder,
+    content_update_brand,
     audio_playlist_create,
     audio_playlists_list,
     audio_playlist_get,
@@ -112,6 +113,11 @@ from db import (
     audio_tracks_by_playlist,
     audio_track_delete,
     audio_playlist_update,
+    brand_insert,
+    brand_update,
+    brand_delete,
+    brand_get,
+    brands_list,
     happy_hour_list,
     happy_hour_get,
     happy_hour_insert,
@@ -343,6 +349,19 @@ class LocationCreate(BaseModel):
     timezone: Optional[str] = "Europe/Bucharest"
     security_code: Optional[str] = None
 
+class Brand(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    address: Optional[str] = None
+    logo_url: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class BrandCreate(BaseModel):
+    name: str
+    address: Optional[str] = None
+    logo_url: Optional[str] = None
+
 class Screen(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -404,6 +423,7 @@ class Content(BaseModel):
     loop: bool = True
     playlist_urls: List[str] = []
     folder_id: Optional[str] = None
+    brand: List[str] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ContentCreate(BaseModel):
@@ -418,6 +438,7 @@ class ContentCreate(BaseModel):
     loop: Optional[bool] = True
     playlist_urls: Optional[List[str]] = []
     folder_id: Optional[str] = None
+    brand: Optional[List[str]] = []
 
 
 class ContentFolder(BaseModel):
@@ -450,6 +471,9 @@ class MoveToFolder(BaseModel):
 
 class ContentTitleUpdate(BaseModel):
     title: str
+
+class ContentBrandUpdate(BaseModel):
+    brand: List[str]
 
 class Playlist(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -721,7 +745,11 @@ async def login(credentials: UserLogin):
     verify_time = time.time() - verify_start
     
     # Update last_login
-    await user_update_last_login(user.email)
+    try:
+        # Explicitly cast to str to avoid any Pydantic EmailStr issues
+        await user_update_last_login(str(user.email))
+    except Exception as e:
+        print(f"ERROR updating last_login for {user.email}: {e}")
     
     access_token = create_access_token(data={"sub": user.email})
     
@@ -1293,6 +1321,11 @@ async def rename_content(content_id: str, update_data: ContentTitleUpdate, curre
     await content_update_title(content_id, update_data.title)
     return JSONResponse(content={"message": "Content renamed successfully"}, status_code=200)
 
+@api_router.patch("/content/{content_id}/brand")
+async def update_content_brand(content_id: str, update_data: ContentBrandUpdate, current_user: User = Depends(require_admin)):
+    await content_update_brand(content_id, update_data.brand)
+    return JSONResponse(content={"message": "Content brands updated successfully"}, status_code=200)
+
 @api_router.post("/content/folders/upload-icon")
 async def upload_folder_icon(
     file: UploadFile = File(...),
@@ -1341,8 +1374,14 @@ async def create_content(
     type: str = Form(...), # image, video
     category: str = Form("other"),
     folder_id: Optional[str] = Form(None),
+    brand: Optional[str] = Form(None), # This will be a comma-separated string from the form
     current_user: User = Depends(require_admin)
 ):
+    # Parse brands if provided as string
+    brand_list = []
+    if brand:
+        brand_list = [b.strip() for b in brand.split(',') if b.strip()]
+
     created_items = []
     
     for file in files:
@@ -1386,6 +1425,7 @@ async def create_content(
                 "duration": 10,
                 "category": category,
                 "folder_id": folder_id,
+                "brand": brand_list,
                 "tags": [],
                 "thumbnail_url": file_url if type == "image" else None,
                 "autoplay": True,
@@ -2173,6 +2213,40 @@ async def delete_happy_hour(schedule_id: str, current_user: dict = Depends(get_c
     
     await happy_hour_delete(schedule_id)
     return {"message": "Happy hour schedule deleted successfully"}
+
+# ============ BRANDS ROUTES ============
+
+@api_router.get("/brands", response_model=List[Brand])
+async def get_brands(current_user: User = Depends(get_current_user)):
+    return await brands_list()
+
+@api_router.post("/brands", response_model=Brand)
+async def create_brand(brand_data: BrandCreate, current_user: User = Depends(require_admin)):
+    brand = Brand(**brand_data.model_dump())
+    await brand_insert(brand.model_dump())
+    return brand
+
+@api_router.get("/brands/{brand_id}", response_model=Brand)
+async def get_brand(brand_id: str, current_user: User = Depends(get_current_user)):
+    brand = await brand_get(brand_id)
+    if not brand:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    return brand
+
+@api_router.put("/brands/{brand_id}", response_model=Brand)
+async def update_brand_endpoint(brand_id: str, brand_data: BrandCreate, current_user: User = Depends(require_admin)):
+    existing = await brand_get(brand_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    await brand_update(brand_id, brand_data.model_dump())
+    return await brand_get(brand_id)
+
+@api_router.delete("/brands/{brand_id}")
+async def delete_brand_endpoint(brand_id: str, current_user: User = Depends(require_admin)):
+    ok = await brand_delete(brand_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    return {"message": "Brand deleted"}
 
 # Include the router in the main app AFTER all routes are defined
 app.include_router(api_router)

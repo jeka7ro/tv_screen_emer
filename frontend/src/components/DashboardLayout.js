@@ -26,12 +26,14 @@ const menuItems = [
   { path: '/live-preview', icon: Eye, label: 'Live Preview' },
   { path: '/locations', icon: MapPin, label: 'Locații' },
   { path: '/screens', icon: Tv, label: 'Ecrane' },
-  { path: '/screen-sync', icon: Shuffle, label: 'Sincronizare' },
   { path: '/content', icon: FileImage, label: 'Conținut' },
+  { path: '/screen-sync', icon: Shuffle, label: 'Sincronizare' },
+  { path: '/happy-hour', icon: ChevronRight, label: 'Happy Hour' },
+  { path: '/playlists', icon: List, label: 'Playlist-uri' },
   { path: '/products', icon: ShoppingBag, label: 'Produse' },
   { path: '/digital-menus', icon: Menu, label: 'Meniuri Digitale' },
-  { path: '/playlists', icon: List, label: 'Playlist-uri' },
   { path: '/audio', icon: Music, label: 'Muzică & Reclame' },
+  { path: '/brands', icon: List, label: 'Brandurile noastre' },
 ];
 
 const adminMenuItems = [
@@ -66,20 +68,20 @@ export const DashboardLayout = ({ children }) => {
         <div className={`p-6 border-b border-white/40 relative flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
           <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden">
             <img
-              src="https://sushimaster.ro/_next/static/images/logo-83e52024fa4e316c47581a7890fe5e8c.png"
-              alt="SushiMaster Logo"
-              className="w-10 h-10 object-contain shrink-0"
+              src="/favicon.png"
+              alt="Media Screens Logo"
+              className={`${isSidebarCollapsed ? 'w-10 h-10' : 'w-20 h-20'} object-contain shrink-0 transition-all duration-300`}
             />
             {!isSidebarCollapsed && (
               <div className="animate-in fade-in duration-300">
-                <h1 className="text-lg font-bold text-slate-800 whitespace-nowrap">SushiMaster</h1>
-                <p className="text-xs text-slate-500 whitespace-nowrap">Digital Menu System</p>
+                <h1 className="text-lg font-bold text-slate-800 whitespace-nowrap">Media Screens</h1>
+                <p className="text-xs text-slate-500 whitespace-nowrap">Digital Signage System</p>
               </div>
             )}
           </Link>
           <button
             onClick={toggleSidebar}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-md hover:text-indigo-600 transition-colors z-[60]"
+            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-md hover:text-red-600 transition-colors z-[60]"
           >
             {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
@@ -104,7 +106,7 @@ export const DashboardLayout = ({ children }) => {
                 data-testid={`nav-${item.path.substring(1)}`}
                 title={isSidebarCollapsed ? item.label : ''}
               >
-                <Icon className="w-5 h-5 shrink-0" />
+                <Icon className="w-5 h-5 shrink-0 text-red-600" />
                 {!isSidebarCollapsed && <span className="animate-in fade-in slide-in-from-left-2 duration-300">{item.label}</span>}
               </Link>
             );
@@ -115,7 +117,7 @@ export const DashboardLayout = ({ children }) => {
             <>
               <div className="pt-4 pb-2">
                 <div className="flex items-center gap-2 px-3 text-xs font-semibold text-slate-400 uppercase">
-                  <Shield className="w-3 h-3" />
+                  <Shield className="w-3 h-3 text-red-600" />
                   Admin
                 </div>
               </div>
@@ -130,7 +132,7 @@ export const DashboardLayout = ({ children }) => {
                     data-testid={`nav-${item.path.substring(1)}`}
                     title={isSidebarCollapsed ? item.label : ''}
                   >
-                    <Icon className="w-5 h-5 shrink-0" />
+                    <Icon className="w-5 h-5 shrink-0 text-red-600" />
                     {!isSidebarCollapsed && <span className="animate-in fade-in slide-in-from-left-2 duration-300">{item.label}</span>}
                   </Link>
                 );
@@ -165,7 +167,7 @@ export const DashboardLayout = ({ children }) => {
             data-testid="logout-button"
             title={isSidebarCollapsed ? "Deconectare" : ""}
           >
-            <LogOut className="w-5 h-5 shrink-0" />
+            <LogOut className="w-5 h-5 shrink-0 text-red-600" />
             {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">Deconectare</span>}
           </button>
         </div>
