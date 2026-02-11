@@ -488,6 +488,11 @@ async def content_count() -> int:
     return r["c"] if r else 0
 
 
+async def content_update_title(content_id: str, title: str) -> None:
+    """Update content title (rename)"""
+    await _execute("UPDATE content SET title = $1 WHERE id = $2", title, content_id)
+
+
 # ========== CONTENT FOLDERS ==========
 
 async def folder_list() -> List[Dict[str, Any]]:

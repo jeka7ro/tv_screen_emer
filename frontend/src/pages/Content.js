@@ -44,6 +44,10 @@ export const Content = () => {
   const [viewMode, setViewMode] = useState('list');
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
+  const [screens, setScreens] = useState([]);
+  const [renamingItem, setRenamingItem] = useState(null);
+  const [newTitle, setNewTitle] = useState('');
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(() => {
     const saved = localStorage.getItem('contentItemsPerPage');
@@ -55,6 +59,7 @@ export const Content = () => {
   useEffect(() => {
     loadContent();
     loadFolders();
+    loadScreens();
   }, []);
 
   const loadContent = async () => {
@@ -74,6 +79,15 @@ export const Content = () => {
       setFolders(response.data);
     } catch (error) {
       console.error('Error loading folders:', error);
+    }
+  };
+
+  const loadScreens = async () => {
+    try {
+      const response = await api.get('/screens');
+      setScreens(response.data);
+    } catch (error) {
+      console.error('Error loading screens:', error);
     }
   };
 
@@ -311,6 +325,35 @@ export const Content = () => {
     setShowPreview(true);
   };
 
+  const handleRenameContent = async (e) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+
+    try {
+      await api.patch(`/content/${renamingItem.id}/title`, { title: newTitle });
+      toast.success('Conținut redenumit!');
+      setShowRenameDialog(false);
+      loadContent();
+    } catch (error) {
+      toast.error('Eroare la redenumire');
+    }
+  };
+
+  const handleAssignToScreen = async (contentId, screenId) => {
+    try {
+      // Create zone content assignment (to zone1 by default)
+      await api.post('/screen-zones', {
+        screen_id: screenId,
+        zone_id: 'zone1',
+        content_type: 'single_content',
+        content_id: contentId
+      });
+      toast.success('Conținut asignat ecranului!');
+    } catch (error) {
+      toast.error('Eroare la asignarea conținutului');
+    }
+  };
+
   const getFileUrl = (fileUrl) => {
     // If it's a relative URL (starts with /api/uploads), prepend backend URL
     if (fileUrl.startsWith('/api/uploads')) {
@@ -521,9 +564,23 @@ export const Content = () => {
                           <Eye className="w-4 h-4 text-slate-500" />
                         </Button>
                         {isAdmin() && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-rose-50 group/d" onClick={() => handleDelete(item.id)}>
-                            <Trash2 className="w-4 h-4 text-slate-400 group-hover/d:text-rose-500" />
-                          </Button>
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:bg-indigo-50"
+                              onClick={() => {
+                                setRenamingItem(item);
+                                setNewTitle(item.title);
+                                setShowRenameDialog(true);
+                              }}
+                            >
+                              <Edit2 className="w-4 h-4 text-indigo-500" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-rose-50 group/d" onClick={() => handleDelete(item.id)}>
+                              <Trash2 className="w-4 h-4 text-slate-400 group-hover/d:text-rose-500" />
+                            </Button>
+                          </>
                         )}
                       </div>
                     </td>
@@ -649,16 +706,28 @@ export const Content = () => {
                 </div>
               </div>
               {isAdmin() && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(item.id);
-                  }}
-                  className="absolute top-2 right-2 p-2 bg-rose-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                  data-testid={`delete-content-${item.id}`}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRenamingItem(item);
+                      setNewTitle(item.title);
+                      setShowRenameDialog(true);
+                    }}
+                    className="p-2 bg-indigo-500 text-white rounded-lg"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(item.id);
+                    }}
+                    className="p-2 bg-rose-500 text-white rounded-lg"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               )}
             </div>
             <h3 className="text-sm font-medium text-slate-800 mb-1 truncate">
@@ -942,6 +1011,8 @@ export const Content = () => {
                   handleDeleteFolder={handleDeleteFolder}
                   handleMoveToFolder={handleMoveToFolder}
                   onAddContent={openUploadDialogWithFolder}
+                  screens={screens}
+                  onAssignToScreen={handleAssignToScreen}
                   onRefresh={() => {
                     loadFolders();
                     loadContent();
@@ -1040,6 +1111,35 @@ export const Content = () => {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Rename Dialog */}
+        <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+          <DialogContent className="glass-panel">
+            <DialogHeader>
+              <DialogTitle>Redenumește fișierul</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleRenameContent} className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label>Titlu Nou</Label>
+                <Input
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="Introdu noul nume..."
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <Button type="button" variant="outline" onClick={() => setShowRenameDialog(false)}>
+                  Anulează
+                </Button>
+                <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex-1">
+                  Salvează
+                </Button>
+              </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div >

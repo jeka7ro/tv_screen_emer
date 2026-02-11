@@ -73,6 +73,7 @@ from db import (
     content_insert,
     content_delete,
     content_count,
+    content_update_title,
     playlist_get,
     playlists_list,
     playlist_insert,
@@ -434,6 +435,9 @@ class ContentFolderUpdate(BaseModel):
 
 class MoveToFolder(BaseModel):
     folder_id: Optional[str] = None  # None = move to root
+
+class ContentTitleUpdate(BaseModel):
+    title: str
 
 class Playlist(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -1266,6 +1270,11 @@ async def move_content_to_folder(content_id: str, move_data: MoveToFolder, curre
             raise HTTPException(status_code=404, detail="Folder not found")
     await content_update_folder(content_id, move_data.folder_id)
     return JSONResponse(content={"message": "Content moved successfully"}, status_code=200)
+
+@api_router.patch("/content/{content_id}/title")
+async def rename_content(content_id: str, update_data: ContentTitleUpdate, current_user: User = Depends(require_admin)):
+    await content_update_title(content_id, update_data.title)
+    return JSONResponse(content={"message": "Content renamed successfully"}, status_code=200)
 
 @api_router.post("/content/folders/upload-icon")
 async def upload_folder_icon(
