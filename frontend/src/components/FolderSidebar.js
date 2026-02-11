@@ -1,5 +1,5 @@
 import React from 'react';
-import { Folder, FolderPlus, FolderOpen, Edit2, Trash2 } from 'lucide-react';
+import { Folder, FolderPlus, FolderOpen, Edit2, Trash2, List as ListIcon } from 'lucide-react';
 import api from '../utils/api';
 
 export const FolderSidebar = ({
