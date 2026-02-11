@@ -1,5 +1,5 @@
 import React from 'react';
-import { Folder, FolderPlus, FolderOpen, Edit2, Trash2, List as ListIcon } from 'lucide-react';
+import { Folder, FolderPlus, FolderOpen, Edit2, Trash2, List as ListIcon, Plus } from 'lucide-react';
 import api from '../utils/api';
 
 export const FolderSidebar = ({
@@ -10,6 +10,8 @@ export const FolderSidebar = ({
     isAdmin,
     openFolderDialog,
     handleDeleteFolder,
+    handleMoveToFolder,
+    onAddContent,
     onRefresh
 }) => {
     return (
@@ -84,6 +86,13 @@ export const FolderSidebar = ({
                             </button>
                             {isAdmin && (
                                 <div className="flex gap-1 opacity-0 group-hover/f:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={() => onAddContent(folder)}
+                                        className="p-1 hover:bg-indigo-50 rounded transition-colors"
+                                        title="Adaugă conținut"
+                                    >
+                                        <Plus className="w-3 h-3 text-indigo-600" />
+                                    </button>
                                     <button
                                         onClick={() => openFolderDialog(folder)}
                                         className="p-1 hover:bg-white rounded transition-colors"

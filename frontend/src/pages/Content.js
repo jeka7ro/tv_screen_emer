@@ -292,6 +292,19 @@ export const Content = () => {
     setSelectedFiles([]);
   };
 
+  const openUploadDialogWithFolder = (folder) => {
+    setFormData({
+      title: '',
+      type: 'image',
+      category: 'other',
+      duration: '10',
+      file_url: '',
+      folder_id: folder.id
+    });
+    setSelectedFiles([]);
+    setShowDialog(true);
+  };
+
   const handlePreview = (item) => {
     setPreviewItem(item);
     setShowPreview(true);
@@ -927,6 +940,7 @@ export const Content = () => {
                   openFolderDialog={openFolderDialog}
                   handleDeleteFolder={handleDeleteFolder}
                   handleMoveToFolder={handleMoveToFolder}
+                  onAddContent={openUploadDialogWithFolder}
                   onRefresh={() => {
                     loadFolders();
                     loadContent();
