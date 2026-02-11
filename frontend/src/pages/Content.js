@@ -42,6 +42,10 @@ export const Content = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [viewMode, setViewMode] = useState('list');
   const [selectedItems, setSelectedItems] = useState(new Set());
+  const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [typeFilter, setTypeFilter] = useState('all');
 
   useEffect(() => {
     loadContent();
@@ -143,6 +147,50 @@ export const Content = () => {
     ? content.filter(item => item.folder_id === selectedFolder.id)
     : content;
 
+  // Filter by type
+  const typeFilteredContent = typeFilter === 'all'
+    ? filteredContent
+    : filteredContent.filter(item => {
+      if (typeFilter === 'images') return item.type === 'image';
+      if (typeFilter === 'videos') return item.type === 'video';
+      return true;
+    });
+
+  // Sorting Logic
+  const sortedContent = [...typeFilteredContent].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+
+    let aVal = a[sortConfig.key];
+    let bVal = b[sortConfig.key];
+
+    // Handle string comparisons
+    if (typeof aVal === 'string') {
+      aVal = aVal.toLowerCase();
+      bVal = bVal.toLowerCase();
+    }
+
+    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const images = filteredContent.filter(c => c.type === 'image');
+  const videos = filteredContent.filter(c => c.type === 'video');
+
+  // Pagination Logic
+  const totalPages = itemsPerPage === 'all' ? 1 : Math.ceil(sortedContent.length / itemsPerPage);
+  const currentItems = itemsPerPage === 'all'
+    ? sortedContent
+    : sortedContent.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
   const handleFileUpload = async (e) => {
     e.preventDefault();
     if (uploadMethod === 'file' && selectedFiles.length === 0) {
@@ -229,8 +277,6 @@ export const Content = () => {
     return fileUrl;
   };
 
-  const images = filteredContent.filter(c => c.type === 'image');
-  const videos = filteredContent.filter(c => c.type === 'video');
 
   if (loading) {
     return (
@@ -298,12 +344,8 @@ export const Content = () => {
       return (
         <div className="glass-card p-12 text-center" data-testid="no-content">
           <FileImage className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-800 mb-2">
-            Niciun conținut
-          </h3>
-          <p className="text-slate-500 mb-6">
-            Începe prin a adăuga imagini sau video-uri
-          </p>
+          <p className="text-slate-500 font-medium">Niciun fișier găsit aici.</p>
+          <p className="text-sm text-slate-400 mt-1">Încarcă un fișier nou sau alege alt folder.</p>
         </div>
       );
     }
@@ -311,95 +353,189 @@ export const Content = () => {
     if (viewMode === 'list') {
       return (
         <div className="glass-card overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50/50 border-b border-slate-100">
-              <tr>
-                <th className="p-4 w-10">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    checked={items.length > 0 && selectedItems.size === items.length}
-                    onChange={() => toggleSelectAll(items)}
-                  />
-                </th>
-                <th className="p-4 font-medium text-slate-500 text-xs uppercase">Preview</th>
-                <th className="p-4 font-medium text-slate-500 text-xs uppercase">Titlu</th>
-                <th className="p-4 font-medium text-slate-500 text-xs uppercase">Tip</th>
-                <th className="p-4 font-medium text-slate-500 text-xs uppercase">Categorie</th>
-
-                <th className="p-4 font-medium text-slate-500 text-xs uppercase">Dimensiune</th>
-                <th className="p-4 font-medium text-slate-500 text-xs uppercase">Încărcat de</th>
-                <th className="p-4 font-medium text-slate-500 text-xs uppercase text-right">Acțiuni</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {items.map((item) => (
-                <tr
-                  key={item.id}
-                  className={`group hover:bg-slate-50/50 transition-colors ${selectedItems.has(item.id) ? 'bg-indigo-50/30' : ''} cursor-move active:opacity-50 active:scale-[0.99] transform`}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData('contentId', item.id);
-                    e.dataTransfer.effectAllowed = 'move';
-                  }}
-                >
-                  <td className="p-4">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/50">
+                  <th className="p-4 text-left w-10">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      checked={selectedItems.has(item.id)}
-                      onChange={() => toggleSelectItem(item.id)}
+                      checked={selectedItems.size === items.length && items.length > 0}
+                      onChange={() => toggleSelectAll(items)}
+                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                     />
-                  </td>
-                  <td className="p-4 w-24">
-                    <div
-                      className="w-16 h-10 rounded-lg overflow-hidden bg-slate-100 cursor-pointer flex items-center justify-center border border-slate-200 shadow-sm"
-                      onClick={() => handlePreview(item)}
-                    >
-                      {item.type === 'youtube' ? (
-                        <div className="w-full h-full bg-red-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
-                          <Film className="w-4 h-4 mr-0.5" /> YT
-                        </div>
-                      ) : item.type === 'web' ? (
-                        <div className="w-full h-full bg-indigo-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
-                          <LayoutGrid className="w-4 h-4 mr-0.5" /> WEB
-                        </div>
-                      ) : item.type === 'image' ? (
-                        <img src={getFileUrl(item.file_url)} className="w-full h-full object-cover" alt="" />
-                      ) : (
-                        <div className="relative w-full h-full bg-slate-900 flex items-center justify-center">
-                          <video src={getFileUrl(item.file_url)} className="w-full h-full object-cover opacity-60" />
-                          <Film className="absolute w-4 h-4 text-white" />
-                        </div>
-                      )}
+                  </th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Previzualizare</th>
+                  <th
+                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-indigo-600 transition-colors"
+                    onClick={() => requestSort('title')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Titlu
+                      {sortConfig.key === 'title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </div>
-                  </td>
-                  <td className="p-4 font-medium text-slate-800">{item.title}</td>
-                  <td className="p-4 capitalize text-slate-600">{item.type}</td>
-                  <td className="p-4 capitalize text-slate-600">{item.category}</td>
-
-                  <td className="p-4 text-slate-600 text-sm">
-                    {item.file_size ? `${(item.file_size / 1024 / 1024).toFixed(2)} MB` : '-'}
-                  </td>
-                  <td className="p-4 text-slate-600 text-sm">
-                    {item.uploaded_by || 'Admin'}
-                  </td>
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button className="btn-ghost p-2 h-auto" onClick={() => handlePreview(item)}>
-                        <Eye className="w-4 h-4 text-slate-500" />
-                      </Button>
-                      {isAdmin() && (
-                        <Button className="btn-ghost p-2 h-auto" onClick={() => handleDelete(item.id)}>
-                          <Trash2 className="w-4 h-4 text-rose-500" />
-                        </Button>
-                      )}
+                  </th>
+                  <th
+                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-indigo-600 transition-colors"
+                    onClick={() => requestSort('type')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Tip
+                      {sortConfig.key === 'type' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </div>
-                  </td>
+                  </th>
+                  <th
+                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-indigo-600 transition-colors"
+                    onClick={() => requestSort('file_size')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Dimensiune
+                      {sortConfig.key === 'file_size' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-indigo-600 transition-colors"
+                    onClick={() => requestSort('created_at')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Dată
+                      {sortConfig.key === 'created_at' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                    </div>
+                  </th>
+                  <th className="p-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acțiuni</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {items.map((item) => (
+                  <tr
+                    key={item.id}
+                    className={`group hover:bg-slate-50/50 transition-colors ${selectedItems.has(item.id) ? 'bg-indigo-50/30' : ''} cursor-move active:opacity-50 active:scale-[0.99] transform`}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('contentId', item.id);
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                  >
+                    <td className="p-4">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                        checked={selectedItems.has(item.id)}
+                        onChange={() => toggleSelectItem(item.id)}
+                      />
+                    </td>
+                    <td className="p-4 w-24">
+                      <div
+                        className="w-16 h-10 rounded-lg overflow-hidden bg-slate-100 cursor-pointer flex items-center justify-center border border-slate-200 shadow-sm"
+                        onClick={() => handlePreview(item)}
+                      >
+                        {item.type === 'youtube' ? (
+                          <div className="w-full h-full bg-red-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
+                            <Film className="w-4 h-4 mr-0.5" /> YT
+                          </div>
+                        ) : item.type === 'web' ? (
+                          <div className="w-full h-full bg-indigo-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
+                            <LayoutGrid className="w-4 h-4 mr-0.5" /> WEB
+                          </div>
+                        ) : item.type === 'image' ? (
+                          <img src={getFileUrl(item.file_url)} className="w-full h-full object-cover" alt="" />
+                        ) : (
+                          <div className="relative w-full h-full bg-slate-900 flex items-center justify-center">
+                            <video src={getFileUrl(item.file_url)} className="w-full h-full object-cover opacity-60" />
+                            <Film className="absolute w-4 h-4 text-white" />
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-slate-800">{item.title}</span>
+                        <span className="text-[10px] text-slate-400 font-mono uppercase">{item.id.substring(0, 8)}</span>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-1.5">
+                        {item.type === 'image' && <FileImage className="w-3.5 h-3.5 text-indigo-500" />}
+                        {item.type === 'video' && <Film className="w-3.5 h-3.5 text-slate-500" />}
+                        {item.type === 'youtube' && <Film className="w-3.5 h-3.5 text-red-600" />}
+                        {item.type === 'web' && <LayoutGrid className="w-3.5 h-3.5 text-indigo-600" />}
+                        <span className={`text-xs font-medium capitalize ${item.type === 'youtube' ? 'text-red-600' :
+                          item.type === 'web' ? 'text-indigo-600' : 'text-slate-600'
+                          }`}>
+                          {item.type}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-slate-600 text-sm">
+                      {item.file_size ? `${(item.file_size / 1024 / 1024).toFixed(2)} MB` : '-'}
+                    </td>
+                    <td className="p-4 text-slate-600 text-sm">
+                      {item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-slate-100" onClick={() => handlePreview(item)}>
+                          <Eye className="w-4 h-4 text-slate-500" />
+                        </Button>
+                        {isAdmin() && (
+                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-rose-50 group/d" onClick={() => handleDelete(item.id)}>
+                            <Trash2 className="w-4 h-4 text-slate-400 group-hover/d:text-rose-500" />
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Footer */}
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">Afișează:</span>
+                <select
+                  className="text-xs border rounded-md px-1 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setItemsPerPage(val === 'all' ? 'all' : parseInt(val));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value="all">Toate</option>
+                </select>
+              </div>
+              <span className="text-xs text-slate-500">
+                Pagina {currentPage} din {totalPages}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                className="h-8 px-2 text-xs"
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                className="h-8 px-2 text-xs"
+              >
+                Următor
+              </Button>
+            </div>
+          </div>
         </div>
       );
     }
@@ -696,7 +832,10 @@ export const Content = () => {
           handleUpdateFolder={handleUpdateFolder}
         />
 
-        <Tabs defaultValue="all" className="space-y-6">
+        <Tabs value={typeFilter} onValueChange={(val) => {
+          setTypeFilter(val);
+          setCurrentPage(1);
+        }} className="space-y-6">
           <div className="flex items-center">
             <TabsList className="bg-slate-100 p-1 rounded-xl">
               <TabsTrigger value="all" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Toate ({filteredContent.length})</TabsTrigger>
@@ -727,17 +866,16 @@ export const Content = () => {
 
             <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col">
               <div className="p-6 flex-1">
-
                 <TabsContent value="all">
-                  {renderView(filteredContent)}
+                  {renderView(currentItems)}
                 </TabsContent>
 
                 <TabsContent value="images">
-                  {renderView(images)}
+                  {renderView(currentItems)}
                 </TabsContent>
 
                 <TabsContent value="videos">
-                  {renderView(videos)}
+                  {renderView(currentItems)}
                 </TabsContent>
               </div>
             </div>
