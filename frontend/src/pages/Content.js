@@ -688,148 +688,6 @@ export const Content = () => {
             </div>
           )}
 
-          <div className="flex gap-2">
-            <div className="bg-white/50 p-1 rounded-lg flex border border-slate-200/50 mr-4">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-                title="Grid View"
-              >
-                <LayoutGrid className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
-                title="List View"
-              >
-                <ListIcon className="w-5 h-5" />
-              </button>
-            </div>
-            {isAdmin() && (
-              <Dialog open={showDialog} onOpenChange={(open) => {
-                setShowDialog(open);
-                if (!open) resetForm();
-              }}>
-                <DialogTrigger asChild>
-                  <Button className="btn-primary px-6 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all" data-testid="add-content-button">
-                    <Plus className="w-6 h-6 mr-2" />
-                    Adăugă conținut
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="glass-panel">
-                  <DialogHeader>
-                    <DialogTitle>Adăugă conținut nou</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleFileUpload} className="space-y-4">
-                    <Tabs value={uploadMethod} onValueChange={setUploadMethod}>
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="file">Upload Fișier</TabsTrigger>
-                        <TabsTrigger value="external">Link Extern</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="file" className="space-y-4 mt-4">
-                        <div>
-                          <Label className="text-base font-semibold">Selectează fișier(e)</Label>
-                          <div className="mt-3 border-2 border-dashed border-indigo-300 rounded-xl p-6 bg-gradient-to-br from-indigo-50/50 to-blue-50/30 hover:from-indigo-50 hover:to-blue-50 transition-all">
-                            <div className="flex flex-col items-center mb-4">
-                              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
-                                <Upload className="w-8 h-8 text-indigo-600" />
-                              </div>
-                              <p className="text-sm font-semibold text-slate-700 mb-1">Click pentru a selecta fișiere</p>
-                              <p className="text-xs text-slate-500">sau drag & drop aici</p>
-                            </div>
-                            <Input
-                              type="file"
-                              accept="image/*,video/*"
-                              multiple
-                              onChange={(e) => {
-                                const files = e.target.files;
-                                setSelectedFiles(files);
-                                if (files.length > 0) {
-                                  const file = files[0];
-                                  const type = file.type.startsWith('video') ? 'video' : 'image';
-                                  setFormData({ ...formData, type, title: formData.title || file.name }); // Set title from first file if empty
-                                }
-                              }}
-                              data-testid="content-file-input"
-                              className="cursor-pointer"
-                            />
-                            {selectedFiles.length > 0 && (
-                              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                <p className="text-sm text-green-700 font-semibold flex items-center gap-2">
-                                  <span className="text-green-600">✓</span> {selectedFiles.length} fișier(e) selectat(e)
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-500 mt-2">
-                            Poți selecta mai multe fișiere. Max 200MB/fișier.
-                          </p>
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="external" className="space-y-4 mt-4">
-                        <div>
-                          <Label>Tip Conținut Extern</Label>
-                          <Select
-                            value={formData.type}
-                            onValueChange={(value) => setFormData({ ...formData, type: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="image">Imagine (Link Direct)</SelectItem>
-                              <SelectItem value="video">Video (Link Direct)</SelectItem>
-                              <SelectItem value="youtube">YouTube (Link/Embed)</SelectItem>
-                              <SelectItem value="web">Pagină Web (URL)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>URL conținut</Label>
-                          <Input
-                            value={formData.file_url}
-                            onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
-                            placeholder={formData.type === 'youtube' ? "https://youtube.com/watch?v=..." : "https://..."}
-                            data-testid="content-url-input"
-                          />
-                          <p className="text-xs text-slate-500 mt-1">
-                            {formData.type === 'youtube'
-                              ? "Pastează link-ul YouTube (normal sau embed)."
-                              : "Direct link către fișier (Dropbox, Drive cu 'direct download link')."}
-                          </p>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-
-                    <div className="flex gap-3 pt-4">
-                      <Button
-                        type="submit"
-                        disabled={uploading}
-                        className="btn-primary flex-1"
-                        data-testid="save-content-button"
-                      >
-                        {uploading ? (
-                          <div className="flex items-center gap-2">
-                            <div className="spinner w-4 h-4"></div>
-                            Se încarcă...
-                          </div>
-                        ) : (
-                          'Adăugă'
-                        )}
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => setShowDialog(false)}
-                        className="btn-secondary"
-                      >
-                        Anulează
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
         </div>
 
 
@@ -848,12 +706,156 @@ export const Content = () => {
           setTypeFilter(val);
           setCurrentPage(1);
         }} className="space-y-6">
-          <div className="flex items-center">
+          <div className="flex items-center justify-between gap-4">
             <TabsList className="bg-slate-100 p-1 rounded-xl">
               <TabsTrigger value="all" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Toate ({filteredContent.length})</TabsTrigger>
               <TabsTrigger value="images" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Imagini ({images.length})</TabsTrigger>
               <TabsTrigger value="videos" className="rounded-lg px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">Video-uri ({videos.length})</TabsTrigger>
             </TabsList>
+
+            <div className="flex items-center gap-2">
+              <div className="bg-white p-1 rounded-lg flex border border-slate-200 shadow-sm">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                  title="Grid View"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                  title="List View"
+                >
+                  <ListIcon className="w-4 h-4" />
+                </button>
+              </div>
+
+              {isAdmin() && (
+                <Dialog open={showDialog} onOpenChange={(open) => {
+                  setShowDialog(open);
+                  if (!open) resetForm();
+                }}>
+                  <DialogTrigger asChild>
+                    <Button className="btn-red px-6 py-2.5 rounded-full text-base font-semibold shadow-lg hover:shadow-xl transition-all h-auto" data-testid="add-content-button">
+                      <Plus className="w-5 h-5 mr-2" />
+                      Adăugă conținut
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="glass-panel">
+                    <DialogHeader>
+                      <DialogTitle>Adăugă conținut nou</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleFileUpload} className="space-y-4">
+                      <Tabs value={uploadMethod} onValueChange={setUploadMethod}>
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="file">Upload Fișier</TabsTrigger>
+                          <TabsTrigger value="external">Link Extern</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="file" className="space-y-4 mt-4">
+                          <div>
+                            <Label className="text-base font-semibold">Selectează fișier(e)</Label>
+                            <div className="mt-3 border-2 border-dashed border-indigo-300 rounded-xl p-6 bg-gradient-to-br from-indigo-50/50 to-blue-50/30 hover:from-indigo-50 hover:to-blue-50 transition-all">
+                              <div className="flex flex-col items-center mb-4">
+                                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
+                                  <Upload className="w-8 h-8 text-indigo-600" />
+                                </div>
+                                <p className="text-sm font-semibold text-slate-700 mb-1">Click pentru a selecta fișiere</p>
+                                <p className="text-xs text-slate-500">sau drag & drop aici</p>
+                              </div>
+                              <Input
+                                type="file"
+                                accept="image/*,video/*"
+                                multiple
+                                onChange={(e) => {
+                                  const files = e.target.files;
+                                  setSelectedFiles(files);
+                                  if (files.length > 0) {
+                                    const file = files[0];
+                                    const type = file.type.startsWith('video') ? 'video' : 'image';
+                                    setFormData({ ...formData, type, title: formData.title || file.name }); // Set title from first file if empty
+                                  }
+                                }}
+                                data-testid="content-file-input"
+                                className="cursor-pointer"
+                              />
+                              {selectedFiles.length > 0 && (
+                                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                  <p className="text-sm text-green-700 font-semibold flex items-center gap-2">
+                                    <span className="text-green-600">✓</span> {selectedFiles.length} fișier(e) selectat(e)
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2">
+                              Poți selecta mai multe fișiere. Max 200MB/fișier.
+                            </p>
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="external" className="space-y-4 mt-4">
+                          <div>
+                            <Label>Tip Conținut Extern</Label>
+                            <Select
+                              value={formData.type}
+                              onValueChange={(value) => setFormData({ ...formData, type: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="image">Imagine (Link Direct)</SelectItem>
+                                <SelectItem value="video">Video (Link Direct)</SelectItem>
+                                <SelectItem value="youtube">YouTube (Link/Embed)</SelectItem>
+                                <SelectItem value="web">Pagină Web (URL)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label>URL conținut</Label>
+                            <Input
+                              value={formData.file_url}
+                              onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
+                              placeholder={formData.type === 'youtube' ? "https://youtube.com/watch?v=..." : "https://..."}
+                              data-testid="content-url-input"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">
+                              {formData.type === 'youtube'
+                                ? "Pastează link-ul YouTube (normal sau embed)."
+                                : "Direct link către fișier (Dropbox, Drive cu 'direct download link')."}
+                            </p>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+
+                      <div className="flex gap-3 pt-4">
+                        <Button
+                          type="submit"
+                          disabled={uploading}
+                          className="btn-primary flex-1"
+                          data-testid="save-content-button"
+                        >
+                          {uploading ? (
+                            <div className="flex items-center gap-2">
+                              <div className="spinner w-4 h-4"></div>
+                              Se încarcă...
+                            </div>
+                          ) : (
+                            'Adăugă'
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => setShowDialog(false)}
+                          className="btn-secondary"
+                        >
+                          Anulează
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
           </div>
 
           {/* Main Content with Folder Sidebar */}
@@ -968,7 +970,7 @@ export const Content = () => {
             )}
           </DialogContent>
         </Dialog>
-      </div>
-    </DashboardLayout>
+      </div >
+    </DashboardLayout >
   );
 };
