@@ -671,13 +671,13 @@ export const Content = () => {
           </div>
 
           {isAdmin() && selectedItems.size > 0 && (
-            <div className="mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
+            <div className="mb-6 bg-gradient-to-r from-red-600 to-rose-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
               <span className="font-semibold text-lg">{selectedItems.size} selectate</span>
               <div className="h-6 w-px bg-white/30"></div>
 
               {/* Move to Folder Dropdown */}
               <Select onValueChange={(value) => handleBulkMoveToFolder(value === 'none' ? null : value)}>
-                <SelectTrigger className="w-48 bg-white/20 border-white/30 text-white hover:bg-white/30">
+                <SelectTrigger className="w-48 bg-white text-slate-900 border-none shadow-sm font-medium hover:bg-slate-50">
                   <SelectValue placeholder="Mută în folder..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -695,14 +695,14 @@ export const Content = () => {
 
               <button
                 onClick={handleBulkDelete}
-                className="ml-auto bg-white/20 hover:bg-red-500 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+                className="ml-auto bg-white text-rose-600 hover:bg-slate-100 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm"
               >
                 <Trash2 className="w-4 h-4" />
                 Șterge
               </button>
               <button
                 onClick={() => setSelectedItems(new Set())}
-                className="text-white/80 hover:text-white text-sm"
+                className="text-white hover:underline text-sm font-medium transition-all"
               >
                 Anulează
               </button>
@@ -892,6 +892,7 @@ export const Content = () => {
                   isAdmin={isAdmin}
                   openFolderDialog={openFolderDialog}
                   handleDeleteFolder={handleDeleteFolder}
+                  handleMoveToFolder={handleMoveToFolder}
                   onRefresh={() => {
                     loadFolders();
                     loadContent();

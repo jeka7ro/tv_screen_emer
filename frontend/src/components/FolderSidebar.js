@@ -50,6 +50,21 @@ export const FolderSidebar = ({
                             key={folder.id}
                             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all group/f ${isSelected ? 'bg-indigo-100 shadow-sm' : 'hover:bg-slate-50'
                                 }`}
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.add('bg-indigo-200', 'scale-[1.02]');
+                            }}
+                            onDragLeave={(e) => {
+                                e.currentTarget.classList.remove('bg-indigo-200', 'scale-[1.02]');
+                            }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.remove('bg-indigo-200', 'scale-[1.02]');
+                                const contentId = e.dataTransfer.getData('contentId');
+                                if (contentId) {
+                                    handleMoveToFolder(contentId, folder.id);
+                                }
+                            }}
                         >
                             <button
                                 onClick={() => setSelectedFolder(folder)}
