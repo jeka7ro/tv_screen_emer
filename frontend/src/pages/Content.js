@@ -47,7 +47,7 @@ export const Content = () => {
   const [itemsPerPage, setItemsPerPage] = useState(() => {
     const saved = localStorage.getItem('contentItemsPerPage');
     if (saved === 'all') return 'all';
-    return saved ? parseInt(saved) : 25; // Default to 25
+    return saved ? parseInt(saved) : 10; // Default to 10
   });
   const [typeFilter, setTypeFilter] = useState('all');
 
@@ -491,7 +491,7 @@ export const Content = () => {
                   </tr>
                 ))}
                 {/* Padding Empty Rows */}
-                {Array.from({ length: Math.max(0, 25 - items.length) }).map((_, i) => (
+                {Array.from({ length: Math.max(0, 10 - items.length) }).map((_, i) => (
                   <tr key={`empty-${i}`} className="h-[65px] bg-white/40">
                     <td colSpan={7} className="p-4"></td>
                   </tr>
@@ -516,6 +516,7 @@ export const Content = () => {
                     setCurrentPage(1);
                   }}
                 >
+                  <option value={10}>10</option>
                   <option value={25}>25</option>
                   <option value={50}>50</option>
                   <option value={100}>100</option>
