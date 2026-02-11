@@ -169,7 +169,7 @@ export const Content = () => {
   // Filter content by selected folder
   const filteredContent = selectedFolder
     ? content.filter(item => item.folder_id === selectedFolder.id)
-    : content;
+    : content.filter(item => !item.folder_id);
 
   // Filter by type
   const typeFilteredContent = typeFilter === 'all'
