@@ -1267,6 +1267,35 @@ async def move_content_to_folder(content_id: str, move_data: MoveToFolder, curre
     await content_update_folder(content_id, move_data.folder_id)
     return JSONResponse(content={"message": "Content moved successfully"}, status_code=200)
 
+@api_router.post("/content/folders/upload-icon")
+async def upload_folder_icon(
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_admin)
+):
+    try:
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
+        if file.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail=f"Tip fișier imagine invalid: {file.content_type}")
+        
+        # Generate unique filename
+        file_ext = Path(file.filename).suffix.lower()
+        if not file_ext:
+            file_ext = '.jpg'
+        unique_filename = f"icon_{uuid.uuid4()}{file_ext}"
+        
+        # Read file bytes
+        file_bytes = await file.read()
+        
+        # Upload to Supabase Storage in folder-icons directory
+        supabase_path = f"folder-icons/{unique_filename}"
+        icon_url = await upload_to_supabase(file_bytes, supabase_path, file.content_type)
+        
+        return {"id": unique_filename, "url": icon_url}
+    except Exception as e:
+        logger.error(f"Error uploading folder icon: {e}")
+        raise HTTPException(status_code=500, detail=f"Eroare la încărcarea iconiței: {str(e)}")
+
 # ============ CONTENT ROUTES ============
 
 @api_router.get("/content", response_model=List[Content])

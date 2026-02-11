@@ -43,6 +43,8 @@ export const FolderSidebar = ({
                 {folders.map(folder => {
                     const folderContent = content.filter(item => item.folder_id === folder.id);
                     const isSelected = selectedFolder?.id === folder.id;
+                    const isIconUrl = folder.icon && (folder.icon.startsWith('http') || folder.icon.startsWith('/') || folder.icon.startsWith('data:'));
+
                     return (
                         <div
                             key={folder.id}
@@ -53,7 +55,13 @@ export const FolderSidebar = ({
                                 onClick={() => setSelectedFolder(folder)}
                                 className="flex-1 flex items-center gap-3 text-left overflow-hidden"
                             >
-                                <Folder className="w-4 h-4 shrink-0 transition-transform group-hover/f:scale-110" style={{ color: folder.color }} />
+                                {isIconUrl ? (
+                                    <div className="w-5 h-5 rounded-md overflow-hidden shrink-0 border border-slate-200/60 bg-white">
+                                        <img src={folder.icon} alt={folder.name} className="w-full h-full object-cover" />
+                                    </div>
+                                ) : (
+                                    <Folder className="w-4 h-4 shrink-0 transition-transform group-hover/f:scale-110" style={{ color: folder.color }} />
+                                )}
                                 <span className="flex-1 text-sm font-medium text-slate-700 md:truncate">{folder.name}</span>
                                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-indigo-200 text-indigo-800' : 'bg-slate-100 text-slate-500'}`}>
                                     {folderContent.length}

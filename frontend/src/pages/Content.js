@@ -35,7 +35,8 @@ export const Content = () => {
   const [folderFormData, setFolderFormData] = useState({
     name: '',
     description: '',
-    color: '#6366f1'
+    color: '#6366f1',
+    icon: 'folder'
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewItem, setPreviewItem] = useState(null);
@@ -102,6 +103,24 @@ export const Content = () => {
     }
   };
 
+  const handleIconUpload = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      toast.info('Se încarcă iconița...');
+      const response = await api.post('/content/folders/upload-icon', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      setFolderFormData(prev => ({ ...prev, icon: response.data.url }));
+      toast.success('Iconiță încărcată!');
+    } catch (error) {
+      toast.error('Eroare la încărcarea iconiței');
+      console.error(error);
+    }
+  };
+
   const handleDeleteFolder = async (folderId) => {
     if (!window.confirm('Sigur dorești să ștergi acest folder? Conținutul va fi mutat în "Toate fișierele".')) return;
     try {
@@ -133,7 +152,8 @@ export const Content = () => {
       setFolderFormData({
         name: folder.name,
         description: folder.description || '',
-        color: folder.color
+        color: folder.color,
+        icon: folder.icon || 'folder'
       });
     } else {
       resetFolderForm();
@@ -142,7 +162,7 @@ export const Content = () => {
   };
 
   const resetFolderForm = () => {
-    setFolderFormData({ name: '', description: '', color: '#6366f1' });
+    setFolderFormData({ name: '', description: '', color: '#6366f1', icon: 'folder' });
     setEditingFolder(null);
   };
 
@@ -701,6 +721,7 @@ export const Content = () => {
           setFolderFormData={setFolderFormData}
           handleCreateFolder={handleCreateFolder}
           handleUpdateFolder={handleUpdateFolder}
+          handleIconUpload={handleIconUpload}
         />
 
         <Tabs value={typeFilter} onValueChange={(val) => {
