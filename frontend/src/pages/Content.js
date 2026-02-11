@@ -168,7 +168,7 @@ export const Content = () => {
 
   // Filter content by selected folder
   const filteredContent = selectedFolder
-    ? content.filter(item => item.folder_id === selectedFolder.id)
+    ? content.filter(item => String(item.folder_id) === String(selectedFolder.id))
     : content.filter(item => !item.folder_id);
 
   // Filter by type
@@ -293,6 +293,7 @@ export const Content = () => {
   };
 
   const openUploadDialogWithFolder = (folder) => {
+    setSelectedFiles([]);
     setFormData({
       title: '',
       type: 'image',
@@ -301,7 +302,7 @@ export const Content = () => {
       file_url: '',
       folder_id: folder.id
     });
-    setSelectedFiles([]);
+    setSelectedFolder(folder); // Auto-switch to destination folder
     setShowDialog(true);
   };
 

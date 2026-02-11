@@ -43,7 +43,7 @@ export const FolderSidebar = ({
             {/* Folder List */}
             <div className="space-y-1">
                 {folders.map(folder => {
-                    const folderContent = content.filter(item => item.folder_id === folder.id);
+                    const folderContent = content.filter(item => String(item.folder_id) === String(folder.id));
                     const isSelected = selectedFolder?.id === folder.id;
                     const isIconUrl = folder.icon && (folder.icon.startsWith('http') || folder.icon.startsWith('/') || folder.icon.startsWith('data:'));
 
