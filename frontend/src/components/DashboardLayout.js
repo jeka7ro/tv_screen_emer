@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -16,7 +16,9 @@ import {
   Users,
   Shield,
   Eye,
-  Music
+  Music,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 const menuItems = [
@@ -38,6 +40,10 @@ const adminMenuItems = [
 ];
 
 export const DashboardLayout = ({ children }) => {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebarCollapsed');
+    return saved === 'true';
+  });
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isSuperAdmin } = useAuth();
@@ -47,22 +53,36 @@ export const DashboardLayout = ({ children }) => {
     navigate('/login');
   };
 
+  const toggleSidebar = () => {
+    const newState = !isSidebarCollapsed;
+    setIsSidebarCollapsed(newState);
+    localStorage.setItem('sidebarCollapsed', newState.toString());
+  };
+
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className="w-64 h-screen fixed left-0 top-0 glass-panel z-50 flex flex-col" data-testid="sidebar">
-        <div className="p-6 border-b border-white/40">
-          <Link to="/dashboard" className="flex items-center gap-3">
+      <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} h-screen fixed left-0 top-0 glass-panel z-50 flex flex-col transition-all duration-300 ease-in-out`} data-testid="sidebar">
+        <div className={`p-6 border-b border-white/40 relative flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
+          <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden">
             <img
               src="https://sushimaster.ro/_next/static/images/logo-83e52024fa4e316c47581a7890fe5e8c.png"
               alt="SushiMaster Logo"
-              className="w-10 h-10 object-contain"
+              className="w-10 h-10 object-contain shrink-0"
             />
-            <div>
-              <h1 className="text-lg font-bold text-slate-800">SushiMaster</h1>
-              <p className="text-xs text-slate-500">Digital Menu System</p>
-            </div>
+            {!isSidebarCollapsed && (
+              <div className="animate-in fade-in duration-300">
+                <h1 className="text-lg font-bold text-slate-800 whitespace-nowrap">SushiMaster</h1>
+                <p className="text-xs text-slate-500 whitespace-nowrap">Digital Menu System</p>
+              </div>
+            )}
           </Link>
+          <button
+            onClick={toggleSidebar}
+            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-md hover:text-indigo-600 transition-colors z-[60]"
+          >
+            {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
 
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto hide-scrollbar">
@@ -80,11 +100,12 @@ export const DashboardLayout = ({ children }) => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
+                className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''} ${isSidebarCollapsed ? 'justify-center' : ''}`}
                 data-testid={`nav-${item.path.substring(1)}`}
+                title={isSidebarCollapsed ? item.label : ''}
               >
-                <Icon className="w-5 h-5" />
-                <span>{item.label}</span>
+                <Icon className="w-5 h-5 shrink-0" />
+                {!isSidebarCollapsed && <span className="animate-in fade-in slide-in-from-left-2 duration-300">{item.label}</span>}
               </Link>
             );
           })}
@@ -105,11 +126,12 @@ export const DashboardLayout = ({ children }) => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
+                    className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''} ${isSidebarCollapsed ? 'justify-center' : ''}`}
                     data-testid={`nav-${item.path.substring(1)}`}
+                    title={isSidebarCollapsed ? item.label : ''}
                   >
-                    <Icon className="w-5 h-5" />
-                    <span>{item.label}</span>
+                    <Icon className="w-5 h-5 shrink-0" />
+                    {!isSidebarCollapsed && <span className="animate-in fade-in slide-in-from-left-2 duration-300">{item.label}</span>}
                   </Link>
                 );
               })}
@@ -118,36 +140,39 @@ export const DashboardLayout = ({ children }) => {
         </nav>
 
         <div className="p-4 border-t border-white/40">
-          <div className="glass-card p-4 mb-3">
-            <div className="flex items-center gap-2 mb-1">
-              <p className="text-xs text-slate-500">Autentificat ca</p>
-              {isSuperAdmin() && (
-                <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-medium rounded">
-                  Admin
-                </span>
-              )}
-              {user?.role === 'manager' && (
-                <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-medium rounded">
-                  Manager
-                </span>
-              )}
+          {!isSidebarCollapsed && (
+            <div className="glass-card p-4 mb-3 animate-in fade-in duration-300">
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-xs text-slate-500">Autentificat ca</p>
+                {isSuperAdmin() && (
+                  <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-medium rounded">
+                    Admin
+                  </span>
+                )}
+                {user?.role === 'manager' && (
+                  <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-medium rounded">
+                    Manager
+                  </span>
+                )}
+              </div>
+              <p className="text-sm font-medium text-slate-800 truncate">{user?.full_name}</p>
+              <p className="text-xs text-slate-500 truncate">{user?.email}</p>
             </div>
-            <p className="text-sm font-medium text-slate-800 truncate">{user?.full_name}</p>
-            <p className="text-xs text-slate-500 truncate">{user?.email}</p>
-          </div>
+          )}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-slate-600 hover:bg-rose-100/50 hover:text-rose-600 transition-colors duration-200"
+            className={`w-full flex items-center rounded-xl text-slate-600 hover:bg-rose-100/50 hover:text-rose-600 transition-colors duration-200 ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-2 px-4 py-3'}`}
             data-testid="logout-button"
+            title={isSidebarCollapsed ? "Deconectare" : ""}
           >
-            <LogOut className="w-5 h-5" />
-            <span>Deconectare</span>
+            <LogOut className="w-5 h-5 shrink-0" />
+            {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">Deconectare</span>}
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="ml-64 flex-1 p-8 min-h-screen" data-testid="main-content">
+      <main className={`${isSidebarCollapsed ? 'ml-20' : 'ml-64'} flex-1 p-8 min-h-screen transition-all duration-300 ease-in-out`} data-testid="main-content">
         {children}
       </main>
     </div>

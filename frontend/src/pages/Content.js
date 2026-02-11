@@ -47,10 +47,9 @@ export const Content = () => {
   const [itemsPerPage, setItemsPerPage] = useState(() => {
     const saved = localStorage.getItem('contentItemsPerPage');
     if (saved === 'all') return 'all';
-    return saved ? parseInt(saved) : 50;
+    return saved ? parseInt(saved) : 25; // Default to 25
   });
   const [typeFilter, setTypeFilter] = useState('all');
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     loadContent();
@@ -859,7 +858,7 @@ export const Content = () => {
 
           {/* Main Content with Folder Sidebar */}
           <div className="flex flex-col lg:flex-row gap-6 items-start min-h-[600px]">
-            <div className={`w-full shrink-0 lg:sticky lg:top-24 transition-all duration-300 ${isSidebarCollapsed ? 'lg:w-20' : 'lg:w-80'}`}>
+            <div className="w-full lg:w-96 shrink-0 lg:sticky lg:top-24">
               <div className="h-full bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col p-1">
                 <FolderSidebar
                   folders={folders}
@@ -869,8 +868,6 @@ export const Content = () => {
                   isAdmin={isAdmin}
                   openFolderDialog={openFolderDialog}
                   handleDeleteFolder={handleDeleteFolder}
-                  isCollapsed={isSidebarCollapsed}
-                  setIsCollapsed={setIsSidebarCollapsed}
                   onRefresh={() => {
                     loadFolders();
                     loadContent();
