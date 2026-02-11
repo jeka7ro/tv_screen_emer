@@ -75,7 +75,7 @@ export const FolderSidebar = ({
                                         <img src={folder.icon} alt={folder.name} className="w-full h-full object-cover" />
                                     </div>
                                 ) : (
-                                    <Folder className="w-4 h-4 shrink-0 transition-transform group-hover/f:scale-110" style={{ color: folder.color }} />
+                                    <Folder className="w-4 h-4 shrink-0 transition-transform group-hover/f:scale-110" style={{ color: folder.color }} fill={folder.color} />
                                 )}
                                 <span className="flex-1 text-sm font-medium text-slate-700 md:truncate">{folder.name}</span>
                                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-indigo-200 text-indigo-800' : 'bg-slate-100 text-slate-500'}`}>

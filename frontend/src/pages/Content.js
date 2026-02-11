@@ -793,7 +793,7 @@ export const Content = () => {
                                       <img src={folder.icon} className="w-full h-full object-cover" alt="" />
                                     </div>
                                   ) : (
-                                    <Folder className="w-4 h-4" style={{ color: folder.color }} />
+                                    <Folder className="w-4 h-4" style={{ color: folder.color }} fill={folder.color} />
                                   )}
                                   {folder.name}
                                 </div>
