@@ -1314,6 +1314,7 @@ async def create_content(
     files: List[UploadFile] = File(...),
     type: str = Form(...), # image, video
     category: str = Form("other"),
+    folder_id: Optional[str] = Form(None),
     current_user: User = Depends(require_admin)
 ):
     created_items = []
@@ -1358,6 +1359,7 @@ async def create_content(
                 "file_size": file_size,
                 "duration": 10,
                 "category": category,
+                "folder_id": folder_id,
                 "tags": [],
                 "thumbnail_url": file_url if type == "image" else None,
                 "autoplay": True,

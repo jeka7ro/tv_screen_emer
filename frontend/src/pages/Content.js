@@ -30,7 +30,7 @@ export const Content = () => {
     category: 'other',
     duration: '10',
     file_url: '',
-    folder_id: null
+    folder_id: selectedFolder?.id || 'none'
   });
   const [folderFormData, setFolderFormData] = useState({
     name: '',
@@ -233,6 +233,9 @@ export const Content = () => {
         formDataToSend.append('type', formData.type);
         formDataToSend.append('category', formData.category);
         formDataToSend.append('duration', formData.duration);
+        if (formData.folder_id && formData.folder_id !== 'none') {
+          formDataToSend.append('folder_id', formData.folder_id);
+        }
 
         // Increase timeout for large files
         await api.post('/content', formDataToSend, {
@@ -250,7 +253,8 @@ export const Content = () => {
           source_type: 'url',
           file_url: formData.file_url,
           category: formData.category,
-          duration: parseInt(formData.duration)
+          duration: parseInt(formData.duration),
+          folder_id: formData.folder_id === 'none' ? null : formData.folder_id
         });
       }
       toast.success('Conținut adăugat!');
@@ -282,7 +286,8 @@ export const Content = () => {
       type: 'image',
       category: 'other',
       duration: '10',
-      file_url: ''
+      file_url: '',
+      folder_id: selectedFolder?.id || 'none'
     });
     setSelectedFiles([]);
   };
@@ -769,6 +774,35 @@ export const Content = () => {
                       <DialogTitle>Adăugă conținut nou</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleFileUpload} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Folder Destinație</Label>
+                        <Select
+                          value={formData.folder_id || 'none'}
+                          onValueChange={(val) => setFormData({ ...formData, folder_id: val })}
+                        >
+                          <SelectTrigger className="w-full bg-white border-slate-200">
+                            <SelectValue placeholder="Selectează folder" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">📁 Root (Toate fișierele)</SelectItem>
+                            {folders.map(folder => (
+                              <SelectItem key={folder.id} value={folder.id}>
+                                <div className="flex items-center gap-2">
+                                  {folder.icon && (folder.icon.startsWith('http') || folder.icon.startsWith('/') || folder.icon.startsWith('data:')) ? (
+                                    <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0">
+                                      <img src={folder.icon} className="w-full h-full object-cover" alt="" />
+                                    </div>
+                                  ) : (
+                                    <Folder className="w-4 h-4" style={{ color: folder.color }} />
+                                  )}
+                                  {folder.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <Tabs value={uploadMethod} onValueChange={setUploadMethod}>
                         <TabsList className="grid w-full grid-cols-2">
                           <TabsTrigger value="file">Upload Fișier</TabsTrigger>
