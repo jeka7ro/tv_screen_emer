@@ -1270,9 +1270,9 @@ export const Content = () => {
           </div>
 
           {/* Main Layout Body */}
-          <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-9.5rem)]">
             {/* Sidebar Column (Left) */}
-            <div className="w-full lg:w-80 shrink-0 lg:sticky lg:top-24">
+            <div className="w-full lg:w-80 shrink-0 h-full flex flex-col">
               <FolderSidebar
                 folders={folders}
                 selectedFolder={selectedFolder}
@@ -1293,9 +1293,9 @@ export const Content = () => {
             </div>
 
             {/* Right Column (Content) */}
-            <div className="flex-1 flex flex-col w-full min-w-0">
+            <div className="flex-1 flex flex-col w-full min-w-0 h-full">
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col h-full">
-                <div className="p-6 flex-1">
+                <div className="p-6 flex-1 overflow-y-auto custom-scrollbar">
                   <TabsContent value="all" className="mt-0">
                     {renderView(currentItems)}
                   </TabsContent>
