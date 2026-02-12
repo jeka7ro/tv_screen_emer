@@ -782,91 +782,143 @@ export const Content = () => {
         {items.map((item) => (
           <div
             key={item.id}
-            className="glass-card p-4 group"
+            className={`glass-card p-6 flex flex-col h-full group transition-all duration-300 ${selectedItems.has(item.id) ? 'ring-2 ring-indigo-500 shadow-lg scale-[1.02]' : 'hover:shadow-md'}`}
             data-testid={`content-card-${item.id}`}
             draggable
             onDragStart={(e) => {
               e.dataTransfer.setData('contentId', item.id);
             }}
+            onClick={(e) => {
+              // Toggle selection on card click if not clicking a button
+              if (!e.target.closest('button') && !e.target.closest('input')) {
+                toggleSelectItem(item.id);
+              }
+            }}
           >
-            <div
-              className="relative mb-3 cursor-pointer"
-              onClick={() => handlePreview(item)}
-              data-testid={`preview-content-${item.id}`}
-            >
+            {/* Header: Brand & Title */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex flex-col min-w-0">
+                <div className="flex -space-x-1 overflow-hidden mb-1.5 h-6 items-center">
+                  {Array.isArray(item.brand) && item.brand.map((brandName, idx) => (
+                    getBrandLogo(brandName) ? (
+                      <div
+                        key={idx}
+                        className="w-6 h-6 rounded border border-slate-100 bg-white overflow-hidden shrink-0 shadow-sm ring-2 ring-white z-10"
+                        title={brandName}
+                      >
+                        <img src={getBrandLogo(brandName)} className="w-full h-full object-contain p-0.5" alt="" />
+                      </div>
+                    ) : (
+                      <span key={idx} className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mr-2 underline decoration-2 decoration-indigo-200 underline-offset-4">
+                        {brandName}
+                      </span>
+                    )
+                  ))}
+                  {Array.isArray(item.brand) && item.brand.length === 0 && (
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fără Brand</span>
+                  )}
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 leading-tight truncate pr-2" title={item.title}>
+                  {item.title}
+                </h3>
+              </div>
+              <div className="flex gap-1.5">
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 shadow-sm cursor-pointer mt-1"
+                  checked={selectedItems.has(item.id)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    toggleSelectItem(item.id);
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Media Area - Aspect Video */}
+            <div className="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden mb-5 border border-slate-200 shadow-inner group-inner">
               {item.type === 'youtube' ? (
-                <div className="w-full h-40 bg-red-900 rounded-xl flex items-center justify-center">
-                  <Film className="w-12 h-12 text-white" />
-                  <div className="absolute bottom-2 right-2 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">YOUTUBE</div>
+                <div className="w-full h-full bg-red-900 flex items-center justify-center">
+                  <Film className="w-16 h-16 text-white/80" />
+                  <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}></div>
+                  <div className="absolute top-3 right-3 z-20 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest shadow-sm">YOUTUBE</div>
                 </div>
               ) : item.type === 'web' ? (
-                <div className="w-full h-40 bg-blue-900 rounded-xl flex items-center justify-center">
-                  <LayoutGrid className="w-12 h-12 text-white" />
-                  <div className="absolute bottom-2 right-2 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">WEB</div>
+                <div className="w-full h-full bg-indigo-900 flex items-center justify-center">
+                  <LayoutGrid className="w-16 h-16 text-white/80" />
+                  <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}></div>
+                  <div className="absolute top-3 right-3 z-20 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest shadow-sm">WEB</div>
                 </div>
               ) : item.type === 'image' ? (
-                <div className="relative group">
-                  <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <input
-                      type="checkbox"
-                      className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 shadow-sm cursor-pointer"
-                      checked={selectedItems.has(item.id)}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        toggleSelectItem(item.id);
-                      }}
-                    />
-                  </div>
+                <>
                   <img
                     src={getFileUrl(item.file_url)}
                     alt={item.title}
-                    className={`w-full h-40 object-cover rounded-xl ${selectedItems.has(item.id) ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}`}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                </div>
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}></div>
+                  <div className="absolute top-3 right-3 z-20 bg-slate-900/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest border border-white/10">
+                    {item.duration}s
+                  </div>
+                </>
               ) : (
                 <>
-                  <div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <input
-                      type="checkbox"
-                      className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 shadow-sm cursor-pointer"
-                      checked={selectedItems.has(item.id)}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        toggleSelectItem(item.id);
-                      }}
-                    />
+                  <video
+                    src={getFileUrl(item.file_url)}
+                    className="w-full h-full object-cover"
+                    muted
+                    preload="metadata"
+                  />
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}>
+                    <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 border border-white/30 group-hover:scale-110 transition-transform">
+                      <Film className="w-6 h-6 text-white" />
+                    </div>
                   </div>
-                  <div
-                    className={`aspect-video bg-slate-100 relative group overflow-hidden ${selectedItems.has(item.id) ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}`}
-                    onClick={() => {
-                      // Optional: Allow selection on card click if needed, or keep preview
-                      // For now keep preview on main click, checkbox for selection
-                    }}
-                  >
-                    <video
-                      src={getFileUrl(item.file_url)}
-                      className="w-full h-full object-cover"
-                      muted
-                      preload="metadata"
-                    />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <div className="bg-white/90 rounded-full p-4">
-                        <Film className="w-8 h-8 text-slate-800" />
-                      </div>
-                    </div>
-                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                      VIDEO
-                    </div>
+                  <div className="absolute top-3 right-3 z-20 bg-indigo-600/90 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest shadow-sm">
+                    VIDEO
+                  </div>
+                  <div className="absolute bottom-3 left-3 z-20 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded font-medium">
+                    {item.duration}s
                   </div>
                 </>
               )}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-xl transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                <div className="bg-white/90 text-slate-800 px-3 py-2 rounded-lg text-sm font-medium">
-                  👁️ Preview
+            </div>
+
+            {/* Metadata Section */}
+            <div className="flex-1 space-y-3 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                  {item.type === 'video' || item.type === 'youtube' ? <Film className="w-4 h-4 text-slate-400" /> : <FileImage className="w-4 h-4 text-slate-400" />}
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Tip</p>
+                  <p className="text-sm font-bold text-slate-700 capitalize">{item.type}</p>
                 </div>
               </div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Categorie</span>
+                  <span className="text-xs font-bold text-indigo-600 capitalize">{item.category}</span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase bg-white px-2 py-0.5 rounded-md border border-slate-100">
+                  {(item.file_size / 1024 / 1024).toFixed(1)} MB
+                </span>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex gap-2 mt-auto">
+              <button
+                onClick={(e) => { e.stopPropagation(); handlePreview(item); }}
+                className="flex-1 flex items-center justify-center gap-2 text-sm bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-3 rounded-xl transition-all shadow-md hover:shadow-lg font-bold"
+              >
+                <Eye className="w-4 h-4" />
+                Preview
+              </button>
+
               {isAdmin() && (
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -875,51 +927,22 @@ export const Content = () => {
                       setEditBrands(Array.isArray(item.brand) ? item.brand : []);
                       setShowRenameDialog(true);
                     }}
-                    className="p-2 bg-indigo-500 text-white rounded-lg"
+                    className="p-3 hover:bg-indigo-50 rounded-xl transition-all text-slate-400 hover:text-indigo-600 border border-transparent hover:border-indigo-100"
+                    title="Editează"
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Edit2 className="w-5 h-5" />
                   </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(item.id);
                     }}
-                    className="p-2 bg-rose-500 text-white rounded-lg"
+                    className="p-3 hover:bg-rose-50 rounded-xl transition-all text-slate-400 hover:text-rose-600 border border-transparent hover:border-rose-100 group/del"
+                    title="Șterge"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-5 h-5 group-hover/del:scale-110 transition-transform" />
                   </button>
-                </div>
-              )}
-            </div>
-            <h3 className="text-sm font-medium text-slate-800 mb-1 truncate flex items-center gap-2">
-              <div className="flex -space-x-1 overflow-hidden">
-                {Array.isArray(item.brand) && item.brand.slice(0, 2).map((brandName, idx) => (
-                  getBrandLogo(brandName) && (
-                    <div
-                      key={idx}
-                      className="w-5 h-5 rounded border border-slate-100 bg-white overflow-hidden shrink-0 shadow-sm ring-2 ring-white"
-                      title={brandName}
-                    >
-                      <img src={getBrandLogo(brandName)} className="w-full h-full object-contain" alt="" />
-                    </div>
-                  )
-                ))}
-                {Array.isArray(item.brand) && item.brand.length > 2 && (
-                  <div className="w-5 h-5 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-[8px] font-bold text-slate-500 ring-2 ring-white">
-                    +{item.brand.length - 2}
-                  </div>
-                )}
-              </div>
-              {item.title}
-            </h3>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full">
-                {item.category}
-              </span>
-              {item.type === 'image' && (
-                <span className="text-xs text-slate-500">
-                  {item.duration}s
-                </span>
+                </>
               )}
             </div>
           </div>
