@@ -1270,7 +1270,7 @@ export const Content = () => {
           </div>
 
           {/* Main Layout Body */}
-          <div className="flex flex-col lg:flex-row gap-6 min-h-[600px]">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Sidebar Column (Left) */}
             <div className="w-full lg:w-80 shrink-0 lg:sticky lg:top-24">
               <FolderSidebar
