@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle auth errors
+// Handle auth errors and format Pydantic validation errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -25,6 +25,25 @@ api.interceptors.response.use(
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
+
+    // Extract readable error message from Pydantic detail if it's an array of objects
+    if (error.response?.data?.detail && typeof error.response.data.detail !== 'string') {
+      const detail = error.response.data.detail;
+      if (Array.isArray(detail)) {
+        // Example structure: [{type, loc, msg, input}, ...]
+        const messages = detail.map(err => {
+          if (err.msg) {
+            const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : '';
+            return field ? `${field}: ${err.msg}` : err.msg;
+          }
+          return JSON.stringify(err);
+        });
+        error.response.data.detail = messages.join(', ');
+      } else {
+        error.response.data.detail = JSON.stringify(detail);
+      }
+    }
+
     return Promise.reject(error);
   }
 );

@@ -61,8 +61,8 @@ export const Playlists = () => {
     try {
       const submitData = {
         ...formData,
-        start_at: formData.is_scheduled ? formData.start_at : null,
-        end_at: formData.is_scheduled ? formData.end_at : null,
+        start_at: (formData.is_scheduled && formData.start_at) ? formData.start_at : null,
+        end_at: (formData.is_scheduled && formData.end_at) ? formData.end_at : null,
         items: playlistItems.map((item, index) => ({
           content_id: item.content_id,
           order: index,
