@@ -42,7 +42,7 @@ export const Content = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewItem, setPreviewItem] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [viewMode, setViewMode] = useState('grid');
+  const [viewMode, setViewMode] = useState('list');
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
   const [screens, setScreens] = useState([]);
@@ -782,7 +782,7 @@ export const Content = () => {
         {items.map((item) => (
           <div
             key={item.id}
-            className={`glass-card p-6 flex flex-col h-full group transition-all duration-300 ${selectedItems.has(item.id) ? 'ring-2 ring-indigo-500 shadow-lg scale-[1.02]' : 'hover:shadow-md'}`}
+            className={`glass-card p-6 flex flex-col h-full min-h-[460px] group transition-all duration-300 ${selectedItems.has(item.id) ? 'ring-2 ring-indigo-500 shadow-lg scale-[1.02]' : 'hover:shadow-md'}`}
             data-testid={`content-card-${item.id}`}
             draggable
             onDragStart={(e) => {
