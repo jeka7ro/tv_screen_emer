@@ -102,5 +102,7 @@ verify_*.py
 
 # Large/Temporary Media
 *.png
+!frontend/public/favicon.png
+!frontend/public/logo-sushimaster.png
 *.mp4
 backend/uploads/
