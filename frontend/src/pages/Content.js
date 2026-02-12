@@ -1019,7 +1019,7 @@ export const Content = () => {
                     className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-110 opacity-100' : 'opacity-50 hover:opacity-100 hover:scale-105'}`}
                     title={brand.name}
                   >
-                    <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-full ${selectedBrands.includes(brand.name) ? '' : 'filter grayscale'}`}>
+                    <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-full ${selectedBrands.includes(brand.name) ? '' : 'opacity-80'}`}>
                       {brand.logo_url ? (
                         <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain" />
                       ) : (
