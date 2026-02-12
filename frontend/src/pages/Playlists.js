@@ -474,7 +474,7 @@ export const Playlists = () => {
 
           {/* Filters Row */}
           <div className="flex flex-wrap items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
-            <div className="flex items-center gap-3 overflow-x-auto pb-1 max-w-4xl scrollbar-hide">
+            <div className="flex items-center gap-3 overflow-x-auto py-2 max-w-4xl scrollbar-hide">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-2 shrink-0">Filtrează:</span>
               <div className="flex gap-2">
                 {brands.map(brand => {
@@ -497,7 +497,7 @@ export const Playlists = () => {
                         )}
                       </div>
                       {selectedBrands.includes(brand.name) && (
-                        <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-indigo-500 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-10 animate-in zoom-in duration-200">
+                        <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-red-600 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-20 animate-in zoom-in duration-200">
                           {count}
                         </div>
                       )}

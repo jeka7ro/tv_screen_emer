@@ -1009,7 +1009,7 @@ export const Content = () => {
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex items-center gap-3 overflow-x-auto pb-1 max-w-4xl scrollbar-hide mr-auto ml-4">
+            <div className="flex items-center gap-3 overflow-x-auto py-2 max-w-4xl scrollbar-hide mr-auto ml-4">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Filtrează:</span>
               <div className="flex gap-2">
                 {brands.map(brand => {
@@ -1034,7 +1034,7 @@ export const Content = () => {
                         )}
                       </div>
                       {selectedBrands.includes(brand.name) && (
-                        <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-indigo-500 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-10 animate-in zoom-in duration-200">
+                        <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-red-600 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-20 animate-in zoom-in duration-200">
                           {count}
                         </div>
                       )}
