@@ -608,24 +608,24 @@ export const Content = () => {
                         onChange={() => toggleSelectItem(item.id)}
                       />
                     </td>
-                    <td className="p-4 w-40">
+                    <td className="p-4 w-24">
                       <div
-                        className="w-32 h-20 rounded-lg overflow-hidden bg-slate-100 cursor-pointer flex items-center justify-center border border-slate-200 shadow-sm transition-transform hover:scale-105"
+                        className="w-16 h-10 rounded-lg overflow-hidden bg-slate-100 cursor-pointer flex items-center justify-center border border-slate-200 shadow-sm transition-transform hover:scale-105"
                         onClick={() => handlePreview(item)}
                       >
                         {item.type === 'youtube' ? (
-                          <div className="w-full h-full bg-red-600 flex items-center justify-center text-white font-bold text-xs shadow-inner flex-col gap-1">
-                            <Film className="w-6 h-6" /> YT
+                          <div className="w-full h-full bg-red-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
+                            <Film className="w-4 h-4 mr-0.5" /> YT
                           </div>
                         ) : item.type === 'web' ? (
-                          <div className="w-full h-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-inner flex-col gap-1">
-                            <LayoutGrid className="w-6 h-6" /> WEB
+                          <div className="w-full h-full bg-indigo-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
+                            <LayoutGrid className="w-4 h-4 mr-0.5" /> WEB
                           </div>
                         ) : item.type === 'image' ? (
                           <img src={getFileUrl(item.file_url)} className="w-full h-full object-cover" alt="" />
                         ) : (
                           <div className="relative w-full h-full bg-slate-900 flex items-center justify-center text-white">
-                            <Film className="w-8 h-8" />
+                            <Film className="w-4 h-4" />
                           </div>
                         )}
                       </div>
@@ -716,7 +716,7 @@ export const Content = () => {
                 ))}
                 {/* Padding Empty Rows */}
                 {Array.from({ length: Math.max(0, 10 - items.length) }).map((_, i) => (
-                  <tr key={`empty-${i}`} className="h-[115px] bg-white/40">
+                  <tr key={`empty-${i}`} className="h-[65px] bg-white/40">
                     <td colSpan={9} className="p-4"></td>
                   </tr>
                 ))}
