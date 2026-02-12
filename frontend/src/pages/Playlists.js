@@ -477,29 +477,33 @@ export const Playlists = () => {
             <div className="flex items-center gap-3 overflow-x-auto pb-1 max-w-4xl scrollbar-hide">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-2 shrink-0">Filtrează:</span>
               <div className="flex gap-2">
-                {brands.map(brand => (
-                  <button
-                    key={brand.id}
-                    onClick={() => toggleBrandFilter(brand.name)}
-                    className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-110 opacity-100' : 'opacity-50 hover:opacity-100 hover:scale-105'}`}
-                    title={brand.name}
-                  >
-                    <div className={`w-9 h-9 flex items-center justify-center overflow-hidden transition-all rounded-md ${selectedBrands.includes(brand.name) ? '' : 'opacity-80'}`}>
-                      {brand.logo_url ? (
-                        <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain" />
-                      ) : (
-                        <span className="text-[8px] font-bold text-slate-400">{brand.name?.substring(0, 2).toUpperCase()}</span>
-                      )}
-                    </div>
-                    {selectedBrands.includes(brand.name) && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-indigo-500 rounded-full flex items-center justify-center text-white border-2 border-slate-50 shadow-sm z-10 animate-in zoom-in duration-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-2 h-2">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
+                {brands.map(brand => {
+                  const count = playlists.filter(p =>
+                    p.items && p.items.some(i => i.brand === brand.name || (Array.isArray(i.brand) && i.brand.includes(brand.name)))
+                  ).length;
+
+                  return (
+                    <button
+                      key={brand.id}
+                      onClick={() => toggleBrandFilter(brand.name)}
+                      className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
+                      title={`${brand.name} (${count})`}
+                    >
+                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${selectedBrands.includes(brand.name) ? 'border-indigo-500' : 'border-slate-100'}`}>
+                        {brand.logo_url ? (
+                          <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
+                        ) : (
+                          <span className="text-[8px] font-bold text-slate-400">{brand.name?.substring(0, 2).toUpperCase()}</span>
+                        )}
                       </div>
-                    )}
-                  </button>
-                ))}
+                      {selectedBrands.includes(brand.name) && (
+                        <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-indigo-500 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-10 animate-in zoom-in duration-200">
+                          {count}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
               {selectedBrands.length > 0 && (
                 <button
