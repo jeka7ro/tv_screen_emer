@@ -26,7 +26,7 @@ export const Playlists = () => {
   const [brands, setBrands] = useState([]);
   const [playlistItems, setPlaylistItems] = useState([]);
   const [viewMode, setViewMode] = useViewMode('view_mode_playlists', 'grid');
-  const [brandFilter, setBrandFilter] = useState('all_brands');
+
   const [selectedPlaylists, setSelectedPlaylists] = useState([]);
   const [editingPlaylist, setEditingPlaylist] = useState(null);
 
@@ -190,9 +190,19 @@ export const Playlists = () => {
   };
 
   // Brands logic
-  const filteredPlaylists = brandFilter === 'all_brands'
+  const [selectedBrands, setSelectedBrands] = useState([]);
+
+  const filteredPlaylists = selectedBrands.length === 0
     ? playlists
-    : playlists.filter(p => p.brand === brandFilter);
+    : playlists.filter(p => selectedBrands.includes(p.brand));
+
+  const toggleBrandFilter = (brandName) => {
+    if (selectedBrands.includes(brandName)) {
+      setSelectedBrands(selectedBrands.filter(b => b !== brandName));
+    } else {
+      setSelectedBrands([...selectedBrands, brandName]);
+    }
+  };
 
   const toggleSelectAll = () => {
     if (selectedPlaylists.length === filteredPlaylists.length) {
@@ -248,37 +258,35 @@ export const Playlists = () => {
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>Nume playlist</Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Nume playlist</Label>
                         <Input
+                          id="name"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="Promoții Vară"
+                          placeholder="Ex: Meniu Prânz"
                           required
-                          data-testid="playlist-name-input"
                         />
                       </div>
-                      <div>
-                        <Label>Brand</Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="brand">Brand</Label>
                         <Select
                           value={formData.brand}
                           onValueChange={(value) => setFormData({ ...formData, brand: value })}
                         >
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger>
                             <SelectValue placeholder="Selectează brand" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="none">Fără brand</SelectItem>
-                            {brands.map((b) => (
-                              <SelectItem key={b.id} value={b.name || "unknown"}>
-                                {b.name}
-                              </SelectItem>
+                            {brands.map(brand => (
+                              <SelectItem key={brand.id} value={brand.name || "unknown"}>{brand.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
-                    <div className="flex gap-4">
+
+                    <div className="flex items-center gap-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
                       <label className="flex items-center gap-2">
                         <input
                           type="checkbox"
@@ -466,31 +474,44 @@ export const Playlists = () => {
 
           {/* Filters Row */}
           <div className="flex flex-wrap items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-2">Brand:</span>
-              <Select value={brandFilter} onValueChange={setBrandFilter}>
-                <SelectTrigger className="w-[200px] h-9 text-sm bg-slate-50 border-slate-100 rounded-xl">
-                  <SelectValue placeholder="Toate brandurile" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all_brands">Toate brandurile</SelectItem>
-                  {brands.map(brand => (
-                    <SelectItem key={brand.id} value={brand.name || "unknown"}>
-                      <div className="flex items-center gap-2">
-                        {brand.logo_url && (
-                          <img src={brand.logo_url} alt="" className="w-4 h-4 object-contain" />
-                        )}
-                        <span>{brand.name}</span>
+            <div className="flex items-center gap-3 overflow-x-auto pb-1 max-w-4xl scrollbar-hide">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-2 shrink-0">Filtrează:</span>
+              <div className="flex gap-2">
+                {brands.map(brand => (
+                  <button
+                    key={brand.id}
+                    onClick={() => toggleBrandFilter(brand.name)}
+                    className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-105' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
+                    title={brand.name}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white overflow-hidden shadow-sm border-2 transition-all ${selectedBrands.includes(brand.name) ? 'border-indigo-500 shadow-md ring-2 ring-indigo-100' : 'border-slate-100'}`}>
+                      {brand.logo_url ? (
+                        <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-1" />
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400">{brand.name?.substring(0, 2).toUpperCase()}</span>
+                      )}
+                    </div>
+                    {selectedBrands.includes(brand.name) && (
+                      <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-indigo-500 rounded-full flex items-center justify-center text-white border-2 border-white shadow-sm z-10 animate-in zoom-in duration-200">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full" />
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    )}
+                  </button>
+                ))}
+              </div>
+              {selectedBrands.length > 0 && (
+                <button
+                  onClick={() => setSelectedBrands([])}
+                  className="ml-2 px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors uppercase tracking-wider"
+                >
+                  Resetează
+                </button>
+              )}
             </div>
 
             <div className="flex-1"></div>
 
-            <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200">
+            <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200 shrink-0">
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}

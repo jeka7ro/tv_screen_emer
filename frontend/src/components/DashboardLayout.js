@@ -70,7 +70,7 @@ export const DashboardLayout = ({ children }) => {
             <img
               src="/favicon.png"
               alt="Media Screens Logo"
-              className={`${isSidebarCollapsed ? 'w-10 h-10' : 'w-20 h-20'} object-contain shrink-0 transition-all duration-300`}
+              className={`${isSidebarCollapsed ? 'w-10 h-10' : 'w-20 h-20 -ml-2'} object-contain shrink-0 transition-all duration-300`}
             />
             {!isSidebarCollapsed && (
               <div className="animate-in fade-in duration-300">

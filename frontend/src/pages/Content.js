@@ -57,7 +57,7 @@ export const Content = () => {
     return saved ? parseInt(saved) : 10; // Default to 10
   });
   const [typeFilter, setTypeFilter] = useState('all');
-  const [brandFilter, setBrandFilter] = useState('all');
+
   const [brands, setBrands] = useState([]);
   const [showSlideshowDialog, setShowSlideshowDialog] = useState(false);
   const [pendingSlideshowScreen, setPendingSlideshowScreen] = useState(null);
@@ -206,11 +206,23 @@ export const Content = () => {
     : content.filter(item => !item.folder_id);
 
   // 2. Filter by brand
-  const brandFilteredContent = brandFilter === 'all'
+  const [selectedBrands, setSelectedBrands] = useState([]);
+
+  const brandFilteredContent = selectedBrands.length === 0
     ? folderFilteredContent
     : folderFilteredContent.filter(item =>
-      Array.isArray(item.brand) && item.brand.includes(brandFilter)
+      Array.isArray(item.brand) && item.brand.some(b => selectedBrands.includes(b))
     );
+
+  const toggleBrandFilter = (brandName) => {
+    if (selectedBrands.includes(brandName)) {
+      setSelectedBrands(selectedBrands.filter(b => b !== brandName));
+    } else {
+      setSelectedBrands([...selectedBrands, brandName]);
+    }
+    setCurrentPage(1);
+  };
+
 
   // 3. Filter by type (for display)
   const typeFilteredContent = typeFilter === 'all'
@@ -997,31 +1009,39 @@ export const Content = () => {
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex items-center gap-2 mr-auto ml-4">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Brand:</span>
-              <Select value={brandFilter} onValueChange={(val) => {
-                setBrandFilter(val);
-                setCurrentPage(1);
-              }}>
-                <SelectTrigger className="w-[180px] h-8 text-xs bg-slate-50 border-slate-100 rounded-lg">
-                  <SelectValue placeholder="Toate brandurile" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toate brandurile</SelectItem>
-                  {brands.map(brand => (
-                    <SelectItem key={brand.id} value={brand.name}>
-                      <div className="flex items-center gap-2">
-                        {brand.logo_url && (
-                          <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0 border border-slate-100 bg-white">
-                            <img src={brand.logo_url} className="w-full h-full object-contain" alt="" />
-                          </div>
-                        )}
-                        {brand.name}
+            <div className="flex items-center gap-3 overflow-x-auto pb-1 max-w-4xl scrollbar-hide mr-auto ml-4">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Filtrează:</span>
+              <div className="flex gap-2">
+                {brands.map(brand => (
+                  <button
+                    key={brand.id}
+                    onClick={() => toggleBrandFilter(brand.name)}
+                    className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-105' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
+                    title={brand.name}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-white overflow-hidden shadow-sm border-2 transition-all ${selectedBrands.includes(brand.name) ? 'border-indigo-500 shadow-md ring-2 ring-indigo-100' : 'border-slate-100'}`}>
+                      {brand.logo_url ? (
+                        <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400">{brand.name?.substring(0, 2).toUpperCase()}</span>
+                      )}
+                    </div>
+                    {selectedBrands.includes(brand.name) && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-indigo-500 rounded-full flex items-center justify-center text-white border-2 border-white shadow-sm z-10 animate-in zoom-in duration-200">
+                        <div className="w-1 h-1 bg-white rounded-full" />
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    )}
+                  </button>
+                ))}
+              </div>
+              {selectedBrands.length > 0 && (
+                <button
+                  onClick={() => setSelectedBrands([])}
+                  className="ml-2 px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors uppercase tracking-wider"
+                >
+                  Resetează
+                </button>
+              )}
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto">
