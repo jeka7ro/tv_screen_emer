@@ -55,22 +55,18 @@ export const DashboardLayout = ({ children }) => {
     navigate('/login');
   };
 
-  const toggleSidebar = () => {
-    const newState = !isSidebarCollapsed;
-    setIsSidebarCollapsed(newState);
-    localStorage.setItem('sidebarCollapsed', newState.toString());
-  };
+  const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
 
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} h-screen fixed left-0 top-0 glass-panel z-50 flex flex-col transition-all duration-300 ease-in-out`} data-testid="sidebar">
+      <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-72'} h-screen fixed left-0 top-0 glass-panel z-50 flex flex-col transition-all duration-300 ease-in-out`} data-testid="sidebar">
         <div className={`p-6 border-b border-white/40 relative flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
           <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden">
             <img
               src="/favicon.png"
               alt="Media Screens Logo"
-              className={`${isSidebarCollapsed ? 'w-10 h-10' : 'w-20 h-20 -ml-2'} object-contain shrink-0 transition-all duration-300`}
+              className={`${isSidebarCollapsed ? 'w-10 h-10' : 'w-14 h-14'} object-contain shrink-0 transition-all duration-300`}
             />
             {!isSidebarCollapsed && (
               <div className="animate-in fade-in duration-300">

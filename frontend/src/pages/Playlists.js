@@ -484,11 +484,11 @@ export const Playlists = () => {
                     className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-105' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                     title={brand.name}
                   >
-                    <div className={`h-11 w-28 px-4 rounded-xl flex items-center justify-center bg-white overflow-hidden shadow-sm border-2 transition-all ${selectedBrands.includes(brand.name) ? 'border-indigo-500 shadow-md ring-2 ring-indigo-100' : 'border-slate-100'}`}>
+                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center bg-white overflow-hidden shadow-sm border-2 transition-all ${selectedBrands.includes(brand.name) ? 'border-indigo-500 shadow-md ring-2 ring-indigo-100' : 'border-slate-100'}`}>
                       {brand.logo_url ? (
-                        <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-1" />
+                        <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-1.5" />
                       ) : (
-                        <span className="text-[10px] font-bold text-slate-400 truncate">{brand.name}</span>
+                        <span className="text-[10px] font-bold text-slate-400">{brand.name?.substring(0, 2).toUpperCase()}</span>
                       )}
                     </div>
                     {selectedBrands.includes(brand.name) && (

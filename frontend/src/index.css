@@ -111,11 +111,11 @@ body::before {
 }
 
 /* Hide scrollbar but keep functionality */
-.hide-scrollbar {
+.scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
 
-.hide-scrollbar::-webkit-scrollbar {
+.scrollbar-hide::-webkit-scrollbar {
     display: none;
 }
