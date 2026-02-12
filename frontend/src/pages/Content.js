@@ -1019,16 +1019,18 @@ export const Content = () => {
                     className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-105' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                     title={brand.name}
                   >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-white overflow-hidden shadow-sm border-2 transition-all ${selectedBrands.includes(brand.name) ? 'border-indigo-500 shadow-md ring-2 ring-indigo-100' : 'border-slate-100'}`}>
+                    <div className={`h-12 w-16 px-2 rounded-xl flex items-center justify-center bg-white overflow-hidden shadow-sm border-2 transition-all ${selectedBrands.includes(brand.name) ? 'border-indigo-500 shadow-md ring-2 ring-indigo-100' : 'border-slate-100'}`}>
                       {brand.logo_url ? (
-                        <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
+                        <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain" />
                       ) : (
                         <span className="text-[10px] font-bold text-slate-400">{brand.name?.substring(0, 2).toUpperCase()}</span>
                       )}
                     </div>
                     {selectedBrands.includes(brand.name) && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-indigo-500 rounded-full flex items-center justify-center text-white border-2 border-white shadow-sm z-10 animate-in zoom-in duration-200">
-                        <div className="w-1 h-1 bg-white rounded-full" />
+                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center text-white border-2 border-white shadow-sm z-10 animate-in zoom-in duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
                       </div>
                     )}
                   </button>
