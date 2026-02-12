@@ -41,7 +41,7 @@ const adminMenuItems = [
   { path: '/invitations', icon: UserPlus, label: 'Invitații' },
 ];
 
-export const DashboardLayout = ({ children, isFixed = false }) => {
+export const DashboardLayout = ({ children }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebarCollapsed');
     return saved === 'true';
@@ -170,7 +170,7 @@ export const DashboardLayout = ({ children, isFixed = false }) => {
       </aside>
 
       {/* Main Content */}
-      <main className={`${isSidebarCollapsed ? 'ml-20' : 'ml-[17rem]'} flex-1 p-8 ${isFixed ? 'h-screen overflow-hidden' : 'min-h-screen'} transition-all duration-300 ease-in-out`} data-testid="main-content">
+      <main className={`${isSidebarCollapsed ? 'ml-20' : 'ml-[17rem]'} flex-1 p-8 min-h-screen transition-all duration-300 ease-in-out`} data-testid="main-content">
         {children}
       </main>
     </div>

@@ -62,6 +62,13 @@ export const Content = () => {
   const [showSlideshowDialog, setShowSlideshowDialog] = useState(false);
   const [pendingSlideshowScreen, setPendingSlideshowScreen] = useState(null);
 
+  // Safe Delete States
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [usageInfo, setUsageInfo] = useState({ screens: [], playlists: [] });
+  const [isCheckingUsage, setIsCheckingUsage] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     loadContent();
     loadFolders();
@@ -326,14 +333,35 @@ export const Content = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Sigur dorești să ștergi acest conținut?')) return;
+  const handleDelete = async (item) => {
+    setItemToDelete(item);
+    setUsageInfo({ screens: [], playlists: [] });
+    setIsCheckingUsage(true);
+    setShowDeleteConfirm(true);
+
     try {
-      await api.delete(`/content/${id}`);
+      const response = await api.get(`/content/${item.id}/usage`);
+      setUsageInfo(response.data);
+    } catch (error) {
+      console.error('Eroare la verificarea utilizării:', error);
+    } finally {
+      setIsCheckingUsage(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(`/content/${itemToDelete.id}`);
       toast.success('Conținut șters!');
+      setShowDeleteConfirm(false);
+      setItemToDelete(null);
       loadContent();
     } catch (error) {
       toast.error('Eroare la ștergere');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -409,6 +437,7 @@ export const Content = () => {
         content_id: contentId
       });
       toast.success('Conținut asignat ecranului!');
+      loadScreens(); // REFRESH UI
     } catch (error) {
       toast.error('Eroare la asignarea conținutului');
     }
@@ -441,6 +470,7 @@ export const Content = () => {
       });
 
       toast.success('Slideshow creat și asignat!');
+      loadScreens(); // REFRESH UI
       setSelectedItems(new Set()); // Clear selection
     } catch (error) {
       console.error('Slideshow creation failed:', error);
@@ -705,8 +735,8 @@ export const Content = () => {
                             >
                               <Edit2 className="w-4 h-4 text-indigo-500" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-rose-50 group/d" onClick={() => handleDelete(item.id)}>
-                              <Trash2 className="w-4 h-4 text-slate-400 group-hover/d:text-rose-500" />
+                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-rose-50 group/d" onClick={() => handleDelete(item)}>
+                              <Trash2 className="h-4 w-4 text-slate-400 group-hover/d:text-rose-600 transition-colors" />
                             </Button>
                           </>
                         )}
@@ -936,7 +966,7 @@ export const Content = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete(item.id);
+                      handleDelete(item);
                     }}
                     className="p-3 hover:bg-rose-50 rounded-xl transition-all text-slate-400 hover:text-rose-600 border border-transparent hover:border-rose-100 group/del"
                     title="Șterge"
@@ -953,170 +983,324 @@ export const Content = () => {
   };
 
   return (
-    <DashboardLayout isFixed={true}>
-      <div className="flex flex-col h-full gap-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
+    <DashboardLayout>
+      <div className="animate-in" data-testid="content-page">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Bibliotecă Conținut</h1>
+            <h1 className="text-4xl font-bold text-slate-800 mb-2">Bibliotecă Conținut</h1>
             <p className="text-slate-500">Gestionează imagini și video-uri</p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="bg-white border border-slate-200 rounded-lg p-1 flex items-center shadow-sm">
+          {isAdmin() && selectedItems.size > 0 && (
+            <div className="mb-6 bg-gradient-to-r from-red-600 to-rose-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
+              <span className="font-semibold text-lg">{selectedItems.size} selectate</span>
+              <div className="h-6 w-px bg-white/30"></div>
+
+              {/* Move to Folder Dropdown */}
+              <Select onValueChange={(value) => handleBulkMoveToFolder(value === 'none' ? null : value)}>
+                <SelectTrigger className="w-48 bg-white text-slate-900 border-none shadow-sm font-medium hover:bg-slate-50">
+                  <SelectValue placeholder="Mută în folder..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">📁 Root (Niciun folder)</SelectItem>
+                  {folders.map(folder => (
+                    <SelectItem key={folder.id} value={folder.id}>
+                      <div className="flex items-center gap-2">
+                        <Folder className="w-4 h-4" style={{ color: folder.color }} />
+                        {folder.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <button
-                onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                title="Vizualizare Grid"
+                onClick={handleBulkDelete}
+                className="ml-auto bg-white text-rose-600 hover:bg-slate-100 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm"
               >
-                <LayoutGrid className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" />
+                Șterge
               </button>
               <button
-                onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-indigo-50 text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                title="Vizualizare Listă"
+                onClick={() => setSelectedItems(new Set())}
+                className="text-white hover:underline text-sm font-medium transition-all"
               >
-                <ListIcon className="w-4 h-4" />
+                Anulează
               </button>
             </div>
+          )}
 
-            <Button onClick={() => openUploadDialogWithFolder(selectedFolder || { id: null })} className="btn-primary">
-              <Plus className="w-4 h-4 mr-2" />
-              Adaugă conținut
-            </Button>
-          </div>
         </div>
 
-        <Tabs defaultValue="all" className="flex-1 flex flex-col min-h-0">
-          <div className="flex items-center justify-between gap-4 mb-6 shrink-0">
-            <TabsList>
-              <TabsTrigger value="all">Toate ({content.length})</TabsTrigger>
-              <TabsTrigger value="images">Imagini ({content.filter(c => c.type === 'image' || c.type === 'web').length})</TabsTrigger>
-              <TabsTrigger value="videos">Video ({content.filter(c => c.type === 'video' || c.type === 'youtube').length})</TabsTrigger>
+
+        {/* Folder Dialog */}
+        <FolderDialog
+          showFolderDialog={showFolderDialog}
+          setShowFolderDialog={setShowFolderDialog}
+          editingFolder={editingFolder}
+          folderFormData={folderFormData}
+          setFolderFormData={setFolderFormData}
+          handleCreateFolder={handleCreateFolder}
+          handleUpdateFolder={handleUpdateFolder}
+          handleIconUpload={handleIconUpload}
+        />
+
+        <Tabs value={typeFilter} onValueChange={(val) => {
+          setTypeFilter(val);
+          setCurrentPage(1);
+        }} className="space-y-6">
+          {/* Header Row: Tabs (Left) + Actions (Right) */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm mb-6">
+            <TabsList className="bg-slate-100 p-1 rounded-xl w-full sm:w-auto grid grid-cols-3 sm:flex">
+              <TabsTrigger value="all" className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
+                Toate ({brandFilteredContent.length})
+              </TabsTrigger>
+              <TabsTrigger value="images" className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
+                Imagini ({images.length})
+              </TabsTrigger>
+              <TabsTrigger value="videos" className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
+                Video ({videos.length})
+              </TabsTrigger>
             </TabsList>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Filtrează:</span>
-              <div className="flex gap-1">
-                {['SUSHI MASTER', 'SMASH ME', 'MANO'].map(brand => (
-                  <button
-                    key={brand}
-                    onClick={() => toggleBrandFilter(brand)}
-                    className={`w-8 h-8 rounded-md p-0.5 border transition-all ${selectedBrands.includes(brand)
-                      ? 'border-indigo-500 ring-2 ring-indigo-200 bg-indigo-50 grayscale-0'
-                      : 'border-slate-200 bg-white grayscale opacity-60 hover:opacity-100 hover:grayscale-0'
-                      }`}
-                    title={brand}
-                  >
-                    <img
-                      src={getBrandLogo(brand)}
-                      alt={brand}
-                      className="w-full h-full object-contain"
-                    />
-                  </button>
-                ))}
+            <div className="flex items-center gap-3 overflow-x-auto py-2 max-w-4xl scrollbar-hide mr-auto ml-4">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Filtrează:</span>
+              <div className="flex gap-2">
+                {brands.map(brand => {
+                  const count = folderFilteredContent.filter(item =>
+                    Array.isArray(item.brand)
+                      ? item.brand.includes(brand.name)
+                      : item.brand === brand.name
+                  ).length;
+
+                  return (
+                    <button
+                      key={brand.id}
+                      onClick={() => toggleBrandFilter(brand.name)}
+                      className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
+                      title={`${brand.name} (${count})`}
+                    >
+                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${selectedBrands.includes(brand.name) ? 'border-indigo-500' : 'border-slate-100'}`}>
+                        {brand.logo_url ? (
+                          <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
+                        ) : (
+                          <span className="text-[8px] font-bold text-slate-400">{brand.name?.substring(0, 2).toUpperCase()}</span>
+                        )}
+                      </div>
+                      {selectedBrands.includes(brand.name) && (
+                        <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-red-600 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-20 animate-in zoom-in duration-200">
+                          {count}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
+              {selectedBrands.length > 0 && (
+                <button
+                  onClick={() => setSelectedBrands([])}
+                  className="ml-2 px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors uppercase tracking-wider"
+                >
+                  Resetează
+                </button>
+              )}
             </div>
-          </div>
 
-          {/* Upload Dialog - Hidden but functional */}
-          <div className="hidden">
-            <div className="flex justify-end mb-6">
-              <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                <DialogContent className="glass-panel sm:max-w-[600px]">
-                  <DialogHeader>
-                    <DialogTitle>Adaugă conținut nou</DialogTitle>
-                  </DialogHeader>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {/* View Mode Switcher */}
+              <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  title="Grid View"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  title="List View"
+                >
+                  <ListIcon className="w-4 h-4" />
+                </button>
+              </div>
 
-                  <Tabs defaultValue="file" value={uploadMethod} onValueChange={setUploadMethod} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 mb-4">
-                      <TabsTrigger value="file">Încărcare Fișier</TabsTrigger>
-                      <TabsTrigger value="external">Link Extern (YouTube/Web)</TabsTrigger>
-                    </TabsList>
+              {/* Add Content Button & Dialog */}
+              {isAdmin() && (
+                <Dialog open={showDialog} onOpenChange={(open) => {
+                  setShowDialog(open);
+                  if (!open) resetForm();
+                }}>
+                  <DialogTrigger asChild>
+                    <Button className="btn-red px-6 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Adăugă conținut
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="glass-panel">
+                    <DialogHeader>
+                      <DialogTitle>Adăugă conținut nou</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleFileUpload} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Folder Destinație</Label>
+                        <Select
+                          value={formData.folder_id || 'none'}
+                          onValueChange={(val) => setFormData({ ...formData, folder_id: val })}
+                        >
+                          <SelectTrigger className="w-full bg-white border-slate-200">
+                            <SelectValue placeholder="Selectează folder" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">📁 Root (Toate fișierele)</SelectItem>
+                            {folders.map(folder => (
+                              <SelectItem key={folder.id} value={folder.id}>
+                                <div className="flex items-center gap-2">
+                                  {folder.icon && (folder.icon.startsWith('http') || folder.icon.startsWith('/') || folder.icon.startsWith('data:')) ? (
+                                    <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0">
+                                      <img src={folder.icon} className="w-full h-full object-cover" alt="" />
+                                    </div>
+                                  ) : (
+                                    <Folder className="w-4 h-4" style={{ color: folder.color }} fill={folder.color} />
+                                  )}
+                                  {folder.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                    <form onSubmit={handleFileUpload}>
-                      <TabsContent value="file" className="space-y-4 mt-4">
-                        <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Branduri (Clienți)</Label>
+                        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl max-h-40 overflow-y-auto">
+                          {brands.length === 0 ? (
+                            <p className="text-xs text-slate-400 italic">Niciun brand creat încă.</p>
+                          ) : (
+                            brands.map(brand => (
+                              <label
+                                key={brand.id}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all ${formData.brand?.includes(brand.name)
+                                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
+                                  : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                                  }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="hidden"
+                                  checked={formData.brand?.includes(brand.name)}
+                                  onChange={() => {
+                                    const currentBrands = formData.brand || [];
+                                    const newBrands = currentBrands.includes(brand.name)
+                                      ? currentBrands.filter(b => b !== brand.name)
+                                      : [...currentBrands, brand.name];
+                                    setFormData({ ...formData, brand: newBrands });
+                                  }}
+                                />
+                                {brand.logo_url && (
+                                  <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0 border border-slate-100 bg-white">
+                                    <img src={brand.logo_url} className="w-full h-full object-contain" alt="" />
+                                  </div>
+                                )}
+                                <span className="text-xs font-medium">{brand.name}</span>
+                              </label>
+                            ))
+                          )}
+                        </div>
+                        {formData.brand?.length > 0 && (
+                          <p className="text-[10px] text-slate-400">
+                            {formData.brand.length} branduri selectate
+                          </p>
+                        )}
+                      </div>
+
+                      <Tabs value={uploadMethod} onValueChange={setUploadMethod}>
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="file">Upload Fișier</TabsTrigger>
+                          <TabsTrigger value="external">Link Extern</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="file" className="space-y-4 mt-4">
                           <div>
-                            <Label>Drag & Drop Fișiere</Label>
-                            <div
-                              className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-indigo-500 hover:bg-indigo-50/50 transition-colors cursor-pointer"
-                              onClick={() => document.querySelector('input[type="file"]').click()}
-                            >
-                              <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <Upload className="w-6 h-6" />
+                            <Label className="text-base font-semibold">Selectează fișier(e)</Label>
+                            <div className="mt-3 border-2 border-dashed border-indigo-300 rounded-xl p-6 bg-gradient-to-br from-indigo-50/50 to-blue-50/30 hover:from-indigo-50 hover:to-blue-50 transition-all">
+                              <div className="flex flex-col items-center mb-4">
+                                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
+                                  <Upload className="w-8 h-8 text-indigo-600" />
+                                </div>
+                                <p className="text-sm font-semibold text-slate-700 mb-1">Click pentru a selecta fișiere</p>
+                                <p className="text-xs text-slate-500">sau drag & drop aici</p>
                               </div>
-                              <p className="text-sm font-semibold text-slate-700 mb-1">Click pentru a selecta fișiere</p>
-                              <p className="text-xs text-slate-500">sau drag & drop aici</p>
+                              <Input
+                                type="file"
+                                accept="image/*,video/*"
+                                multiple
+                                onChange={(e) => {
+                                  const files = e.target.files;
+                                  setSelectedFiles(files);
+                                  if (files.length > 0) {
+                                    const file = files[0];
+                                    const type = file.type.startsWith('video') ? 'video' : 'image';
+                                    setFormData({ ...formData, type, title: formData.title || file.name });
+                                  }
+                                }}
+                                className="cursor-pointer"
+                              />
+                              {selectedFiles.length > 0 && (
+                                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                  <p className="text-sm text-green-700 font-semibold flex items-center gap-2">
+                                    <span className="text-green-600">✓</span> {selectedFiles.length} fișier(e) selectat(e)
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                            <Input
-                              type="file"
-                              accept="image/*,video/*"
-                              multiple
-                              onChange={(e) => {
-                                const files = e.target.files;
-                                setSelectedFiles(files);
-                                if (files.length > 0) {
-                                  const file = files[0];
-                                  const type = file.type.startsWith('video') ? 'video' : 'image';
-                                  setFormData({ ...formData, type, title: formData.title || file.name });
-                                }
-                              }}
-                              className="cursor-pointer"
-                            />
-                            {selectedFiles.length > 0 && (
-                              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                <p className="text-sm text-green-700 font-semibold flex items-center gap-2">
-                                  <span className="text-green-600">✓</span> {selectedFiles.length} fișier(e) selectat(e)
-                                </p>
-                              </div>
-                            )}
                           </div>
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="external" className="space-y-4 mt-4">
-                        <div>
-                          <Label>Tip Conținut Extern</Label>
-                          <Select
-                            value={formData.type}
-                            onValueChange={(value) => setFormData({ ...formData, type: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="image">Imagine (Link Direct)</SelectItem>
-                              <SelectItem value="video">Video (Link Direct)</SelectItem>
-                              <SelectItem value="youtube">YouTube (Link/Embed)</SelectItem>
-                              <SelectItem value="web">Pagină Web (URL)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>URL conținut</Label>
-                          <Input
-                            value={formData.file_url}
-                            onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
-                            placeholder={formData.type === 'youtube' ? "https://youtube.com/watch?v=..." : "https://..."}
-                          />
-                        </div>
-                      </TabsContent>
+                        </TabsContent>
+                        <TabsContent value="external" className="space-y-4 mt-4">
+                          <div>
+                            <Label>Tip Conținut Extern</Label>
+                            <Select
+                              value={formData.type}
+                              onValueChange={(value) => setFormData({ ...formData, type: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="image">Imagine (Link Direct)</SelectItem>
+                                <SelectItem value="video">Video (Link Direct)</SelectItem>
+                                <SelectItem value="youtube">YouTube (Link/Embed)</SelectItem>
+                                <SelectItem value="web">Pagină Web (URL)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label>URL conținut</Label>
+                            <Input
+                              value={formData.file_url}
+                              onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
+                              placeholder={formData.type === 'youtube' ? "https://youtube.com/watch?v=..." : "https://..."}
+                            />
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+
+                      <div className="flex gap-3 pt-4">
+                        <Button type="submit" disabled={uploading} className="btn-primary flex-1">
+                          {uploading ? 'Se încarcă...' : 'Adăugă'}
+                        </Button>
+                        <Button type="button" onClick={() => setShowDialog(false)} className="btn-secondary">
+                          Anulează
+                        </Button>
+                      </div>
                     </form>
-                    <div className="flex gap-3 pt-4">
-                      <Button type="submit" disabled={uploading} className="btn-primary flex-1" onClick={handleFileUpload}>
-                        {uploading ? 'Se încarcă...' : 'Adăugă'}
-                      </Button>
-                      <Button type="button" onClick={() => setShowDialog(false)} className="btn-secondary">
-                        Anulează
-                      </Button>
-                    </div>
-                  </Tabs>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
           </div>
 
           {/* Main Layout Body */}
-          <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
+          <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-14rem)]">
             {/* Sidebar Column (Left) */}
             <div className="w-full lg:w-80 shrink-0 h-full overflow-hidden flex flex-col">
               <FolderSidebar
@@ -1139,16 +1323,16 @@ export const Content = () => {
             </div>
 
             {/* Right Column (Content) */}
-            <div className="flex-1 flex flex-col w-full min-w-0 h-full">
+            <div className="flex-1 flex flex-col w-full min-w-0">
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col h-full">
                 <div className="p-6 flex-1 overflow-y-auto custom-scrollbar">
-                  <TabsContent value="all" className="mt-0 h-full">
+                  <TabsContent value="all" className="mt-0">
                     {renderView(currentItems)}
                   </TabsContent>
-                  <TabsContent value="images" className="mt-0 h-full">
+                  <TabsContent value="images" className="mt-0">
                     {renderView(currentItems)}
                   </TabsContent>
-                  <TabsContent value="videos" className="mt-0 h-full">
+                  <TabsContent value="videos" className="mt-0">
                     {renderView(currentItems)}
                   </TabsContent>
                 </div>
@@ -1157,9 +1341,8 @@ export const Content = () => {
           </div>
         </Tabs>
 
-        {/* ... Modals (Preview, Rename, Slideshow) ... */}
         {/* Preview Modal */}
-        <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        < Dialog open={showPreview} onOpenChange={setShowPreview} >
           <DialogContent className="glass-panel max-w-5xl max-h-[90vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>{previewItem?.title}</DialogTitle>
@@ -1231,10 +1414,10 @@ export const Content = () => {
               </div>
             )}
           </DialogContent>
-        </Dialog>
+        </Dialog >
 
         {/* Rename Dialog */}
-        <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        < Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog} >
           <DialogContent className="glass-panel">
             <DialogHeader>
               <DialogTitle>Editează conținutul</DialogTitle>
@@ -1297,7 +1480,7 @@ export const Content = () => {
               </div>
             </form>
           </DialogContent>
-        </Dialog>
+        </Dialog >
 
         <SlideshowConfigDialog
           open={showSlideshowDialog}
@@ -1306,7 +1489,70 @@ export const Content = () => {
           count={selectedItems.size}
           selectedContent={content.filter(item => selectedItems.has(item.id))}
         />
-      </div>
-    </DashboardLayout>
+
+        {/* Safe Delete Confirmation Dialog */}
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-rose-600">
+                <Trash2 className="h-5 w-5" />
+                Confirmare Ștergere
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="py-4 space-y-4">
+              <p className="text-slate-600">
+                Sigur dorești să ștergi fișierul <span className="font-semibold text-slate-900">"{itemToDelete?.title}"</span>?
+              </p>
+
+              {isCheckingUsage ? (
+                <div className="flex items-center gap-2 text-slate-400 italic py-2">
+                  <div className="h-4 w-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
+                  Se verifică utilizarea...
+                </div>
+              ) : (
+                (usageInfo.screens.length > 0 || usageInfo.playlists.length > 0) && (
+                  <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 space-y-3">
+                    <div className="flex items-start gap-2 text-rose-800 font-medium text-sm">
+                      <span className="mt-0.5">⚠️</span>
+                      Acest fișier este folosit în următoarele locuri:
+                    </div>
+                    <div className="space-y-2 text-sm text-rose-700">
+                      {usageInfo.screens.length > 0 && (
+                        <div>
+                          <span className="font-semibold">Ecrane:</span> {usageInfo.screens.map(s => s.name).join(', ')}
+                        </div>
+                      )}
+                      {usageInfo.playlists.length > 0 && (
+                        <div>
+                          <span className="font-semibold">Playlist-uri:</span> {usageInfo.playlists.map(p => p.name).join(', ')}
+                        </div>
+                      )}
+                      <p className="text-xs font-semibold mt-2 text-rose-900 italic">
+                        * Notă: Fișierul va fi eliminat automat din playlist-uri după ștergere.
+                      </p>
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={isDeleting}>
+                Anulează
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmDelete}
+                disabled={isCheckingUsage || isDeleting}
+                className="bg-rose-600 hover:bg-rose-700"
+              >
+                {isDeleting ? 'Se șterge...' : 'Șterge Fișierul'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div >
+    </DashboardLayout >
   );
 };

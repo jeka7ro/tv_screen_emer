@@ -1,5 +1,5 @@
 import React from 'react';
-import { Folder, FolderPlus, FolderOpen, Edit2, Trash2, List as ListIcon, Plus, Monitor } from 'lucide-react';
+import { Folder, FolderPlus, FolderOpen, Edit2, Trash2, List as ListIcon, Plus, Monitor, RefreshCw } from 'lucide-react';
 import api from '../utils/api';
 
 export const FolderSidebar = ({
@@ -178,11 +178,18 @@ export const FolderSidebar = ({
                 <div className="p-4 flex items-center justify-between border-b border-slate-100 shrink-0">
                     <h3 className="font-semibold text-slate-800 text-sm">Ecrane</h3>
                     <div className="flex items-center gap-2">
+                        <button
+                            onClick={onRefresh}
+                            className="p-1.5 hover:bg-slate-100 rounded-md transition-all text-slate-400 hover:text-indigo-600 group/refresh"
+                            title="Refresh"
+                        >
+                            <RefreshCw className="w-3.5 h-3.5 group-hover/refresh:rotate-180 transition-transform duration-500" />
+                        </button>
                         {locations.length > 0 && (
                             <select
                                 value={selectedLocation}
                                 onChange={(e) => setSelectedLocation(e.target.value)}
-                                className="text-[10px] border border-slate-200 rounded-md px-1.5 py-0.5 bg-slate-50 text-slate-600 focus:outline-none focus:border-indigo-300 cursor-pointer max-w-[100px]"
+                                className="text-[10px] border border-slate-200 rounded-md px-1.5 py-0.5 bg-slate-50 text-slate-600 focus:outline-none focus:border-indigo-300 cursor-pointer max-w-[80px]"
                             >
                                 <option value="all">Toate</option>
                                 {locations.map(city => (
@@ -196,58 +203,50 @@ export const FolderSidebar = ({
                     </div>
                 </div>
 
-                <div className="p-2 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
+                <div className="p-2 grid grid-cols-2 gap-2 flex-1 overflow-y-auto custom-scrollbar content-start">
                     {filteredScreens.map(screen => (
                         <div
                             key={screen.id}
-                            className="bg-white border border-slate-100 rounded-xl p-3 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all cursor-default group/s"
+                            className="bg-white border border-slate-100 rounded-xl p-2.5 shadow-sm hover:border-indigo-200 transition-all cursor-default group/s flex flex-col h-fit"
                             onDragOver={(e) => {
                                 e.preventDefault();
-                                e.currentTarget.classList.add('border-indigo-500', 'bg-indigo-50/50', 'scale-[1.02]');
+                                e.currentTarget.classList.add('border-indigo-500', 'bg-indigo-50/50');
                             }}
                             onDragLeave={(e) => {
-                                e.currentTarget.classList.remove('border-indigo-500', 'bg-indigo-50/50', 'scale-[1.02]');
+                                e.currentTarget.classList.remove('border-indigo-500', 'bg-indigo-50/50');
                             }}
                             onDrop={(e) => {
                                 e.preventDefault();
-                                e.currentTarget.classList.remove('border-indigo-500', 'bg-indigo-50/50', 'scale-[1.02]');
+                                e.currentTarget.classList.remove('border-indigo-500', 'bg-indigo-50/50');
                                 const contentId = e.dataTransfer.getData('contentId');
                                 if (contentId && onAssignToScreen) {
                                     onAssignToScreen(contentId, screen.id);
                                 }
                             }}
                         >
-                            <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${screen.status === 'online' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-400'}`}>
-                                    <Monitor className="w-4 h-4" />
+                            <div className="flex items-start gap-2 h-full">
+                                <div className={`p-1.5 rounded-lg shrink-0 ${screen.status === 'online' ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-400'}`}>
+                                    <Monitor className="w-3.5 h-3.5" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-bold text-slate-800 truncate">{screen.name}</p>
+                                <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-800 leading-tight mb-1 line-clamp-2">{screen.name}</p>
 
-                                    {/* City • Location */}
-                                    <p className="text-[10px] text-slate-500 truncate mt-0.5">
-                                        {[screen.city, screen.location_name].filter(Boolean).join(' • ') || 'Fără locație'}
-                                    </p>
+                                        {/* Status Dot & Playing Info */}
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-1">
+                                                <div className={`w-1 h-1 rounded-full ${screen.status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`} />
+                                                <p className="text-[8px] text-slate-500 uppercase tracking-wider font-semibold">
+                                                    {screen.status === 'online' ? 'Online' : 'Offline'}
+                                                </p>
+                                            </div>
 
-                                    {/* Current Content */}
-                                    {screen.current_content_title && (
-                                        <div className="flex items-center gap-1 mt-1 text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md w-fit max-w-full">
-                                            <span className="font-medium truncate block max-w-full">
-                                                Playing: {screen.current_content_title}
-                                            </span>
+                                            {screen.current_content_title && (
+                                                <p className="text-[8px] text-indigo-600 font-medium truncate bg-indigo-50 px-1 rounded">
+                                                    {screen.current_content_title}
+                                                </p>
+                                            )}
                                         </div>
-                                    )}
-
-                                    <div className="flex items-center gap-1.5 mt-1">
-                                        <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'online' ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`} />
-                                        <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">
-                                            {screen.status === 'online' ? 'Online' : 'Offline'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="opacity-0 group-hover/s:opacity-100 transition-opacity">
-                                    <div className="text-[10px] text-indigo-600 font-bold bg-indigo-50 px-1.5 py-0.5 rounded uppercase">
-                                        Trage
                                     </div>
                                 </div>
                             </div>

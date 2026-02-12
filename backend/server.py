@@ -123,8 +123,10 @@ from db import (
     happy_hour_insert,
     happy_hour_update,
     happy_hour_delete,
-    happy_hours_active_now
-,
+    happy_hours_active_now,
+    content_get_usage,
+    playlist_remove_content_item,
+    content_clear_from_screen_zones
 )
 
 ROOT_DIR = Path(__file__).parent
@@ -215,24 +217,7 @@ async def get_version():
 app.router.route_class = type('CustomRoute', (app.router.route_class,), {
 })
 
-# FINAL PERMISSIVE CORS SETUP
-allowed_origins = [
-    "https://smr.onl",
-    "https://www.smr.onl",
-    "https://tv-screen-emer.onrender.com",
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:3000",
-]
-
-# Allow any origin that ends with smr.onl or onrender.com
-app.add_middleware(
-    CORSMiddleware,
-    allow_origin_regex=r"https?://.*(smr\.onl|onrender\.com|localhost|127\.0\.0\.1)(:[0-9]+)?",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS will be added after all other app setup to be outermost
 
 import traceback # For deep error reporting
 
@@ -484,8 +469,11 @@ class Playlist(BaseModel):
     autoplay: bool = True
     loop: bool = True
     status: str = "active"  # active, inactive
-    brand: Optional[str] = None
+    brand: List[str] = []
     created_by: Optional[str] = None
+    is_scheduled: bool = False
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class PlaylistCreate(BaseModel):
@@ -495,8 +483,11 @@ class PlaylistCreate(BaseModel):
     autoplay: Optional[bool] = True
     loop: Optional[bool] = True
     status: Optional[str] = "active"
-    brand: Optional[str] = None
+    brand: Optional[List[str]] = []
     created_by: Optional[str] = None
+    is_scheduled: Optional[bool] = False
+    start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
     model_config = ConfigDict(extra="ignore")
 
 class Product(BaseModel):
@@ -1457,14 +1448,24 @@ async def get_content_by_id(content_id: str, current_user: User = Depends(get_cu
         raise HTTPException(status_code=404, detail="Content not found")
     return content
 
+@api_router.get("/content/{content_id}/usage")
+async def get_content_usage_info(content_id: str, current_user: User = Depends(get_current_user)):
+    usage = await content_get_usage(content_id)
+    return usage
+
 @api_router.delete("/content/{content_id}")
-async def delete_content(content_id: str, current_user: User = Depends(require_admin)):
-    content = await content_get(content_id)
-    if not content:
+async def delete_content_item(content_id: str, current_user: User = Depends(require_admin)):
+    item = await content_get(content_id)
+    if not item:
         raise HTTPException(status_code=404, detail="Content not found")
     
-    # Delete file from storage
-    file_url = content.get("file_url", "")
+    # 1. Automatic cleanup from playlists
+    await playlist_remove_content_item(content_id)
+    
+    # 2. Cleanup from screen zones (set to NULL)
+    await content_clear_from_screen_zones(content_id)
+
+    file_url = item.get("file_url")
     
     # For Supabase URLs, extract path and delete
     if "supabase.co/storage" in file_url:
@@ -1485,7 +1486,7 @@ async def delete_content(content_id: str, current_user: User = Depends(require_a
             file_path.unlink()
     
     await content_delete(content_id)
-    return {"message": "Content deleted"}
+    return {"message": "Content deleted and cleaned up from playlists/screens"}
 
 # Serve uploaded files
 from fastapi.responses import FileResponse
@@ -2250,3 +2251,27 @@ async def delete_brand_endpoint(brand_id: str, current_user: User = Depends(requ
 
 # Include the router in the main app AFTER all routes are defined
 app.include_router(api_router)
+
+# FINAL PERMISSIVE CORS SETUP - outermost middleware
+allowed_origins = [
+    "https://smr.onl",
+    "https://www.smr.onl",
+    "https://tv-screen-emer.onrender.com",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https?://.*(smr\.onl|onrender\.com|localhost|127\.0\.0\.1)(:[0-9]+)?",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
+
+if __name__ == "__main__":
+    pass

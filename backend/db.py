@@ -6,6 +6,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import json
+from datetime import datetime, timezone, timedelta, time
 from typing import Any, Dict, List, Optional
 
 import asyncpg
@@ -199,15 +200,23 @@ def _row(r: Optional[asyncpg.Record]) -> Optional[Dict[str, Any]]:
     if r is None:
         return None
     d = dict(r)
-    d = dict(r)
     for k, v in list(d.items()):
         if hasattr(v, "isoformat"):  # datetime
             d[k] = v.isoformat()
-        if k in ["tags", "playlist_urls", "items", "selected_products", "selected_categories", "promo_products", "brand"] and isinstance(v, str):
-            try:
-                d[k] = json.loads(v)
-            except:
-                pass
+        
+        # Ensure list/dict fields are correctly parsed or defaulted
+        list_fields = ["tags", "playlist_urls", "items", "selected_products", "selected_categories", "promo_products", "brand"]
+        if k in list_fields:
+            if v is None:
+                d[k] = []
+            elif isinstance(v, str):
+                try:
+                    parsed = json.loads(v)
+                    d[k] = parsed if isinstance(parsed, (list, dict)) else [v]
+                except:
+                    # Not JSON? Treat as single item or empty
+                    d[k] = [v] if v and k != "items" else []
+            # if already a list/dict (from JSONB), leave it as is
     return d
 
 
@@ -525,6 +534,69 @@ async def content_delete(id: str) -> bool:
     return "DELETE 1" in res
 
 
+async def content_get_usage(content_id: str) -> Dict[str, List[Dict[str, Any]]]:
+    """Check if content is used in screens or playlists"""
+    # Check screens (screen_zones)
+    screens = await _fetch_all("""
+        SELECT s.id, s.name, sz.zone_id 
+        FROM screens s
+        JOIN screen_zones sz ON s.id = sz.screen_id
+        WHERE sz.content_id = $1
+    """, content_id)
+    
+    # Check playlists
+    # JSONB search for content_id in items array
+    playlists = await _fetch_all("""
+        SELECT id, name 
+        FROM playlists,
+        jsonb_array_elements(items) as item
+        WHERE item->>'content_id' = $1
+    """, content_id)
+    
+    # Deduplicate playlists since jsonb_array_elements might return multiple rows per playlist
+    unique_playlists = []
+    seen_p_ids = set()
+    for p in playlists:
+        if p['id'] not in seen_p_ids:
+            unique_playlists.append(p)
+            seen_p_ids.add(p['id'])
+
+    return {
+        "screens": screens,
+        "playlists": unique_playlists
+    }
+
+
+async def playlist_remove_content_item(content_id: str) -> None:
+    """Remove a content item from all playlists that contain it"""
+    # Postgres 12+ supports jsonb_set or we can just pull, filter and push
+    # But for a clean solution, we update all playlists that contain the item
+    playlists = await _fetch_all("""
+        SELECT id, items FROM playlists 
+        WHERE EXISTS (
+            SELECT 1 FROM jsonb_array_elements(items) as item 
+            WHERE item->>'content_id' = $1
+        )
+    """, content_id)
+    
+    for p in playlists:
+        items = p['items']
+        if isinstance(items, str):
+            items = json.loads(items)
+        
+        new_items = [item for item in items if item.get('content_id') != content_id]
+        
+        await _execute(
+            "UPDATE playlists SET items = $1 WHERE id = $2",
+            json.dumps(new_items), p['id']
+        )
+
+
+async def content_clear_from_screen_zones(content_id: str) -> None:
+    """Nullify content_id in screen_zones where this content is assigned"""
+    await _execute("UPDATE screen_zones SET content_id = NULL WHERE content_id = $1", content_id)
+
+
 async def content_count() -> int:
     r = await _fetch_one("SELECT count(*)::int AS c FROM content")
     return r["c"] if r else 0
@@ -608,7 +680,10 @@ async def content_update_folder(content_id: str, folder_id: Optional[str]) -> No
 
 async def folder_get_content_count(folder_id: str) -> int:
     """Get count of content items in a folder"""
-    return await _fetch_val("SELECT COUNT(*) FROM content WHERE folder_id = $1", folder_id)
+    # Assuming _fetch_val is defined elsewhere or needs to be added.
+    # For now, using _fetch_one and extracting the count.
+    r = await _fetch_one("SELECT COUNT(*)::int AS c FROM content WHERE folder_id = $1", folder_id)
+    return r["c"] if r else 0
 
 
 # ---------- playlists ----------
@@ -624,22 +699,25 @@ async def playlists_list() -> List[Dict[str, Any]]:
 async def playlist_insert(row: Dict[str, Any]) -> None:
     items = json.dumps(row.get("items") or [])
     await _execute(
-        """INSERT INTO playlists (id, name, description, items, autoplay, loop, status, created_at, brand, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)""",
+        """INSERT INTO playlists (id, name, description, items, autoplay, loop, status, created_at, brand, created_by, is_scheduled, start_at, end_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)""",
         row["id"], row["name"], row.get("description"), items,
         row.get("autoplay", True), row.get("loop", True), row.get("status", "active"), row["created_at"],
-        row.get("brand"), row.get("created_by")
+        row.get("brand"), row.get("created_by"), row.get("is_scheduled", False),
+        row.get("start_at"), row.get("end_at")
     )
 
 
 async def playlist_update(id: str, data: Dict[str, Any]) -> None:
     items = json.dumps(data.get("items") or [])
     await _execute(
-        """UPDATE playlists SET name = $1, description = $2, items = $3, autoplay = $4, loop = $5, status = $6, brand = $7
-           WHERE id = $8""",
+        """UPDATE playlists SET name = $1, description = $2, items = $3, autoplay = $4, loop = $5, status = $6, brand = $7,
+           is_scheduled = $8, start_at = $9, end_at = $10
+           WHERE id = $11""",
         data["name"], data.get("description"), items,
         data.get("autoplay", True), data.get("loop", True), data.get("status", "active"), 
-        data.get("brand"), id,
+        data.get("brand"), data.get("is_scheduled", False),
+        data.get("start_at"), data.get("end_at"), id,
     )
 
 
@@ -916,6 +994,23 @@ async def happy_hour_get(schedule_id: str):
 
 async def happy_hour_insert(data: dict):
     """Create a new happy hour schedule"""
+    # Parse time strings to datetime.time objects if needed
+    start_time = data.get('start_time')
+    if isinstance(start_time, str):
+        try:
+            start_time = datetime.strptime(start_time, "%H:%M").time()
+        except ValueError:
+            # If parsing fails, keep original string or handle error
+            pass
+            
+    end_time = data.get('end_time')
+    if isinstance(end_time, str):
+        try:
+            end_time = datetime.strptime(end_time, "%H:%M").time()
+        except ValueError:
+            # If parsing fails, keep original string or handle error
+            pass
+
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
             INSERT INTO happy_hour_schedules (
@@ -927,8 +1022,8 @@ async def happy_hour_insert(data: dict):
             data.get('name'),
             data.get('city'),
             data.get('screen_ids', []),
-            data.get('start_time'),
-            data.get('end_time'),
+            start_time,
+            end_time,
             data.get('content_type'),
             data.get('content_id'),
             data.get('playlist_id'),
@@ -941,6 +1036,23 @@ async def happy_hour_insert(data: dict):
 
 async def happy_hour_update(schedule_id: str, data: dict):
     """Update an existing happy hour schedule"""
+    # Parse time strings to datetime.time objects if needed
+    start_time = data.get('start_time')
+    if isinstance(start_time, str):
+        try:
+            start_time = datetime.strptime(start_time, "%H:%M").time()
+        except ValueError:
+            # If parsing fails, keep original string or handle error
+            pass
+            
+    end_time = data.get('end_time')
+    if isinstance(end_time, str):
+        try:
+            end_time = datetime.strptime(end_time, "%H:%M").time()
+        except ValueError:
+            # If parsing fails, keep original string or handle error
+            pass
+
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
             UPDATE happy_hour_schedules
@@ -955,8 +1067,8 @@ async def happy_hour_update(schedule_id: str, data: dict):
             data.get('name'),
             data.get('city'),
             data.get('screen_ids', []),
-            data.get('start_time'),
-            data.get('end_time'),
+            start_time,
+            end_time,
             data.get('content_type'),
             data.get('content_id'),
             data.get('playlist_id'),

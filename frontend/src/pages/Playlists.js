@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
-import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy } from 'lucide-react';
+import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
@@ -11,6 +11,8 @@ import { Textarea } from '../components/ui/textarea';
 import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, parseISO } from 'date-fns';
+import { ro } from 'date-fns/locale';
 
 export const Playlists = () => {
   const [playlists, setPlaylists] = useState([]);
@@ -21,14 +23,17 @@ export const Playlists = () => {
     name: '',
     autoplay: true,
     loop: true,
-    brand: ''
+    brand: '',
+    is_scheduled: false,
+    start_at: '',
+    end_at: ''
   });
   const [brands, setBrands] = useState([]);
   const [playlistItems, setPlaylistItems] = useState([]);
   const [viewMode, setViewMode] = useViewMode('view_mode_playlists', 'grid');
 
-  const [selectedPlaylists, setSelectedPlaylists] = useState([]);
   const [editingPlaylist, setEditingPlaylist] = useState(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   useEffect(() => {
     loadData();
@@ -56,6 +61,8 @@ export const Playlists = () => {
     try {
       const submitData = {
         ...formData,
+        start_at: formData.is_scheduled ? formData.start_at : null,
+        end_at: formData.is_scheduled ? formData.end_at : null,
         items: playlistItems.map((item, index) => ({
           content_id: item.content_id,
           order: index,
@@ -83,7 +90,10 @@ export const Playlists = () => {
       name: playlist.name,
       autoplay: playlist.autoplay,
       loop: playlist.loop,
-      brand: playlist.brand || ''
+      brand: playlist.brand || '',
+      is_scheduled: playlist.is_scheduled || false,
+      start_at: playlist.start_at || '',
+      end_at: playlist.end_at || ''
     });
     setPlaylistItems(playlist.items || []);
     setShowDialog(true);
@@ -157,7 +167,10 @@ export const Playlists = () => {
       name: '',
       autoplay: true,
       loop: true,
-      brand: ''
+      brand: '',
+      is_scheduled: false,
+      start_at: '',
+      end_at: ''
     });
     setPlaylistItems([]);
     setEditingPlaylist(null);
@@ -219,6 +232,22 @@ export const Playlists = () => {
       setSelectedPlaylists([...selectedPlaylists, id]);
     }
   };
+
+  const sortedPlaylists = [...filteredPlaylists].sort((a, b) => {
+    // If one is scheduled and other is not, scheduled comes first
+    if (a.is_scheduled && !b.is_scheduled) return -1;
+    if (!a.is_scheduled && b.is_scheduled) return 1;
+
+    // If both scheduled, sort by start_at
+    if (a.is_scheduled && b.is_scheduled) {
+      if (!a.start_at) return 1;
+      if (!b.start_at) return -1;
+      return new Date(a.start_at) - new Date(b.start_at);
+    }
+
+    // Default: sort by created_at (desc)
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
 
   if (loading) {
     return (
@@ -305,7 +334,43 @@ export const Playlists = () => {
                         />
                         <span className="text-sm text-slate-700">Repetă playlist</span>
                       </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.is_scheduled}
+                          onChange={(e) => setFormData({ ...formData, is_scheduled: e.target.checked })}
+                          className="rounded text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="text-sm font-medium text-slate-700">Programează</span>
+                      </label>
                     </div>
+
+                    {formData.is_scheduled && (
+                      <div className="grid grid-cols-2 gap-4 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="space-y-2">
+                          <Label htmlFor="start_at" className="text-xs font-bold text-indigo-700 uppercase tracking-wider">Începe la</Label>
+                          <Input
+                            id="start_at"
+                            type="datetime-local"
+                            value={formData.start_at ? formData.start_at.substring(0, 16) : ''}
+                            onChange={(e) => setFormData({ ...formData, start_at: e.target.value })}
+                            className="bg-white border-indigo-200 focus:border-indigo-500 rounded-lg shadow-sm h-10"
+                            required={formData.is_scheduled}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="end_at" className="text-xs font-bold text-indigo-700 uppercase tracking-wider">Se termină la</Label>
+                          <Input
+                            id="end_at"
+                            type="datetime-local"
+                            value={formData.end_at ? formData.end_at.substring(0, 16) : ''}
+                            onChange={(e) => setFormData({ ...formData, end_at: e.target.value })}
+                            className="bg-white border-indigo-200 focus:border-indigo-500 rounded-lg shadow-sm h-10"
+                            required={formData.is_scheduled}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <div className="space-y-3">
@@ -399,13 +464,29 @@ export const Playlists = () => {
                                       </button>
                                     </div>
 
-                                    {/* Thumbnail */}
-                                    <div className="w-24 h-16 rounded-xl border-2 border-slate-50 overflow-hidden shrink-0 bg-slate-100 shadow-inner">
-                                      {contentItem?.thumbnail_url || (contentItem?.type === 'image' && contentItem?.file_url) ? (
+                                    <div className="w-24 h-16 rounded-xl border-2 border-slate-50 overflow-hidden shrink-0 bg-black flex items-center justify-center shadow-inner relative group/item-thumb">
+                                      {contentItem?.type === 'video' ? (
+                                        <>
+                                          {contentItem.thumbnail_url ? (
+                                            <img src={contentItem.thumbnail_url} alt="" className="w-full h-full object-cover group-hover/item-thumb:hidden" />
+                                          ) : null}
+                                          <video
+                                            src={contentItem.file_url}
+                                            className={`w-full h-full object-cover ${contentItem.thumbnail_url ? 'hidden group-hover/item-thumb:block' : ''}`}
+                                            muted
+                                            playsInline
+                                            onMouseOver={(e) => e.target.play()}
+                                            onMouseOut={(e) => { e.target.pause(); e.target.currentTime = 0; }}
+                                          />
+                                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-100 group-hover/item-thumb:opacity-0 transition-opacity">
+                                            <Film className="w-4 h-4 text-white shadow-sm" />
+                                          </div>
+                                        </>
+                                      ) : contentItem?.thumbnail_url || (contentItem?.type === 'image' && contentItem?.file_url) ? (
                                         <img src={contentItem.thumbnail_url || contentItem.file_url} alt="" className="w-full h-full object-cover" />
                                       ) : (
                                         <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                          {contentItem?.type === 'video' ? <Film className="w-5 h-5" /> : <ImageIcon className="w-5 h-5" />}
+                                          <ImageIcon className="w-5 h-5" />
                                         </div>
                                       )}
                                     </div>
@@ -530,6 +611,13 @@ export const Playlists = () => {
               >
                 <ListIcon className="w-4 h-4" />
               </button>
+              <button
+                onClick={() => setViewMode('calendar')}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                title="Calendar"
+              >
+                <CalendarIcon className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -602,6 +690,12 @@ export const Playlists = () => {
                           <span className="text-slate-400">
                             {playlist.created_at ? new Date(playlist.created_at).toLocaleDateString('ro-RO') : '-'}
                           </span>
+                          {playlist.is_scheduled && playlist.start_at && (
+                            <div className="mt-1 flex items-center gap-1 text-indigo-600 font-bold">
+                              <Clock className="w-3 h-3" />
+                              <span>{format(new Date(playlist.start_at), 'dd.MM HH:mm', { locale: ro })}</span>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -619,6 +713,12 @@ export const Playlists = () => {
                           {playlist.autoplay && (
                             <span className="text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">
                               Autoplay
+                            </span>
+                          )}
+                          {playlist.is_scheduled && (
+                            <span className="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter flex items-center gap-1">
+                              <CalendarIcon className="w-2.5 h-2.5" />
+                              Programat
                             </span>
                           )}
                         </div>
@@ -654,9 +754,100 @@ export const Playlists = () => {
               </table>
             </div>
           </div>
+        ) : viewMode === 'calendar' ? (
+          <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 overflow-hidden flex flex-col min-h-[700px]">
+            {/* Calendar Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-indigo-50 rounded-2xl">
+                  <CalendarIcon className="w-6 h-6 text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-slate-800 capitalize leading-tight">
+                    {format(currentMonth, 'MMMM yyyy', { locale: ro })}
+                  </h2>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Calendar Programe</p>
+                </div>
+              </div>
+              <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200/50">
+                <button
+                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                  className="p-2 hover:bg-white rounded-xl transition-all text-slate-600 hover:text-indigo-600 shadow-sm hover:shadow"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <div className="w-px bg-slate-200 mx-1"></div>
+                <button
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  className="p-2 hover:bg-white rounded-xl transition-all text-slate-600 hover:text-indigo-600 shadow-sm hover:shadow"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Calendar Grid */}
+            <div className="flex-1 overflow-auto bg-slate-50/30 p-4">
+              <div className="grid grid-cols-7 gap-3 h-full">
+                {['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm', 'Dum'].map(day => (
+                  <div key={day} className="py-3 text-center text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">{day}</div>
+                ))}
+
+                {(() => {
+                  const monthStart = startOfMonth(currentMonth);
+                  const monthEnd = endOfMonth(monthStart);
+                  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
+                  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+                  const calendarDays = eachDayOfInterval({ start: startDate, end: endDate });
+
+                  return calendarDays.map((date, idx) => {
+                    const dayPlaylists = sortedPlaylists.filter(p =>
+                      p.is_scheduled && p.start_at && isSameDay(new Date(p.start_at), date)
+                    );
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`min-h-[140px] p-3 rounded-2xl border transition-all ${!isSameMonth(date, monthStart)
+                          ? 'bg-slate-50/50 border-transparent opacity-30 select-none'
+                          : isSameDay(date, new Date())
+                            ? 'bg-white border-indigo-400 shadow-[0_8px_30px_rgb(79,70,229,0.12)] ring-1 ring-indigo-400 ring-offset-4'
+                            : 'bg-white border-slate-100/80 hover:border-indigo-200 shadow-sm hover:shadow-md'
+                          }`}
+                      >
+                        <div className="flex flex-col gap-2 h-full">
+                          <span className={`text-sm font-black w-8 h-8 flex items-center justify-center rounded-xl transition-colors ${isSameDay(date, new Date())
+                            ? 'bg-indigo-600 text-white shadow-lg'
+                            : 'text-slate-400 group-hover:text-indigo-600'
+                            }`}>
+                            {format(date, 'd')}
+                          </span>
+
+                          <div className="space-y-1.5 overflow-hidden flex-1">
+                            {dayPlaylists.map(p => (
+                              <div
+                                key={p.id}
+                                onClick={() => handleEdit(p)}
+                                className="px-2 py-1.5 bg-indigo-50 border border-indigo-100 rounded-lg text-[10px] font-bold text-indigo-700 truncate hover:bg-indigo-600 hover:text-white transition-all cursor-pointer group shadow-sm flex items-center gap-1.5"
+                                title={`${format(new Date(p.start_at), 'HH:mm')} - ${p.name}`}
+                              >
+                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 group-hover:bg-white shrink-0"></div>
+                                <span className="font-black text-[9px] opacity-70 italic">{format(new Date(p.start_at), 'HH:mm')}</span>
+                                <span className="truncate">{p.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPlaylists.map((playlist) => (
+            {sortedPlaylists.map((playlist) => (
               <div key={playlist.id} className="glass-card p-6 flex flex-col h-full hover:shadow-lg transition-all border-slate-200/60" data-testid={`playlist-card-${playlist.id}`}>
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex flex-col">
@@ -745,8 +936,16 @@ export const Playlists = () => {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${playlist.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                    {playlist.status === 'active' ? 'Filtrul Activ' : 'Inactiv'}
+                  <div className="flex flex-col gap-1.5">
+                    <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${playlist.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                      {playlist.status === 'active' ? 'Filtrul Activ' : 'Inactiv'}
+                    </div>
+                    {playlist.is_scheduled && playlist.start_at && (
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-[10px] font-black uppercase tracking-wider border border-indigo-100/50 shadow-sm">
+                        <Clock className="w-3 h-3 text-indigo-400" />
+                        <span>{format(new Date(playlist.start_at), 'dd MMM HH:mm', { locale: ro })}</span>
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => handleEdit(playlist)}
