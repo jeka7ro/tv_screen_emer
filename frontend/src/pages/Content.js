@@ -782,7 +782,8 @@ export const Content = () => {
         {items.map((item) => (
           <div
             key={item.id}
-            className={`glass-card p-6 flex flex-col h-[520px] group transition-all duration-300 ${selectedItems.has(item.id) ? 'ring-2 ring-indigo-500 shadow-lg scale-[1.02]' : 'hover:shadow-md'}`}
+            className={`glass-card p-6 flex flex-col group transition-all duration-300 ${selectedItems.has(item.id) ? 'ring-2 ring-indigo-500 shadow-lg scale-[1.02]' : 'hover:shadow-md'}`}
+            style={{ minHeight: '600px' }}
             data-testid={`content-card-${item.id}`}
             draggable
             onDragStart={(e) => {
