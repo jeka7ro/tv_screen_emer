@@ -1132,334 +1132,326 @@ export const Content = () => {
                                     </div>
                                   ) : (
                                     <Folder className="w-4 h-4" style={{ color: folder.color }} fill={folder.color} />
-                                  )}
-                                  {folder.name}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Filtrează:</span>
+              <div className="flex gap-1">
+                {['SUSHI MASTER', 'SMASH ME', 'MANO'].map(brand => (
+                  <button
+                    key={brand}
+                    onClick={() => {
+                      if (filterBrands.includes(brand)) {
+                        setFilterBrands(filterBrands.filter(b => b !== brand));
+                      } else {
+                        setFilterBrands([...filterBrands, brand]);
+                      }
+                    }}
+                    className={`w-8 h-8 rounded-md p-0.5 border transition-all ${filterBrands.includes(brand)
+                      ? 'border-indigo-500 ring-2 ring-indigo-200 bg-indigo-50 grayscale-0'
+                      : 'border-slate-200 bg-white grayscale opacity-60 hover:opacity-100 hover:grayscale-0'
+                      }`}
+                    title={brand}
+                  >
+                    <img
+                      src={getBrandLogo(brand)}
+                      alt={brand}
+                      className="w-full h-full object-contain"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
 
-                      <div className="space-y-2">
-                        <Label className="text-sm font-semibold">Branduri (Clienți)</Label>
-                        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl max-h-40 overflow-y-auto">
-                          {brands.length === 0 ? (
-                            <p className="text-xs text-slate-400 italic">Niciun brand creat încă.</p>
-                          ) : (
-                            brands.map(brand => (
-                              <label
-                                key={brand.id}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all ${formData.brand?.includes(brand.name)
-                                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
-                                  : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                                  }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  className="hidden"
-                                  checked={formData.brand?.includes(brand.name)}
-                                  onChange={() => {
-                                    const currentBrands = formData.brand || [];
-                                    const newBrands = currentBrands.includes(brand.name)
-                                      ? currentBrands.filter(b => b !== brand.name)
-                                      : [...currentBrands, brand.name];
-                                    setFormData({ ...formData, brand: newBrands });
-                                  }}
-                                />
-                                {brand.logo_url && (
-                                  <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0 border border-slate-100 bg-white">
-                                    <img src={brand.logo_url} className="w-full h-full object-contain" alt="" />
+                                {/* Upload Dialog - Hidden but functional */}
+                                <div className="hidden">
+                                  <div className="flex justify-end mb-6">
+                                    <Dialog open={showDialog} onOpenChange={setShowDialog}>
+                                      {/* Trigger moved to top right button */}
+                                      <DialogContent className="glass-panel sm:max-w-[600px]">
+                                        <DialogHeader>
+                                          <DialogTitle>Adaugă conținut nou</DialogTitle>
+                                        </DialogHeader>
+
+                                        <Tabs defaultValue="file" value={uploadMethod} onValueChange={setUploadMethod} className="w-full">
+                                          <TabsList className="grid w-full grid-cols-2 mb-4">
+                                            <TabsTrigger value="file">Încărcare Fișier</TabsTrigger>
+                                            <TabsTrigger value="external">Link Extern (YouTube/Web)</TabsTrigger>
+                                          </TabsList>
+
+                                          <form onSubmit={handleFileUpload}>
+                                            <TabsContent value="file" className="space-y-4 mt-4">
+                                              <div className="space-y-4">
+                                                <div>
+                                                  <Label>Drag & Drop Fișiere</Label>
+                                                  <div
+                                                    className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-indigo-500 hover:bg-indigo-50/50 transition-colors cursor-pointer"
+                                                    onClick={() => document.querySelector('input[type="file"]').click()}
+                                                  >
+                                                    <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                      <Upload className="w-6 h-6" />
+                                                    </div>
+                                                    <p className="text-sm font-semibold text-slate-700 mb-1">Click pentru a selecta fișiere</p>
+                                                    <p className="text-xs text-slate-500">sau drag & drop aici</p>
+                                                  </div>
+                                                  <Input
+                                                    type="file"
+                                                    accept="image/*,video/*"
+                                                    multiple
+                                                    onChange={(e) => {
+                                                      const files = e.target.files;
+                                                      setSelectedFiles(files);
+                                                      if (files.length > 0) {
+                                                        const file = files[0];
+                                                        const type = file.type.startsWith('video') ? 'video' : 'image';
+                                                        setFormData({ ...formData, type, title: formData.title || file.name });
+                                                      }
+                                                    }}
+                                                    className="cursor-pointer"
+                                                  />
+                                                  {selectedFiles.length > 0 && (
+                                                    <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                      <p className="text-sm text-green-700 font-semibold flex items-center gap-2">
+                                                        <span className="text-green-600">✓</span> {selectedFiles.length} fișier(e) selectat(e)
+                                                      </p>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </TabsContent>
+                                            <TabsContent value="external" className="space-y-4 mt-4">
+                                              <div>
+                                                <Label>Tip Conținut Extern</Label>
+                                                <Select
+                                                  value={formData.type}
+                                                  onValueChange={(value) => setFormData({ ...formData, type: value })}
+                                                >
+                                                  <SelectTrigger>
+                                                    <SelectValue />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    <SelectItem value="image">Imagine (Link Direct)</SelectItem>
+                                                    <SelectItem value="video">Video (Link Direct)</SelectItem>
+                                                    <SelectItem value="youtube">YouTube (Link/Embed)</SelectItem>
+                                                    <SelectItem value="web">Pagină Web (URL)</SelectItem>
+                                                  </SelectContent>
+                                                </Select>
+                                              </div>
+                                              <div>
+                                                <Label>URL conținut</Label>
+                                                <Input
+                                                  value={formData.file_url}
+                                                  onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
+                                                  placeholder={formData.type === 'youtube' ? "https://youtube.com/watch?v=..." : "https://..."}
+                                                />
+                                              </div>
+                                            </TabsContent>
+                                          </form>
+                                          <div className="flex gap-3 pt-4">
+                                            <Button type="submit" disabled={uploading} className="btn-primary flex-1" onClick={handleFileUpload}>
+                                              {uploading ? 'Se încarcă...' : 'Adăugă'}
+                                            </Button>
+                                            <Button type="button" onClick={() => setShowDialog(false)} className="btn-secondary">
+                                              Anulează
+                                            </Button>
+                                          </div>
+                                        </Tabs>
+                                      </DialogContent>
+                                    </Dialog>
+                                  </div>
+                                </div>
+
+                                {/* Main Layout Body */}
+                                <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
+                                  {/* Sidebar Column (Left) */}
+                                  <div className="w-full lg:w-80 shrink-0 h-full overflow-hidden flex flex-col">
+                                    <FolderSidebar
+                                      folders={folders}
+                                      selectedFolder={selectedFolder}
+                                      setSelectedFolder={setSelectedFolder}
+                                      content={content}
+                                      isAdmin={isAdmin}
+                                      openFolderDialog={openFolderDialog}
+                                      handleDeleteFolder={handleDeleteFolder}
+                                      handleMoveToFolder={handleMoveToFolder}
+                                      onAddContent={openUploadDialogWithFolder}
+                                      screens={screens}
+                                      onAssignToScreen={handleAssignToScreen}
+                                      onRefresh={() => {
+                                        loadFolders();
+                                        loadContent();
+                                      }}
+                                    />
+                                  </div>
+
+                                  {/* Right Column (Content) */}
+                                  <div className="flex-1 flex flex-col w-full min-w-0 h-full">
+                                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col h-full">
+                                      <div className="p-6 flex-1 overflow-y-auto custom-scrollbar">
+                                        <TabsContent value="all" className="mt-0 h-full">
+                                          {renderView(currentItems)}
+                                        </TabsContent>
+                                        <TabsContent value="images" className="mt-0 h-full">
+                                          {renderView(currentItems)}
+                                        </TabsContent>
+                                        <TabsContent value="videos" className="mt-0 h-full">
+                                          {renderView(currentItems)}
+                                        </TabsContent>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Tabs>
+
+        {/* ... Modals (Preview, Rename, Slideshow) ... */ }
+        {/* Preview Modal */ }
+                              < Dialog open = { showPreview } onOpenChange = { setShowPreview } >
+                              <DialogContent className="glass-panel max-w-5xl max-h-[90vh] overflow-hidden">
+                                <DialogHeader>
+                                  <DialogTitle>{previewItem?.title}</DialogTitle>
+                                </DialogHeader>
+                                {previewItem && (
+                                  <div className="space-y-4">
+                                    <div className="bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center relative" style={{ minHeight: '400px', maxHeight: '600px' }}>
+                                      {previewItem.type === 'youtube' ? (
+                                        <div className="w-full aspect-video">
+                                          <iframe
+                                            src={`https://www.youtube.com/embed/${(previewItem.file_url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/) || [])[1]}`}
+                                            className="w-full h-full border-0"
+                                            allow="autoplay; encrypted-media"
+                                            allowFullScreen
+                                          />
+                                        </div>
+                                      ) : previewItem.type === 'web' ? (
+                                        <iframe
+                                          src={previewItem.file_url}
+                                          className="w-full h-[500px] border-0 bg-white"
+                                        />
+                                      ) : previewItem.type === 'image' ? (
+                                        <img
+                                          src={getFileUrl(previewItem.file_url)}
+                                          alt={previewItem.title}
+                                          className="max-w-full max-h-full object-contain"
+                                          data-testid="preview-image"
+                                        />
+                                      ) : (
+                                        <video
+                                          src={getFileUrl(previewItem.file_url)}
+                                          controls
+                                          autoPlay
+                                          className="max-w-full max-h-full"
+                                          data-testid="preview-video"
+                                        >
+                                          Browser-ul tău nu suportă redarea video.
+                                        </video>
+                                      )}
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 p-4 bg-white/40 rounded-xl">
+                                      <div>
+                                        <p className="text-xs text-slate-500 mb-1">Tip</p>
+                                        <p className="text-sm font-medium text-slate-800 capitalize">{previewItem.type}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-slate-500 mb-1">Categorie</p>
+                                        <p className="text-sm font-medium text-slate-800 capitalize">{previewItem.category}</p>
+                                      </div>
+                                      {previewItem.type === 'image' && (
+                                        <div>
+                                          <p className="text-xs text-slate-500 mb-1">Durată afișare</p>
+                                          <p className="text-sm font-medium text-slate-800">{previewItem.duration} secunde</p>
+                                        </div>
+                                      )}
+                                      <div>
+                                        <p className="text-xs text-slate-500 mb-1">URL fișier</p>
+                                        <a
+                                          href={getFileUrl(previewItem.file_url)}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-sm text-indigo-600 hover:text-indigo-700 truncate block"
+                                        >
+                                          Deschide în tab nou →
+                                        </a>
+                                      </div>
+                                    </div>
                                   </div>
                                 )}
-                                <span className="text-xs font-medium">{brand.name}</span>
-                              </label>
-                            ))
-                          )}
-                        </div>
-                        {formData.brand?.length > 0 && (
-                          <p className="text-[10px] text-slate-400">
-                            {formData.brand.length} branduri selectate
-                          </p>
-                        )}
-                      </div>
+                              </DialogContent>
+        </Dialog>
 
-                      <Tabs value={uploadMethod} onValueChange={setUploadMethod}>
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="file">Upload Fișier</TabsTrigger>
-                          <TabsTrigger value="external">Link Extern</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="file" className="space-y-4 mt-4">
-                          <div>
-                            <Label className="text-base font-semibold">Selectează fișier(e)</Label>
-                            <div className="mt-3 border-2 border-dashed border-indigo-300 rounded-xl p-6 bg-gradient-to-br from-indigo-50/50 to-blue-50/30 hover:from-indigo-50 hover:to-blue-50 transition-all">
-                              <div className="flex flex-col items-center mb-4">
-                                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-3">
-                                  <Upload className="w-8 h-8 text-indigo-600" />
+                          {/* Rename Dialog */}
+                          <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+                            <DialogContent className="glass-panel">
+                              <DialogHeader>
+                                <DialogTitle>Editează conținutul</DialogTitle>
+                              </DialogHeader>
+                              <form onSubmit={handleRenameContent} className="space-y-4 pt-4">
+                                <div className="space-y-2">
+                                  <Label className="text-sm font-semibold">Titlu</Label>
+                                  <Input
+                                    value={newTitle}
+                                    onChange={(e) => setNewTitle(e.target.value)}
+                                    placeholder="Introdu titlul..."
+                                    required
+                                  />
                                 </div>
-                                <p className="text-sm font-semibold text-slate-700 mb-1">Click pentru a selecta fișiere</p>
-                                <p className="text-xs text-slate-500">sau drag & drop aici</p>
-                              </div>
-                              <Input
-                                type="file"
-                                accept="image/*,video/*"
-                                multiple
-                                onChange={(e) => {
-                                  const files = e.target.files;
-                                  setSelectedFiles(files);
-                                  if (files.length > 0) {
-                                    const file = files[0];
-                                    const type = file.type.startsWith('video') ? 'video' : 'image';
-                                    setFormData({ ...formData, type, title: formData.title || file.name });
-                                  }
-                                }}
-                                className="cursor-pointer"
-                              />
-                              {selectedFiles.length > 0 && (
-                                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                  <p className="text-sm text-green-700 font-semibold flex items-center gap-2">
-                                    <span className="text-green-600">✓</span> {selectedFiles.length} fișier(e) selectat(e)
-                                  </p>
+
+                                <div className="space-y-2">
+                                  <Label className="text-sm font-semibold">Branduri (Clienți)</Label>
+                                  <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl max-h-48 overflow-y-auto">
+                                    {brands.length === 0 ? (
+                                      <p className="text-xs text-slate-400 italic">Niciun brand creat încă.</p>
+                                    ) : (
+                                      brands.map(brand => (
+                                        <label
+                                          key={brand.id}
+                                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all ${editBrands.includes(brand.name)
+                                            ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
+                                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                                            }`}
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            className="hidden"
+                                            checked={editBrands.includes(brand.name)}
+                                            onChange={() => {
+                                              const newBrands = editBrands.includes(brand.name)
+                                                ? editBrands.filter(b => b !== brand.name)
+                                                : [...editBrands, brand.name];
+                                              setEditBrands(newBrands);
+                                            }}
+                                          />
+                                          {brand.logo_url && (
+                                            <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0 border border-slate-100 bg-white">
+                                              <img src={brand.logo_url} className="w-full h-full object-contain" alt="" />
+                                            </div>
+                                          )}
+                                          <span className="text-xs font-medium">{brand.name}</span>
+                                        </label>
+                                      ))
+                                    )}
+                                  </div>
                                 </div>
-                              )}
-                            </div>
-                          </div>
-                        </TabsContent>
-                        <TabsContent value="external" className="space-y-4 mt-4">
-                          <div>
-                            <Label>Tip Conținut Extern</Label>
-                            <Select
-                              value={formData.type}
-                              onValueChange={(value) => setFormData({ ...formData, type: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="image">Imagine (Link Direct)</SelectItem>
-                                <SelectItem value="video">Video (Link Direct)</SelectItem>
-                                <SelectItem value="youtube">YouTube (Link/Embed)</SelectItem>
-                                <SelectItem value="web">Pagină Web (URL)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label>URL conținut</Label>
-                            <Input
-                              value={formData.file_url}
-                              onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
-                              placeholder={formData.type === 'youtube' ? "https://youtube.com/watch?v=..." : "https://..."}
-                            />
-                          </div>
-                        </TabsContent>
-                      </Tabs>
 
-                      <div className="flex gap-3 pt-4">
-                        <Button type="submit" disabled={uploading} className="btn-primary flex-1">
-                          {uploading ? 'Se încarcă...' : 'Adăugă'}
-                        </Button>
-                        <Button type="button" onClick={() => setShowDialog(false)} className="btn-secondary">
-                          Anulează
-                        </Button>
+                                <div className="flex justify-end gap-3 pt-4">
+                                  <Button type="button" variant="outline" onClick={() => setShowRenameDialog(false)}>
+                                    Anulează
+                                  </Button>
+                                  <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex-1 shadow-md">
+                                    Salvează modificările
+                                  </Button>
+                                </div>
+                              </form>
+                            </DialogContent>
+                          </Dialog>
+
+                          <SlideshowConfigDialog
+                            open={showSlideshowDialog}
+                            onOpenChange={setShowSlideshowDialog}
+                            onConfirm={handleCreateSlideshow}
+                            count={selectedItems.size}
+                            selectedContent={content.filter(item => selectedItems.has(item.id))}
+                          />
                       </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
-          </div>
-
-          {/* Main Layout Body */}
-          <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-14rem)]">
-            {/* Sidebar Column (Left) */}
-            <div className="w-full lg:w-80 shrink-0 h-full overflow-hidden flex flex-col">
-              <FolderSidebar
-                folders={folders}
-                selectedFolder={selectedFolder}
-                setSelectedFolder={setSelectedFolder}
-                content={content}
-                isAdmin={isAdmin}
-                openFolderDialog={openFolderDialog}
-                handleDeleteFolder={handleDeleteFolder}
-                handleMoveToFolder={handleMoveToFolder}
-                onAddContent={openUploadDialogWithFolder}
-                screens={screens}
-                onAssignToScreen={handleAssignToScreen}
-                onRefresh={() => {
-                  loadFolders();
-                  loadContent();
-                }}
-              />
-            </div>
-
-            {/* Right Column (Content) */}
-            <div className="flex-1 flex flex-col w-full min-w-0">
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col h-full">
-                <div className="p-6 flex-1 overflow-y-auto custom-scrollbar">
-                  <TabsContent value="all" className="mt-0">
-                    {renderView(currentItems)}
-                  </TabsContent>
-                  <TabsContent value="images" className="mt-0">
-                    {renderView(currentItems)}
-                  </TabsContent>
-                  <TabsContent value="videos" className="mt-0">
-                    {renderView(currentItems)}
-                  </TabsContent>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Tabs>
-
-        {/* Preview Modal */}
-        < Dialog open={showPreview} onOpenChange={setShowPreview} >
-          <DialogContent className="glass-panel max-w-5xl max-h-[90vh] overflow-hidden">
-            <DialogHeader>
-              <DialogTitle>{previewItem?.title}</DialogTitle>
-            </DialogHeader>
-            {previewItem && (
-              <div className="space-y-4">
-                <div className="bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center relative" style={{ minHeight: '400px', maxHeight: '600px' }}>
-                  {previewItem.type === 'youtube' ? (
-                    <div className="w-full aspect-video">
-                      <iframe
-                        src={`https://www.youtube.com/embed/${(previewItem.file_url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/) || [])[1]}`}
-                        className="w-full h-full border-0"
-                        allow="autoplay; encrypted-media"
-                        allowFullScreen
-                      />
-                    </div>
-                  ) : previewItem.type === 'web' ? (
-                    <iframe
-                      src={previewItem.file_url}
-                      className="w-full h-[500px] border-0 bg-white"
-                    />
-                  ) : previewItem.type === 'image' ? (
-                    <img
-                      src={getFileUrl(previewItem.file_url)}
-                      alt={previewItem.title}
-                      className="max-w-full max-h-full object-contain"
-                      data-testid="preview-image"
-                    />
-                  ) : (
-                    <video
-                      src={getFileUrl(previewItem.file_url)}
-                      controls
-                      autoPlay
-                      className="max-w-full max-h-full"
-                      data-testid="preview-video"
-                    >
-                      Browser-ul tău nu suportă redarea video.
-                    </video>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 p-4 bg-white/40 rounded-xl">
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Tip</p>
-                    <p className="text-sm font-medium text-slate-800 capitalize">{previewItem.type}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">Categorie</p>
-                    <p className="text-sm font-medium text-slate-800 capitalize">{previewItem.category}</p>
-                  </div>
-                  {previewItem.type === 'image' && (
-                    <div>
-                      <p className="text-xs text-slate-500 mb-1">Durată afișare</p>
-                      <p className="text-sm font-medium text-slate-800">{previewItem.duration} secunde</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-xs text-slate-500 mb-1">URL fișier</p>
-                    <a
-                      href={getFileUrl(previewItem.file_url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-indigo-600 hover:text-indigo-700 truncate block"
-                    >
-                      Deschide în tab nou →
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog >
-
-        {/* Rename Dialog */}
-        < Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog} >
-          <DialogContent className="glass-panel">
-            <DialogHeader>
-              <DialogTitle>Editează conținutul</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleRenameContent} className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Titlu</Label>
-                <Input
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Introdu titlul..."
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-semibold">Branduri (Clienți)</Label>
-                <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl max-h-48 overflow-y-auto">
-                  {brands.length === 0 ? (
-                    <p className="text-xs text-slate-400 italic">Niciun brand creat încă.</p>
-                  ) : (
-                    brands.map(brand => (
-                      <label
-                        key={brand.id}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all ${editBrands.includes(brand.name)
-                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
-                          : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                          }`}
-                      >
-                        <input
-                          type="checkbox"
-                          className="hidden"
-                          checked={editBrands.includes(brand.name)}
-                          onChange={() => {
-                            const newBrands = editBrands.includes(brand.name)
-                              ? editBrands.filter(b => b !== brand.name)
-                              : [...editBrands, brand.name];
-                            setEditBrands(newBrands);
-                          }}
-                        />
-                        {brand.logo_url && (
-                          <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0 border border-slate-100 bg-white">
-                            <img src={brand.logo_url} className="w-full h-full object-contain" alt="" />
-                          </div>
-                        )}
-                        <span className="text-xs font-medium">{brand.name}</span>
-                      </label>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setShowRenameDialog(false)}>
-                  Anulează
-                </Button>
-                <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex-1 shadow-md">
-                  Salvează modificările
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog >
-
-        <SlideshowConfigDialog
-          open={showSlideshowDialog}
-          onOpenChange={setShowSlideshowDialog}
-          onConfirm={handleCreateSlideshow}
-          count={selectedItems.size}
-          selectedContent={content.filter(item => selectedItems.has(item.id))}
-        />
-      </div >
-    </DashboardLayout >
-  );
+                    </DashboardLayout>
+                    );
 };
