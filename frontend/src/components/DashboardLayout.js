@@ -60,7 +60,7 @@ export const DashboardLayout = ({ children }) => {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-64'} h-screen fixed left-0 top-0 glass-panel z-50 flex flex-col transition-all duration-300 ease-in-out`} data-testid="sidebar">
+      <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-68'} h-screen fixed left-0 top-0 glass-panel z-50 flex flex-col transition-all duration-300 ease-in-out`} data-testid="sidebar">
         <div className={`p-6 border-b border-white/40 relative flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
           <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden">
             <img
@@ -170,7 +170,7 @@ export const DashboardLayout = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <main className={`${isSidebarCollapsed ? 'ml-20' : 'ml-64'} flex-1 p-8 min-h-screen transition-all duration-300 ease-in-out`} data-testid="main-content">
+      <main className={`${isSidebarCollapsed ? 'ml-20' : 'ml-68'} flex-1 p-8 min-h-screen transition-all duration-300 ease-in-out`} data-testid="main-content">
         {children}
       </main>
     </div>
