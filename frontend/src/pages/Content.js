@@ -42,7 +42,7 @@ export const Content = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewItem, setPreviewItem] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [viewMode, setViewMode] = useState('list');
+  const [viewMode, setViewMode] = useState('grid');
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
   const [screens, setScreens] = useState([]);
