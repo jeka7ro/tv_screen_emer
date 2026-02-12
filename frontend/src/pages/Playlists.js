@@ -3,7 +3,7 @@ import { DashboardLayout } from '../components/DashboardLayout';
 import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -90,7 +90,7 @@ export const Playlists = () => {
       name: playlist.name,
       autoplay: playlist.autoplay,
       loop: playlist.loop,
-      brand: playlist.brand || '',
+      brand: (Array.isArray(playlist.brand) ? playlist.brand[0] : playlist.brand) || '',
       is_scheduled: playlist.is_scheduled || false,
       start_at: playlist.start_at || '',
       end_at: playlist.end_at || ''
@@ -284,6 +284,9 @@ export const Playlists = () => {
                     <DialogTitle>
                       {editingPlaylist ? 'Editează playlist-ul' : 'Creează playlist nou'}
                     </DialogTitle>
+                    <DialogDescription className="hidden">
+                      Detalii despre playlist-ul tău.
+                    </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">

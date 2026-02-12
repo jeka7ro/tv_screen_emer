@@ -3,7 +3,7 @@ import { DashboardLayout } from '../components/DashboardLayout';
 import { Clock, Plus, Edit2, Trash2, Copy, Calendar, LayoutGrid, List as ListIcon, FileImage, ImageIcon, Eye, Film } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -404,6 +404,9 @@ export const HappyHour = () => {
                             <DialogTitle>
                                 {editingSchedule ? 'Editează Program' : 'Program Nou Happy Hour'}
                             </DialogTitle>
+                            <DialogDescription className="hidden">
+                                Configurează intervalele orare și conținutul pentru Happy Hour.
+                            </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
@@ -542,7 +545,7 @@ export const HappyHour = () => {
                                 <div>
                                     <Label>Conținut</Label>
                                     <Select
-                                        value={formData.content_id || ''}
+                                        value={formData.content_id ? String(formData.content_id) : ''}
                                         onValueChange={(val) => setFormData({ ...formData, content_id: val })}
                                     >
                                         <SelectTrigger>
@@ -575,7 +578,7 @@ export const HappyHour = () => {
                                 <div>
                                     <Label>Playlist</Label>
                                     <Select
-                                        value={formData.playlist_id || ''}
+                                        value={formData.playlist_id ? String(formData.playlist_id) : ''}
                                         onValueChange={(val) => setFormData({ ...formData, playlist_id: val })}
                                     >
                                         <SelectTrigger>
