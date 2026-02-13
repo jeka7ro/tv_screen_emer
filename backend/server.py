@@ -315,6 +315,7 @@ class UserResponse(BaseModel):
     role: str = "admin"
     location_id: Optional[str] = None
     status: str = "active"
+    avatar_url: Optional[str] = None
     last_login: Optional[datetime] = None
 
 class UserStatusUpdate(BaseModel):
@@ -798,6 +799,7 @@ async def login(credentials: UserLogin):
             role=user.role,
             location_id=user.location_id,
             status=user.status,
+            avatar_url=user.avatar_url,
             last_login=datetime.now(timezone.utc)
         ),
     )
@@ -811,6 +813,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
         is_super_admin=current_user.is_super_admin,
         role=current_user.role,
         location_id=current_user.location_id,
+        avatar_url=current_user.avatar_url,
         last_login=current_user.last_login
     )
 
