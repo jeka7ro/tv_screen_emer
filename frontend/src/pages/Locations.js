@@ -159,68 +159,70 @@ export const Locations = () => {
                     Adăugă locație
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="glass-panel">
+                <DialogContent className="glass-panel max-h-[90vh] overflow-hidden flex flex-col">
                   <DialogHeader>
                     <DialogTitle>
                       {editingLocation ? 'Editează locația' : 'Adăugă locație nouă'}
                     </DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <Label>Nume locație</Label>
-                      <Input
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="SushiMaster Centru"
-                        required
-                        data-testid="location-name-input"
-                      />
-                    </div>
-                    <div>
-                      <Label>Adresă</Label>
-                      <Input
-                        value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        placeholder="Strada Principală nr. 123"
-                        required
-                        data-testid="location-address-input"
-                      />
-                    </div>
-                    <div>
-                      <Label>Oraș</Label>
-                      <Input
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        placeholder="București"
-                        required
-                        data-testid="location-city-input"
-                      />
-                    </div>
-                    <div>
-                      <Label>Cod de securitate (opțional)</Label>
-                      <Input
-                        value={formData.security_code}
-                        onChange={(e) => setFormData({ ...formData, security_code: e.target.value })}
-                        placeholder="1234"
-                        data-testid="location-security-input"
-                      />
-                      <p className="text-xs text-slate-500 mt-1">
-                        Va fi cerut la accesarea ecranelor din această locație
-                      </p>
-                    </div>
-                    <div className="flex gap-3 pt-4">
-                      <Button type="submit" className="btn-primary flex-1" data-testid="save-location-button">
-                        {editingLocation ? 'Actualizează' : 'Creează'}
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => setShowDialog(false)}
-                        className="btn-secondary"
-                      >
-                        Anulează
-                      </Button>
-                    </div>
-                  </form>
+                  <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div>
+                        <Label>Nume locație</Label>
+                        <Input
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="SushiMaster Centru"
+                          required
+                          data-testid="location-name-input"
+                        />
+                      </div>
+                      <div>
+                        <Label>Adresă</Label>
+                        <Input
+                          value={formData.address}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          placeholder="Strada Principală nr. 123"
+                          required
+                          data-testid="location-address-input"
+                        />
+                      </div>
+                      <div>
+                        <Label>Oraș</Label>
+                        <Input
+                          value={formData.city}
+                          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                          placeholder="București"
+                          required
+                          data-testid="location-city-input"
+                        />
+                      </div>
+                      <div>
+                        <Label>Cod de securitate (opțional)</Label>
+                        <Input
+                          value={formData.security_code}
+                          onChange={(e) => setFormData({ ...formData, security_code: e.target.value })}
+                          placeholder="1234"
+                          data-testid="location-security-input"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">
+                          Va fi cerut la accesarea ecranelor din această locație
+                        </p>
+                      </div>
+                      <div className="flex gap-3 pt-4">
+                        <Button type="submit" className="btn-primary flex-1" data-testid="save-location-button">
+                          {editingLocation ? 'Actualizează' : 'Creează'}
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => setShowDialog(false)}
+                          className="btn-secondary"
+                        >
+                          Anulează
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
                 </DialogContent>
               </Dialog>
             )}

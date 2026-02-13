@@ -12,11 +12,13 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
+import { BrandSelector } from '../components/BrandSelector';
 
 export const Screens = () => {
   const { isAdmin } = useAuth();
   const [screens, setScreens] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [editingScreen, setEditingScreen] = useState(null);
@@ -35,7 +37,7 @@ export const Screens = () => {
     resolution: '1920x1080',
     orientation: 'landscape',
     template_id: 'fullscreen',
-    brand: ''
+    logo_brand_id: ''  // Changed from 'brand' to 'logo_brand_id'
   });
 
   useEffect(() => {
@@ -44,14 +46,16 @@ export const Screens = () => {
 
   const loadData = async () => {
     try {
-      const [screensRes, locationsRes] = await Promise.all([
+      const [screensRes, locationsRes, brandsRes] = await Promise.all([
         api.get('/screens'),
-        api.get('/locations')
+        api.get('/locations'),
+        api.get('/brands')
       ]);
       setScreens(screensRes.data.sort((a, b) =>
         (a.name || '').localeCompare(b.name || '', undefined, { numeric: true })
       ));
       setLocations(locationsRes.data);
+      setBrands(brandsRes.data);
     } catch (error) {
       toast.error('Eroare la încărcarea datelor');
     } finally {
@@ -62,17 +66,24 @@ export const Screens = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Clean up formData - convert empty strings to null for optional fields
+      const cleanedData = {
+        ...formData,
+        logo_brand_id: formData.logo_brand_id || null
+      };
+
       if (editingScreen) {
-        await api.put(`/screens/${editingScreen.id}`, formData);
+        await api.put(`/screens/${editingScreen.id}`, cleanedData);
         toast.success('Ecran actualizat!');
       } else {
-        await api.post('/screens', formData);
+        await api.post('/screens', cleanedData);
         toast.success('Ecran creat!');
       }
       setShowDialog(false);
       resetForm();
       loadData();
     } catch (error) {
+      console.error('Error saving screen:', error);
       toast.error(error.response?.data?.detail || 'Eroare la salvare');
     }
   };
@@ -86,7 +97,7 @@ export const Screens = () => {
       resolution: screen.resolution,
       orientation: screen.orientation,
       template_id: screen.template_id || 'fullscreen',
-      brand: screen.brand || ''
+      logo_brand_id: screen.logo_brand_id || ''
     });
     setShowDialog(true);
   };
@@ -110,7 +121,7 @@ export const Screens = () => {
       resolution: '1920x1080',
       orientation: 'landscape',
       template_id: 'fullscreen',
-      brand: ''
+      logo_brand_id: ''
     });
     setEditingScreen(null);
   };
@@ -124,13 +135,19 @@ export const Screens = () => {
   };
 
   // Get unique brands, cities, and locations for filters
-  const brands = [...new Set(screens.map(s => s.brand).filter(Boolean))].sort();
   const cities = [...new Set(locations.map(l => l.city))].sort();
   const filteredLocations = cityFilter === 'all' ? locations : locations.filter(l => l.city === cityFilter);
 
+  // Helper function to get brand name from ID
+  const getBrandName = (brandId) => {
+    if (!brandId) return null;
+    const brand = brands.find(b => b.id === brandId);
+    return brand?.name || null;
+  };
+
   const filteredScreens = screens.filter(screen => {
     const location = getLocation(screen.location_id);
-    const matchesBrand = brandFilter === 'all' || screen.brand === brandFilter;
+    const matchesBrand = brandFilter === 'all' || screen.logo_brand_id === brandFilter;
     const matchesCity = cityFilter === 'all' || location?.city === cityFilter;
     const matchesLocation = locationFilter === 'all' || screen.location_id === locationFilter;
     return matchesBrand && matchesCity && matchesLocation;
@@ -251,11 +268,11 @@ export const Screens = () => {
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div>
                         <Label>Brand</Label>
-                        <Input
-                          value={formData.brand}
-                          onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                          placeholder="Ex: Sushi Master, MyBox, etc."
-                          data-testid="screen-brand-input"
+                        <BrandSelector
+                          brands={brands}
+                          value={formData.logo_brand_id}
+                          onValueChange={(value) => setFormData({ ...formData, logo_brand_id: value === 'none' ? '' : value })}
+                          placeholder="Selectează brand"
                         />
                       </div>
                       <div>
@@ -363,7 +380,9 @@ export const Screens = () => {
                 <SelectContent>
                   <SelectItem value="all">Toate brandurile</SelectItem>
                   {brands.map(brand => (
-                    <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                    <SelectItem key={brand.id} value={brand.id}>
+                      {brand.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -471,7 +490,7 @@ export const Screens = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col">
-                            {screen.brand && <span className="text-[10px] font-bold text-red-600 uppercase mb-0.5">{screen.brand}</span>}
+                            {getBrandName(screen.logo_brand_id) && <span className="text-[10px] font-bold text-red-600 uppercase mb-0.5">{getBrandName(screen.logo_brand_id)}</span>}
                             <span className="font-semibold text-slate-800">{screen.name}</span>
                           </div>
                         </td>
@@ -543,9 +562,9 @@ export const Screens = () => {
               <div key={screen.id} className="glass-card p-6 flex flex-col h-full" data-testid={`screen-card-${screen.id}`}>
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex flex-col">
-                    {screen.brand && (
+                    {getBrandName(screen.logo_brand_id) && (
                       <span className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1 underline decoration-2 decoration-red-200 underline-offset-4">
-                        {screen.brand}
+                        {getBrandName(screen.logo_brand_id)}
                       </span>
                     )}
                     <h3 className="text-lg font-bold text-slate-800 leading-tight">

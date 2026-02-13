@@ -548,98 +548,102 @@ export const Users = () => {
         )}
 
         <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-          <DialogContent className="glass-panel">
+          <DialogContent className="glass-panel max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle>Resetare parolă pentru {selectedUser?.full_name}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleResetPassword} className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="new-password">Parolă nouă</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Introduceți parola nouă (min. 6 caractere)"
-                  autoFocus
-                />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <Button type="submit" disabled={resetting} className="flex-1 btn-primary">
-                  {resetting ? 'Se resetează...' : 'Resetează parola'}
-                </Button>
-                <Button type="button" onClick={() => setShowPasswordDialog(false)} variant="outline">
-                  Anulează
-                </Button>
-              </div>
-            </form>
+            <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+              <form onSubmit={handleResetPassword} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">Parolă nouă</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Introduceți parola nouă (min. 6 caractere)"
+                    autoFocus
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <Button type="submit" disabled={resetting} className="flex-1 btn-primary">
+                    {resetting ? 'Se resetează...' : 'Resetează parola'}
+                  </Button>
+                  <Button type="button" onClick={() => setShowPasswordDialog(false)} variant="outline">
+                    Anulează
+                  </Button>
+                </div>
+              </form>
+            </div>
           </DialogContent>
         </Dialog>
 
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogContent className="glass-panel">
+          <DialogContent className="glass-panel max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle>Editează Utilizator: {selectedUser?.full_name}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleUpdateUser} className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label>Nume Complet</Label>
-                <Input
-                  value={editFormData.full_name}
-                  onChange={(e) => setEditFormData({ ...editFormData, full_name: e.target.value })}
-                  placeholder="Nume Prenume"
-                  required
-                />
-              </div>
+            <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+              <form onSubmit={handleUpdateUser} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label>Nume Complet</Label>
+                  <Input
+                    value={editFormData.full_name}
+                    onChange={(e) => setEditFormData({ ...editFormData, full_name: e.target.value })}
+                    placeholder="Nume Prenume"
+                    required
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label>Rol</Label>
-                <Select
-                  value={editFormData.role}
-                  onValueChange={(value) => setEditFormData({ ...editFormData, role: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin (Toate locațiile)</SelectItem>
-                    <SelectItem value="manager">Manager (Locație specifică)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-2">
+                  <Label>Rol</Label>
+                  <Select
+                    value={editFormData.role}
+                    onValueChange={(value) => setEditFormData({ ...editFormData, role: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin (Toate locațiile)</SelectItem>
+                      <SelectItem value="manager">Manager (Locație specifică)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="space-y-2">
-                <Label>Locație</Label>
-                <Select
-                  value={editFormData.location_id || 'none'}
-                  onValueChange={(value) => setEditFormData({ ...editFormData, location_id: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selectează locația" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nicio locație</SelectItem>
-                    {locations.map(loc => (
-                      <SelectItem key={loc.id} value={loc.id}>
-                        {loc.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-slate-500">
-                  Managerii pot vedea doar ecranele din locația atribuită.
-                </p>
-              </div>
+                <div className="space-y-2">
+                  <Label>Locație</Label>
+                  <Select
+                    value={editFormData.location_id || 'none'}
+                    onValueChange={(value) => setEditFormData({ ...editFormData, location_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selectează locația" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nicio locație</SelectItem>
+                      {locations.map(loc => (
+                        <SelectItem key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500">
+                    Managerii pot vedea doar ecranele din locația atribuită.
+                  </p>
+                </div>
 
-              <div className="flex gap-3 pt-2">
-                <Button type="submit" disabled={updating} className="flex-1 btn-primary">
-                  {updating ? 'Se salvează...' : 'Salvează modificările'}
-                </Button>
-                <Button type="button" onClick={() => setShowEditDialog(false)} variant="outline">
-                  Anulează
-                </Button>
-              </div>
-            </form>
+                <div className="flex gap-3 pt-2">
+                  <Button type="submit" disabled={updating} className="flex-1 btn-primary">
+                    {updating ? 'Se salvează...' : 'Salvează modificările'}
+                  </Button>
+                  <Button type="button" onClick={() => setShowEditDialog(false)} variant="outline">
+                    Anulează
+                  </Button>
+                </div>
+              </form>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

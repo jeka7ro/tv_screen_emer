@@ -339,111 +339,113 @@ export const Invitations = () => {
 
         {/* Create Invitation Dialog */}
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogContent>
+          <DialogContent className="glass-panel max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle>Crează Invitație Nouă</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Valabilitate (zile)
-                </label>
-                <select
-                  value={newInvitation.expires_in_days}
-                  onChange={(e) => setNewInvitation({ ...newInvitation, expires_in_days: parseInt(e.target.value) })}
-                  className="w-full glass-input px-4 py-3"
-                  data-testid="expires-in-days-select"
-                >
-                  <option value={1}>1 zi</option>
-                  <option value={3}>3 zile</option>
-                  <option value={7}>7 zile</option>
-                  <option value={14}>14 zile</option>
-                  <option value={30}>30 zile</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Număr maxim de utilizări
-                </label>
-                <select
-                  value={newInvitation.max_uses}
-                  onChange={(e) => setNewInvitation({ ...newInvitation, max_uses: parseInt(e.target.value) })}
-                  className="w-full glass-input px-4 py-3"
-                  data-testid="max-uses-select"
-                >
-                  <option value={1}>1 utilizare (un singur cont)</option>
-                  <option value={5}>5 utilizări</option>
-                  <option value={10}>10 utilizări</option>
-                  <option value={25}>25 utilizări</option>
-                  <option value={50}>50 utilizări</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Rol Utilizator
-                </label>
-                <select
-                  value={newInvitation.role}
-                  onChange={(e) => setNewInvitation({ ...newInvitation, role: e.target.value })}
-                  className="w-full glass-input px-4 py-3"
-                >
-                  <option value="admin">Admin (Acces Total)</option>
-                  <option value="manager">Manager (Limitat la Locație)</option>
-                </select>
-              </div>
-
-              {newInvitation.role === 'manager' && (
+            <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+              <div className="space-y-4 py-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Locație Atribuită
+                    Valabilitate (zile)
                   </label>
                   <select
-                    value={newInvitation.location_id}
-                    onChange={(e) => setNewInvitation({ ...newInvitation, location_id: e.target.value })}
+                    value={newInvitation.expires_in_days}
+                    onChange={(e) => setNewInvitation({ ...newInvitation, expires_in_days: parseInt(e.target.value) })}
                     className="w-full glass-input px-4 py-3"
-                    required={newInvitation.role === 'manager'}
+                    data-testid="expires-in-days-select"
                   >
-                    <option value="">Selectează locația...</option>
-                    {locations.map(loc => (
-                      <option key={loc.id} value={loc.id}>{loc.name} - {loc.city}</option>
-                    ))}
+                    <option value={1}>1 zi</option>
+                    <option value={3}>3 zile</option>
+                    <option value={7}>7 zile</option>
+                    <option value={14}>14 zile</option>
+                    <option value={30}>30 zile</option>
                   </select>
                 </div>
-              )}
-              <div className="p-4 bg-slate-50 rounded-xl">
-                <p className="text-sm text-slate-600">
-                  Link-ul generat va fi valid timp de <strong>{newInvitation.expires_in_days} zile</strong> și
-                  poate fi folosit de <strong>{newInvitation.max_uses} {newInvitation.max_uses === 1 ? 'persoană' : 'persoane'}</strong>.
-                </p>
-              </div>
-            </div>
-            <DialogFooter>
-              <button
-                onClick={() => setShowCreateDialog(false)}
-                className="btn-secondary"
-              >
-                Anulează
-              </button>
-              <button
-                onClick={handleCreateInvitation}
-                disabled={creating}
-                className="btn-primary flex items-center gap-2"
-                data-testid="confirm-create-invitation-btn"
-              >
-                {creating ? (
-                  <>
-                    <div className="spinner w-4 h-4"></div>
-                    Se creează...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4" />
-                    Crează
-                  </>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Număr maxim de utilizări
+                  </label>
+                  <select
+                    value={newInvitation.max_uses}
+                    onChange={(e) => setNewInvitation({ ...newInvitation, max_uses: parseInt(e.target.value) })}
+                    className="w-full glass-input px-4 py-3"
+                    data-testid="max-uses-select"
+                  >
+                    <option value={1}>1 utilizare (un singur cont)</option>
+                    <option value={5}>5 utilizări</option>
+                    <option value={10}>10 utilizări</option>
+                    <option value={25}>25 utilizări</option>
+                    <option value={50}>50 utilizări</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Rol Utilizator
+                  </label>
+                  <select
+                    value={newInvitation.role}
+                    onChange={(e) => setNewInvitation({ ...newInvitation, role: e.target.value })}
+                    className="w-full glass-input px-4 py-3"
+                  >
+                    <option value="admin">Admin (Acces Total)</option>
+                    <option value="manager">Manager (Limitat la Locație)</option>
+                  </select>
+                </div>
+
+                {newInvitation.role === 'manager' && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Locație Atribuită
+                    </label>
+                    <select
+                      value={newInvitation.location_id}
+                      onChange={(e) => setNewInvitation({ ...newInvitation, location_id: e.target.value })}
+                      className="w-full glass-input px-4 py-3"
+                      required={newInvitation.role === 'manager'}
+                    >
+                      <option value="">Selectează locația...</option>
+                      {locations.map(loc => (
+                        <option key={loc.id} value={loc.id}>{loc.name} - {loc.city}</option>
+                      ))}
+                    </select>
+                  </div>
                 )}
-              </button>
-            </DialogFooter>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-sm text-slate-600">
+                    Link-ul generat va fi valid timp de <strong>{newInvitation.expires_in_days} zile</strong> și
+                    poate fi folosit de <strong>{newInvitation.max_uses} {newInvitation.max_uses === 1 ? 'persoană' : 'persoane'}</strong>.
+                  </p>
+                </div>
+              </div>
+              <DialogFooter>
+                <button
+                  onClick={() => setShowCreateDialog(false)}
+                  className="btn-secondary"
+                >
+                  Anulează
+                </button>
+                <button
+                  onClick={handleCreateInvitation}
+                  disabled={creating}
+                  className="btn-primary flex items-center gap-2"
+                  data-testid="confirm-create-invitation-btn"
+                >
+                  {creating ? (
+                    <>
+                      <div className="spinner w-4 h-4"></div>
+                      Se creează...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      Crează
+                    </>
+                  )}
+                </button>
+              </DialogFooter>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

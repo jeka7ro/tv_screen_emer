@@ -120,57 +120,59 @@ export const Brands = () => {
                                         Adăugă brand
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="glass-panel">
+                                <DialogContent className="glass-panel max-h-[90vh] overflow-hidden flex flex-col">
                                     <DialogHeader>
                                         <DialogTitle>
                                             {editingBrand ? 'Editează brandul' : 'Adăugă brand nou'}
                                         </DialogTitle>
                                     </DialogHeader>
-                                    <form onSubmit={handleSubmit} className="space-y-4">
-                                        <div>
-                                            <Label>Nume brand</Label>
-                                            <Input
-                                                value={formData.name}
-                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                placeholder="Ex: SushiMaster"
-                                                required
-                                                data-testid="brand-name-input"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>Adresă / Sediul central</Label>
-                                            <Input
-                                                value={formData.address}
-                                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                                placeholder="Strada Exemplului nr. 1"
-                                                data-testid="brand-address-input"
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>URL Logo</Label>
-                                            <Input
-                                                value={formData.logo_url}
-                                                onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                                                placeholder="https://example.com/logo.png"
-                                                data-testid="brand-logo-input"
-                                            />
-                                            <p className="text-xs text-slate-500 mt-1">
-                                                Introduceți URL-ul imaginii logo-ului
-                                            </p>
-                                        </div>
-                                        <div className="flex gap-3 pt-4">
-                                            <Button type="submit" className="btn-primary flex-1" data-testid="save-brand-button">
-                                                {editingBrand ? 'Actualizează' : 'Creează'}
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                onClick={() => setShowDialog(false)}
-                                                className="btn-secondary"
-                                            >
-                                                Anulează
-                                            </Button>
-                                        </div>
-                                    </form>
+                                    <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+                                        <form onSubmit={handleSubmit} className="space-y-4">
+                                            <div>
+                                                <Label>Nume brand</Label>
+                                                <Input
+                                                    value={formData.name}
+                                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                    placeholder="Ex: SushiMaster"
+                                                    required
+                                                    data-testid="brand-name-input"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>Adresă / Sediul central</Label>
+                                                <Input
+                                                    value={formData.address}
+                                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                                    placeholder="Strada Exemplului nr. 1"
+                                                    data-testid="brand-address-input"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>URL Logo</Label>
+                                                <Input
+                                                    value={formData.logo_url}
+                                                    onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                                                    placeholder="https://example.com/logo.png"
+                                                    data-testid="brand-logo-input"
+                                                />
+                                                <p className="text-xs text-slate-500 mt-1">
+                                                    Introduceți URL-ul imaginii logo-ului
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-3 pt-4">
+                                                <Button type="submit" className="btn-primary flex-1" data-testid="save-brand-button">
+                                                    {editingBrand ? 'Actualizează' : 'Creează'}
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    onClick={() => setShowDialog(false)}
+                                                    className="btn-secondary"
+                                                >
+                                                    Anulează
+                                                </Button>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </DialogContent>
                             </Dialog>
                         )}

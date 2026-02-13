@@ -278,123 +278,126 @@ export const Products = () => {
                   Adaugă produs
                 </Button>
               </DialogTrigger>
-              <DialogContent className="glass-panel max-h-[90vh] overflow-y-auto">
+              <DialogContent className="glass-panel max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader>
                   <DialogTitle>
                     {editingProduct ? 'Editează produsul' : 'Adaugă produs nou'}
                   </DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label>Nume produs</Label>
-                    <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="California Roll"
-                      required
-                      data-testid="product-name-input"
-                    />
-                  </div>
-                  <div>
-                    <Label>Descriere (opțional)</Label>
-                    <Textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Descriere delicată a produsului..."
-                      rows={3}
-                      data-testid="product-description-input"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+
                     <div>
-                      <Label>Preț</Label>
+                      <Label>Nume produs</Label>
                       <Input
-                        type="number"
-                        step="0.01"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                        placeholder="35.99"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="California Roll"
                         required
-                        data-testid="product-price-input"
+                        data-testid="product-name-input"
                       />
                     </div>
                     <div>
-                      <Label>Monedă</Label>
+                      <Label>Descriere (opțional)</Label>
+                      <Textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Descriere delicată a produsului..."
+                        rows={3}
+                        data-testid="product-description-input"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Preț</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={formData.price}
+                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                          placeholder="35.99"
+                          required
+                          data-testid="product-price-input"
+                        />
+                      </div>
+                      <div>
+                        <Label>Monedă</Label>
+                        <Select
+                          value={formData.currency}
+                          onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="RON">RON</SelectItem>
+                            <SelectItem value="EUR">EUR</SelectItem>
+                            <SelectItem value="USD">USD</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Categorie</Label>
                       <Select
-                        value={formData.currency}
-                        onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                        value={formData.category}
+                        onValueChange={(value) => setFormData({ ...formData, category: value })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger data-testid="product-category-select">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="RON">RON</SelectItem>
-                          <SelectItem value="EUR">EUR</SelectItem>
-                          <SelectItem value="USD">USD</SelectItem>
+                          {categories.map(cat => (
+                            <SelectItem key={cat.value} value={cat.value}>
+                              {cat.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-                  <div>
-                    <Label>Categorie</Label>
-                    <Select
-                      value={formData.category}
-                      onValueChange={(value) => setFormData({ ...formData, category: value })}
-                    >
-                      <SelectTrigger data-testid="product-category-select">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map(cat => (
-                          <SelectItem key={cat.value} value={cat.value}>
-                            {cat.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>URL imagine (opțional)</Label>
-                    <Input
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                      placeholder="https://..."
-                      data-testid="product-image-input"
-                    />
-                  </div>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.available}
-                        onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
-                        className="rounded"
+                    <div>
+                      <Label>URL imagine (opțional)</Label>
+                      <Input
+                        value={formData.image_url}
+                        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                        placeholder="https://..."
+                        data-testid="product-image-input"
                       />
-                      <span className="text-sm text-slate-700">Disponibil</span>
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.featured}
-                        onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                        className="rounded"
-                      />
-                      <span className="text-sm text-slate-700">În evidență</span>
-                    </label>
-                  </div>
-                  <div className="flex gap-3 pt-4">
-                    <Button type="submit" className="btn-primary flex-1" data-testid="save-product-button">
-                      {editingProduct ? 'Actualizează' : 'Creează'}
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => setShowDialog(false)}
-                      className="btn-secondary"
-                    >
-                      Anulează
-                    </Button>
-                  </div>
-                </form>
+                    </div>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.available}
+                          onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
+                          className="rounded"
+                        />
+                        <span className="text-sm text-slate-700">Disponibil</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={formData.featured}
+                          onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+                          className="rounded"
+                        />
+                        <span className="text-sm text-slate-700">În evidență</span>
+                      </label>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                      <Button type="submit" className="btn-primary flex-1" data-testid="save-product-button">
+                        {editingProduct ? 'Actualizează' : 'Creează'}
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => setShowDialog(false)}
+                        className="btn-secondary"
+                      >
+                        Anulează
+                      </Button>
+                    </div>
+                  </form>
+                </div>
               </DialogContent>
             </Dialog>
             <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />

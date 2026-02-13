@@ -1003,7 +1003,10 @@ async def create_screen(screen_data: ScreenCreate, current_user: User = Depends(
     if await screen_exists_by_slug(screen_data.slug):
         raise HTTPException(status_code=400, detail="Slug already exists")
     screen = Screen(**screen_data.model_dump())
-    await screen_insert(screen.model_dump())
+    # Add missing fields required by screen_insert
+    screen_dict = screen.model_dump()
+    screen_dict["brand"] = None  # Default to None if not provided
+    await screen_insert(screen_dict)
     await log_activity(current_user.id, current_user.full_name, "create", "screen", screen.id, "INFO", {"name": screen.name, "location_id": screen.location_id})
     return screen
 
