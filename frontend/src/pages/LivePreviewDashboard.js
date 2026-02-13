@@ -404,9 +404,9 @@ export const LivePreviewDashboard = () => {
                                         className="absolute flex"
                                         style={{
                                             left: '25.5%',
-                                            top: '42%',
+                                            top: '45%',
                                             width: '48%',
-                                            height: '28%',
+                                            height: '33%',
                                             gap: '0.6%',
                                         }}
                                     >
