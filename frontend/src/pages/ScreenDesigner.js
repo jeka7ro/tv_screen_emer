@@ -856,9 +856,9 @@ export const ScreenDesigner = () => {
                           // Precise coordinates for storefront.jpg televisions (3 screens)
                           <>
                             {[
-                              { left: '28.5%', top: '50%', width: '12.5%', height: '8.5%', idx: 0 },
-                              { left: '43%', top: '50%', width: '12.5%', height: '8.5%', idx: 1 },
-                              { left: '57%', top: '50.5%', width: '12.5%', height: '8.5%', idx: 2 }
+                              { left: '26%', top: '47%', width: '16%', height: '11%', idx: 0 },
+                              { left: '42.5%', top: '47%', width: '16%', height: '11%', idx: 1 },
+                              { left: '59%', top: '47.5%', width: '16%', height: '11%', idx: 2 }
                             ].map((pos, idx) => {
                               const s = groupScreens[idx];
                               if (!s) return null;
