@@ -43,6 +43,7 @@ export const DisplayScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const [currentPlaylistIndex, setCurrentPlaylistIndex] = useState(0);
   const [securityCode, setSecurityCode] = useState('');
   const [needsAuth, setNeedsAuth] = useState(false);
   const isDebug = searchParams.get('debug') === 'true';
@@ -84,6 +85,8 @@ export const DisplayScreen = () => {
   useEffect(() => {
     if (!displayData) return;
     const zonesList = displayData.zones_config || displayData.zones || [];
+
+    // Digital Menu rotation
     const zoneWithMenu = zonesList.find(z => z.content_type === 'digital_menu');
     if (zoneWithMenu?.digital_menu?.auto_rotate) {
       const menu = zoneWithMenu.digital_menu;
@@ -96,7 +99,21 @@ export const DisplayScreen = () => {
         return () => clearInterval(interval);
       }
     }
-  }, [displayData]);
+
+    // Playlist rotation
+    const zoneWithPlaylist = zonesList.find(z => z.content_type === 'playlist');
+    if (zoneWithPlaylist?.playlist?.content_items?.length > 1) {
+      const playlist = zoneWithPlaylist.playlist;
+      const currentItem = playlist.content_items[currentPlaylistIndex];
+      const duration = currentItem?.duration || 10; // Default 10 seconds if no duration
+
+      const interval = setInterval(() => {
+        setCurrentPlaylistIndex(prev => (prev + 1) % playlist.content_items.length);
+      }, duration * 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [displayData, currentPlaylistIndex]);
 
   useEffect(() => {
     const pollInterval = setInterval(() => {
@@ -246,7 +263,8 @@ export const DisplayScreen = () => {
     if (zoneConfig.content_type === 'single_content') {
       contentItem = zoneConfig.content;
     } else if (zoneConfig.content_type === 'playlist') {
-      contentItem = zoneConfig.playlist?.content_items?.[0]; // Default to first item for now
+      const playlistItems = zoneConfig.playlist?.content_items || [];
+      contentItem = playlistItems[currentPlaylistIndex] || playlistItems[0];
     } else if (zoneConfig.content_type === 'digital_menu') {
       return renderDigitalMenu(zoneConfig);
     }
@@ -348,6 +366,39 @@ export const DisplayScreen = () => {
           </div>
         );
       })}
+
+      {/* Logo Overlay */}
+      {displayData?.screen?.logo_enabled && displayData?.screen?.logo_brand_id && (() => {
+        const logoUrl = displayData?.screen?.logo_url;
+        const position = displayData?.screen?.logo_position || 'top-right';
+        const size = displayData?.screen?.logo_size || 'md';
+
+        const posMap = {
+          'top-left': { top: '12px', left: '12px' },
+          'top-center': { top: '12px', left: '50%', transform: 'translateX(-50%)' },
+          'top-right': { top: '12px', right: '12px' },
+          'center-left': { top: '50%', left: '12px', transform: 'translateY(-50%)' },
+          'center': { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+          'center-right': { top: '50%', right: '12px', transform: 'translateY(-50%)' },
+          'bottom-left': { bottom: '12px', left: '12px' },
+          'bottom-center': { bottom: '12px', left: '50%', transform: 'translateX(-50%)' },
+          'bottom-right': { bottom: '12px', right: '12px' },
+        };
+        const sizeMap = { sm: '40px', md: '64px', lg: '96px', xl: '128px' };
+
+        if (!logoUrl) return null;
+        const dim = sizeMap[size] || '64px';
+        return (
+          <div className="absolute z-40 pointer-events-none" style={{ ...posMap[position], width: dim, height: dim }}>
+            <img
+              src={getFileUrl(logoUrl)}
+              className="w-full h-full object-contain"
+              style={{ mixBlendMode: 'multiply', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
+              alt="Logo"
+            />
+          </div>
+        );
+      })()}
 
       {isDebug && (
         <div className="absolute bottom-4 left-4 z-50 p-3 bg-black/90 text-emerald-400 font-mono text-[9px] rounded-lg border border-emerald-500/30 max-w-sm pointer-events-none shadow-2xl backdrop-blur-sm">

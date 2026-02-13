@@ -15,6 +15,7 @@ import {
   Ban,
   CheckCircle,
   Edit,
+  Camera,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
@@ -38,6 +39,9 @@ export const Users = () => {
   const [resetting, setResetting] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [locations, setLocations] = useState([]);
+  const [avatarUploadingId, setAvatarUploadingId] = useState(null);
+  const avatarInputRef = React.useRef(null);
+  const [avatarTargetUser, setAvatarTargetUser] = useState(null);
   const [editFormData, setEditFormData] = useState({
     full_name: '',
     role: 'admin',
@@ -152,6 +156,68 @@ export const Users = () => {
     });
   };
 
+  const handleAvatarClick = (user) => {
+    setAvatarTargetUser(user);
+    avatarInputRef.current?.click();
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !avatarTargetUser) return;
+
+    setAvatarUploadingId(avatarTargetUser.id);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      await api.post(`/users/${avatarTargetUser.id}/avatar`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success('Avatar actualizat!');
+      loadUsers();
+    } catch (error) {
+      toast.error('Eroare la upload avatar');
+    } finally {
+      setAvatarUploadingId(null);
+      setAvatarTargetUser(null);
+      e.target.value = '';
+    }
+  };
+
+  const renderAvatar = (user, size = 'md') => {
+    const sizeClass = size === 'lg' ? 'w-20 h-20' : 'w-10 h-10';
+    const iconSize = size === 'lg' ? 'w-10 h-10' : 'w-5 h-5';
+    const cameraSize = size === 'lg' ? 'w-8 h-8' : 'w-6 h-6';
+    const cameraIconSize = size === 'lg' ? 'w-4 h-4' : 'w-3 h-3';
+    const isUploading = avatarUploadingId === user.id;
+
+    return (
+      <div
+        className={`${sizeClass} rounded-full relative group cursor-pointer flex-shrink-0`}
+        onClick={() => handleAvatarClick(user)}
+        title="Schimbă avatar"
+      >
+        {user.avatar_url ? (
+          <img
+            src={user.avatar_url}
+            alt={user.full_name}
+            className={`${sizeClass} rounded-full object-cover border-2 border-white shadow-sm`}
+          />
+        ) : (
+          <div className={`${sizeClass} rounded-full bg-indigo-100 flex items-center justify-center border-2 border-white shadow-sm`}>
+            <User className={`${iconSize} text-indigo-600`} />
+          </div>
+        )}
+        <div className={`absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity`}>
+          {isUploading ? (
+            <div className="animate-spin rounded-full border-2 border-white border-t-transparent" style={{ width: size === 'lg' ? 20 : 14, height: size === 'lg' ? 20 : 14 }} />
+          ) : (
+            <Camera className={`${cameraIconSize} text-white`} />
+          )}
+        </div>
+      </div>
+    );
+  };
+
   if (!isSuperAdmin()) {
     return (
       <DashboardLayout>
@@ -163,6 +229,17 @@ export const Users = () => {
       </DashboardLayout>
     );
   }
+
+  // Hidden file input for avatar uploads
+  const avatarFileInput = (
+    <input
+      ref={avatarInputRef}
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={handleAvatarUpload}
+    />
+  );
 
   if (loading) {
     return (
@@ -178,6 +255,7 @@ export const Users = () => {
 
   return (
     <DashboardLayout>
+      {avatarFileInput}
       <div className="animate-in" data-testid="users-page">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
@@ -270,9 +348,7 @@ export const Users = () => {
                     >
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                            <User className="w-5 h-5 text-indigo-600" />
-                          </div>
+                          {renderAvatar(u, 'md')}
                           <span className="font-medium text-slate-800">{u.full_name || '—'}</span>
                         </div>
                       </td>
@@ -376,8 +452,8 @@ export const Users = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {users.map((u) => (
               <div key={u.id} className="glass-card p-6 flex flex-col items-center text-center" data-testid={`user-card-${u.email}`}>
-                <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center mb-4 border-4 border-white shadow-sm">
-                  <User className="w-10 h-10 text-indigo-600" />
+                <div className="mb-4">
+                  {renderAvatar(u, 'lg')}
                 </div>
 
                 <h3 className="text-lg font-bold text-slate-800 mb-1">

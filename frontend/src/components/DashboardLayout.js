@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -19,7 +19,9 @@ import {
   Music,
   ChevronLeft,
   ChevronRight,
-  Activity
+  Activity,
+  Clock,
+  Calendar
 } from 'lucide-react';
 
 const menuItems = [
@@ -48,9 +50,15 @@ export const DashboardLayout = ({ children }) => {
     const saved = localStorage.getItem('sidebarCollapsed');
     return saved === 'true';
   });
+  const [currentTime, setCurrentTime] = useState(new Date());
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isSuperAdmin } = useAuth();
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -58,6 +66,22 @@ export const DashboardLayout = ({ children }) => {
   };
 
   const toggleSidebar = () => setIsSidebarCollapsed(!isSidebarCollapsed);
+
+  // Generate initials for avatar
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const formatDate = (date) => {
+    const days = ['Duminică', 'Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă'];
+    const months = ['Ian', 'Feb', 'Mar', 'Apr', 'Mai', 'Iun', 'Iul', 'Aug', 'Sep', 'Oct', 'Noi', 'Dec'];
+    return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+  };
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -172,9 +196,55 @@ export const DashboardLayout = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <main className={`${isSidebarCollapsed ? 'ml-20' : 'ml-[17rem]'} flex-1 p-8 min-h-screen transition-all duration-300 ease-in-out`} data-testid="main-content">
-        {children}
-      </main>
+      <div className={`${isSidebarCollapsed ? 'ml-20' : 'ml-[17rem]'} flex-1 min-h-screen transition-all duration-300 ease-in-out flex flex-col`}>
+        {/* Top Header Bar */}
+        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-8 py-3">
+          <div className="flex items-center justify-end gap-4">
+            {/* Date & Time */}
+            <div className="flex items-center gap-3 text-right">
+              <div>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                  <Calendar className="w-3 h-3" />
+                  <span>{formatDate(currentTime)}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-sm font-bold text-slate-800 justify-end">
+                  <Clock className="w-3.5 h-3.5 text-red-500" />
+                  <span className="tabular-nums">{formatTime(currentTime)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Separator */}
+            <div className="w-px h-8 bg-slate-200" />
+
+            {/* User Info */}
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-semibold text-slate-800 leading-tight">{user?.full_name}</p>
+                <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
+                  {isSuperAdmin() ? 'Super Admin' : user?.role === 'manager' ? 'Manager' : 'Admin'}
+                </p>
+              </div>
+              {/* Avatar */}
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user?.full_name}
+                  className="w-9 h-9 rounded-full object-cover border-2 border-red-200 shadow-sm"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white text-xs font-bold shadow-sm border-2 border-red-200">
+                  {getInitials(user?.full_name)}
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 p-8" data-testid="main-content">
+          {children}
+        </main>
+      </div>
     </div>
   );
 };

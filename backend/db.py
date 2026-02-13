@@ -188,6 +188,20 @@ async def init_db() -> None:
         );
     """)
 
+    # Add effects columns to screens table
+    for col, col_type, default in [
+        ("parallax_enabled", "BOOLEAN", "FALSE"),
+        ("steam_enabled", "BOOLEAN", "FALSE"),
+        ("logo_enabled", "BOOLEAN", "FALSE"),
+        ("logo_brand_id", "TEXT", "NULL"),
+        ("logo_position", "TEXT", "'top-right'"),
+        ("logo_size", "TEXT", "'md'"),
+    ]:
+        try:
+            await pool.execute(f"ALTER TABLE screens ADD COLUMN IF NOT EXISTS {col} {col_type} DEFAULT {default}")
+        except Exception:
+            pass  # Column may already exist
+
 
 async def close_db() -> None:
     global pool
@@ -478,13 +492,19 @@ async def screen_update(id: str, data: Dict[str, Any]) -> None:
     await _execute(
         """UPDATE screens SET location_id = $1, name = $2, slug = $3, resolution = $4, orientation = $5,
            template_id = $6, sync_group = $7, cascade_offset = $8, status = $9, last_active = $10, 
-           sync_type = $11, sync_group_name = $12, sync_fit_mode = $13, brand = $14 WHERE id = $15""",
+           sync_type = $11, sync_group_name = $12, sync_fit_mode = $13, brand = $14,
+           parallax_enabled = $15, steam_enabled = $16, logo_enabled = $17, 
+           logo_brand_id = $18, logo_position = $19, logo_size = $20 WHERE id = $21""",
         data["location_id"], data["name"], data["slug"],
         data.get("resolution", "1920x1080"), data.get("orientation", "landscape"),
         data.get("template_id"), data.get("sync_group"), data.get("cascade_offset", 0),
         data.get("status", "offline"), data.get("last_active"), data.get("sync_type", "simple"), 
         data.get("sync_group_name"), data.get("sync_fit_mode", "cover"), 
-        data.get("brand"), id,
+        data.get("brand"),
+        data.get("parallax_enabled", False), data.get("steam_enabled", False),
+        data.get("logo_enabled", False), data.get("logo_brand_id"),
+        data.get("logo_position", "top-right"), data.get("logo_size", "md"),
+        id,
     )
 
 
@@ -1090,21 +1110,7 @@ async def happy_hour_delete(schedule_id: str):
             WHERE id = $1::uuid
         """, schedule_id)
 
-async def happy_hours_active_now():
-    """Get currently active happy hour schedules"""
-    now = datetime.now()
-    current_time = now.strftime("%H:%M:%S")
-    current_day = now.isoweekday() # 1-7
-    
-    async with pool.acquire() as conn:
-        rows = await conn.fetch("""
-            SELECT * FROM happy_hour_schedules
-            WHERE active = true 
-              AND $1 = ANY(days_of_week)
-              AND start_time <= $2
-              AND end_time >= $3
-        """, current_day, current_time, current_time)
-        return _rows(rows)
+
 
 # ---------- brands ----------
 
@@ -1198,7 +1204,7 @@ async def happy_hours_active_now() -> List[Dict[str, Any]]:
         rows = await conn.fetch("""
             SELECT * FROM happy_hour_schedules
             WHERE active = true
-            AND CURRENT_TIME BETWEEN start_time AND end_time
-            AND EXTRACT(ISODOW FROM CURRENT_DATE) = ANY(days_of_week)
+            AND (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Bucharest')::time BETWEEN start_time AND end_time
+            AND EXTRACT(ISODOW FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Bucharest')::date)::int = ANY(days_of_week)
         """)
         return [dict(r) for r in rows]

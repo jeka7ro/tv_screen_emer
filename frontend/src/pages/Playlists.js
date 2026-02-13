@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
-import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Folder, FolderOpen } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../components/ui/dialog';
@@ -19,6 +19,7 @@ export const Playlists = () => {
   const [playlists, setPlaylists] = useState([]);
   const [happyHours, setHappyHours] = useState([]);
   const [content, setContent] = useState([]);
+  const [folders, setFolders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -45,7 +46,8 @@ export const Playlists = () => {
   const [calendarView, setCalendarView] = useState('week');
   // Fix: Add missing state for selectedPlaylists
   const [selectedPlaylists, setSelectedPlaylists] = useState([]);
-  const [filterWithScreens, setFilterWithScreens] = useState(false);
+  const [filterWithScreens, setFilterWithScreens] = useState(true); // Default to true
+  const [selectedLocationForScreens, setSelectedLocationForScreens] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -56,13 +58,14 @@ export const Playlists = () => {
 
   const loadData = async () => {
     try {
-      const [playlistsRes, contentRes, brandsRes, screensRes, locationsRes, happyHoursRes] = await Promise.all([
+      const [playlistsRes, contentRes, brandsRes, screensRes, locationsRes, happyHoursRes, foldersRes] = await Promise.all([
         api.get(`/playlists?t=${new Date().getTime()}`),
         api.get('/content'),
         api.get('/brands'),
         api.get('/screens'),
         api.get('/locations'),
-        api.get('/happy-hours')
+        api.get('/happy-hours'),
+        api.get('/content/folders')
       ]);
       setPlaylists(playlistsRes.data);
       setContent(contentRes.data);
@@ -70,6 +73,7 @@ export const Playlists = () => {
       setScreens(screensRes.data);
       setLocations(locationsRes.data);
       setHappyHours(happyHoursRes.data);
+      setFolders(foldersRes.data);
     } catch (error) {
       toast.error('Eroare la încărcarea datelor');
     } finally {
@@ -172,10 +176,14 @@ export const Playlists = () => {
   };
 
   const addContentToPlaylist = (contentId) => {
+    const contentItem = getContentById(contentId);
+    // Auto-detect duration from content metadata if available
+    const defaultDuration = contentItem?.duration || 10;
+
     setPlaylistItems([...playlistItems, {
       content_id: contentId,
       order: playlistItems.length,
-      duration: 10
+      duration: defaultDuration
     }]);
   };
 
@@ -353,7 +361,7 @@ export const Playlists = () => {
                     Creează playlist
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="glass-panel max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="glass-panel max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                   <DialogHeader>
                     <DialogTitle>
                       {editingPlaylist ? 'Editează playlist-ul' : 'Creează playlist nou'}
@@ -362,49 +370,49 @@ export const Playlists = () => {
                       Detalii despre playlist-ul tău.
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-4 py-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-1 space-y-1.5">
-                          <Label htmlFor="name" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nume playlist</Label>
-                          <Input
-                            id="name"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="font-medium bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                            placeholder="Ex: Campanie Primăvară 2024"
-                          />
-                        </div>
+                  <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div className="space-y-4 py-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1 space-y-1.5">
+                            <Label htmlFor="name" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nume playlist</Label>
+                            <Input
+                              id="name"
+                              value={formData.name}
+                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                              className="font-medium bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                              placeholder="Ex: Campanie Primăvară 2024"
+                            />
+                          </div>
 
-                        <div className="space-y-1.5 w-[160px]">
-                          <Label htmlFor="brand" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Brand</Label>
-                          <Select
-                            value={formData.brand}
-                            onValueChange={(value) => setFormData({ ...formData, brand: value })}
-                          >
-                            <SelectTrigger className="bg-slate-50 border-slate-200">
-                              <SelectValue placeholder="Brand" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="unknown">Fără brand</SelectItem>
-                              {brands.map(brand => (
-                                <SelectItem key={brand.id} value={brand.name || "unknown"}>
-                                  <div className="flex items-center gap-2">
-                                    {brand.logo_url && (
-                                      <img src={brand.logo_url} alt="" className="w-4 h-4 object-contain" />
-                                    )}
-                                    <span>{brand.name}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                          <div className="space-y-1.5 w-[160px]">
+                            <Label htmlFor="brand" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Brand</Label>
+                            <Select
+                              value={formData.brand}
+                              onValueChange={(value) => setFormData({ ...formData, brand: value })}
+                            >
+                              <SelectTrigger className="bg-slate-50 border-slate-200">
+                                <SelectValue placeholder="Brand" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="unknown">Fără brand</SelectItem>
+                                {brands.map(brand => (
+                                  <SelectItem key={brand.id} value={brand.name || "unknown"}>
+                                    <div className="flex items-center gap-2">
+                                      {brand.logo_url && (
+                                        <img src={brand.logo_url} alt="" className="w-4 h-4 object-contain" />
+                                      )}
+                                      <span>{brand.name}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
 
-                        <div className="space-y-1.5 flex-1 max-w-[120px]">
-                          <Label htmlFor="color" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Culoare</Label>
-                          <div className="flex items-center gap-2">
-                            <div className="relative w-10 h-10 rounded-lg border border-slate-200 shadow-sm overflow-hidden shrink-0" style={{ backgroundColor: formData.color }}>
+                          <div className="space-y-1.5 flex-1 max-w-[60px]">
+                            <Label htmlFor="color" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Culoare</Label>
+                            <div className="relative w-10 h-10 rounded-lg border border-slate-200 shadow-sm overflow-hidden shrink-0 cursor-pointer hover:scale-105 transition-transform" style={{ backgroundColor: formData.color }}>
                               <input
                                 type="color"
                                 id="color"
@@ -414,370 +422,473 @@ export const Playlists = () => {
                                 title="Alege culoare"
                               />
                             </div>
-                            <Input
-                              value={formData.color}
-                              onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                              className="h-10 text-xs font-mono font-bold bg-slate-50 uppercase"
-                              placeholder="#HEX"
-                            />
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={formData.autoplay}
-                          onChange={(e) => setFormData({ ...formData, autoplay: e.target.checked })}
-                          className="rounded"
-                        />
-                        <span className="text-sm text-slate-700">Autoplay</span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={formData.loop}
-                          onChange={(e) => setFormData({ ...formData, loop: e.target.checked })}
-                          className="rounded"
-                        />
-                        <span className="text-sm text-slate-700">Repetă playlist</span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={formData.is_scheduled}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            // Calculate local ISO string for defaults
-                            const now = new Date();
-                            const toLocalISO = (date) => {
-                              const offsetMs = date.getTimezoneOffset() * 60000;
-                              return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
-                            };
-
-                            const defaultStart = toLocalISO(now);
-                            // Default end NO LONGER set automatically to allow infinite play
-
-                            setFormData({
-                              ...formData,
-                              is_scheduled: checked,
-                              start_at: checked && !formData.start_at ? defaultStart : formData.start_at,
-                              end_at: checked ? formData.end_at : '' // Keep existing or reset if unchecked
-                            });
-                          }}
-                          className="rounded text-red-600 focus:ring-red-500"
-                        />
-                        <span className="text-sm font-medium text-slate-700">Programează</span>
-                      </label>
-                    </div>
-
-                    {formData.is_scheduled && (
-                      <div className="grid grid-cols-2 gap-4 p-4 bg-red-50/50 rounded-xl border border-red-100 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="space-y-2">
-                          <Label htmlFor="start_at" className="text-xs font-bold text-red-700 uppercase tracking-wider">Începe la</Label>
-                          <Input
-                            id="start_at"
-                            type="datetime-local"
-                            value={formData.start_at ? formData.start_at.substring(0, 16) : ''}
-                            onChange={(e) => setFormData({ ...formData, start_at: e.target.value })}
-                            className="bg-white border-red-200 focus:border-red-500 rounded-lg shadow-sm h-10"
-                            required={formData.is_scheduled}
+                      <div className="flex items-center gap-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={formData.autoplay}
+                            onChange={(e) => setFormData({ ...formData, autoplay: e.target.checked })}
+                            className="rounded"
                           />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="end_at" className="text-xs font-bold text-red-700 uppercase tracking-wider">Se termină la (Opțional)</Label>
-                          <Input
-                            id="end_at"
-                            type="datetime-local"
-                            value={formData.end_at ? formData.end_at.substring(0, 16) : ''}
-                            onChange={(e) => setFormData({ ...formData, end_at: e.target.value })}
-                            className="bg-white border-red-200 focus:border-red-500 rounded-lg shadow-sm h-10"
+                          <span className="text-sm text-slate-700">Autoplay</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={formData.loop}
+                            onChange={(e) => setFormData({ ...formData, loop: e.target.checked })}
+                            className="rounded"
                           />
-                          <p className="text-[10px] text-slate-500">Lasă gol pentru a rula până la oprire manuală</p>
-                        </div>
+                          <span className="text-sm text-slate-700">Repetă playlist</span>
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={formData.is_scheduled}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              // Calculate local ISO string for defaults
+                              const now = new Date();
+                              const toLocalISO = (date) => {
+                                const offsetMs = date.getTimezoneOffset() * 60000;
+                                return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+                              };
 
-                        <div className="col-span-2 space-y-2 mt-2 pt-2 border-t border-red-200/50">
-                          <div className="flex items-center justify-between mb-2">
-                            <Label className="text-xs font-bold text-red-700 uppercase tracking-wider">
-                              Selectează Ecrane {formData.screen_ids?.length > 0 && <span className="ml-1 text-red-500 font-normal">({formData.screen_ids.length} selectate)</span>}
-                            </Label>
-                            <div className="flex items-center gap-2">
-                              <label className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-slate-600 hover:text-red-600">
-                                <input
-                                  type="checkbox"
-                                  checked={filterWithScreens}
-                                  onChange={(e) => setFilterWithScreens(e.target.checked)}
-                                  className="rounded w-3 h-3 text-red-600 focus:ring-1 focus:ring-red-500 border-slate-300"
-                                />
-                                Doar locații cu ecrane
-                              </label>
-                            </div>
-                          </div>
+                              const defaultStart = toLocalISO(now);
+                              // Default end NO LONGER set automatically to allow infinite play
 
-                          {/* Location Filter */}
-                          <div className="bg-white p-3 rounded-lg border border-red-100 mb-2">
-                            <input
-                              type="text"
-                              placeholder="Caută locație..."
-                              value={locationSearch}
-                              onChange={(e) => setLocationSearch(e.target.value)}
-                              className="w-full text-xs p-1.5 border border-slate-200 rounded mb-2 focus:ring-1 focus:ring-red-500 outline-none"
+                              setFormData({
+                                ...formData,
+                                is_scheduled: checked,
+                                start_at: checked && !formData.start_at ? defaultStart : formData.start_at,
+                                end_at: checked ? formData.end_at : '' // Keep existing or reset if unchecked
+                              });
+                            }}
+                            className="rounded text-red-600 focus:ring-red-500"
+                          />
+                          <span className="text-sm font-medium text-slate-700">Programează</span>
+                        </label>
+                      </div>
+
+                      {formData.is_scheduled && (
+                        <div className="grid grid-cols-2 gap-4 p-4 bg-red-50/50 rounded-xl border border-red-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="space-y-2">
+                            <Label htmlFor="start_at" className="text-xs font-bold text-red-700 uppercase tracking-wider">Începe la</Label>
+                            <Input
+                              id="start_at"
+                              type="datetime-local"
+                              value={formData.start_at ? formData.start_at.substring(0, 16) : ''}
+                              onChange={(e) => setFormData({ ...formData, start_at: e.target.value })}
+                              className="bg-white border-red-200 focus:border-red-500 rounded-lg shadow-sm h-10"
+                              required={formData.is_scheduled}
                             />
-                            <div className="max-h-24 overflow-y-auto space-y-1">
-                              <label className="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-50 p-1 rounded font-bold text-red-700 border-b border-red-100 pb-1 mb-1">
-                                <input
-                                  type="checkbox"
-                                  checked={screens.length > 0 && formData.screen_ids?.length === screens.length}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      setFormData(prev => ({ ...prev, screen_ids: screens.map(s => s.id) }));
-                                    } else {
-                                      setFormData(prev => ({ ...prev, screen_ids: [] }));
-                                    }
-                                  }}
-                                  className="rounded text-red-600 focus:ring-red-500 w-3 h-3"
-                                />
-                                <span>Selectează Tot</span>
-                              </label>
-                              {locations
-                                .filter(loc => loc.name.toLowerCase().includes(locationSearch.toLowerCase()))
-                                .map(loc => {
-                                  const locScreens = screens.filter(s => s.location_id === loc.id);
-
-                                  // Filter: Only locations with screens
-                                  if (filterWithScreens && locScreens.length === 0) return null;
-
-                                  const allSelected = locScreens.length > 0 && locScreens.every(s => formData.screen_ids?.includes(s.id));
-                                  const someSelected = locScreens.some(s => formData.screen_ids?.includes(s.id));
-
-                                  return (
-                                    <label key={loc.id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-50 p-1 rounded">
-                                      <input
-                                        type="checkbox"
-                                        checked={allSelected}
-                                        ref={input => { if (input) input.indeterminate = someSelected && !allSelected; }}
-                                        onChange={(e) => {
-                                          const checked = e.target.checked;
-                                          const screenIds = locScreens.map(s => s.id);
-                                          setFormData(prev => {
-                                            const current = new Set(prev.screen_ids || []);
-                                            if (checked) {
-                                              screenIds.forEach(id => current.add(id));
-                                            } else {
-                                              screenIds.forEach(id => current.delete(id));
-                                            }
-                                            return { ...prev, screen_ids: Array.from(current) };
-                                          });
-                                        }}
-                                        className="rounded text-red-600 focus:ring-red-500 w-3 h-3"
-                                      />
-                                      <span className="font-medium text-slate-700">{loc.name}</span>
-                                      <span className="text-slate-400 text-[10px]">({locScreens.length} ecrane)</span>
-                                    </label>
-                                  );
-                                })
-                              }
-                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="end_at" className="text-xs font-bold text-red-700 uppercase tracking-wider">Se termină la (Opțional)</Label>
+                            <Input
+                              id="end_at"
+                              type="datetime-local"
+                              value={formData.end_at ? formData.end_at.substring(0, 16) : ''}
+                              onChange={(e) => setFormData({ ...formData, end_at: e.target.value })}
+                              className="bg-white border-red-200 focus:border-red-500 rounded-lg shadow-sm h-10"
+                            />
+                            <p className="text-[10px] text-slate-500">Lasă gol pentru a rula până la oprire manuală</p>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-red-200">
-                            {screens.map(screen => (
-                              <label key={screen.id} className={`flex items-start gap-2 p-2 rounded-lg border transition-all cursor-pointer ${formData.screen_ids?.includes(screen.id)
-                                ? 'bg-red-100 border-red-300 shadow-sm'
-                                : 'bg-white border-red-100 hover:bg-red-50'
-                                }`}>
-                                <input
-                                  type="checkbox"
-                                  checked={formData.screen_ids?.includes(screen.id) || false}
-                                  onChange={(e) => {
-                                    const checked = e.target.checked;
-                                    setFormData(prev => {
-                                      const currentIds = prev.screen_ids || [];
-                                      if (checked) {
-                                        return { ...prev, screen_ids: [...currentIds, screen.id] };
-                                      } else {
-                                        return { ...prev, screen_ids: currentIds.filter(id => id !== screen.id) };
-                                      }
-                                    });
-                                  }}
-                                  className="mt-1 rounded text-red-600 focus:ring-red-500"
-                                />
-                                <div>
-                                  <div className="text-xs font-bold text-slate-700">{screen.name}</div>
-                                  <div className="text-[10px] text-slate-500">{screen.location_name || screen.city || 'No Location'}</div>
+                          <div className="col-span-2 space-y-2 mt-2 pt-2 border-t border-red-200/50">
+                            <div className="flex items-center justify-between mb-2">
+                              <Label className="text-xs font-bold text-red-700 uppercase tracking-wider">
+                                Selectează Ecrane {formData.screen_ids?.length > 0 && <span className="ml-1 text-red-500 font-normal">({formData.screen_ids.length} selectate)</span>}
+                              </Label>
+                              <div className="flex items-center gap-2">
+                                <label className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-slate-600 hover:text-red-600">
+                                  <input
+                                    type="checkbox"
+                                    checked={filterWithScreens}
+                                    onChange={(e) => setFilterWithScreens(e.target.checked)}
+                                    className="rounded w-3 h-3 text-red-600 focus:ring-1 focus:ring-red-500 border-slate-300"
+                                  />
+                                  Doar locații cu ecrane
+                                </label>
+                              </div>
+                            </div>
+
+                            {/* Split layout: Locations (left) + Screens (right) */}
+                            <div className="grid grid-cols-2 gap-0 bg-white rounded-xl border border-red-100 overflow-hidden" style={{ minHeight: '180px' }}>
+                              {/* Left: Locations */}
+                              <div className="border-r border-slate-100">
+                                <div className="p-2 border-b border-slate-100 bg-slate-50">
+                                  <input
+                                    type="text"
+                                    placeholder="🔍 Caută locație..."
+                                    value={locationSearch}
+                                    onChange={(e) => setLocationSearch(e.target.value)}
+                                    className="w-full text-xs p-1.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-red-500 outline-none bg-white"
+                                  />
                                 </div>
-                              </label>
-                            ))}
+                                <div className="max-h-40 overflow-y-auto">
+                                  {/* Select All */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (screens.length > 0 && formData.screen_ids?.length === screens.length) {
+                                        setFormData(prev => ({ ...prev, screen_ids: [] }));
+                                      } else {
+                                        setFormData(prev => ({ ...prev, screen_ids: screens.map(s => s.id) }));
+                                      }
+                                    }}
+                                    className="w-full flex items-center gap-2 text-xs px-3 py-2 font-bold text-red-700 border-b border-red-100 hover:bg-red-50 transition-colors text-left"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={screens.length > 0 && formData.screen_ids?.length === screens.length}
+                                      readOnly
+                                      className="rounded text-red-600 focus:ring-red-500 w-3 h-3 pointer-events-none"
+                                    />
+                                    <span>Selectează Tot</span>
+                                  </button>
+
+                                  {locations
+                                    .filter(loc => loc.name.toLowerCase().includes(locationSearch.toLowerCase()))
+                                    .map(loc => {
+                                      const locScreens = screens.filter(s => s.location_id === loc.id);
+                                      if (filterWithScreens && locScreens.length === 0) return null;
+
+                                      const allSelected = locScreens.length > 0 && locScreens.every(s => formData.screen_ids?.includes(s.id));
+                                      const someSelected = locScreens.some(s => formData.screen_ids?.includes(s.id));
+                                      const isActive = selectedLocationForScreens === loc.id;
+
+                                      return (
+                                        <button
+                                          key={loc.id}
+                                          type="button"
+                                          onClick={() => setSelectedLocationForScreens(isActive ? null : loc.id)}
+                                          className={`w-full flex items-center gap-2 text-xs px-3 py-2 transition-colors text-left border-b border-slate-50 last:border-0 ${isActive ? 'bg-red-50 border-l-2 border-l-red-500' : 'hover:bg-slate-50'
+                                            }`}
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={allSelected}
+                                            ref={input => { if (input) input.indeterminate = someSelected && !allSelected; }}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              const checked = !allSelected;
+                                              const screenIds = locScreens.map(s => s.id);
+                                              setFormData(prev => {
+                                                const current = new Set(prev.screen_ids || []);
+                                                if (checked) {
+                                                  screenIds.forEach(id => current.add(id));
+                                                } else {
+                                                  screenIds.forEach(id => current.delete(id));
+                                                }
+                                                return { ...prev, screen_ids: Array.from(current) };
+                                              });
+                                            }}
+                                            readOnly
+                                            className="rounded text-red-600 focus:ring-red-500 w-3 h-3 cursor-pointer"
+                                          />
+                                          <span className="font-medium text-slate-700 flex-1 truncate">{loc.name}</span>
+                                          <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full shrink-0">{locScreens.length}</span>
+                                        </button>
+                                      );
+                                    })
+                                  }
+                                </div>
+                              </div>
+
+                              {/* Right: Screens for selected location */}
+                              <div className="bg-slate-50/50">
+                                <div className="p-2 border-b border-slate-100 bg-slate-50">
+                                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    {selectedLocationForScreens
+                                      ? `Ecrane — ${locations.find(l => l.id === selectedLocationForScreens)?.name || ''}`
+                                      : 'Selectează o locație ←'
+                                    }
+                                  </span>
+                                </div>
+                                <div className="max-h-40 overflow-y-auto p-2">
+                                  {!selectedLocationForScreens ? (
+                                    <div className="flex items-center justify-center h-28 text-xs text-slate-400">
+                                      <span>Click pe o locație din stânga</span>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-1.5">
+                                      {screens
+                                        .filter(s => s.location_id === selectedLocationForScreens)
+                                        .map(screen => (
+                                          <label
+                                            key={screen.id}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs cursor-pointer transition-all border ${formData.screen_ids?.includes(screen.id)
+                                              ? 'bg-red-100 border-red-300 text-red-700 font-bold shadow-sm'
+                                              : 'bg-white border-slate-200 text-slate-600 hover:bg-red-50 hover:border-red-200'
+                                              }`}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={formData.screen_ids?.includes(screen.id) || false}
+                                              onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setFormData(prev => {
+                                                  const currentIds = prev.screen_ids || [];
+                                                  if (checked) {
+                                                    return { ...prev, screen_ids: [...currentIds, screen.id] };
+                                                  } else {
+                                                    return { ...prev, screen_ids: currentIds.filter(id => id !== screen.id) };
+                                                  }
+                                                });
+                                              }}
+                                              className="rounded text-red-600 focus:ring-red-500 w-3.5 h-3.5"
+                                            />
+                                            <span className={`w-2 h-2 rounded-full shrink-0 ${formData.screen_ids?.includes(screen.id) ? 'bg-red-500' : 'bg-slate-300'}`} />
+                                            {screen.name}
+                                          </label>
+                                        ))}
+                                      {screens.filter(s => s.location_id === selectedLocationForScreens).length === 0 && (
+                                        <div className="text-center py-4 text-xs text-slate-400 italic">
+                                          Niciun ecran la această locație
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
                             {screens.length === 0 && (
-                              <div className="col-span-2 text-center py-4 text-xs text-slate-400 italic">
+                              <div className="text-center py-4 text-xs text-slate-400 italic">
                                 Nu există ecrane disponibile. Adaugă ecrane din meniul Ecrane.
                               </div>
                             )}
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <Label className="text-base font-bold text-slate-700 flex items-center gap-2">
-                          <Plus className="w-4 h-4 text-emerald-500" />
-                          Conținut disponibil
-                        </Label>
-                        <div className="max-h-[500px] overflow-y-auto space-y-2 border border-slate-100 rounded-2xl p-4 bg-slate-50 shadow-inner">
-                          {content.map(item => (
-                            <div
-                              key={item.id}
-                              className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-lg hover:border-red-200 hover:shadow-sm transition-all group"
-                            >
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="w-10 h-10 rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center shadow-sm relative group/thumb">
-                                  {item.type === 'video' ? (
-                                    <>
-                                      {item.thumbnail_url ? (
-                                        <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover group-hover:hidden" />
-                                      ) : null}
-                                      <video
-                                        src={item.file_url}
-                                        className={`w-full h-full object-cover ${item.thumbnail_url ? 'hidden group-hover:block' : ''}`}
-                                        muted
-                                        playsInline
-                                        onMouseOver={(e) => e.target.play()}
-                                        onMouseOut={(e) => { e.target.pause(); e.target.currentTime = 0; }}
-                                      />
-                                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-100 group-hover:opacity-0 transition-opacity">
-                                        <Film className="w-4 h-4 text-white shadow-sm" />
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <img src={item.thumbnail_url || item.file_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                                  )}
-                                </div>
-                                <div>
-                                  <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.title}</p>
-                                  <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{item.type}</p>
-                                </div>
-                              </div>
-                              <Button
-                                type="button"
-                                onClick={() => addContentToPlaylist(item.id)}
-                                className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-lg border-none shadow-none"
-                              >
-                                Adaugă
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                          <Label className="text-base font-bold text-slate-700 flex items-center gap-2">
+                            <Plus className="w-4 h-4 text-emerald-500" />
+                            Conținut disponibil
+                          </Label>
+                          <div className="max-h-[500px] overflow-y-auto space-y-2 border border-slate-100 rounded-2xl p-4 bg-slate-50 shadow-inner">
+                            {/* Named folder sections first */}
+                            {folders.map(folder => {
+                              const folderItems = content.filter(item => String(item.folder_id) === String(folder.id));
+                              if (folderItems.length === 0) return null;
 
-                      <div className="space-y-3">
-                        <Label className="text-base font-bold text-slate-700 flex items-center gap-2">
-                          <ListIcon className="w-4 h-4 text-red-500" />
-                          Playlist ({playlistItems.length} elemente • {formatDuration(calculateTotalDuration(playlistItems))})
-                        </Label>
-                        <div className="max-h-[500px] overflow-y-auto space-y-3 border border-slate-100 rounded-2xl p-4 bg-slate-50 shadow-inner">
-                          {playlistItems.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                              <Plus className="w-12 h-12 mb-4 opacity-10" />
-                              <p className="font-medium">Adaugă elemente din stânga</p>
-                            </div>
-                          ) : (
-                            playlistItems.map((item, index) => {
-                              const contentItem = getContentById(item.content_id);
+                              const isIconUrl = folder.icon && (folder.icon.startsWith('http') || folder.icon.startsWith('/') || folder.icon.startsWith('data:'));
+
                               return (
-                                <div
-                                  key={index}
-                                  className="bg-white border border-slate-100 rounded-lg p-2 shadow-sm hover:shadow-md transition-all relative group flex items-center gap-3"
-                                >
-                                  {/* Order controls */}
-                                  <div className="flex flex-col gap-0.5">
-                                    <button
-                                      type="button"
-                                      onClick={() => moveItem(index, 'up')}
-                                      disabled={index === 0}
-                                      className="p-0.5 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
-                                    >
-                                      <ArrowUp className="w-3 h-3 text-slate-400" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => moveItem(index, 'down')}
-                                      disabled={index === playlistItems.length - 1}
-                                      className="p-0.5 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
-                                    >
-                                      <ArrowDown className="w-3 h-3 text-slate-400" />
-                                    </button>
-                                  </div>
-
-                                  {/* Thumbnail */}
-                                  <div className="w-12 h-8 rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center relative group/item-thumb">
-                                    {contentItem?.type === 'video' ? (
-                                      <>
-                                        {contentItem.thumbnail_url ? (
-                                          <img src={contentItem.thumbnail_url} alt="" className="w-full h-full object-cover group-hover/item-thumb:hidden" />
-                                        ) : null}
-                                        <video
-                                          src={contentItem.file_url}
-                                          className={`w-full h-full object-cover ${contentItem.thumbnail_url ? 'hidden group-hover/item-thumb:block' : ''}`}
-                                          muted
-                                        />
-                                      </>
+                                <details key={folder.id} className="group/folder">
+                                  <summary className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded-lg cursor-pointer hover:bg-slate-50 transition-all mb-2">
+                                    {isIconUrl ? (
+                                      <div className="w-4 h-4 rounded overflow-hidden shrink-0 border border-slate-200/60 bg-white">
+                                        <img src={folder.icon} alt={folder.name} className="w-full h-full object-cover" />
+                                      </div>
                                     ) : (
-                                      <img src={contentItem?.thumbnail_url || contentItem?.file_url} alt="" className="w-full h-full object-cover" />
+                                      <Folder className="w-4 h-4 shrink-0" style={{ color: folder.color }} fill={folder.color} />
                                     )}
+                                    <span className="text-sm font-bold text-slate-700 flex-1">{folder.name}</span>
+                                    <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{folderItems.length}</span>
+                                  </summary>
+                                  <div className="ml-6 mt-2 space-y-2">
+                                    {folderItems.map(item => (
+                                      <div
+                                        key={item.id}
+                                        className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-lg hover:border-red-200 hover:shadow-sm transition-all group"
+                                      >
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                          <div className="w-10 h-10 rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center shadow-sm relative group/thumb">
+                                            {item.type === 'video' ? (
+                                              item.thumbnail_url ? (
+                                                <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                              ) : (
+                                                <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                                                  <Film className="w-4 h-4 text-slate-400" />
+                                                </div>
+                                              )
+                                            ) : (
+                                              <img src={item.thumbnail_url || item.file_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                                            )}
+                                          </div>
+                                          <div>
+                                            <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.title}</p>
+                                            <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{item.type}</p>
+                                          </div>
+                                        </div>
+                                        <Button
+                                          type="button"
+                                          onClick={() => addContentToPlaylist(item.id)}
+                                          className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-lg border-none shadow-none"
+                                        >
+                                          Adaugă
+                                        </Button>
+                                      </div>
+                                    ))}
                                   </div>
-
-                                  {/* Info */}
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-[10px] font-black text-red-500">#{index + 1}</span>
-                                      <p className="text-xs font-bold text-slate-700 truncate">{contentItem?.title || 'Unknown'}</p>
-                                    </div>
-                                    <div className="flex items-center gap-1 mt-0.5">
-                                      <Clock className="w-2.5 h-2.5 text-slate-400" />
-                                      <input
-                                        type="number"
-                                        min="1"
-                                        value={item.duration || 10}
-                                        onChange={(e) => updateItemDuration(index, e.target.value)}
-                                        className="h-5 w-12 px-1 text-[10px] font-bold text-slate-600 bg-slate-50 border-none rounded focus:ring-1 focus:ring-red-500"
-                                      />
-                                      <span className="text-[9px] text-slate-400 uppercase">sec</span>
-                                    </div>
-                                  </div>
-
-                                  {/* Delete button */}
-                                  <button
-                                    type="button"
-                                    onClick={() => removeFromPlaylist(index)}
-                                    className="p-1.5 hover:bg-rose-50 text-slate-300 hover:text-rose-500 rounded-md transition-colors"
-                                    title="Șterge"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
+                                </details>
                               );
-                            })
-                          )}
+                            })}
+
+                            {/* Root/unorganized items - collapsed by default */}
+                            {(() => {
+                              const rootItems = content.filter(item => !item.folder_id);
+                              if (rootItems.length === 0) return null;
+                              return (
+                                <details className="group/folder">
+                                  <summary className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded-lg cursor-pointer hover:bg-slate-50 transition-all mb-2">
+                                    <FolderOpen className="w-4 h-4 text-slate-400 group-open/folder:text-indigo-600" />
+                                    <span className="text-sm font-bold text-slate-700 flex-1">Fără folder</span>
+                                    <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{rootItems.length}</span>
+                                  </summary>
+                                  <div className="ml-6 mt-2 space-y-2">
+                                    {rootItems.map(item => (
+                                      <div
+                                        key={item.id}
+                                        className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-lg hover:border-red-200 hover:shadow-sm transition-all group"
+                                      >
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                          <div className="w-10 h-10 rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center shadow-sm relative group/thumb">
+                                            {item.type === 'video' ? (
+                                              item.thumbnail_url ? (
+                                                <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                              ) : (
+                                                <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                                                  <Film className="w-4 h-4 text-slate-400" />
+                                                </div>
+                                              )
+                                            ) : (
+                                              <img src={item.thumbnail_url || item.file_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                                            )}
+                                          </div>
+                                          <div>
+                                            <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.title}</p>
+                                            <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{item.type}</p>
+                                          </div>
+                                        </div>
+                                        <Button
+                                          type="button"
+                                          onClick={() => addContentToPlaylist(item.id)}
+                                          className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-lg border-none shadow-none"
+                                        >
+                                          Adaugă
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </details>
+                              );
+                            })()}
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <Label className="text-base font-bold text-slate-700 flex items-center gap-2">
+                            <ListIcon className="w-4 h-4 text-red-500" />
+                            Playlist ({playlistItems.length} elemente • {formatDuration(calculateTotalDuration(playlistItems))})
+                          </Label>
+                          <div className="max-h-[500px] overflow-y-auto space-y-3 border border-slate-100 rounded-2xl p-4 bg-slate-50 shadow-inner">
+                            {playlistItems.length === 0 ? (
+                              <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+                                <Plus className="w-12 h-12 mb-4 opacity-10" />
+                                <p className="font-medium">Adaugă elemente din stânga</p>
+                              </div>
+                            ) : (
+                              playlistItems.map((item, index) => {
+                                const contentItem = getContentById(item.content_id);
+                                return (
+                                  <div
+                                    key={index}
+                                    className="bg-white border border-slate-100 rounded-lg p-2 shadow-sm hover:shadow-md transition-all relative group flex items-center gap-3"
+                                  >
+                                    {/* Order controls */}
+                                    <div className="flex flex-col gap-0.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => moveItem(index, 'up')}
+                                        disabled={index === 0}
+                                        className="p-0.5 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
+                                      >
+                                        <ArrowUp className="w-3 h-3 text-slate-400" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => moveItem(index, 'down')}
+                                        disabled={index === playlistItems.length - 1}
+                                        className="p-0.5 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
+                                      >
+                                        <ArrowDown className="w-3 h-3 text-slate-400" />
+                                      </button>
+                                    </div>
+
+                                    {/* Thumbnail */}
+                                    <div className="w-12 h-8 rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center relative">
+                                      {contentItem?.type === 'video' ? (
+                                        contentItem?.thumbnail_url ? (
+                                          <img src={contentItem.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                        ) : (
+                                          <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                                            <Film className="w-4 h-4 text-slate-400" />
+                                          </div>
+                                        )
+                                      ) : (
+                                        <img src={contentItem?.thumbnail_url || contentItem?.file_url} alt="" className="w-full h-full object-cover" />
+                                      )}
+                                    </div>
+
+                                    {/* Info */}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black text-red-500">#{index + 1}</span>
+                                        <p className="text-xs font-bold text-slate-700 truncate">{contentItem?.title || 'Unknown'}</p>
+                                      </div>
+                                      <div className="flex items-center gap-1 mt-0.5">
+                                        <Clock className="w-2.5 h-2.5 text-slate-400" />
+                                        <input
+                                          type="number"
+                                          min="1"
+                                          value={item.duration || 10}
+                                          onChange={(e) => updateItemDuration(index, e.target.value)}
+                                          className="h-5 w-12 px-1 text-[10px] font-bold text-slate-600 bg-slate-50 border-none rounded focus:ring-1 focus:ring-red-500"
+                                        />
+                                        <span className="text-[9px] text-slate-400 uppercase">sec</span>
+                                      </div>
+                                    </div>
+
+                                    {/* Delete button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => removeFromPlaylist(index)}
+                                      className="p-1.5 hover:bg-rose-50 text-slate-300 hover:text-rose-500 rounded-md transition-colors"
+                                      title="Șterge"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex gap-3 pt-4">
-                      <Button type="submit" className="btn-primary flex-1 h-11 rounded-xl shadow-md hover:shadow-lg transition-all" data-testid="save-playlist-button">
-                        {editingPlaylist ? 'Actualizează' : 'Creează'}
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => setShowDialog(false)}
-                        className="btn-secondary h-11 rounded-xl"
-                      >
-                        Anulează
-                      </Button>
-                    </div>
-                  </form>
+                      <div className="flex gap-3 pt-4">
+                        <Button type="submit" className="btn-primary flex-1 h-11 rounded-xl shadow-md hover:shadow-lg transition-all" data-testid="save-playlist-button">
+                          {editingPlaylist ? 'Actualizează' : 'Creează'}
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => setShowDialog(false)}
+                          className="btn-secondary h-11 rounded-xl"
+                        >
+                          Anulează
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
                 </DialogContent>
               </Dialog>
             </div>
@@ -1102,9 +1213,15 @@ export const Playlists = () => {
                         return (
                           <div key={idx} className="relative rounded overflow-hidden bg-black h-full border border-slate-100">
                             {contentItem.type === 'video' ? (
-                              <video src={contentItem.file_url} className="w-full h-full object-cover opacity-80" />
+                              contentItem.thumbnail_url ? (
+                                <img src={contentItem.thumbnail_url} alt="" className="w-full h-full object-cover opacity-80" />
+                              ) : (
+                                <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                                  <Film className="w-3 h-3 text-slate-400" />
+                                </div>
+                              )
                             ) : (
-                              <img src={contentItem.thumbnail_url || contentItem.file_url} className="w-full h-full object-cover opacity-80" />
+                              <img src={contentItem.thumbnail_url || contentItem.file_url} alt="" className="w-full h-full object-cover opacity-80" />
                             )}
                           </div>
                         )

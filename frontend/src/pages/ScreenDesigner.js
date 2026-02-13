@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Save, ArrowLeft, Eye } from 'lucide-react';
+import { Save, ArrowLeft, Eye, Check, Sparkles, Layers, Wind, Image, Monitor } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import '../styles/effects.css';
@@ -10,6 +10,34 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+
+// Mini layout diagram for each template
+const TemplateIcon = ({ template, isSelected }) => {
+  const baseClass = `w-full h-full rounded transition-all`;
+  const zones = template.zones || [];
+
+  return (
+    <div className={`relative w-14 h-9 rounded border-2 overflow-hidden ${isSelected ? 'border-indigo-400 bg-indigo-50' : 'border-slate-300 bg-slate-50'}`}>
+      {zones.map((zone, i) => {
+        const colors = ['bg-indigo-400', 'bg-purple-400', 'bg-teal-400'];
+        const selectedColors = ['bg-indigo-500', 'bg-purple-500', 'bg-teal-500'];
+        return (
+          <div
+            key={zone.id}
+            className={`absolute ${isSelected ? selectedColors[i % 3] : colors[i % 3]} opacity-60 rounded-[2px]`}
+            style={{
+              left: `${zone.x}%`,
+              top: `${zone.y}%`,
+              width: `${zone.width}%`,
+              height: `${zone.height}%`,
+              margin: '1px'
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+};
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -38,10 +66,32 @@ export const ScreenDesigner = () => {
   const [saving, setSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showLivePreview, setShowLivePreview] = useState(false);
+  const [brands, setBrands] = useState([]);
 
   // Visual effects state
   const [enableParallax, setEnableParallax] = useState(false);
   const [enableSteam, setEnableSteam] = useState(false);
+  const [enableLogo, setEnableLogo] = useState(false);
+  const [selectedBrandId, setSelectedBrandId] = useState(null);
+  const [logoPosition, setLogoPosition] = useState('top-right');
+  const [logoSize, setLogoSize] = useState('md');
+
+  // Logo position classes
+  const logoPositionMap = {
+    'top-left': 'top-3 left-3',
+    'top-center': 'top-3 left-1/2 -translate-x-1/2',
+    'top-right': 'top-3 right-3',
+    'center-left': 'top-1/2 -translate-y-1/2 left-3',
+    'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+    'center-right': 'top-1/2 -translate-y-1/2 right-3',
+    'bottom-left': 'bottom-3 left-3',
+    'bottom-center': 'bottom-3 left-1/2 -translate-x-1/2',
+    'bottom-right': 'bottom-3 right-3',
+  };
+  const logoSizeMap = { sm: 'w-10 h-10', md: 'w-16 h-16', lg: 'w-24 h-24', xl: 'w-32 h-32' };
+
+  // Get brands that have logos
+  const brandsWithLogo = brands.filter(b => b.logo_url);
 
   useEffect(() => {
     loadData();
@@ -49,14 +99,15 @@ export const ScreenDesigner = () => {
 
   const loadData = async () => {
     try {
-      const [screenRes, screensRes, templatesRes, menusRes, playlistsRes, contentRes, zonesRes] = await Promise.all([
+      const [screenRes, screensRes, templatesRes, menusRes, playlistsRes, contentRes, zonesRes, brandsRes] = await Promise.all([
         api.get(`/screens/${screenId}`),
         api.get('/screens'),
         api.get('/screen-templates'),
         api.get('/digital-menus'),
         api.get('/playlists'),
         api.get('/content'),
-        api.get(`/screen-zones/${screenId}`)
+        api.get(`/screen-zones/${screenId}`),
+        api.get('/brands')
       ]);
 
       setScreen(screenRes.data);
@@ -65,6 +116,15 @@ export const ScreenDesigner = () => {
       setDigitalMenus(menusRes.data);
       setPlaylists(playlistsRes.data);
       setContent(contentRes.data);
+      setBrands(brandsRes.data || []);
+
+      // Load saved effects
+      setEnableParallax(!!screenRes.data.parallax_enabled);
+      setEnableSteam(!!screenRes.data.steam_enabled);
+      setEnableLogo(!!screenRes.data.logo_enabled);
+      setSelectedBrandId(screenRes.data.logo_brand_id || null);
+      setLogoPosition(screenRes.data.logo_position || 'top-right');
+      setLogoSize(screenRes.data.logo_size || 'md');
 
       const template = templatesRes.data.find(t => t.id === screenRes.data.template_id);
       setSelectedTemplate(template || templatesRes.data[0]);
@@ -115,10 +175,16 @@ export const ScreenDesigner = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Update screen template
+      // Update screen template + effects
       await api.put(`/screens/${screenId}`, {
         ...screen,
-        template_id: selectedTemplate.id
+        template_id: selectedTemplate.id,
+        parallax_enabled: enableParallax,
+        steam_enabled: enableSteam,
+        logo_enabled: enableLogo,
+        logo_brand_id: selectedBrandId,
+        logo_position: logoPosition,
+        logo_size: logoSize
       });
 
       // Save zone configurations
@@ -210,28 +276,56 @@ export const ScreenDesigner = () => {
         </div>
 
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="lg:col-span-2 flex flex-col gap-6">
+            {/* Template Selector - Visual Cards */}
             <div className="glass-card p-6">
-              <h2 className="text-xl font-semibold text-slate-800 mb-4">Template Ecran</h2>
-              <Select
-                value={selectedTemplate?.id}
-                onValueChange={handleTemplateChange}
-                disabled={!isAdmin()}
-              >
-                <SelectTrigger data-testid="template-select">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map(template => (
-                    <SelectItem key={template.id} value={template.id}>
-                      {template.name} - {template.description}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <Monitor className="w-5 h-5 text-indigo-500" />
+                Template Ecran
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {templates.map(template => {
+                  const isSelected = selectedTemplate?.id === template.id;
+                  return (
+                    <button
+                      key={template.id}
+                      onClick={() => isAdmin() && handleTemplateChange(template.id)}
+                      disabled={!isAdmin()}
+                      className={`relative p-3 rounded-xl border-2 transition-all text-left group ${isSelected
+                        ? 'border-indigo-400 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-md shadow-indigo-100/50 ring-2 ring-indigo-200/50'
+                        : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30 hover:shadow-sm'
+                        }`}
+                    >
+                      {/* Checkmark */}
+                      {isSelected && (
+                        <div className="absolute -top-2 -right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center shadow-md z-10">
+                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                        </div>
+                      )}
+                      {/* Mini Layout Diagram */}
+                      <div className="flex justify-center mb-2">
+                        <TemplateIcon template={template} isSelected={isSelected} />
+                      </div>
+                      <p className={`text-[11px] font-bold text-center leading-tight ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
+                        {template.name}
+                      </p>
+                      <p className={`text-[9px] text-center mt-0.5 leading-tight ${isSelected ? 'text-indigo-500' : 'text-slate-400'}`}>
+                        {template.zones.length} {template.zones.length === 1 ? 'zonă' : 'zone'}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-              <div className="mt-6 bg-slate-100 rounded-2xl p-4 aspect-video relative overflow-hidden shadow-inner border-2 border-slate-200">
+            {/* Preview */}
+            <div className="glass-card p-6 flex-1">
+              <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <Eye className="w-5 h-5 text-indigo-500" />
+                Previzualizare
+              </h2>
+              <div className="bg-slate-100 rounded-2xl p-4 aspect-video relative overflow-hidden shadow-inner border-2 border-slate-200">
                 {selectedTemplate?.zones.map(zone => {
                   const config = zoneConfigs.find(c => c.zone_id === zone.id);
                   let previewUrl = null;
@@ -258,13 +352,13 @@ export const ScreenDesigner = () => {
                       }}
                     >
                       {previewUrl ? (
-                        <div className="relative w-full h-full bg-black">
+                        <div className={`relative w-full h-full bg-black ${enableParallax ? 'parallax-container' : ''}`}>
                           {/* TV Style Background */}
                           <div className="absolute inset-0 z-0">
                             {isVideo ? (
-                              <video src={previewUrl} className="w-full h-full object-cover opacity-50 blur-lg scale-110" muted loop autoPlay />
+                              <video src={previewUrl} className={`w-full h-full object-cover opacity-50 blur-lg scale-110 ${enableParallax ? 'parallax-layer' : ''}`} muted loop autoPlay />
                             ) : (
-                              <img src={previewUrl} className="w-full h-full object-cover opacity-50 blur-lg scale-110" alt="" />
+                              <img src={previewUrl} className={`w-full h-full object-cover opacity-50 blur-lg scale-110 ${enableParallax ? 'parallax-layer' : ''}`} alt="" />
                             )}
                           </div>
 
@@ -287,6 +381,7 @@ export const ScreenDesigner = () => {
                             )}
                           </div>
 
+                          {/* Steam Effect */}
                           {enableSteam && (
                             <div className="steam z-20">
                               {[...Array(12)].map((_, i) => (
@@ -294,6 +389,7 @@ export const ScreenDesigner = () => {
                               ))}
                             </div>
                           )}
+
                         </div>
                       ) : (
                         <div className="flex items-center justify-center h-full text-xs font-bold text-indigo-400 bg-indigo-50/50 backdrop-blur-sm border-2 border-dashed border-indigo-200">
@@ -303,13 +399,164 @@ export const ScreenDesigner = () => {
                     </div>
                   );
                 })}
+
+                {/* Logo Overlay - screen level, over all zones */}
+                {enableLogo && selectedBrandId && (() => {
+                  const brand = brands.find(b => b.id === selectedBrandId);
+                  if (!brand?.logo_url) return null;
+                  const sizePixels = { sm: '40px', md: '64px', lg: '96px', xl: '128px' };
+                  const posStyles = {
+                    'top-left': { top: '12px', left: '12px' },
+                    'top-center': { top: '12px', left: '50%', transform: 'translateX(-50%)' },
+                    'top-right': { top: '12px', right: '12px' },
+                    'center-left': { top: '50%', left: '12px', transform: 'translateY(-50%)' },
+                    'center': { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+                    'center-right': { top: '50%', right: '12px', transform: 'translateY(-50%)' },
+                    'bottom-left': { bottom: '12px', left: '12px' },
+                    'bottom-center': { bottom: '12px', left: '50%', transform: 'translateX(-50%)' },
+                    'bottom-right': { bottom: '12px', right: '12px' },
+                  };
+                  const dim = sizePixels[logoSize] || '64px';
+                  return (
+                    <div className="absolute z-40 pointer-events-none" style={{ ...posStyles[logoPosition], width: dim, height: dim }}>
+                      <img src={getFileUrl(brand.logo_url)} className="w-full h-full object-contain" style={{ mixBlendMode: 'multiply', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }} alt={brand.name} />
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
 
-          <div>
-            <div className="glass-card p-6 space-y-6">
-              <h2 className="text-xl font-semibold text-slate-800">Configurare Zone</h2>
+          <div className="flex flex-col gap-6">
+            {/* Effects Panel */}
+            <div className="glass-card p-5">
+              <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-500" />
+                Efecte Vizuale
+              </h2>
+              <div className="space-y-3">
+                {/* Parallax Toggle */}
+                <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${enableParallax ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-100 hover:bg-slate-50'
+                  }`}>
+                  <div className={`w-9 h-5 rounded-full transition-all relative ${enableParallax ? 'bg-indigo-500' : 'bg-slate-300'}`}>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableParallax ? 'left-[18px]' : 'left-0.5'}`} />
+                  </div>
+                  <Layers className={`w-4 h-4 ${enableParallax ? 'text-indigo-500' : 'text-slate-400'}`} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-700">Parallax</p>
+                    <p className="text-[10px] text-slate-400">Mișcare lentă de fundal</p>
+                  </div>
+                  <input type="checkbox" className="sr-only" checked={enableParallax} onChange={e => setEnableParallax(e.target.checked)} />
+                </label>
+
+                {/* Steam Toggle */}
+                <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${enableSteam ? 'bg-teal-50 border-teal-200' : 'bg-white border-slate-100 hover:bg-slate-50'
+                  }`}>
+                  <div className={`w-9 h-5 rounded-full transition-all relative ${enableSteam ? 'bg-teal-500' : 'bg-slate-300'}`}>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableSteam ? 'left-[18px]' : 'left-0.5'}`} />
+                  </div>
+                  <Wind className={`w-4 h-4 ${enableSteam ? 'text-teal-500' : 'text-slate-400'}`} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-700">Steam</p>
+                    <p className="text-[10px] text-slate-400">Efect de aburi dinamic</p>
+                  </div>
+                  <input type="checkbox" className="sr-only" checked={enableSteam} onChange={e => setEnableSteam(e.target.checked)} />
+                </label>
+
+                {/* Logo Overlay Toggle */}
+                <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${enableLogo ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-100 hover:bg-slate-50'
+                  }`}>
+                  <div className={`w-9 h-5 rounded-full transition-all relative ${enableLogo ? 'bg-amber-500' : 'bg-slate-300'}`}>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableLogo ? 'left-[18px]' : 'left-0.5'}`} />
+                  </div>
+                  <Image className={`w-4 h-4 ${enableLogo ? 'text-amber-500' : 'text-slate-400'}`} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-700">Logo Overlay</p>
+                    <p className="text-[10px] text-slate-400">Suprapunere logo PNG</p>
+                  </div>
+                  <input type="checkbox" className="sr-only" checked={enableLogo} onChange={e => setEnableLogo(e.target.checked)} />
+                </label>
+
+                {/* Logo Picker (shown when enabled) */}
+                {enableLogo && (
+                  <div className="pl-3 border-l-2 border-amber-200 ml-1 space-y-3">
+                    {/* Brand Selection */}
+                    <div>
+                      <p className="text-xs font-medium text-slate-600 mb-1.5">Alege brand:</p>
+                      <div className="space-y-1.5 max-h-28 overflow-y-auto custom-scrollbar">
+                        {brandsWithLogo.map(brand => (
+                          <button
+                            key={brand.id}
+                            onClick={() => setSelectedBrandId(brand.id)}
+                            className={`w-full flex items-center gap-2 p-2 rounded-lg border transition-all ${selectedBrandId === brand.id
+                              ? 'border-amber-400 bg-amber-50 ring-1 ring-amber-200 shadow-sm'
+                              : 'border-slate-200 bg-white hover:border-amber-300 hover:bg-amber-50/30'
+                              }`}
+                          >
+                            <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 p-0.5">
+                              <img src={getFileUrl(brand.logo_url)} className="w-full h-full object-contain" alt={brand.name} />
+                            </div>
+                            <span className={`text-xs font-medium flex-1 text-left truncate ${selectedBrandId === brand.id ? 'text-amber-700' : 'text-slate-600'}`}>
+                              {brand.name}
+                            </span>
+                            {selectedBrandId === brand.id && (
+                              <Check className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" strokeWidth={3} />
+                            )}
+                          </button>
+                        ))}
+                        {brandsWithLogo.length === 0 && (
+                          <p className="text-[10px] text-slate-400 text-center py-2">Niciun brand cu logo</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Position Grid */}
+                    <div>
+                      <p className="text-xs font-medium text-slate-600 mb-1.5">Poziție:</p>
+                      <div className="grid grid-cols-3 gap-1 w-20 mx-auto">
+                        {['top-left', 'top-center', 'top-right', 'center-left', 'center', 'center-right', 'bottom-left', 'bottom-center', 'bottom-right'].map(pos => (
+                          <button
+                            key={pos}
+                            onClick={() => setLogoPosition(pos)}
+                            className={`w-6 h-5 rounded-sm border transition-all ${logoPosition === pos
+                              ? 'bg-amber-400 border-amber-500 shadow-sm'
+                              : 'bg-slate-100 border-slate-200 hover:bg-amber-100 hover:border-amber-300'
+                              }`}
+                            title={pos}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Size Selector */}
+                    <div>
+                      <p className="text-xs font-medium text-slate-600 mb-1.5">Mărime:</p>
+                      <div className="flex gap-1">
+                        {[{ k: 'sm', l: 'S' }, { k: 'md', l: 'M' }, { k: 'lg', l: 'L' }, { k: 'xl', l: 'XL' }].map(s => (
+                          <button
+                            key={s.k}
+                            onClick={() => setLogoSize(s.k)}
+                            className={`flex-1 py-1 rounded-md text-[10px] font-bold border transition-all ${logoSize === s.k
+                              ? 'bg-amber-400 text-white border-amber-500 shadow-sm'
+                              : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-amber-50 hover:border-amber-300'
+                              }`}
+                          >
+                            {s.l}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Zone Configuration */}
+            <div className="glass-card p-6 space-y-6 flex-1">
+              <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                <Layers className="w-5 h-5 text-indigo-500" />
+                Configurare Zone
+              </h2>
               {selectedTemplate?.zones.map((zone, index) => {
                 const config = zoneConfigs.find(c => c.zone_id === zone.id) || {};
                 return (

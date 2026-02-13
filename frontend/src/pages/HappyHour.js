@@ -400,7 +400,7 @@ export const HappyHour = () => {
 
                 {/* Dialog */}
                 <Dialog open={showDialog} onOpenChange={setShowDialog}>
-                    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="glass-panel sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
                         <DialogHeader>
                             <DialogTitle>
                                 {editingSchedule ? 'Editează Program' : 'Program Nou Happy Hour'}
@@ -409,223 +409,248 @@ export const HappyHour = () => {
                                 Configurează intervalele orare și conținutul pentru Happy Hour.
                             </DialogDescription>
                         </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <Label>Nume eveniment</Label>
-                                <Input
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                />
-                            </div>
-
-                            <div className="space-y-4">
+                        <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+                            <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
-                                    <div className="flex items-center justify-between mb-1">
-                                        <Label>Locații</Label>
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowOnlyWithScreens(!showOnlyWithScreens)}
-                                                className={`text-[10px] font-bold uppercase tracking-tighter transition-colors ${showOnlyWithScreens ? 'text-red-600' : 'text-slate-400 hover:text-slate-600'}`}
-                                            >
-                                                {showOnlyWithScreens ? 'Toate locațiile' : 'Doar cu ecrane'}
-                                            </button>
-                                            <span className="text-slate-200">|</span>
-                                            <button
-                                                type="button"
-                                                onClick={toggleAllLocations}
-                                                className="text-[10px] font-bold text-red-600 hover:text-red-700 uppercase tracking-tighter"
-                                            >
-                                                {formData.location_ids.length === locations.length ? 'Deselectează tot' : 'Selectează tot'}
-                                            </button>
+                                    <Label>Nume eveniment</Label>
+                                    <Input
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <Label>Locații</Label>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowOnlyWithScreens(!showOnlyWithScreens)}
+                                                    className={`text-[10px] font-bold uppercase tracking-tighter transition-colors ${showOnlyWithScreens ? 'text-red-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                >
+                                                    {showOnlyWithScreens ? 'Toate locațiile' : 'Doar cu ecrane'}
+                                                </button>
+                                                <span className="text-slate-200">|</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={toggleAllLocations}
+                                                    className="text-[10px] font-bold text-red-600 hover:text-red-700 uppercase tracking-tighter"
+                                                >
+                                                    {formData.location_ids.length === locations.length ? 'Deselectează tot' : 'Selectează tot'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="border border-slate-200 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1 bg-slate-50/50">
+                                            {filteredLocations.map(loc => (
+                                                <label key={loc.id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded-lg transition-colors">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={(formData.location_ids || []).includes(loc.id)}
+                                                        onChange={() => toggleLocation(loc.id)}
+                                                        className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                                                    />
+                                                    <span className="text-sm font-medium text-slate-700">{loc.name} <span className="text-[10px] text-slate-400">({loc.city})</span></span>
+                                                </label>
+                                            ))}
                                         </div>
                                     </div>
-                                    <div className="border border-slate-200 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1 bg-slate-50/50">
-                                        {filteredLocations.map(loc => (
-                                            <label key={loc.id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded-lg transition-colors">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={(formData.location_ids || []).includes(loc.id)}
-                                                    onChange={() => toggleLocation(loc.id)}
-                                                    className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
-                                                />
-                                                <span className="text-sm font-medium text-slate-700">{loc.name} <span className="text-[10px] text-slate-400">({loc.city})</span></span>
-                                            </label>
+
+                                    <div>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <Label>Ecrane</Label>
+                                            {formData.location_ids.length > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const visibleScreens = screens.filter(s => formData.location_ids.includes(s.location_id));
+                                                        const allVisibleIds = visibleScreens.map(s => s.id);
+                                                        if (formData.screen_ids.length === allVisibleIds.length) {
+                                                            setFormData({ ...formData, screen_ids: [] });
+                                                        } else {
+                                                            setFormData({ ...formData, screen_ids: allVisibleIds });
+                                                        }
+                                                    }}
+                                                    className="text-[10px] font-bold text-red-600 hover:text-red-700 uppercase tracking-tighter"
+                                                >
+                                                    {formData.screen_ids.length > 0 ? 'Deselectează tot' : 'Selectează tot'}
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                            {formData.location_ids.length === 0 ? (
+                                                <p className="text-xs text-slate-400 italic text-center py-4">Selectează cel puțin o locație</p>
+                                            ) : (
+                                                <div className="max-h-40 overflow-y-auto">
+                                                    {locations
+                                                        .filter(loc => formData.location_ids.includes(loc.id))
+                                                        .map(loc => {
+                                                            const locScreens = screens.filter(s => s.location_id === loc.id);
+                                                            if (locScreens.length === 0) return null;
+                                                            return (
+                                                                <div key={loc.id} className="border-b border-slate-50 last:border-0">
+                                                                    <div className="flex items-center gap-2 px-3 py-2 text-xs">
+                                                                        <span className="font-semibold text-slate-700 flex-1">{loc.name}</span>
+                                                                        <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">{locScreens.length}</span>
+                                                                    </div>
+                                                                    <div className="pl-4 pr-3 pb-2 flex flex-wrap gap-1.5">
+                                                                        {locScreens.map(screen => (
+                                                                            <label
+                                                                                key={screen.id}
+                                                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] cursor-pointer transition-all border ${(formData.screen_ids || []).includes(screen.id)
+                                                                                        ? 'bg-red-100 border-red-300 text-red-700 font-bold shadow-sm'
+                                                                                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-red-50 hover:border-red-200'
+                                                                                    }`}
+                                                                            >
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    checked={(formData.screen_ids || []).includes(screen.id)}
+                                                                                    onChange={() => toggleScreen(screen.id)}
+                                                                                    className="hidden"
+                                                                                />
+                                                                                <span className={`w-2 h-2 rounded-full ${(formData.screen_ids || []).includes(screen.id) ? 'bg-red-500' : 'bg-slate-300'}`} />
+                                                                                {screen.name}
+                                                                            </label>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label>Oră început</Label>
+                                        <Input
+                                            type="time"
+                                            value={formData.start_time}
+                                            onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>Oră sfârșit</Label>
+                                        <Input
+                                            type="time"
+                                            value={formData.end_time}
+                                            onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Label>Zile săptămână</Label>
+                                    <div className="flex gap-2 mt-2">
+                                        {dayNames.map((day, idx) => (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => toggleDay(idx + 1)}
+                                                className={`w-10 h-10 rounded-full font-medium transition-all ${(formData.days_of_week || []).includes(idx + 1)
+                                                    ? 'bg-red-600 text-white shadow-md shadow-red-200'
+                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                    }`}
+                                            >
+                                                {day}
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <div className="flex items-center justify-between mb-1">
-                                        <Label>Ecrane</Label>
-                                        {formData.location_ids.length > 0 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const visibleScreens = screens.filter(s => formData.location_ids.includes(s.location_id));
-                                                    const allVisibleIds = visibleScreens.map(s => s.id);
-                                                    if (formData.screen_ids.length === allVisibleIds.length) {
-                                                        setFormData({ ...formData, screen_ids: [] });
-                                                    } else {
-                                                        setFormData({ ...formData, screen_ids: allVisibleIds });
-                                                    }
-                                                }}
-                                                className="text-[10px] font-bold text-red-600 hover:text-red-700 uppercase tracking-tighter"
-                                            >
-                                                {formData.screen_ids.length > 0 ? 'Deselectează tot' : 'Selectează tot'}
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="border border-slate-200 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1 bg-slate-50/50">
-                                        {formData.location_ids.length === 0 ? (
-                                            <p className="text-xs text-slate-400 italic text-center py-4">Selectează cel puțin o locație</p>
-                                        ) : (
-                                            screens
-                                                .filter(s => formData.location_ids.includes(s.location_id))
-                                                .map(screen => (
-                                                    <label key={screen.id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded-lg transition-colors">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={(formData.screen_ids || []).includes(screen.id)}
-                                                            onChange={() => toggleScreen(screen.id)}
-                                                            className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
-                                                        />
-                                                        <span className="text-sm font-medium text-slate-700">{screen.name}</span>
-                                                    </label>
-                                                ))
-                                        )}
-                                    </div>
+                                    <Label>Tip conținut</Label>
+                                    <Select
+                                        value={formData.content_type}
+                                        onValueChange={(val) => setFormData({ ...formData, content_type: val })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="single_content">Imagine/Video singular</SelectItem>
+                                            <SelectItem value="playlist">Playlist</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label>Oră început</Label>
-                                    <Input
-                                        type="time"
-                                        value={formData.start_time}
-                                        onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <Label>Oră sfârșit</Label>
-                                    <Input
-                                        type="time"
-                                        value={formData.end_time}
-                                        onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <Label>Zile săptămână</Label>
-                                <div className="flex gap-2 mt-2">
-                                    {dayNames.map((day, idx) => (
-                                        <button
-                                            key={idx}
-                                            type="button"
-                                            onClick={() => toggleDay(idx + 1)}
-                                            className={`w-10 h-10 rounded-full font-medium transition-all ${(formData.days_of_week || []).includes(idx + 1)
-                                                ? 'bg-red-600 text-white shadow-md shadow-red-200'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                                }`}
+                                {formData.content_type === 'single_content' ? (
+                                    <div>
+                                        <Label>Conținut</Label>
+                                        <Select
+                                            value={formData.content_id ? String(formData.content_id) : ''}
+                                            onValueChange={(val) => setFormData({ ...formData, content_id: val })}
                                         >
-                                            {day}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div>
-                                <Label>Tip conținut</Label>
-                                <Select
-                                    value={formData.content_type}
-                                    onValueChange={(val) => setFormData({ ...formData, content_type: val })}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="single_content">Imagine/Video singular</SelectItem>
-                                        <SelectItem value="playlist">Playlist</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            {formData.content_type === 'single_content' ? (
-                                <div>
-                                    <Label>Conținut</Label>
-                                    <Select
-                                        value={formData.content_id ? String(formData.content_id) : ''}
-                                        onValueChange={(val) => setFormData({ ...formData, content_id: val })}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selectează conținut" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {content.map(item => (
-                                                <SelectItem key={item.id} value={item.id}>
-                                                    <div className="flex items-center gap-3 py-1">
-                                                        <div className="w-10 h-10 rounded border border-slate-200 overflow-hidden shrink-0 bg-slate-50 flex items-center justify-center">
-                                                            {item.thumbnail_url || (item.type === 'image' && item.file_url) ? (
-                                                                <img src={item.thumbnail_url || item.file_url} alt="" className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                                                    {item.type === 'video' ? <Film className="w-5 h-5" /> : <ImageIcon className="w-5 h-5" />}
-                                                                </div>
-                                                            )}
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selectează conținut" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {content.map(item => (
+                                                    <SelectItem key={item.id} value={item.id}>
+                                                        <div className="flex items-center gap-3 py-1">
+                                                            <div className="w-10 h-10 rounded border border-slate-200 overflow-hidden shrink-0 bg-slate-50 flex items-center justify-center">
+                                                                {item.thumbnail_url || (item.type === 'image' && item.file_url) ? (
+                                                                    <img src={item.thumbnail_url || item.file_url} alt="" className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                                                        {item.type === 'video' ? <Film className="w-5 h-5" /> : <ImageIcon className="w-5 h-5" />}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-col min-w-0">
+                                                                <span className="text-sm font-medium truncate">{item.title}</span>
+                                                                <span className="text-[10px] text-slate-500 uppercase">{item.type}</span>
+                                                            </div>
                                                         </div>
-                                                        <div className="flex flex-col min-w-0">
-                                                            <span className="text-sm font-medium truncate">{item.title}</span>
-                                                            <span className="text-[10px] text-slate-500 uppercase">{item.type}</span>
-                                                        </div>
-                                                    </div>
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            ) : (
-                                <div>
-                                    <Label>Playlist</Label>
-                                    <Select
-                                        value={formData.playlist_id ? String(formData.playlist_id) : ''}
-                                        onValueChange={(val) => setFormData({ ...formData, playlist_id: val })}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selectează playlist" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {playlists.map(pl => (
-                                                <SelectItem key={pl.id} value={pl.id}>{pl.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <Label>Playlist</Label>
+                                        <Select
+                                            value={formData.playlist_id ? String(formData.playlist_id) : ''}
+                                            onValueChange={(val) => setFormData({ ...formData, playlist_id: val })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selectează playlist" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {playlists.map(pl => (
+                                                    <SelectItem key={pl.id} value={pl.id}>{pl.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
 
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.active}
-                                    onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                                    className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
-                                />
-                                <Label>Activ</Label>
-                            </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.active}
+                                        onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                                        className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                    />
+                                    <Label>Activ</Label>
+                                </div>
 
-                            <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
-                                    Anulează
-                                </Button>
-                                <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-200">
-                                    {editingSchedule ? 'Actualizează' : 'Creează'}
-                                </Button>
-                            </DialogFooter>
-                        </form>
+                                <DialogFooter>
+                                    <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
+                                        Anulează
+                                    </Button>
+                                    <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-200">
+                                        {editingSchedule ? 'Actualizează' : 'Creează'}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>

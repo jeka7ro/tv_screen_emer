@@ -275,6 +275,52 @@ export const Content = () => {
     setSortConfig({ key, direction });
   };
 
+  // Generate a thumbnail from a video file using canvas
+  const generateVideoThumbnail = (videoFile) => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.muted = true;
+      video.playsInline = true;
+
+      const url = URL.createObjectURL(videoFile);
+      video.src = url;
+
+      video.onloadeddata = () => {
+        // Seek to 1 second or 10% of duration, whichever is less
+        video.currentTime = Math.min(1, video.duration * 0.1);
+      };
+
+      video.onseeked = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.min(video.videoWidth, 640);
+          canvas.height = Math.round(canvas.width * (video.videoHeight / video.videoWidth));
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob) => {
+            URL.revokeObjectURL(url);
+            resolve(blob);
+          }, 'image/jpeg', 0.8);
+        } catch (e) {
+          URL.revokeObjectURL(url);
+          resolve(null);
+        }
+      };
+
+      video.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      };
+
+      // Timeout fallback
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        resolve(null);
+      }, 10000);
+    });
+  };
+
   const handleFileUpload = async (e) => {
     e.preventDefault();
     if (uploadMethod === 'file' && selectedFiles.length === 0) {
@@ -298,6 +344,18 @@ export const Content = () => {
         }
         if (formData.brand && Array.isArray(formData.brand) && formData.brand.length > 0) {
           formDataToSend.append('brand', formData.brand.join(','));
+        }
+
+        // Generate video thumbnail on client side
+        if (formData.type === 'video' && selectedFiles.length > 0) {
+          try {
+            const thumbBlob = await generateVideoThumbnail(selectedFiles[0]);
+            if (thumbBlob) {
+              formDataToSend.append('thumbnail', thumbBlob, 'thumbnail.jpg');
+            }
+          } catch (e) {
+            console.warn('Could not generate video thumbnail:', e);
+          }
         }
 
         // Increase timeout for large files
@@ -564,11 +622,11 @@ export const Content = () => {
 
     if (viewMode === 'list') {
       return (
-        <div className="glass-card overflow-hidden">
+        <div className="overflow-hidden rounded-xl">
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/50">
+                <tr className="border-b border-slate-200/60 bg-gradient-to-r from-slate-50 to-slate-100/50">
                   <th className="p-4 text-left w-10">
                     <input
                       type="checkbox"
@@ -754,57 +812,7 @@ export const Content = () => {
               </tbody>
             </table>
           </div>
-
-          {/* Pagination Footer */}
-          <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">Afișează:</span>
-                <select
-                  className="text-xs border rounded-md px-1 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-red-500"
-                  value={itemsPerPage}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const newItemsPerPage = val === 'all' ? 'all' : parseInt(val);
-                    setItemsPerPage(newItemsPerPage);
-                    localStorage.setItem('contentItemsPerPage', val);
-                    setCurrentPage(1);
-                  }}
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                  <option value="all">Toate</option>
-                </select>
-              </div>
-              <span className="text-xs text-slate-500">
-                Pagina {currentPage} din {totalPages}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className="h-8 px-2 text-xs"
-              >
-                Anterior
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className="h-8 px-2 text-xs"
-              >
-                Următor
-              </Button>
-            </div>
-          </div>
-        </div >
+        </div>
       );
     }
 
@@ -895,12 +903,17 @@ export const Content = () => {
                 </>
               ) : (
                 <>
-                  <video
-                    src={getFileUrl(item.file_url)}
-                    className="w-full h-full object-cover"
-                    muted
-                    preload="metadata"
-                  />
+                  {item.thumbnail_url ? (
+                    <img
+                      src={getFileUrl(item.thumbnail_url)}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-900 flex items-center justify-center">
+                      <Film className="w-12 h-12 text-slate-500" />
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-black/20 flex items-center justify-center cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}>
                     <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 border border-white/30 group-hover:scale-110 transition-transform">
                       <Film className="w-6 h-6 text-white" />
@@ -986,10 +999,10 @@ export const Content = () => {
   return (
     <DashboardLayout>
       <div className="animate-in" data-testid="content-page">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">Bibliotecă Conținut</h1>
-            <p className="text-slate-500">Gestionează imagini și video-uri</p>
+            <h1 className="text-3xl font-extrabold bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent mb-1 tracking-tight">Bibliotecă Conținut</h1>
+            <p className="text-sm text-slate-400 font-medium">Gestionează imagini, video-uri și conținut media</p>
           </div>
 
           {isAdmin() && selectedItems.size > 0 && (
@@ -1231,7 +1244,14 @@ export const Content = () => {
                                 <p className="text-sm font-semibold text-slate-700 mb-1">Click pentru a selecta fișiere</p>
                                 <p className="text-xs text-slate-500">sau drag & drop aici</p>
                               </div>
+                              <Label
+                                htmlFor="file-upload-input"
+                                className="inline-block px-6 py-3 bg-red-600 text-white font-bold rounded-lg cursor-pointer hover:bg-red-700 transition-colors shadow-md hover:shadow-lg mb-4"
+                              >
+                                Alege fișierele
+                              </Label>
                               <Input
+                                id="file-upload-input"
                                 type="file"
                                 accept="image/*,video/*"
                                 multiple
@@ -1244,7 +1264,7 @@ export const Content = () => {
                                     setFormData({ ...formData, type, title: formData.title || file.name });
                                   }
                                 }}
-                                className="cursor-pointer"
+                                className="hidden"
                               />
                               {selectedFiles.length > 0 && (
                                 <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -1301,9 +1321,9 @@ export const Content = () => {
           </div>
 
           {/* Main Layout Body */}
-          <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-14rem)]">
+          <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-13rem)]">
             {/* Sidebar Column (Left) */}
-            <div className="w-full lg:w-80 shrink-0 h-full overflow-hidden flex flex-col">
+            <div className="w-full lg:w-72 xl:w-80 shrink-0 h-full overflow-hidden flex flex-col">
               <FolderSidebar
                 folders={folders}
                 selectedFolder={selectedFolder}
@@ -1326,7 +1346,17 @@ export const Content = () => {
             {/* Right Column (Content) */}
             <div className="flex-1 flex flex-col w-full min-w-0">
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col h-full">
-                <div className="p-6 flex-1 overflow-y-auto custom-scrollbar">
+                {/* Header */}
+                <div className="px-4 py-3 flex items-center justify-between border-b border-slate-100/80 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg flex items-center justify-center shadow-sm">
+                      <FileImage className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <h3 className="font-bold text-sm text-slate-800 tracking-tight">Bibliotecă Conținut</h3>
+                  </div>
+                </div>
+
+                <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
                   <TabsContent value="all" className="mt-0">
                     {renderView(currentItems)}
                   </TabsContent>
@@ -1336,6 +1366,60 @@ export const Content = () => {
                   <TabsContent value="videos" className="mt-0">
                     {renderView(currentItems)}
                   </TabsContent>
+                </div>
+
+                {/* Pagination Footer */}
+                <div className="px-4 py-3 border-t border-slate-200/60 flex items-center justify-between bg-gradient-to-r from-slate-50/80 to-white shrink-0">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-400 font-medium">Afișează:</span>
+                      <select
+                        className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-all cursor-pointer font-medium text-slate-600 shadow-sm"
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const newItemsPerPage = val === 'all' ? 'all' : parseInt(val);
+                          setItemsPerPage(newItemsPerPage);
+                          localStorage.setItem('contentItemsPerPage', val);
+                          setCurrentPage(1);
+                        }}
+                      >
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                        <option value="all">Toate</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-slate-400 font-medium">Pagina</span>
+                      <span className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-sm min-w-[2.5rem] text-center">
+                        {currentPage}
+                      </span>
+                      <span className="text-xs text-slate-400 font-medium">din {totalPages}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      className="h-8 px-3 text-xs font-semibold rounded-lg border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-40"
+                    >
+                      ← Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      className="h-8 px-3 text-xs font-semibold rounded-lg border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-40"
+                    >
+                      Următor →
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

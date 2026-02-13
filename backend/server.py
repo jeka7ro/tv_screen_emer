@@ -141,24 +141,38 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 STORAGE_BUCKET = "content"
 
+# Local storage fallback will use UPLOAD_DIR (defined below)
 # Helper functions for Supabase Storage
 async def upload_to_supabase(file_bytes: bytes, file_path: str, content_type: str) -> str:
-    """Upload file to Supabase Storage and return public URL"""
-    if not supabase:
-        raise HTTPException(status_code=500, detail="Supabase not configured")
+    """Upload file to Supabase Storage with local fallback"""
+    # Try Supabase first
+    if supabase:
+        try:
+            supabase.storage.from_(STORAGE_BUCKET).upload(
+                file_path,
+                file_bytes,
+                {"content-type": content_type, "upsert": "true"}
+            )
+            public_url = supabase.storage.from_(STORAGE_BUCKET).get_public_url(file_path)
+            return public_url
+        except Exception as e:
+            print(f"Supabase upload failed, falling back to local storage: {e}")
+    
+    # Fallback: save locally
     try:
-        # Upload file
-        supabase.storage.from_(STORAGE_BUCKET).upload(
-            file_path,
-            file_bytes,
-            {"content-type": content_type, "upsert": "true"}
-        )
+        # UPLOAD_DIR is defined below but directories are created at startup
+        local_uploads_dir = ROOT_DIR / "uploads"
+        local_path = local_uploads_dir / file_path
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(local_path, "wb") as f:
+            f.write(file_bytes)
         
-        # Get public URL
-        public_url = supabase.storage.from_(STORAGE_BUCKET).get_public_url(file_path)
+        # Return URL that points to our static file endpoint
+        public_url = f"/api/uploads/{file_path}"
+        print(f"File saved locally: {local_path} -> {public_url}")
         return public_url
     except Exception as e:
-        print(f"Supabase upload error: {e}")
+        print(f"Local storage also failed: {e}")
         raise HTTPException(status_code=500, detail=f"Storage upload failed: {str(e)}")
 
 async def delete_from_supabase(file_path: str):
@@ -259,8 +273,10 @@ class User(BaseModel):
     role: str = "admin"  # admin, manager
     location_id: Optional[str] = None
     status: str = "active"  # active, suspended
+    avatar_url: Optional[str] = None
     created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_login: Optional[datetime] = None
+
 
 class InvitationLink(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -316,6 +332,7 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     role: Optional[str] = None
     location_id: Optional[str] = None
+    avatar_url: Optional[str] = None
 
 class Location(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -364,6 +381,12 @@ class Screen(BaseModel):
     sync_type: Optional[str] = "simple"
     last_active: Optional[datetime] = None
     sync_group_name: Optional[str] = None
+    parallax_enabled: Optional[bool] = False
+    steam_enabled: Optional[bool] = False
+    logo_enabled: Optional[bool] = False
+    logo_brand_id: Optional[str] = None
+    logo_position: Optional[str] = "top-right"
+    logo_size: Optional[str] = "md"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     # Extra fields from JOINs
@@ -384,6 +407,12 @@ class ScreenCreate(BaseModel):
     status: Optional[str] = "offline"
     sync_type: Optional[str] = "simple"
     sync_group_name: Optional[str] = None
+    parallax_enabled: Optional[bool] = False
+    steam_enabled: Optional[bool] = False
+    logo_enabled: Optional[bool] = False
+    logo_brand_id: Optional[str] = None
+    logo_position: Optional[str] = "top-right"
+    logo_size: Optional[str] = "md"
 
 class ScreenTemplate(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -870,6 +899,31 @@ async def update_user_endpoint(user_id: str, data: UserUpdate, current_user: Use
     await log_activity(current_user.id, current_user.full_name, "update", "user", user_id, "INFO", update_data)
     return {"message": "Utilizator actualizat cu succes"}
 
+@api_router.post("/users/{user_id}/avatar")
+async def upload_user_avatar(
+    user_id: str,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Upload avatar photo for a user"""
+    # Allow users to update their own avatar, or super admins to update any
+    if current_user.id != user_id and not current_user.is_super_admin:
+        raise HTTPException(status_code=403, detail="Nu ai permisiunea de a modifica acest utilizator")
+    
+    # Validate image type
+    allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"Tip fișier invalid: {file.content_type}")
+    
+    file_bytes = await file.read()
+    file_ext = Path(file.filename).suffix.lower() or '.jpg'
+    unique_filename = f"avatars/{user_id}{file_ext}"
+    
+    avatar_url = await upload_to_supabase(file_bytes, unique_filename, file.content_type)
+    await user_update(user_id, {"avatar_url": avatar_url})
+    
+    return {"avatar_url": avatar_url}
+
 @api_router.get("/invitations/validate/{code}")
 async def validate_invitation(code: str):
     invitation = await invitation_get_by_code(code)
@@ -888,15 +942,7 @@ async def validate_invitation(code: str):
 async def check_registration_open():
     return {"open": (await users_count()) == 0}
 
-@api_router.get("/activity-logs")
-async def fetch_activity_logs(
-    entity_type: Optional[str] = None,
-    level: Optional[str] = None,
-    limit: int = 50,
-    offset: int = 0,
-    current_user: User = Depends(require_admin)
-):
-    return await get_activity_logs(entity_type, level, limit, offset)
+
 
 # ============ LOCATIONS ROUTES ============
 
@@ -1262,6 +1308,16 @@ def get_predefined_templates() -> List[dict]:
                 {"id": "zone1", "name": "Main", "x": 0, "y": 0, "width": 70, "height": 100, "type": "menu"},
                 {"id": "zone2", "name": "Sidebar", "x": 70, "y": 0, "width": 30, "height": 100, "type": "promo"}
             ]
+        },
+        {
+            "id": "triple-vertical",
+            "name": "Triple Vertical",
+            "description": "Three equal columns side by side",
+            "zones": [
+                {"id": "zone1", "name": "Left", "x": 0, "y": 0, "width": 33.33, "height": 100, "type": "menu"},
+                {"id": "zone2", "name": "Center", "x": 33.33, "y": 0, "width": 33.34, "height": 100, "type": "content"},
+                {"id": "zone3", "name": "Right", "x": 66.67, "y": 0, "width": 33.33, "height": 100, "type": "promo"}
+            ]
         }
     ]
 
@@ -1406,12 +1462,24 @@ async def create_content(
     category: str = Form("other"),
     folder_id: Optional[str] = Form(None),
     brand: Optional[str] = Form(None), # This will be a comma-separated string from the form
+    thumbnail: Optional[UploadFile] = File(None),
     current_user: User = Depends(require_admin)
 ):
     # Parse brands if provided as string
     brand_list = []
     if brand:
         brand_list = [b.strip() for b in brand.split(',') if b.strip()]
+
+    # If a thumbnail was uploaded, store it first
+    thumbnail_url_shared = None
+    if thumbnail and thumbnail.filename:
+        try:
+            thumb_bytes = await thumbnail.read()
+            thumb_ext = Path(thumbnail.filename).suffix.lower() or '.jpg'
+            thumb_filename = f"thumbnails/{uuid.uuid4()}{thumb_ext}"
+            thumbnail_url_shared = await upload_to_supabase(thumb_bytes, thumb_filename, thumbnail.content_type or "image/jpeg")
+        except Exception as e:
+            logger.warning(f"Thumbnail upload failed: {e}")
 
     created_items = []
     
@@ -1446,6 +1514,14 @@ async def create_content(
             # Create content record - Title from filename
             content_title = Path(file.filename).stem
 
+            # Determine thumbnail URL
+            if type == "image":
+                final_thumbnail_url = file_url
+            elif thumbnail_url_shared:
+                final_thumbnail_url = thumbnail_url_shared
+            else:
+                final_thumbnail_url = None
+
             content_id = str(uuid.uuid4())
             new_content = {
                 "id": content_id,
@@ -1458,7 +1534,7 @@ async def create_content(
                 "folder_id": folder_id,
                 "brand": brand_list,
                 "tags": [],
-                "thumbnail_url": file_url if type == "image" else None,
+                "thumbnail_url": final_thumbnail_url,
                 "autoplay": True,
                 "loop": True,
                 "playlist_urls": [],
@@ -1478,6 +1554,7 @@ async def create_content(
             raise HTTPException(status_code=500, detail=f"Eroare la procesarea fișierului {file.filename}: {str(e)}")
 
     return created_items
+
 
 @api_router.post("/content/external", response_model=Content)
 async def create_external_content(content_data: ContentCreate, current_user: User = Depends(require_admin)):
@@ -2101,7 +2178,73 @@ async def get_display_data(slug: str, security_code: Optional[str] = None):
             except:
                 pass
     
-    return {"screen": screen, "template": template, "zones_config": zones_config, "sync_info": sync_info}
+    # ============ HAPPY HOUR OVERRIDE ============
+    happy_hour_override = None
+    try:
+        active_happy_hours = await happy_hours_active_now()
+        screen_id = screen["id"]
+        for hh in active_happy_hours:
+            hh_screen_ids = hh.get("screen_ids") or []
+            if screen_id in hh_screen_ids:
+                # This screen has an active happy hour — override zones_config
+                override_zones = []
+                if hh.get("content_type") == "playlist" and hh.get("playlist_id"):
+                    playlist = await playlist_get(hh["playlist_id"])
+                    if playlist:
+                        items = []
+                        for it in playlist.get("items") or []:
+                            c = await content_get(it["content_id"])
+                            if c:
+                                items.append({**c, "duration_override": it.get("duration_override")})
+                        playlist = {**playlist, "content_items": items}
+                        override_zones.append({
+                            "zone_id": "zone1",
+                            "content_type": "playlist",
+                            "playlist_id": hh["playlist_id"],
+                            "playlist": playlist
+                        })
+                elif hh.get("content_id"):
+                    content = await content_get(hh["content_id"])
+                    if content:
+                        override_zones.append({
+                            "zone_id": "zone1",
+                            "content_type": "single_content",
+                            "content_id": hh["content_id"],
+                            "content": content
+                        })
+                
+                if override_zones:
+                    zones_config = override_zones
+                    happy_hour_override = {
+                        "id": str(hh.get("id", "")),
+                        "name": hh.get("name", "Happy Hour"),
+                        "start_time": str(hh.get("start_time", "")),
+                        "end_time": str(hh.get("end_time", ""))
+                    }
+                    # Use fullscreen template for happy hour
+                    template = {
+                        "id": "happy-hour-override",
+                        "name": "Happy Hour",
+                        "zones": [{"id": "zone1", "name": "Main", "x": 0, "y": 0, "width": 100, "height": 100, "type": "content"}]
+                    }
+                break
+    except Exception as e:
+        logger.warning(f"Happy hour check failed for screen {slug}: {e}")
+    
+    # Enrich screen with brand logo_url if logo overlay enabled
+    if screen.get("logo_enabled") and screen.get("logo_brand_id"):
+        logo_brand = await brand_get(screen["logo_brand_id"])
+        if logo_brand and logo_brand.get("logo_url"):
+            screen["logo_url"] = logo_brand["logo_url"]
+
+    return {
+        "screen": screen, 
+        "template": template, 
+        "zones_config": zones_config, 
+        "sync_info": sync_info,
+        "happy_hour_active": happy_hour_override
+    }
+
 
 
 @api_router.get("/dashboard/stats")

@@ -241,110 +241,112 @@ export const Screens = () => {
                     Adaugă ecran
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="glass-panel">
+                <DialogContent className="glass-panel max-h-[90vh] overflow-hidden flex flex-col">
                   <DialogHeader>
                     <DialogTitle>
                       {editingScreen ? 'Editează ecranul' : 'Adaugă ecran nou'}
                     </DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <Label>Brand</Label>
-                      <Input
-                        value={formData.brand}
-                        onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                        placeholder="Ex: Sushi Master, MyBox, etc."
-                        data-testid="screen-brand-input"
-                      />
-                    </div>
-                    <div>
-                      <Label>Locație</Label>
-                      <Select
-                        value={formData.location_id}
-                        onValueChange={(value) => setFormData({ ...formData, location_id: value })}
-                        required
-                      >
-                        <SelectTrigger data-testid="location-select">
-                          <SelectValue placeholder="Selectează locația" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {locations.map(location => (
-                            <SelectItem key={location.id} value={location.id}>
-                              {location.city} - {location.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Nume ecran</Label>
-                      <Input
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Ecran Principal"
-                        required
-                        data-testid="screen-name-input"
-                      />
-                    </div>
-                    <div>
-                      <Label>Slug (link scurt)</Label>
-                      <Input
-                        value={formData.slug}
-                        onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-                        placeholder="c1"
-                        required
-                        data-testid="screen-slug-input"
-                      />
-                      <p className="text-xs text-slate-500 mt-1">
-                        ⚡ Recomandare: Folosește 2-3 caractere (ex: c1, tv1, s2) pentru link foarte scurt pe TV
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+                    <form onSubmit={handleSubmit} className="space-y-4">
                       <div>
-                        <Label>Rezoluție</Label>
+                        <Label>Brand</Label>
+                        <Input
+                          value={formData.brand}
+                          onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                          placeholder="Ex: Sushi Master, MyBox, etc."
+                          data-testid="screen-brand-input"
+                        />
+                      </div>
+                      <div>
+                        <Label>Locație</Label>
                         <Select
-                          value={formData.resolution}
-                          onValueChange={(value) => setFormData({ ...formData, resolution: value })}
+                          value={formData.location_id}
+                          onValueChange={(value) => setFormData({ ...formData, location_id: value })}
+                          required
                         >
-                          <SelectTrigger>
-                            <SelectValue />
+                          <SelectTrigger data-testid="location-select">
+                            <SelectValue placeholder="Selectează locația" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1920x1080">1920x1080 (FHD)</SelectItem>
-                            <SelectItem value="3840x2160">3840x2160 (4K)</SelectItem>
-                            <SelectItem value="1080x1920">1080x1920 (Portrait)</SelectItem>
+                            {locations.map(location => (
+                              <SelectItem key={location.id} value={location.id}>
+                                {location.city} - {location.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label>Orientare</Label>
-                        <Select
-                          value={formData.orientation}
-                          onValueChange={(value) => setFormData({ ...formData, orientation: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="landscape">Landscape</SelectItem>
-                            <SelectItem value="portrait">Portrait</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Label>Nume ecran</Label>
+                        <Input
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="Ecran Principal"
+                          required
+                          data-testid="screen-name-input"
+                        />
                       </div>
-                    </div>
-                    <div className="flex gap-3 pt-4">
-                      <Button type="submit" className="btn-primary flex-1" data-testid="save-screen-button">
-                        {editingScreen ? 'Actualizează' : 'Creează'}
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => setShowDialog(false)}
-                        className="btn-secondary"
-                      >
-                        Anulează
-                      </Button>
-                    </div>
-                  </form>
+                      <div>
+                        <Label>Slug (link scurt)</Label>
+                        <Input
+                          value={formData.slug}
+                          onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                          placeholder="c1"
+                          required
+                          data-testid="screen-slug-input"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">
+                          ⚡ Recomandare: Folosește 2-3 caractere (ex: c1, tv1, s2) pentru link foarte scurt pe TV
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Rezoluție</Label>
+                          <Select
+                            value={formData.resolution}
+                            onValueChange={(value) => setFormData({ ...formData, resolution: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1920x1080">1920x1080 (FHD)</SelectItem>
+                              <SelectItem value="3840x2160">3840x2160 (4K)</SelectItem>
+                              <SelectItem value="1080x1920">1080x1920 (Portrait)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>Orientare</Label>
+                          <Select
+                            value={formData.orientation}
+                            onValueChange={(value) => setFormData({ ...formData, orientation: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="landscape">Landscape</SelectItem>
+                              <SelectItem value="portrait">Portrait</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 pt-4">
+                        <Button type="submit" className="btn-primary flex-1" data-testid="save-screen-button">
+                          {editingScreen ? 'Actualizează' : 'Creează'}
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => setShowDialog(false)}
+                          className="btn-secondary"
+                        >
+                          Anulează
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
                 </DialogContent>
               </Dialog>
             )}
