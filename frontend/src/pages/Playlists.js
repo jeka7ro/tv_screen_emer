@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
-import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Folder, FolderOpen } from 'lucide-react';
+import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Folder, FolderOpen, Monitor, MapPin } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../components/ui/dialog';
@@ -48,6 +48,11 @@ export const Playlists = () => {
   const [selectedPlaylists, setSelectedPlaylists] = useState([]);
   const [filterWithScreens, setFilterWithScreens] = useState(true); // Default to true
   const [selectedLocationForScreens, setSelectedLocationForScreens] = useState(null);
+
+  // Drag & Drop state
+  const [draggedPlaylistId, setDraggedPlaylistId] = useState(null);
+  const [droppingOnScreenId, setDroppingOnScreenId] = useState(null);
+  const [showScreensPanel, setShowScreensPanel] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -277,6 +282,30 @@ export const Playlists = () => {
       end: format(effectiveEnd, 'HH:mm'),
       hours: parseFloat(hours).toString() + 'h'
     };
+  };
+
+  // Drag & Drop: assign playlist to screen
+  const handleDropOnScreen = async (screenId) => {
+    if (!draggedPlaylistId) return;
+    const playlist = playlists.find(p => p.id === draggedPlaylistId);
+    const screen = screens.find(s => s.id === screenId);
+    if (!playlist || !screen) return;
+
+    try {
+      // Assign to the first zone (zone1) with content_type 'playlist'
+      await api.post('/screen-zones', {
+        screen_id: screenId,
+        zone_id: 'zone1',
+        content_type: 'playlist',
+        playlist_id: draggedPlaylistId
+      });
+      toast.success(`"${playlist.name}" atribuit lui "${screen.name}"`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Eroare la atribuire');
+    } finally {
+      setDraggedPlaylistId(null);
+      setDroppingOnScreenId(null);
+    }
   };
 
   // Brands logic
@@ -1147,7 +1176,16 @@ export const Playlists = () => {
               return (
                 <div
                   key={playlist.id}
-                  className={`bg-white rounded-xl border transition-all hover:shadow-lg group flex flex-col relative overflow-hidden`}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', playlist.id);
+                    setDraggedPlaylistId(playlist.id);
+                  }}
+                  onDragEnd={() => {
+                    setDraggedPlaylistId(null);
+                    setDroppingOnScreenId(null);
+                  }}
+                  className={`bg-white rounded-xl border transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''}`}
                   style={{
                     borderColor: playlist.color || '#EF4444',
                     borderWidth: '2px',
@@ -1293,6 +1331,66 @@ export const Playlists = () => {
             })}
           </div>
         )}
+
+        {/* Screens Drop Target Panel */}
+        <div className="mt-6">
+          <button
+            onClick={() => setShowScreensPanel(!showScreensPanel)}
+            className="flex items-center gap-2 mb-3 text-sm font-bold text-slate-700 hover:text-red-600 transition-colors"
+          >
+            <Monitor className="w-4 h-4" />
+            Ecrane — Trage playlist peste ecran
+            <span className={`text-xs transition-transform ${showScreensPanel ? 'rotate-90' : ''}`}>▶</span>
+          </button>
+          {showScreensPanel && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+              {locations.filter(loc => screens.some(s => s.location_id === loc.id)).length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-4">Nu există ecrane disponibile</p>
+              ) : (
+                <div className="space-y-4">
+                  {locations.filter(loc => screens.some(s => s.location_id === loc.id)).map(location => (
+                    <div key={location.id}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{location.name}</span>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                        {screens.filter(s => s.location_id === location.id).map(screen => (
+                          <div
+                            key={screen.id}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setDroppingOnScreenId(screen.id);
+                            }}
+                            onDragLeave={() => setDroppingOnScreenId(null)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              handleDropOnScreen(screen.id);
+                            }}
+                            className={`p-3 rounded-xl border-2 transition-all text-center ${droppingOnScreenId === screen.id
+                                ? 'border-red-400 bg-red-50 scale-105 shadow-lg'
+                                : draggedPlaylistId
+                                  ? 'border-dashed border-slate-300 bg-slate-50 hover:border-red-300 hover:bg-red-50/50'
+                                  : 'border-slate-200 bg-slate-50/50'
+                              }`}
+                          >
+                            <Monitor className={`w-6 h-6 mx-auto mb-1 ${droppingOnScreenId === screen.id ? 'text-red-500' : 'text-slate-400'
+                              }`} />
+                            <p className="text-xs font-bold text-slate-700 truncate">{screen.name}</p>
+                            <div className="flex items-center justify-center gap-1 mt-1">
+                              <span className={`w-1.5 h-1.5 rounded-full ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                              <span className="text-[9px] text-slate-400 uppercase font-bold">{screen.status || 'offline'}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </DashboardLayout >
   );
