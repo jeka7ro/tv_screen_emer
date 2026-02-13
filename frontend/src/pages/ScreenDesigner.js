@@ -67,6 +67,7 @@ export const ScreenDesigner = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [showLivePreview, setShowLivePreview] = useState(false);
   const [brands, setBrands] = useState([]);
+  const [groupScreenPreviews, setGroupScreenPreviews] = useState({}); // { screenId: previewUrl }
 
   // Visual effects state
   const [enableParallax, setEnableParallax] = useState(false);
@@ -96,6 +97,59 @@ export const ScreenDesigner = () => {
   useEffect(() => {
     loadData();
   }, [screenId]);
+
+  // Fetch each group screen's actual content for sync preview
+  useEffect(() => {
+    if (!showPreview || !screen?.sync_group || !allScreens.length || !content.length) return;
+
+    const groupScreens = allScreens.filter(s => s.sync_group === screen.sync_group);
+
+    const fetchPreviews = async () => {
+      const previews = {};
+
+      for (const s of groupScreens) {
+        try {
+          // For current screen, use local zoneConfigs
+          if (s.id === screen.id) {
+            const cfg = zoneConfigs.find(z => z.zone_id === 'zone-1' || z.zone_id === 'zone1') || zoneConfigs[0];
+            if (cfg?.content_id) {
+              const item = content.find(c => c.id === cfg.content_id);
+              if (item) previews[s.id] = getFileUrl(item.file_url);
+            } else if (cfg?.content_type === 'playlist' && cfg?.playlist_id) {
+              const plId = typeof cfg.playlist_id === 'string' ? parseInt(cfg.playlist_id) : cfg.playlist_id;
+              const pl = playlists.find(p => p.id === plId || p.id === cfg.playlist_id);
+              if (pl?.items?.length > 0) {
+                const contentItem = content.find(c => c.id === pl.items[0].content_id);
+                if (contentItem) previews[s.id] = getFileUrl(contentItem.file_url);
+              }
+            }
+          } else {
+            // Fetch other screen's zone configs
+            const zonesRes = await api.get(`/screen-zones/${s.id}`);
+            const otherZones = zonesRes.data;
+            const cfg = otherZones.find(z => z.zone_id === 'zone-1' || z.zone_id === 'zone1') || otherZones[0];
+            if (cfg?.content_id) {
+              const item = content.find(c => c.id === cfg.content_id);
+              if (item) previews[s.id] = getFileUrl(item.file_url);
+            } else if (cfg?.content_type === 'playlist' && cfg?.playlist_id) {
+              const plId = typeof cfg.playlist_id === 'string' ? parseInt(cfg.playlist_id) : cfg.playlist_id;
+              const pl = playlists.find(p => p.id === plId || p.id === cfg.playlist_id);
+              if (pl?.items?.length > 0) {
+                const contentItem = content.find(c => c.id === pl.items[0].content_id);
+                if (contentItem) previews[s.id] = getFileUrl(contentItem.file_url);
+              }
+            }
+          }
+        } catch (err) {
+          console.error(`Error fetching preview for screen ${s.id}:`, err);
+        }
+      }
+
+      setGroupScreenPreviews(previews);
+    };
+
+    fetchPreviews();
+  }, [showPreview, screen?.sync_group, allScreens, content, playlists]);
 
   const loadData = async () => {
     try {
@@ -792,7 +846,7 @@ export const ScreenDesigner = () => {
                           aspectRatio: '16/9',
                           backgroundImage: `url(${useStorefront ? storefrontUrl : 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000'})`,
                           backgroundSize: 'cover',
-                          backgroundPosition: 'center',
+                          backgroundPosition: 'center 30%',
                           backgroundRepeat: 'no-repeat'
                         }}
                       >
@@ -807,6 +861,7 @@ export const ScreenDesigner = () => {
                             ].map((pos, idx) => {
                               const s = groupScreens[idx];
                               if (!s) return null;
+                              const screenPreview = groupScreenPreviews[s.id];
                               return (
                                 <div
                                   key={s.id}
@@ -816,11 +871,19 @@ export const ScreenDesigner = () => {
                                     top: pos.top,
                                     width: pos.width,
                                     height: pos.height,
-                                    backgroundImage: `url(${previewImage})`,
-                                    backgroundSize: `${100 * 3}% 100%`, // 3 screens wide
-                                    backgroundPosition: `${(idx / (3 - 1)) * 100}% center`
                                   }}
                                 >
+                                  {screenPreview ? (
+                                    <img
+                                      src={screenPreview}
+                                      alt={s.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full bg-slate-900 flex items-center justify-center">
+                                      <span className="text-[8px] text-slate-400 font-bold">{s.name}</span>
+                                    </div>
+                                  )}
                                   <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
                                     <div className="text-center group-hover:opacity-100 transition-opacity">
                                       <p className="font-black text-white text-[10px] drop-shadow-md leading-none bg-black/40 px-1 rounded">{idx + 1}</p>
