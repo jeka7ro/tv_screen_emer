@@ -53,6 +53,7 @@ export const Playlists = () => {
   const [draggedPlaylistId, setDraggedPlaylistId] = useState(null);
   const [droppingOnScreenId, setDroppingOnScreenId] = useState(null);
   const [showScreensPanel, setShowScreensPanel] = useState(true);
+  const [screenAssignOpen, setScreenAssignOpen] = useState(null); // playlist id with open dropdown
 
   // Screen zones (active content per screen)
   const [screenZones, setScreenZones] = useState({});
@@ -329,6 +330,41 @@ export const Playlists = () => {
       setDraggedPlaylistId(null);
       setDroppingOnScreenId(null);
     }
+  };
+
+  // Toggle screen assignment for a playlist (from card button)
+  const handleToggleScreenAssign = async (playlistId, screenId) => {
+    const zones = screenZones[screenId] || [];
+    const existingZone = zones.find(z => z.content_type === 'playlist' && z.playlist_id === playlistId);
+
+    try {
+      if (existingZone) {
+        // Unassign
+        await api.delete(`/screen-zones/${existingZone.id}`);
+        toast.success('Playlist dezatribuit de pe ecran');
+      } else {
+        // Assign
+        await api.post('/screen-zones', {
+          screen_id: screenId,
+          zone_id: 'zone1',
+          content_type: 'playlist',
+          playlist_id: playlistId
+        });
+        const screen = screens.find(s => s.id === screenId);
+        toast.success(`Playlist atribuit lui "${screen?.name}"`);
+      }
+      // Refresh zones for this screen
+      const zonesRes = await api.get(`/screen-zones/${screenId}`);
+      setScreenZones(prev => ({ ...prev, [screenId]: zonesRes.data }));
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Eroare la atribuire');
+    }
+  };
+
+  // Check if a playlist is assigned to a screen
+  const isPlaylistOnScreen = (playlistId, screenId) => {
+    const zones = screenZones[screenId] || [];
+    return zones.some(z => z.content_type === 'playlist' && z.playlist_id === playlistId);
   };
 
   // Brands logic
@@ -1447,24 +1483,75 @@ export const Playlists = () => {
                         )}
                       </div>
 
-                      <div className="p-3 border-t border-slate-100 flex justify-end gap-2 bg-slate-50/50 rounded-b-xl">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleStatus(playlist)}
-                          className={`h-8 px-3 text-xs font-bold ${isActive ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"}`}
-                        >
-                          {isActive ? 'Stop' : 'Activează'}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDuplicate(playlist)}
-                          className="h-8 px-2 text-slate-500 hover:text-red-600 hover:bg-red-50 text-xs"
-                        >
-                          <Copy className="w-3.5 h-3.5 mr-1.5" />
-                          Duplică
-                        </Button>
+                      <div className="p-3 border-t border-slate-100 flex items-center justify-between gap-2 bg-slate-50/50 rounded-b-xl">
+                        <div className="relative">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setScreenAssignOpen(screenAssignOpen === playlist.id ? null : playlist.id)}
+                            className="h-8 px-3 text-xs font-bold text-slate-500 hover:text-red-600 hover:bg-red-50"
+                          >
+                            <Monitor className="w-3.5 h-3.5 mr-1.5" />
+                            Setare pe ecran
+                            {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 && (
+                              <span className="ml-1.5 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                                {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length}
+                              </span>
+                            )}
+                          </Button>
+                          {screenAssignOpen === playlist.id && (
+                            <div className="absolute bottom-full left-0 mb-1 w-64 bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden">
+                              <div className="p-2 border-b border-slate-100 flex items-center justify-between">
+                                <span className="text-xs font-bold text-slate-600">Selectează ecrane</span>
+                                <button onClick={() => setScreenAssignOpen(null)} className="text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
+                              </div>
+                              <div className="max-h-60 overflow-y-auto p-1">
+                                {locations.filter(loc => screens.some(s => s.location_id === loc.id)).map(location => (
+                                  <div key={location.id} className="mb-1">
+                                    <div className="px-2 py-1">
+                                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{location.name}</span>
+                                    </div>
+                                    {screens.filter(s => s.location_id === location.id).map(screen => (
+                                      <label
+                                        key={screen.id}
+                                        className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={isPlaylistOnScreen(playlist.id, screen.id)}
+                                          onChange={() => handleToggleScreenAssign(playlist.id, screen.id)}
+                                          className="rounded text-red-500 w-3.5 h-3.5"
+                                        />
+                                        <Monitor className="w-3.5 h-3.5 text-slate-400" />
+                                        <span className="text-xs font-medium text-slate-700 flex-1 truncate">{screen.name}</span>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                      </label>
+                                    ))}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleToggleStatus(playlist)}
+                            className={`h-8 px-3 text-xs font-bold ${isActive ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"}`}
+                          >
+                            {isActive ? 'Stop' : 'Activează'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDuplicate(playlist)}
+                            className="h-8 px-2 text-slate-500 hover:text-red-600 hover:bg-red-50 text-xs"
+                          >
+                            <Copy className="w-3.5 h-3.5 mr-1.5" />
+                            Duplică
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   );
