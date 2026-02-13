@@ -202,6 +202,12 @@ async def init_db() -> None:
         except Exception:
             pass  # Column may already exist
 
+    # Add avatar_url column to users table
+    try:
+        await pool.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT")
+    except Exception:
+        pass
+
 
 async def close_db() -> None:
     global pool
