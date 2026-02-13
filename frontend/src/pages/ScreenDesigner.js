@@ -334,14 +334,17 @@ export const ScreenDesigner = () => {
                   let playlistInfo = null;
 
                   if (config?.content_type === 'playlist' && config?.playlist_id) {
-                    const pl = playlists.find(p => p.id === parseInt(config.playlist_id));
+                    const plId = typeof config.playlist_id === 'string' ? parseInt(config.playlist_id) : config.playlist_id;
+                    const pl = playlists.find(p => p.id === plId || p.id === config.playlist_id);
                     if (pl && pl.items && pl.items.length > 0) {
                       isPlaylist = true;
                       playlistInfo = { name: pl.name, count: pl.items.length };
+                      // Playlist items reference content via content_id
                       const firstItem = pl.items[0];
-                      if (firstItem.file_url) {
-                        previewUrl = getFileUrl(firstItem.file_url);
-                        isVideo = firstItem.type === 'video';
+                      const contentItem = content.find(c => c.id === firstItem.content_id);
+                      if (contentItem && contentItem.file_url) {
+                        previewUrl = getFileUrl(contentItem.file_url);
+                        isVideo = contentItem.type === 'video';
                       }
                     }
                   } else if (config?.content_id) {
