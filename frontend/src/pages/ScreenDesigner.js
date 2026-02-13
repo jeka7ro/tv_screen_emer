@@ -846,7 +846,7 @@ export const ScreenDesigner = () => {
                           aspectRatio: '16/9',
                           backgroundImage: `url(${useStorefront ? storefrontUrl : 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000'})`,
                           backgroundSize: 'cover',
-                          backgroundPosition: 'center 30%',
+                          backgroundPosition: 'center 15%',
                           backgroundRepeat: 'no-repeat'
                         }}
                       >
