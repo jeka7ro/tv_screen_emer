@@ -400,9 +400,9 @@ export const LivePreviewDashboard = () => {
                                     .sort((a, b) => (a.cascade_offset || 0) - (b.cascade_offset || 0));
 
                                 const tvPositions = [
-                                    { left: '26%', top: '47%', width: '16%', height: '11%' },
-                                    { left: '42.5%', top: '47%', width: '16%', height: '11%' },
-                                    { left: '59%', top: '47.5%', width: '16%', height: '11%' }
+                                    { left: '29.2%', top: '52.2%', width: '12.2%', height: '8.2%' },
+                                    { left: '43.8%', top: '52.2%', width: '12.2%', height: '8.2%' },
+                                    { left: '58.5%', top: '52.2%', width: '12.2%', height: '8.2%' }
                                 ];
 
                                 return groupScreens.slice(0, 3).map((s, idx) => {
