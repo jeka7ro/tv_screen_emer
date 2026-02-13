@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../utils/api';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 export const LivePreviewDashboard = () => {
@@ -361,93 +361,176 @@ export const LivePreviewDashboard = () => {
                         >
                             Video Wall
                         </button>
+                        {syncGroups.length > 0 && (
+                            <button
+                                onClick={() => setLayoutMode('simulare')}
+                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${layoutMode === 'simulare'
+                                    ? 'bg-white shadow text-slate-800'
+                                    : 'text-slate-500 hover:text-slate-700'
+                                    }`}
+                            >
+                                Simulare Live
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 {/* Screen Grid / Seamless Wall */}
-                <div className={
-                    layoutMode === 'seamless'
-                        ? "bg-slate-950 p-12 rounded-2xl overflow-y-auto space-y-12 min-h-[600px] border border-slate-800 shadow-2xl flex flex-col items-center"
-                        : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                }>
-                    {layoutMode === 'seamless' ? (
-                        (() => {
-                            // In seamless mode, group screens by their sync_group
-                            const groups = {};
-                            filteredScreens.forEach(s => {
-                                const gid = s.sync_group || 'un-synced';
-                                if (!groups[gid]) groups[gid] = [];
-                                groups[gid].push(s);
-                            });
+                {layoutMode === 'simulare' ? (
+                    /* Simulare Live - Storefront with live TV overlays */
+                    <div className="flex flex-col items-center">
+                        <div
+                            className="relative bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-slate-800"
+                            style={{
+                                width: '100%',
+                                maxWidth: '1200px',
+                                aspectRatio: '16/9',
+                                backgroundImage: 'url(/storefront.jpg)',
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center 5%',
+                                backgroundRepeat: 'no-repeat'
+                            }}
+                        >
+                            {/* TV overlays with live iframes */}
+                            {(() => {
+                                const groupId = syncGroups[0];
+                                if (!groupId) return null;
+                                const groupScreens = screens
+                                    .filter(s => s.sync_group === groupId)
+                                    .sort((a, b) => (a.cascade_offset || 0) - (b.cascade_offset || 0));
 
-                            return Object.keys(groups).map(gid => {
-                                const groupScreens = groups[gid].sort((a, b) => (a.cascade_offset || 0) - (b.cascade_offset || 0));
-                                const sample = groupScreens[0];
-                                const isMatrix = sample.sync_type?.startsWith('matrix');
+                                const tvPositions = [
+                                    { left: '27.4%', top: '48%', width: '14.1%', height: '12%' },
+                                    { left: '42.4%', top: '48%', width: '14.0%', height: '12%' },
+                                    { left: '56.7%', top: '49%', width: '14.0%', height: '12%' }
+                                ];
 
-                                let cols = groupScreens.length, rows = 1;
-                                if (isMatrix) {
-                                    const dims = sample.sync_type.split(':')[1].split('x');
-                                    cols = parseInt(dims[0]) || 2;
-                                    rows = parseInt(dims[1]) || 1;
-                                }
-
-                                return (
-                                    <div key={gid} className="flex flex-col items-center">
-                                        <div className="mb-4 flex items-center gap-3">
-                                            <div className="h-px w-12 bg-slate-700"></div>
-                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                                                {gid === 'un-synced' ? 'Ecrane Individuale' : `Grup: ${sample.sync_group_name || gid.substring(0, 8)}`}
-                                            </span>
-                                            <div className="h-px w-12 bg-slate-700"></div>
-                                        </div>
-
+                                return groupScreens.slice(0, 3).map((s, idx) => {
+                                    const pos = tvPositions[idx];
+                                    if (!pos) return null;
+                                    return (
                                         <div
-                                            className="grid gap-1 bg-black p-1 rounded-lg shadow-2xl border border-slate-800"
+                                            key={s.id}
+                                            className="absolute overflow-hidden border-2 border-white/30 shadow-[0_0_20px_rgba(0,0,0,0.6)] transition-all hover:border-yellow-400 hover:scale-[1.03] hover:z-10"
                                             style={{
-                                                gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                                                width: 'fit-content',
-                                                maxWidth: '100%'
+                                                left: pos.left,
+                                                top: pos.top,
+                                                width: pos.width,
+                                                height: pos.height,
                                             }}
                                         >
-                                            {groupScreens.map(screen => {
-                                                return (
-                                                    <div
-                                                        key={screen.id}
-                                                        className="relative aspect-video bg-black overflow-hidden group cursor-pointer border border-white/5"
-                                                        style={{ width: isMatrix ? '260px' : '320px' }}
-                                                        onClick={() => {
-                                                            setSelectedScreen(screen);
-                                                            setShowFullscreen(true);
-                                                        }}
-                                                    >
-                                                        <iframe
-                                                            src={`/display/${screen.slug}`}
-                                                            title={screen.name}
-                                                            className="absolute inset-0 border-0 w-[1920px] h-[1080px]"
-                                                            style={{
-                                                                pointerEvents: 'none',
-                                                                transform: `scale(${isMatrix ? 260 / 1920 : 320 / 1920})`,
-                                                                transformOrigin: 'top left'
-                                                            }}
-                                                        />
-                                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
-                                                        <div className="absolute bottom-1 left-1 z-20 opacity-60 group-hover:opacity-100 transition-opacity">
-                                                            <span className="text-[9px] font-bold text-white px-1 bg-black/60 rounded">
-                                                                {screen.name}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
+                                            <iframe
+                                                src={`/display/${s.slug}`}
+                                                title={s.name}
+                                                className="absolute inset-0 border-0 w-[1920px] h-[1080px]"
+                                                style={{
+                                                    pointerEvents: 'none',
+                                                    transformOrigin: 'top left',
+                                                }}
+                                                ref={el => {
+                                                    if (el) {
+                                                        const container = el.parentElement;
+                                                        const scaleX = container.offsetWidth / 1920;
+                                                        const scaleY = container.offsetHeight / 1080;
+                                                        el.style.transform = `scale(${Math.min(scaleX, scaleY)})`;
+                                                    }
+                                                }}
+                                            />
+                                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1 z-10">
+                                                <span className="text-[8px] font-bold text-white/90 uppercase tracking-wider">{s.name}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            });
-                        })()
-                    ) : filteredScreens.map((screen) => {
+                                    );
+                                });
+                            })()}
 
-                        return (
+                            {/* Legend overlay */}
+                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/60 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 z-20">
+                                <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider">Simulare Live — Vedere Reală Locație</span>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className={
+                        layoutMode === 'seamless'
+                            ? "bg-slate-950 p-12 rounded-2xl overflow-y-auto space-y-12 min-h-[600px] border border-slate-800 shadow-2xl flex flex-col items-center"
+                            : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                    }>
+                        {layoutMode === 'seamless' ? (
+                            (() => {
+                                const groups = {};
+                                filteredScreens.forEach(s => {
+                                    const gid = s.sync_group || 'un-synced';
+                                    if (!groups[gid]) groups[gid] = [];
+                                    groups[gid].push(s);
+                                });
+
+                                return Object.keys(groups).map(gid => {
+                                    const groupScreens = groups[gid].sort((a, b) => (a.cascade_offset || 0) - (b.cascade_offset || 0));
+                                    const sample = groupScreens[0];
+                                    const isMatrix = sample.sync_type?.startsWith('matrix');
+
+                                    let cols = groupScreens.length, rows = 1;
+                                    if (isMatrix) {
+                                        const dims = sample.sync_type.split(':')[1].split('x');
+                                        cols = parseInt(dims[0]) || 2;
+                                        rows = parseInt(dims[1]) || 1;
+                                    }
+
+                                    return (
+                                        <div key={gid} className="flex flex-col items-center">
+                                            <div className="mb-4 flex items-center gap-3">
+                                                <div className="h-px w-12 bg-slate-700"></div>
+                                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                                    {gid === 'un-synced' ? 'Ecrane Individuale' : `Grup: ${sample.sync_group_name || gid.substring(0, 8)}`}
+                                                </span>
+                                                <div className="h-px w-12 bg-slate-700"></div>
+                                            </div>
+
+                                            <div
+                                                className="grid gap-1 bg-black p-1 rounded-lg shadow-2xl border border-slate-800"
+                                                style={{
+                                                    gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                                                    width: 'fit-content',
+                                                    maxWidth: '100%'
+                                                }}
+                                            >
+                                                {groupScreens.map(screen => {
+                                                    return (
+                                                        <div
+                                                            key={screen.id}
+                                                            className="relative aspect-video bg-black overflow-hidden group cursor-pointer border border-white/5"
+                                                            style={{ width: isMatrix ? '260px' : '320px' }}
+                                                            onClick={() => {
+                                                                setSelectedScreen(screen);
+                                                                setShowFullscreen(true);
+                                                            }}
+                                                        >
+                                                            <iframe
+                                                                src={`/display/${screen.slug}`}
+                                                                title={screen.name}
+                                                                className="absolute inset-0 border-0 w-[1920px] h-[1080px]"
+                                                                style={{
+                                                                    pointerEvents: 'none',
+                                                                    transform: `scale(${isMatrix ? 260 / 1920 : 320 / 1920})`,
+                                                                    transformOrigin: 'top left'
+                                                                }}
+                                                            />
+                                                            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
+                                                            <div className="absolute bottom-1 left-1 z-20 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                                <span className="text-[9px] font-bold text-white px-1 bg-black/60 rounded">
+                                                                    {screen.name}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            })()
+                        ) : filteredScreens.map((screen) => (
                             <div
                                 key={screen.id}
                                 className="glass-card p-4 cursor-pointer hover:shadow-xl transition-all"
@@ -468,12 +551,9 @@ export const LivePreviewDashboard = () => {
                                         className="absolute inset-0 border-0 w-full h-full"
                                         style={{ pointerEvents: 'none' }}
                                     />
-
-                                    {/* Fullscreen icon */}
                                     <div className="absolute top-2 right-2 bg-black/70 p-1.5 rounded-lg z-20">
                                         <Maximize2 className="w-4 h-4 text-white" />
                                     </div>
-
                                     <div className="absolute top-2 left-2 z-20">
                                         <span className={screen.status === 'online' ? 'status-active' : 'status-offline'}>
                                             <Circle className="w-2 h-2 fill-current" />
@@ -481,28 +561,23 @@ export const LivePreviewDashboard = () => {
                                         </span>
                                     </div>
                                 </div>
-
-                                {/* Detailed Info only in Grid Mode */}
                                 {layoutMode === 'grid' && (
                                     <>
                                         <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
                                             <Monitor className="w-4 h-4" />
                                             {screen.name}
                                         </h3>
-
                                         <div className="space-y-1.5 text-sm">
                                             <div className="flex items-center gap-2 text-slate-600">
                                                 <MapPin className="w-3.5 h-3.5" />
                                                 <span>{getLocationName(screen.location_id)}</span>
                                             </div>
-
                                             {screen.currentContent && (
                                                 <div className="flex items-center gap-2 text-slate-600">
                                                     {getContentIcon(screen.currentContent)}
                                                     <span className="truncate">{screen.currentContent.name}</span>
                                                 </div>
                                             )}
-
                                             {screen.sync_group && (
                                                 <div className="flex items-center gap-2">
                                                     <div
@@ -518,11 +593,11 @@ export const LivePreviewDashboard = () => {
                                     </>
                                 )}
                             </div>
-                        );
-                    })}
-                </div>
+                        ))}
+                    </div>
+                )}
 
-                {filteredScreens.length === 0 && (
+                {filteredScreens.length === 0 && layoutMode !== 'simulare' && (
                     <div className="glass-card p-12 text-center">
                         <Monitor className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                         <h3 className="text-xl font-semibold text-slate-700 mb-2">
@@ -543,6 +618,7 @@ export const LivePreviewDashboard = () => {
                             <Monitor className="w-5 h-5" />
                             {selectedScreen?.name}
                         </DialogTitle>
+                        <DialogDescription className="sr-only">Previzualizare ecran fullscreen</DialogDescription>
                     </DialogHeader>
 
                     {selectedScreen && (
@@ -603,6 +679,6 @@ export const LivePreviewDashboard = () => {
                     )}
                 </DialogContent>
             </Dialog>
-        </DashboardLayout>
+        </DashboardLayout >
     );
 };
