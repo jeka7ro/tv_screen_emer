@@ -330,51 +330,134 @@ export const ScreenDesigner = () => {
         </div>
 
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <div className="lg:col-span-2 flex flex-col gap-6">
-            {/* Template Selector - Visual Cards */}
-            <div className="glass-card p-6">
-              <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <Monitor className="w-5 h-5 text-indigo-500" />
-                Template Ecran
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                {templates.map(template => {
-                  const isSelected = selectedTemplate?.id === template.id;
-                  return (
-                    <button
-                      key={template.id}
-                      onClick={() => isAdmin() && handleTemplateChange(template.id)}
-                      disabled={!isAdmin()}
-                      className={`relative p-3 rounded-xl border-2 transition-all text-left group ${isSelected
-                        ? 'border-indigo-400 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-md shadow-indigo-100/50 ring-2 ring-indigo-200/50'
-                        : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30 hover:shadow-sm'
-                        }`}
-                    >
-                      {/* Checkmark */}
-                      {isSelected && (
-                        <div className="absolute -top-2 -right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center shadow-md z-10">
-                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                        </div>
-                      )}
-                      {/* Mini Layout Diagram */}
-                      <div className="flex justify-center mb-2">
-                        <TemplateIcon template={template} isSelected={isSelected} />
+        {/* Template Ecran + Efecte Vizuale - Same Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start mb-6">
+          {/* Template Selector - Visual Cards */}
+          <div className="lg:col-span-3 glass-card p-6">
+            <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+              <Monitor className="w-5 h-5 text-indigo-500" />
+              Template Ecran
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {templates.map(template => {
+                const isSelected = selectedTemplate?.id === template.id;
+                return (
+                  <button
+                    key={template.id}
+                    onClick={() => isAdmin() && handleTemplateChange(template.id)}
+                    disabled={!isAdmin()}
+                    className={`relative p-3 rounded-xl border-2 transition-all text-left group ${isSelected
+                      ? 'border-indigo-400 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-md shadow-indigo-100/50 ring-2 ring-indigo-200/50'
+                      : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30 hover:shadow-sm'
+                      }`}
+                  >
+                    {/* Checkmark */}
+                    {isSelected && (
+                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center shadow-md z-10">
+                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
                       </div>
-                      <p className={`text-[11px] font-bold text-center leading-tight ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
-                        {template.name}
-                      </p>
-                      <p className={`text-[9px] text-center mt-0.5 leading-tight ${isSelected ? 'text-indigo-500' : 'text-slate-400'}`}>
-                        {template.zones.length} {template.zones.length === 1 ? 'zonă' : 'zone'}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
+                    )}
+                    {/* Mini Layout Diagram */}
+                    <div className="flex justify-center mb-2">
+                      <TemplateIcon template={template} isSelected={isSelected} />
+                    </div>
+                    <p className={`text-[11px] font-bold text-center leading-tight ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
+                      {template.name}
+                    </p>
+                    <p className={`text-[9px] text-center mt-0.5 leading-tight ${isSelected ? 'text-indigo-500' : 'text-slate-400'}`}>
+                      {template.zones.length} {template.zones.length === 1 ? 'zonă' : 'zone'}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
+          {/* Effects Panel */}
+          <div className="lg:col-span-2 glass-card p-5">
+            <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-500" />
+              Efecte Vizuale
+            </h2>
+            <div className="space-y-3">
+              {/* Parallax Toggle */}
+              <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${enableParallax ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`}>
+                <div className={`w-9 h-5 rounded-full transition-all relative ${enableParallax ? 'bg-indigo-500' : 'bg-slate-300'}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableParallax ? 'left-[18px]' : 'left-0.5'}`} />
+                </div>
+                <Layers className={`w-4 h-4 ${enableParallax ? 'text-indigo-500' : 'text-slate-400'}`} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-700">Parallax</p>
+                  <p className="text-[10px] text-slate-400">Mișcare lentă de fundal</p>
+                </div>
+                <input type="checkbox" className="sr-only" checked={enableParallax} onChange={e => setEnableParallax(e.target.checked)} />
+              </label>
+              {/* Steam Toggle */}
+              <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${enableSteam ? 'bg-teal-50 border-teal-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`}>
+                <div className={`w-9 h-5 rounded-full transition-all relative ${enableSteam ? 'bg-teal-500' : 'bg-slate-300'}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableSteam ? 'left-[18px]' : 'left-0.5'}`} />
+                </div>
+                <Wind className={`w-4 h-4 ${enableSteam ? 'text-teal-500' : 'text-slate-400'}`} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-700">Steam</p>
+                  <p className="text-[10px] text-slate-400">Efect de aburi dinamic</p>
+                </div>
+                <input type="checkbox" className="sr-only" checked={enableSteam} onChange={e => setEnableSteam(e.target.checked)} />
+              </label>
+              {/* Logo Overlay Toggle */}
+              <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${enableLogo ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`}>
+                <div className={`w-9 h-5 rounded-full transition-all relative ${enableLogo ? 'bg-amber-500' : 'bg-slate-300'}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableLogo ? 'left-[18px]' : 'left-0.5'}`} />
+                </div>
+                <Image className={`w-4 h-4 ${enableLogo ? 'text-amber-500' : 'text-slate-400'}`} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-700">Logo Overlay</p>
+                  <p className="text-[10px] text-slate-400">Suprapunere logo PNG</p>
+                </div>
+                <input type="checkbox" className="sr-only" checked={enableLogo} onChange={e => setEnableLogo(e.target.checked)} />
+              </label>
+              {enableLogo && (
+                <div className="pl-3 border-l-2 border-amber-200 ml-1 space-y-3">
+                  <div>
+                    <p className="text-xs font-medium text-slate-600 mb-1.5">Alege brand:</p>
+                    <div className="space-y-1.5 max-h-28 overflow-y-auto custom-scrollbar">
+                      {brandsWithLogo.map(brand => (
+                        <button key={brand.id} onClick={() => setSelectedBrandId(brand.id)} className={`w-full flex items-center gap-2 p-2 rounded-lg border transition-all ${selectedBrandId === brand.id ? 'border-amber-400 bg-amber-50 ring-1 ring-amber-200 shadow-sm' : 'border-slate-200 bg-white hover:border-amber-300 hover:bg-amber-50/30'}`}>
+                          <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 p-0.5"><img src={getFileUrl(brand.logo_url)} className="w-full h-full object-contain" alt={brand.name} /></div>
+                          <span className={`text-xs font-medium flex-1 text-left truncate ${selectedBrandId === brand.id ? 'text-amber-700' : 'text-slate-600'}`}>{brand.name}</span>
+                          {selectedBrandId === brand.id && <Check className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" strokeWidth={3} />}
+                        </button>
+                      ))}
+                      {brandsWithLogo.length === 0 && <p className="text-[10px] text-slate-400 text-center py-2">Niciun brand cu logo</p>}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-600 mb-1.5">Poziție:</p>
+                    <div className="grid grid-cols-3 gap-1 w-20 mx-auto">
+                      {['top-left', 'top-center', 'top-right', 'center-left', 'center', 'center-right', 'bottom-left', 'bottom-center', 'bottom-right'].map(pos => (
+                        <button key={pos} onClick={() => setLogoPosition(pos)} className={`w-6 h-5 rounded-sm border transition-all ${logoPosition === pos ? 'bg-amber-400 border-amber-500 shadow-sm' : 'bg-slate-100 border-slate-200 hover:bg-amber-100 hover:border-amber-300'}`} title={pos} />
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-600 mb-1.5">Mărime:</p>
+                    <div className="flex gap-1">
+                      {[{ k: 'sm', l: 'S' }, { k: 'md', l: 'M' }, { k: 'lg', l: 'L' }, { k: 'xl', l: 'XL' }].map(s => (
+                        <button key={s.k} onClick={() => setLogoSize(s.k)} className={`flex-1 py-1 rounded-md text-[10px] font-bold border transition-all ${logoSize === s.k ? 'bg-amber-400 text-white border-amber-500 shadow-sm' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-amber-50 hover:border-amber-300'}`}>{s.l}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Preview + Zone Configuration Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="lg:col-span-2">
             {/* Preview */}
-            <div className="glass-card p-6 flex-1">
+            <div className="glass-card p-6">
               <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
                 <Eye className="w-5 h-5 text-indigo-500" />
                 Previzualizare
@@ -393,7 +476,6 @@ export const ScreenDesigner = () => {
                     if (pl && pl.items && pl.items.length > 0) {
                       isPlaylist = true;
                       playlistInfo = { name: pl.name, count: pl.items.length };
-                      // Playlist items reference content via content_id
                       const firstItem = pl.items[0];
                       const contentItem = content.find(c => c.id === firstItem.content_id);
                       if (contentItem && contentItem.file_url) {
@@ -410,20 +492,9 @@ export const ScreenDesigner = () => {
                   }
 
                   return (
-                    <div
-                      key={zone.id}
-                      className="absolute overflow-hidden shadow-lg border border-white/20"
-                      style={{
-                        left: `${zone.x}%`,
-                        top: `${zone.y}%`,
-                        width: `${zone.width}%`,
-                        height: `${zone.height}%`,
-                        zIndex: 1
-                      }}
-                    >
+                    <div key={zone.id} className="absolute overflow-hidden shadow-lg border border-white/20" style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%`, zIndex: 1 }}>
                       {previewUrl ? (
                         <div className={`relative w-full h-full bg-black ${enableParallax ? 'parallax-container' : ''}`}>
-                          {/* TV Style Background */}
                           <div className="absolute inset-0 z-0">
                             {isVideo ? (
                               <video src={previewUrl} className={`w-full h-full object-cover opacity-50 blur-lg scale-110 ${enableParallax ? 'parallax-layer' : ''}`} muted loop autoPlay />
@@ -431,35 +502,18 @@ export const ScreenDesigner = () => {
                               <img src={previewUrl} className={`w-full h-full object-cover opacity-50 blur-lg scale-110 ${enableParallax ? 'parallax-layer' : ''}`} alt="" />
                             )}
                           </div>
-
-                          {/* Main Content */}
                           <div className="absolute inset-0 z-10 flex items-center justify-center">
                             {isVideo ? (
-                              <video
-                                src={previewUrl}
-                                className="max-w-full max-h-full"
-                                style={{ objectFit: 'contain' }}
-                                autoPlay loop muted
-                              />
+                              <video src={previewUrl} className="max-w-full max-h-full" style={{ objectFit: 'contain' }} autoPlay loop muted />
                             ) : (
-                              <img
-                                src={previewUrl}
-                                className="max-w-full max-h-full shadow-lg"
-                                style={{ objectFit: 'contain' }}
-                                alt="Preview"
-                              />
+                              <img src={previewUrl} className="max-w-full max-h-full shadow-lg" style={{ objectFit: 'contain' }} alt="Preview" />
                             )}
                           </div>
-
-                          {/* Steam Effect */}
                           {enableSteam && (
                             <div className="steam z-20">
-                              {[...Array(12)].map((_, i) => (
-                                <div key={i} className="steam-particle"></div>
-                              ))}
+                              {[...Array(12)].map((_, i) => (<div key={i} className="steam-particle"></div>))}
                             </div>
                           )}
-
                         </div>
                       ) : isPlaylist && playlistInfo ? (
                         <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-red-50 to-orange-50 border-2 border-dashed border-red-200">
@@ -472,7 +526,6 @@ export const ScreenDesigner = () => {
                           {zone.name}
                         </div>
                       )}
-                      {/* Playlist badge */}
                       {isPlaylist && playlistInfo && previewUrl && (
                         <div className="absolute bottom-1 left-1 right-1 z-30 bg-black/70 backdrop-blur-sm rounded px-1.5 py-0.5 flex items-center gap-1">
                           <ListIcon className="w-3 h-3 text-white" />
@@ -483,8 +536,6 @@ export const ScreenDesigner = () => {
                     </div>
                   );
                 })}
-
-                {/* Logo Overlay - screen level, over all zones */}
                 {enableLogo && selectedBrandId && (() => {
                   const brand = brands.find(b => b.id === selectedBrandId);
                   if (!brand?.logo_url) return null;
@@ -512,129 +563,6 @@ export const ScreenDesigner = () => {
           </div>
 
           <div className="flex flex-col gap-6">
-            {/* Effects Panel */}
-            <div className="glass-card p-5">
-              <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-500" />
-                Efecte Vizuale
-              </h2>
-              <div className="space-y-3">
-                {/* Parallax Toggle */}
-                <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${enableParallax ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-100 hover:bg-slate-50'
-                  }`}>
-                  <div className={`w-9 h-5 rounded-full transition-all relative ${enableParallax ? 'bg-indigo-500' : 'bg-slate-300'}`}>
-                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableParallax ? 'left-[18px]' : 'left-0.5'}`} />
-                  </div>
-                  <Layers className={`w-4 h-4 ${enableParallax ? 'text-indigo-500' : 'text-slate-400'}`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-700">Parallax</p>
-                    <p className="text-[10px] text-slate-400">Mișcare lentă de fundal</p>
-                  </div>
-                  <input type="checkbox" className="sr-only" checked={enableParallax} onChange={e => setEnableParallax(e.target.checked)} />
-                </label>
-
-                {/* Steam Toggle */}
-                <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${enableSteam ? 'bg-teal-50 border-teal-200' : 'bg-white border-slate-100 hover:bg-slate-50'
-                  }`}>
-                  <div className={`w-9 h-5 rounded-full transition-all relative ${enableSteam ? 'bg-teal-500' : 'bg-slate-300'}`}>
-                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableSteam ? 'left-[18px]' : 'left-0.5'}`} />
-                  </div>
-                  <Wind className={`w-4 h-4 ${enableSteam ? 'text-teal-500' : 'text-slate-400'}`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-700">Steam</p>
-                    <p className="text-[10px] text-slate-400">Efect de aburi dinamic</p>
-                  </div>
-                  <input type="checkbox" className="sr-only" checked={enableSteam} onChange={e => setEnableSteam(e.target.checked)} />
-                </label>
-
-                {/* Logo Overlay Toggle */}
-                <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${enableLogo ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-100 hover:bg-slate-50'
-                  }`}>
-                  <div className={`w-9 h-5 rounded-full transition-all relative ${enableLogo ? 'bg-amber-500' : 'bg-slate-300'}`}>
-                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableLogo ? 'left-[18px]' : 'left-0.5'}`} />
-                  </div>
-                  <Image className={`w-4 h-4 ${enableLogo ? 'text-amber-500' : 'text-slate-400'}`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-700">Logo Overlay</p>
-                    <p className="text-[10px] text-slate-400">Suprapunere logo PNG</p>
-                  </div>
-                  <input type="checkbox" className="sr-only" checked={enableLogo} onChange={e => setEnableLogo(e.target.checked)} />
-                </label>
-
-                {/* Logo Picker (shown when enabled) */}
-                {enableLogo && (
-                  <div className="pl-3 border-l-2 border-amber-200 ml-1 space-y-3">
-                    {/* Brand Selection */}
-                    <div>
-                      <p className="text-xs font-medium text-slate-600 mb-1.5">Alege brand:</p>
-                      <div className="space-y-1.5 max-h-28 overflow-y-auto custom-scrollbar">
-                        {brandsWithLogo.map(brand => (
-                          <button
-                            key={brand.id}
-                            onClick={() => setSelectedBrandId(brand.id)}
-                            className={`w-full flex items-center gap-2 p-2 rounded-lg border transition-all ${selectedBrandId === brand.id
-                              ? 'border-amber-400 bg-amber-50 ring-1 ring-amber-200 shadow-sm'
-                              : 'border-slate-200 bg-white hover:border-amber-300 hover:bg-amber-50/30'
-                              }`}
-                          >
-                            <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 p-0.5">
-                              <img src={getFileUrl(brand.logo_url)} className="w-full h-full object-contain" alt={brand.name} />
-                            </div>
-                            <span className={`text-xs font-medium flex-1 text-left truncate ${selectedBrandId === brand.id ? 'text-amber-700' : 'text-slate-600'}`}>
-                              {brand.name}
-                            </span>
-                            {selectedBrandId === brand.id && (
-                              <Check className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" strokeWidth={3} />
-                            )}
-                          </button>
-                        ))}
-                        {brandsWithLogo.length === 0 && (
-                          <p className="text-[10px] text-slate-400 text-center py-2">Niciun brand cu logo</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Position Grid */}
-                    <div>
-                      <p className="text-xs font-medium text-slate-600 mb-1.5">Poziție:</p>
-                      <div className="grid grid-cols-3 gap-1 w-20 mx-auto">
-                        {['top-left', 'top-center', 'top-right', 'center-left', 'center', 'center-right', 'bottom-left', 'bottom-center', 'bottom-right'].map(pos => (
-                          <button
-                            key={pos}
-                            onClick={() => setLogoPosition(pos)}
-                            className={`w-6 h-5 rounded-sm border transition-all ${logoPosition === pos
-                              ? 'bg-amber-400 border-amber-500 shadow-sm'
-                              : 'bg-slate-100 border-slate-200 hover:bg-amber-100 hover:border-amber-300'
-                              }`}
-                            title={pos}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Size Selector */}
-                    <div>
-                      <p className="text-xs font-medium text-slate-600 mb-1.5">Mărime:</p>
-                      <div className="flex gap-1">
-                        {[{ k: 'sm', l: 'S' }, { k: 'md', l: 'M' }, { k: 'lg', l: 'L' }, { k: 'xl', l: 'XL' }].map(s => (
-                          <button
-                            key={s.k}
-                            onClick={() => setLogoSize(s.k)}
-                            className={`flex-1 py-1 rounded-md text-[10px] font-bold border transition-all ${logoSize === s.k
-                              ? 'bg-amber-400 text-white border-amber-500 shadow-sm'
-                              : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-amber-50 hover:border-amber-300'
-                              }`}
-                          >
-                            {s.l}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Zone Configuration */}
             <div className="glass-card p-6 space-y-6 flex-1">
               <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
