@@ -377,7 +377,7 @@ export const LivePreviewDashboard = () => {
 
                 {/* Screen Grid / Seamless Wall */}
                 {layoutMode === 'simulare' ? (
-                    /* Simulare Live - Storefront with live TV overlays */
+                    /* Simulare Live - Storefront with Video Wall overlay on TV area */
                     <div className="flex flex-col items-center">
                         <div
                             className="relative bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-slate-800"
@@ -391,7 +391,7 @@ export const LivePreviewDashboard = () => {
                                 backgroundRepeat: 'no-repeat'
                             }}
                         >
-                            {/* TV overlays with live iframes */}
+                            {/* Single video-wall container covering all 3 TVs */}
                             {(() => {
                                 const groupId = syncGroups[0];
                                 if (!groupId) return null;
@@ -399,49 +399,46 @@ export const LivePreviewDashboard = () => {
                                     .filter(s => s.sync_group === groupId)
                                     .sort((a, b) => (a.cascade_offset || 0) - (b.cascade_offset || 0));
 
-                                const tvPositions = [
-                                    { left: '26%', top: '44.2%', width: '14.8%', height: '23.8%' },
-                                    { left: '41.8%', top: '44.2%', width: '14.8%', height: '23.8%' },
-                                    { left: '57.6%', top: '44.2%', width: '14.8%', height: '23.8%' }
-                                ];
-
-                                return groupScreens.slice(0, 3).map((s, idx) => {
-                                    const pos = tvPositions[idx];
-                                    if (!pos) return null;
-                                    return (
-                                        <div
-                                            key={s.id}
-                                            className="absolute overflow-hidden border-2 border-white/30 shadow-[0_0_20px_rgba(0,0,0,0.6)] transition-all hover:border-yellow-400 hover:scale-[1.03] hover:z-10"
-                                            style={{
-                                                left: pos.left,
-                                                top: pos.top,
-                                                width: pos.width,
-                                                height: pos.height,
-                                            }}
-                                        >
-                                            <iframe
-                                                src={`/display/${s.slug}`}
-                                                title={s.name}
-                                                className="absolute inset-0 border-0 w-[1920px] h-[1080px]"
-                                                style={{
-                                                    pointerEvents: 'none',
-                                                    transformOrigin: 'top left',
-                                                }}
-                                                ref={el => {
-                                                    if (el) {
-                                                        const container = el.parentElement;
-                                                        const scaleX = container.offsetWidth / 1920;
-                                                        const scaleY = container.offsetHeight / 1080;
-                                                        el.style.transform = `scale(${Math.min(scaleX, scaleY)})`;
-                                                    }
-                                                }}
-                                            />
-                                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1 z-10">
-                                                <span className="text-[8px] font-bold text-white/90 uppercase tracking-wider">{s.name}</span>
+                                return (
+                                    <div
+                                        className="absolute flex"
+                                        style={{
+                                            left: '25.5%',
+                                            top: '42%',
+                                            width: '48%',
+                                            height: '28%',
+                                            gap: '0.6%',
+                                        }}
+                                    >
+                                        {groupScreens.slice(0, 3).map((s, idx) => (
+                                            <div
+                                                key={s.id}
+                                                className="relative flex-1 overflow-hidden rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)]"
+                                            >
+                                                <iframe
+                                                    src={`/display/${s.slug}`}
+                                                    title={s.name}
+                                                    className="absolute inset-0 border-0 w-[1920px] h-[1080px]"
+                                                    style={{
+                                                        pointerEvents: 'none',
+                                                        transformOrigin: 'top left',
+                                                    }}
+                                                    ref={el => {
+                                                        if (el) {
+                                                            const container = el.parentElement;
+                                                            const scaleX = container.offsetWidth / 1920;
+                                                            const scaleY = container.offsetHeight / 1080;
+                                                            el.style.transform = `scale(${Math.min(scaleX, scaleY)})`;
+                                                        }
+                                                    }}
+                                                />
+                                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1 z-10">
+                                                    <span className="text-[8px] font-bold text-white/90 uppercase tracking-wider">{idx + 1}</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                });
+                                        ))}
+                                    </div>
+                                );
                             })()}
 
                             {/* Legend overlay */}
