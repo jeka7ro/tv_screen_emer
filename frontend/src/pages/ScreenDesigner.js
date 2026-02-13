@@ -302,8 +302,8 @@ export const ScreenDesigner = () => {
                 className="btn-secondary"
                 data-testid="preview-button"
               >
-                <Eye className="w-5 h-5 mr-2" />
-                Preview Sync
+                <Monitor className="w-5 h-5 mr-2" />
+                Simulare Live
               </Button>
             )}
             {isAdmin() && (
@@ -797,7 +797,7 @@ export const ScreenDesigner = () => {
         <Dialog open={showPreview} onOpenChange={setShowPreview}>
           <DialogContent className="glass-panel max-w-6xl w-full max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Preview Sincronizare ({screen?.sync_type})</DialogTitle>
+              <DialogTitle>Simulare Live ({screen?.sync_type})</DialogTitle>
               <DialogDescription className="sr-only">Vizualizare preview sincronizare ecrane</DialogDescription>
             </DialogHeader>
             <div className="mt-4">
