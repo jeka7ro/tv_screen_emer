@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Save, ArrowLeft, Eye, Check, Sparkles, Layers, Wind, Image, Monitor } from 'lucide-react';
+import { Save, ArrowLeft, Eye, Check, Sparkles, Layers, Wind, Image, Monitor, List as ListIcon } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import '../styles/effects.css';
@@ -330,8 +330,21 @@ export const ScreenDesigner = () => {
                   const config = zoneConfigs.find(c => c.zone_id === zone.id);
                   let previewUrl = null;
                   let isVideo = false;
+                  let isPlaylist = false;
+                  let playlistInfo = null;
 
-                  if (config?.content_id) {
+                  if (config?.content_type === 'playlist' && config?.playlist_id) {
+                    const pl = playlists.find(p => p.id === parseInt(config.playlist_id));
+                    if (pl && pl.items && pl.items.length > 0) {
+                      isPlaylist = true;
+                      playlistInfo = { name: pl.name, count: pl.items.length };
+                      const firstItem = pl.items[0];
+                      if (firstItem.file_url) {
+                        previewUrl = getFileUrl(firstItem.file_url);
+                        isVideo = firstItem.type === 'video';
+                      }
+                    }
+                  } else if (config?.content_id) {
                     const item = content.find(c => c.id === config.content_id);
                     if (item) {
                       previewUrl = getFileUrl(item.file_url);
@@ -391,9 +404,23 @@ export const ScreenDesigner = () => {
                           )}
 
                         </div>
+                      ) : isPlaylist && playlistInfo ? (
+                        <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-red-50 to-orange-50 border-2 border-dashed border-red-200">
+                          <ListIcon className="w-6 h-6 text-red-400 mb-1" />
+                          <span className="text-xs font-bold text-red-600 text-center px-1 truncate w-full">{playlistInfo.name}</span>
+                          <span className="text-[9px] text-red-400 font-bold">{playlistInfo.count} elemente</span>
+                        </div>
                       ) : (
                         <div className="flex items-center justify-center h-full text-xs font-bold text-indigo-400 bg-indigo-50/50 backdrop-blur-sm border-2 border-dashed border-indigo-200">
                           {zone.name}
+                        </div>
+                      )}
+                      {/* Playlist badge */}
+                      {isPlaylist && playlistInfo && previewUrl && (
+                        <div className="absolute bottom-1 left-1 right-1 z-30 bg-black/70 backdrop-blur-sm rounded px-1.5 py-0.5 flex items-center gap-1">
+                          <ListIcon className="w-3 h-3 text-white" />
+                          <span className="text-[9px] text-white font-bold truncate">{playlistInfo.name}</span>
+                          <span className="text-[8px] text-white/70 ml-auto">{playlistInfo.count}</span>
                         </div>
                       )}
                     </div>
