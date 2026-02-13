@@ -1399,7 +1399,7 @@ export const Playlists = () => {
                                 {brandLogo ? (
                                   <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-1" />
                                 ) : (
-                                  <PlaySquare className="w-5 h-5" />
+                                  <Film className="w-5 h-5" />
                                 )}
                               </div>
                               <div className="min-w-0">
