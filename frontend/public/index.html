@@ -48,7 +48,17 @@
 </head>
 
 <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <script>
+        // Suppress ResizeObserver loop error (harmless browser quirk)
+        const _origRO = window.ResizeObserver;
+        window.ResizeObserver = class extends _origRO {
+            constructor(cb) {
+                super((entries, observer) => {
+                    requestAnimationFrame(() => { cb(entries, observer); });
+                });
+            }
+        };
+    </script>
     <div id="root"></div>
     <!--
       This HTML file is a template.
