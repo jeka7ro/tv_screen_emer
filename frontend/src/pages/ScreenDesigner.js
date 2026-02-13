@@ -330,51 +330,98 @@ export const ScreenDesigner = () => {
         </div>
 
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <div className="lg:col-span-2 flex flex-col gap-6">
-            {/* Template Selector - Visual Cards */}
-            <div className="glass-card p-6">
-              <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <Monitor className="w-5 h-5 text-indigo-500" />
-                Template Ecran
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                {templates.map(template => {
-                  const isSelected = selectedTemplate?.id === template.id;
-                  return (
-                    <button
-                      key={template.id}
-                      onClick={() => isAdmin() && handleTemplateChange(template.id)}
-                      disabled={!isAdmin()}
-                      className={`relative p-3 rounded-xl border-2 transition-all text-left group ${isSelected
-                        ? 'border-indigo-400 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-md shadow-indigo-100/50 ring-2 ring-indigo-200/50'
-                        : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30 hover:shadow-sm'
-                        }`}
-                    >
-                      {/* Checkmark */}
-                      {isSelected && (
-                        <div className="absolute -top-2 -right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center shadow-md z-10">
-                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                        </div>
-                      )}
-                      {/* Mini Layout Diagram */}
-                      <div className="flex justify-center mb-2">
-                        <TemplateIcon template={template} isSelected={isSelected} />
+        {/* Row 1: Template Ecran + Efecte Vizuale */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch mb-4">
+          {/* Template Selector */}
+          <div className="lg:col-span-2 glass-card p-5">
+            <h2 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+              <Monitor className="w-4 h-4 text-indigo-500" />
+              Template Ecran
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              {templates.map(template => {
+                const isSelected = selectedTemplate?.id === template.id;
+                return (
+                  <button
+                    key={template.id}
+                    onClick={() => isAdmin() && handleTemplateChange(template.id)}
+                    disabled={!isAdmin()}
+                    className={`relative p-2 rounded-xl border-2 transition-all text-left group ${isSelected
+                      ? 'border-indigo-400 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-md shadow-indigo-100/50 ring-2 ring-indigo-200/50'
+                      : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30 hover:shadow-sm'
+                      }`}
+                  >
+                    {isSelected && (
+                      <div className="absolute -top-2 -right-2 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center shadow-md z-10">
+                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
                       </div>
-                      <p className={`text-[11px] font-bold text-center leading-tight ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
-                        {template.name}
-                      </p>
-                      <p className={`text-[9px] text-center mt-0.5 leading-tight ${isSelected ? 'text-indigo-500' : 'text-slate-400'}`}>
-                        {template.zones.length} {template.zones.length === 1 ? 'zonă' : 'zone'}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
+                    )}
+                    <div className="flex justify-center mb-1.5">
+                      <TemplateIcon template={template} isSelected={isSelected} />
+                    </div>
+                    <p className={`text-[10px] font-bold text-center leading-tight ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
+                      {template.name}
+                    </p>
+                    <p className={`text-[8px] text-center mt-0.5 leading-tight ${isSelected ? 'text-indigo-500' : 'text-slate-400'}`}>
+                      {template.zones.length} {template.zones.length === 1 ? 'zonă' : 'zone'}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
+          {/* Efecte Vizuale - Compact Icons */}
+          <div className="glass-card p-5 flex flex-col">
+            <h2 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              Efecte Vizuale
+            </h2>
+            <div className="flex gap-2 mb-3">
+              <button onClick={() => setEnableParallax(!enableParallax)} title="Parallax" className={`flex-1 flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all ${enableParallax ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30'}`}>
+                <Layers className={`w-5 h-5 ${enableParallax ? 'text-indigo-500' : 'text-slate-400'}`} />
+                <span className={`text-[9px] font-bold ${enableParallax ? 'text-indigo-600' : 'text-slate-400'}`}>Parallax</span>
+              </button>
+              <button onClick={() => setEnableSteam(!enableSteam)} title="Steam" className={`flex-1 flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all ${enableSteam ? 'border-teal-400 bg-teal-50 shadow-sm' : 'border-slate-200 bg-white hover:border-teal-200 hover:bg-teal-50/30'}`}>
+                <Wind className={`w-5 h-5 ${enableSteam ? 'text-teal-500' : 'text-slate-400'}`} />
+                <span className={`text-[9px] font-bold ${enableSteam ? 'text-teal-600' : 'text-slate-400'}`}>Steam</span>
+              </button>
+              <button onClick={() => setEnableLogo(!enableLogo)} title="Logo Overlay" className={`flex-1 flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all ${enableLogo ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/30'}`}>
+                <Image className={`w-5 h-5 ${enableLogo ? 'text-amber-500' : 'text-slate-400'}`} />
+                <span className={`text-[9px] font-bold ${enableLogo ? 'text-amber-600' : 'text-slate-400'}`}>Logo</span>
+              </button>
+            </div>
+            {enableLogo && (
+              <div className="space-y-2 border-t border-slate-100 pt-2">
+                <div className="flex gap-1.5 overflow-x-auto">
+                  {brandsWithLogo.map(brand => (
+                    <button key={brand.id} onClick={() => setSelectedBrandId(brand.id)} className={`flex-shrink-0 w-8 h-8 rounded-lg border-2 overflow-hidden p-0.5 transition-all ${selectedBrandId === brand.id ? 'border-amber-400 shadow-sm ring-1 ring-amber-200' : 'border-slate-200 hover:border-amber-300'}`} title={brand.name}>
+                      <img src={getFileUrl(brand.logo_url)} className="w-full h-full object-contain" alt={brand.name} />
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="grid grid-cols-3 gap-0.5 w-14">
+                    {['top-left', 'top-center', 'top-right', 'center-left', 'center', 'center-right', 'bottom-left', 'bottom-center', 'bottom-right'].map(pos => (
+                      <button key={pos} onClick={() => setLogoPosition(pos)} className={`w-4 h-3.5 rounded-sm border transition-all ${logoPosition === pos ? 'bg-amber-400 border-amber-500' : 'bg-slate-100 border-slate-200 hover:bg-amber-100'}`} title={pos} />
+                    ))}
+                  </div>
+                  <div className="flex gap-0.5 flex-1">
+                    {[{ k: 'sm', l: 'S' }, { k: 'md', l: 'M' }, { k: 'lg', l: 'L' }, { k: 'xl', l: 'XL' }].map(s => (
+                      <button key={s.k} onClick={() => setLogoSize(s.k)} className={`flex-1 py-0.5 rounded text-[9px] font-bold border transition-all ${logoSize === s.k ? 'bg-amber-400 text-white border-amber-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-amber-50'}`}>{s.l}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Row 2: Preview + Zone Config */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+          <div className="lg:col-span-2">
             {/* Preview */}
-            <div className="glass-card p-6 flex-1">
+            <div className="glass-card p-5 flex-1">
               <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
                 <Eye className="w-5 h-5 text-indigo-500" />
                 Previzualizare
@@ -511,140 +558,17 @@ export const ScreenDesigner = () => {
             </div>
           </div>
 
-          <div className="flex flex-col gap-6">
-            {/* Effects Panel */}
-            <div className="glass-card p-5">
-              <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-500" />
-                Efecte Vizuale
-              </h2>
-              <div className="space-y-3">
-                {/* Parallax Toggle */}
-                <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${enableParallax ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-100 hover:bg-slate-50'
-                  }`}>
-                  <div className={`w-9 h-5 rounded-full transition-all relative ${enableParallax ? 'bg-indigo-500' : 'bg-slate-300'}`}>
-                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableParallax ? 'left-[18px]' : 'left-0.5'}`} />
-                  </div>
-                  <Layers className={`w-4 h-4 ${enableParallax ? 'text-indigo-500' : 'text-slate-400'}`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-700">Parallax</p>
-                    <p className="text-[10px] text-slate-400">Mișcare lentă de fundal</p>
-                  </div>
-                  <input type="checkbox" className="sr-only" checked={enableParallax} onChange={e => setEnableParallax(e.target.checked)} />
-                </label>
-
-                {/* Steam Toggle */}
-                <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${enableSteam ? 'bg-teal-50 border-teal-200' : 'bg-white border-slate-100 hover:bg-slate-50'
-                  }`}>
-                  <div className={`w-9 h-5 rounded-full transition-all relative ${enableSteam ? 'bg-teal-500' : 'bg-slate-300'}`}>
-                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableSteam ? 'left-[18px]' : 'left-0.5'}`} />
-                  </div>
-                  <Wind className={`w-4 h-4 ${enableSteam ? 'text-teal-500' : 'text-slate-400'}`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-700">Steam</p>
-                    <p className="text-[10px] text-slate-400">Efect de aburi dinamic</p>
-                  </div>
-                  <input type="checkbox" className="sr-only" checked={enableSteam} onChange={e => setEnableSteam(e.target.checked)} />
-                </label>
-
-                {/* Logo Overlay Toggle */}
-                <label className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border ${enableLogo ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-100 hover:bg-slate-50'
-                  }`}>
-                  <div className={`w-9 h-5 rounded-full transition-all relative ${enableLogo ? 'bg-amber-500' : 'bg-slate-300'}`}>
-                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableLogo ? 'left-[18px]' : 'left-0.5'}`} />
-                  </div>
-                  <Image className={`w-4 h-4 ${enableLogo ? 'text-amber-500' : 'text-slate-400'}`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-700">Logo Overlay</p>
-                    <p className="text-[10px] text-slate-400">Suprapunere logo PNG</p>
-                  </div>
-                  <input type="checkbox" className="sr-only" checked={enableLogo} onChange={e => setEnableLogo(e.target.checked)} />
-                </label>
-
-                {/* Logo Picker (shown when enabled) */}
-                {enableLogo && (
-                  <div className="pl-3 border-l-2 border-amber-200 ml-1 space-y-3">
-                    {/* Brand Selection */}
-                    <div>
-                      <p className="text-xs font-medium text-slate-600 mb-1.5">Alege brand:</p>
-                      <div className="space-y-1.5 max-h-28 overflow-y-auto custom-scrollbar">
-                        {brandsWithLogo.map(brand => (
-                          <button
-                            key={brand.id}
-                            onClick={() => setSelectedBrandId(brand.id)}
-                            className={`w-full flex items-center gap-2 p-2 rounded-lg border transition-all ${selectedBrandId === brand.id
-                              ? 'border-amber-400 bg-amber-50 ring-1 ring-amber-200 shadow-sm'
-                              : 'border-slate-200 bg-white hover:border-amber-300 hover:bg-amber-50/30'
-                              }`}
-                          >
-                            <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0 p-0.5">
-                              <img src={getFileUrl(brand.logo_url)} className="w-full h-full object-contain" alt={brand.name} />
-                            </div>
-                            <span className={`text-xs font-medium flex-1 text-left truncate ${selectedBrandId === brand.id ? 'text-amber-700' : 'text-slate-600'}`}>
-                              {brand.name}
-                            </span>
-                            {selectedBrandId === brand.id && (
-                              <Check className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" strokeWidth={3} />
-                            )}
-                          </button>
-                        ))}
-                        {brandsWithLogo.length === 0 && (
-                          <p className="text-[10px] text-slate-400 text-center py-2">Niciun brand cu logo</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Position Grid */}
-                    <div>
-                      <p className="text-xs font-medium text-slate-600 mb-1.5">Poziție:</p>
-                      <div className="grid grid-cols-3 gap-1 w-20 mx-auto">
-                        {['top-left', 'top-center', 'top-right', 'center-left', 'center', 'center-right', 'bottom-left', 'bottom-center', 'bottom-right'].map(pos => (
-                          <button
-                            key={pos}
-                            onClick={() => setLogoPosition(pos)}
-                            className={`w-6 h-5 rounded-sm border transition-all ${logoPosition === pos
-                              ? 'bg-amber-400 border-amber-500 shadow-sm'
-                              : 'bg-slate-100 border-slate-200 hover:bg-amber-100 hover:border-amber-300'
-                              }`}
-                            title={pos}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Size Selector */}
-                    <div>
-                      <p className="text-xs font-medium text-slate-600 mb-1.5">Mărime:</p>
-                      <div className="flex gap-1">
-                        {[{ k: 'sm', l: 'S' }, { k: 'md', l: 'M' }, { k: 'lg', l: 'L' }, { k: 'xl', l: 'XL' }].map(s => (
-                          <button
-                            key={s.k}
-                            onClick={() => setLogoSize(s.k)}
-                            className={`flex-1 py-1 rounded-md text-[10px] font-bold border transition-all ${logoSize === s.k
-                              ? 'bg-amber-400 text-white border-amber-500 shadow-sm'
-                              : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-amber-50 hover:border-amber-300'
-                              }`}
-                          >
-                            {s.l}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
+          <div className="flex flex-col gap-4">
             {/* Zone Configuration */}
-            <div className="glass-card p-6 space-y-6 flex-1">
-              <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                <Layers className="w-5 h-5 text-indigo-500" />
+            <div className="glass-card p-4 space-y-3 flex-1">
+              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-indigo-500" />
                 Configurare Zone
               </h2>
               {selectedTemplate?.zones.map((zone, index) => {
                 const config = zoneConfigs.find(c => c.zone_id === zone.id) || {};
                 return (
-                  <div key={zone.id} className="p-4 bg-white/40 rounded-xl space-y-3">
+                  <div key={zone.id} className="p-3 bg-white/40 rounded-xl space-y-2">
                     <h3 className="font-medium text-slate-800">{zone.name}</h3>
                     <div>
                       <Label>Tip conținut</Label>
