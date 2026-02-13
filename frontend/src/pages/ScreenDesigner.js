@@ -6,7 +6,7 @@ import { Save, ArrowLeft, Eye, Check, Sparkles, Layers, Wind, Image, Monitor, Li
 import api from '../utils/api';
 import { toast } from 'sonner';
 import '../styles/effects.css';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -798,6 +798,7 @@ export const ScreenDesigner = () => {
           <DialogContent className="glass-panel max-w-6xl w-full max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Preview Sincronizare ({screen?.sync_type})</DialogTitle>
+              <DialogDescription className="sr-only">Vizualizare preview sincronizare ecrane</DialogDescription>
             </DialogHeader>
             <div className="mt-4">
               {(() => {
@@ -975,6 +976,7 @@ export const ScreenDesigner = () => {
           <DialogContent className="max-w-7xl w-full">
             <DialogHeader>
               <DialogTitle>Live Preview - {screen?.name}</DialogTitle>
+              <DialogDescription className="sr-only">Previzualizare live a ecranului</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
