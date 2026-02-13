@@ -400,10 +400,10 @@ export const LivePreviewDashboard = () => {
                                             }
                                         }}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${isSelected
-                                                ? 'bg-blue-600 text-white border-blue-700 shadow-md'
-                                                : count >= 3
-                                                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                                                    : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'
+                                            ? 'bg-blue-600 text-white border-blue-700 shadow-md'
+                                            : count >= 3
+                                                ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                                                : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'
                                             }`}
                                     >
                                         {s.name}
@@ -441,7 +441,7 @@ export const LivePreviewDashboard = () => {
                                         className="absolute flex"
                                         style={{
                                             left: '25.5%',
-                                            top: '48%',
+                                            top: '50%',
                                             width: '48%',
                                             height: '30%',
                                             gap: '0.6%',
