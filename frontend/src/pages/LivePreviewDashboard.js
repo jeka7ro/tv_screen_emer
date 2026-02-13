@@ -25,7 +25,8 @@ export const LivePreviewDashboard = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [selectedScreen, setSelectedScreen] = useState(null);
     const [showFullscreen, setShowFullscreen] = useState(false);
-    const [layoutMode, setLayoutMode] = useState('grid'); // 'grid' | 'seamless'
+    const [layoutMode, setLayoutMode] = useState('grid'); // 'grid' | 'seamless' | 'simulare'
+    const [simulareScreenIds, setSimulareScreenIds] = useState([]);
 
     // Filters
     const [filterLocation, setFilterLocation] = useState('all');
@@ -361,24 +362,57 @@ export const LivePreviewDashboard = () => {
                         >
                             Video Wall
                         </button>
-                        {syncGroups.length > 0 && (
-                            <button
-                                onClick={() => setLayoutMode('simulare')}
-                                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${layoutMode === 'simulare'
-                                    ? 'bg-white shadow text-slate-800'
-                                    : 'text-slate-500 hover:text-slate-700'
-                                    }`}
-                            >
-                                Simulare Live
-                            </button>
-                        )}
+                        <button
+                            onClick={() => {
+                                setLayoutMode('simulare');
+                                if (simulareScreenIds.length === 0) {
+                                    setSimulareScreenIds(screens.slice(0, 3).map(s => s.id));
+                                }
+                            }}
+                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${layoutMode === 'simulare'
+                                ? 'bg-white shadow text-slate-800'
+                                : 'text-slate-500 hover:text-slate-700'
+                                }`}
+                        >
+                            Simulare Live
+                        </button>
                     </div>
                 </div>
 
                 {/* Screen Grid / Seamless Wall */}
                 {layoutMode === 'simulare' ? (
                     /* Simulare Live - Storefront with Video Wall overlay on TV area */
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-center gap-4">
+                        {/* Screen selector */}
+                        <div className="w-full max-w-[1200px] flex flex-wrap items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <span className="text-sm font-semibold text-slate-600 mr-2">Ecrane afișate:</span>
+                            {screens.map(s => {
+                                const isSelected = simulareScreenIds.includes(s.id);
+                                const count = simulareScreenIds.length;
+                                return (
+                                    <button
+                                        key={s.id}
+                                        onClick={() => {
+                                            if (isSelected) {
+                                                setSimulareScreenIds(prev => prev.filter(id => id !== s.id));
+                                            } else if (count < 3) {
+                                                setSimulareScreenIds(prev => [...prev, s.id]);
+                                            }
+                                        }}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${isSelected
+                                                ? 'bg-blue-600 text-white border-blue-700 shadow-md'
+                                                : count >= 3
+                                                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                                                    : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'
+                                            }`}
+                                    >
+                                        {s.name}
+                                    </button>
+                                );
+                            })}
+                            <span className="text-[11px] text-slate-400 ml-auto">{simulareScreenIds.length}/3 selectate</span>
+                        </div>
+
                         <div
                             className="relative bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-slate-800"
                             style={{
@@ -391,26 +425,29 @@ export const LivePreviewDashboard = () => {
                                 backgroundRepeat: 'no-repeat'
                             }}
                         >
-                            {/* Single video-wall container covering all 3 TVs */}
+                            {/* Video-wall container covering all 3 TVs */}
                             {(() => {
-                                const groupId = syncGroups[0];
-                                if (!groupId) return null;
-                                const groupScreens = screens
-                                    .filter(s => s.sync_group === groupId)
-                                    .sort((a, b) => (a.cascade_offset || 0) - (b.cascade_offset || 0));
+                                const selectedScreens = simulareScreenIds
+                                    .map(id => screens.find(s => s.id === id))
+                                    .filter(Boolean);
+                                if (selectedScreens.length === 0) return (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="text-white/60 text-lg">Selectează ecrane pentru simulare</span>
+                                    </div>
+                                );
 
                                 return (
                                     <div
                                         className="absolute flex"
                                         style={{
                                             left: '25.5%',
-                                            top: '45%',
+                                            top: '48%',
                                             width: '48%',
-                                            height: '33%',
+                                            height: '30%',
                                             gap: '0.6%',
                                         }}
                                     >
-                                        {groupScreens.slice(0, 3).map((s, idx) => (
+                                        {selectedScreens.slice(0, 3).map((s, idx) => (
                                             <div
                                                 key={s.id}
                                                 className="relative flex-1 overflow-hidden rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)]"
@@ -433,7 +470,7 @@ export const LivePreviewDashboard = () => {
                                                     }}
                                                 />
                                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1 z-10">
-                                                    <span className="text-[8px] font-bold text-white/90 uppercase tracking-wider">{idx + 1}</span>
+                                                    <span className="text-[8px] font-bold text-white/90 uppercase tracking-wider">{s.name}</span>
                                                 </div>
                                             </div>
                                         ))}
