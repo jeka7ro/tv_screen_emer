@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
-import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Folder, FolderOpen, Monitor, MapPin } from 'lucide-react';
+import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Folder, FolderOpen, Monitor, MapPin, Filter } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../components/ui/dialog';
@@ -54,6 +54,11 @@ export const Playlists = () => {
   const [droppingOnScreenId, setDroppingOnScreenId] = useState(null);
   const [showScreensPanel, setShowScreensPanel] = useState(true);
 
+  // Screen zones (active content per screen)
+  const [screenZones, setScreenZones] = useState({});
+  const [screenLocationFilter, setScreenLocationFilter] = useState('all');
+  const [onlyLocationsWithScreens, setOnlyLocationsWithScreens] = useState(true);
+
   useEffect(() => {
     loadData();
     // Update current date every minute to keep the red line accurate
@@ -79,6 +84,20 @@ export const Playlists = () => {
       setLocations(locationsRes.data);
       setHappyHours(happyHoursRes.data);
       setFolders(foldersRes.data);
+
+      // Load screen zones for all screens to show active content
+      const zonesMap = {};
+      await Promise.all(
+        screensRes.data.map(async (screen) => {
+          try {
+            const zonesRes = await api.get(`/screen-zones/${screen.id}`);
+            zonesMap[screen.id] = zonesRes.data;
+          } catch (e) {
+            zonesMap[screen.id] = [];
+          }
+        })
+      );
+      setScreenZones(zonesMap);
     } catch (error) {
       toast.error('Eroare la încărcarea datelor');
     } finally {
@@ -300,6 +319,11 @@ export const Playlists = () => {
         playlist_id: draggedPlaylistId
       });
       toast.success(`"${playlist.name}" atribuit lui "${screen.name}"`);
+      // Refresh zones for this screen to update active content display
+      try {
+        const zonesRes = await api.get(`/screen-zones/${screenId}`);
+        setScreenZones(prev => ({ ...prev, [screenId]: zonesRes.data }));
+      } catch (e) { }
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Eroare la atribuire');
     } finally {
@@ -1002,394 +1026,462 @@ export const Playlists = () => {
           }}
         />
 
-        {filteredPlaylists.length === 0 ? (
-          <div className="glass-card p-12 text-center" data-testid="no-playlists">
-            <ListIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">
-              Niciun playlist găsit
-            </h3>
-            <p className="text-slate-500 mb-6">
-              Încearcă să schimbi filtrele sau adaugă un playlist nou
-            </p>
-          </div>
-        ) : viewMode === 'list' ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-bold text-slate-500">
-                  <tr>
-                    <th className="px-6 py-4 w-10">
-                      <input
-                        type="checkbox"
-                        checked={filteredPlaylists.length > 0 && selectedPlaylists.length === filteredPlaylists.length}
-                        onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
-                      />
-                    </th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Brand / Nume</th>
-                    <th className="px-6 py-4">Creat de / Data</th>
-                    <th className="px-6 py-4">Elemente</th>
-                    <th className="px-6 py-4">Configurări</th>
-                    <th className="px-6 py-4 text-right">Acțiuni</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredPlaylists.map((playlist) => (
-                    <tr key={playlist.id} className={`hover:bg-slate-50/50 transition-colors ${selectedPlaylists.includes(playlist.id) ? 'bg-red-50/30' : ''}`}>
-                      <td className="px-6 py-4">
-                        <input
-                          type="checkbox"
-                          checked={selectedPlaylists.includes(playlist.id)}
-                          onChange={() => toggleSelectPlaylist(playlist.id)}
-                          className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${playlist.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${playlist.status === 'active' ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
-                          {playlist.status === 'active' ? 'Activ' : 'Inactiv'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-slate-800">
-                        <div className="flex items-center gap-3">
-                          {playlist.brand && getBrandLogo(playlist.brand) && (
-                            <div className="w-8 h-8 rounded-lg border border-slate-100 flex items-center justify-center bg-white overflow-hidden shrink-0 shadow-sm">
-                              <img src={getBrandLogo(playlist.brand)} alt="" className="w-full h-full object-contain" />
-                            </div>
-                          )}
-                          <div className="flex flex-col">
-                            {playlist.brand && <span className="text-[10px] font-bold text-red-600 uppercase mb-0.5">{playlist.brand}</span>}
-                            <span>{playlist.name}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col text-xs">
-                          <span className="text-slate-700 font-medium">{playlist.created_by_name || 'System'}</span>
-                          <span className="text-slate-400">
-                            {playlist.created_at ? new Date(playlist.created_at).toLocaleDateString('ro-RO') : '-'}
-                          </span>
-                          {playlist.is_scheduled && playlist.start_at && (
-                            <div className="mt-1 flex items-center gap-1 text-red-600 font-bold">
-                              <Clock className="w-3 h-3" />
-                              <span>{format(new Date(playlist.start_at), 'dd.MM HH:mm', { locale: ro })}</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-tight">
-                          {playlist.items?.length || 0} elemente • {formatDuration(calculateTotalDuration(playlist.items))}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-1.5">
-                          {playlist.loop && (
-                            <span className="text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">
-                              Loop
-                            </span>
-                          )}
-                          {playlist.autoplay && (
-                            <span className="text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">
-                              Autoplay
-                            </span>
-                          )}
-                          {playlist.is_scheduled && (
-                            <span className="text-[10px] text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter flex items-center gap-1">
-                              <CalendarIcon className="w-2.5 h-2.5" />
-                              Programat
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleToggleStatus(playlist)}
-                            className={`p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all shadow-sm hover:shadow ${playlist.status === 'active' ? 'text-rose-500 hover:text-rose-600' : 'text-emerald-500 hover:text-emerald-600'}`}
-                            title={playlist.status === 'active' ? 'Oprește' : 'Activează'}
-                          >
-                            <div className={`w-3 h-3 ${playlist.status === 'active' ? 'bg-rose-500' : 'bg-emerald-500'} rounded-sm`}></div>
-                          </button>
-                          <button
-                            onClick={() => handleDuplicate(playlist)}
-                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
-                            title="Duplică"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleEdit(playlist)}
-                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
-                            title="Editează"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(playlist.id)}
-                            className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all text-slate-400 hover:text-rose-600"
-                            title="Șterge"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {sortedPlaylists.map((playlist) => {
-              const isActive = playlist.status === 'active';
-              const totalDuration = calculateTotalDuration(playlist.items);
-              const brandName = Array.isArray(playlist.brand) ? playlist.brand[0] : playlist.brand;
-              const brandLogo = getBrandLogo(brandName);
-
-              // Calculate duration/remaining time
-              let timeInfo = null;
-              if (playlist.is_scheduled && playlist.start_at) {
-                const start = new Date(playlist.start_at);
-                const end = playlist.end_at ? new Date(playlist.end_at) : null;
-                const now = new Date();
-
-                if (now < start) {
-                  const diff = start - now;
-                  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                  timeInfo = <span className="text-amber-600 font-bold">Începe în {days}z {hours}h</span>;
-                } else if (end && now > end) {
-                  timeInfo = <span className="text-slate-400 font-bold">Finalizat</span>;
-                } else if (end) {
-                  const diff = end - now;
-                  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                  timeInfo = <span className="text-emerald-600 font-bold">Rămas: {days}z {hours}h</span>;
-                } else {
-                  timeInfo = <span className="text-emerald-600 font-bold">Rulează continuu</span>;
-                }
-              }
-
-              return (
-                <div
-                  key={playlist.id}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData('text/plain', playlist.id);
-                    setDraggedPlaylistId(playlist.id);
-                  }}
-                  onDragEnd={() => {
-                    setDraggedPlaylistId(null);
-                    setDroppingOnScreenId(null);
-                  }}
-                  className={`bg-white rounded-xl border transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''}`}
-                  style={{
-                    borderColor: playlist.color || '#EF4444',
-                    borderWidth: '2px',
-                    boxShadow: selectedPlaylists.includes(playlist.id) ? `0 0 0 1px ${playlist.color || '#EF4444'}, 0 15px 40px -10px ${(playlist.color || '#EF4444')}80` : 'none',
-                    '--playlist-color': playlist.color || '#EF4444'
-                  }}
-                  data-testid={`playlist-card-${playlist.id}`}
+        {/* Main content: Screens LEFT, Playlists RIGHT */}
+        <div className="flex gap-4">
+          {/* LEFT: Screens Panel */}
+          <div className="w-72 shrink-0">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm sticky top-4">
+              <div className="p-3 border-b border-slate-100">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Monitor className="w-4 h-4 text-red-500" />
+                    <span className="text-sm font-bold text-slate-700">Ecrane</span>
+                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full font-bold">{screens.length}</span>
+                  </div>
+                </div>
+                {/* Location filter */}
+                <select
+                  value={screenLocationFilter}
+                  onChange={(e) => setScreenLocationFilter(e.target.value)}
+                  className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-slate-50 text-slate-600 font-medium mb-2"
                 >
-                  <div className="p-4 flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <input
-                          type="checkbox"
-                          checked={selectedPlaylists.includes(playlist.id)}
-                          onChange={() => toggleSelectPlaylist(playlist.id)}
-                          className="rounded text-red-600 focus:ring-red-500 w-4 h-4 cursor-pointer shrink-0"
-                        />
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden ${brandLogo ? 'bg-white' : (isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400')
-                          }`}>
-                          {brandLogo ? (
-                            <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-1" />
-                          ) : (
-                            <PlaySquare className="w-5 h-5" />
-                          )}
+                  <option value="all">Toate locațiile</option>
+                  {locations
+                    .filter(loc => !onlyLocationsWithScreens || screens.some(s => s.location_id === loc.id))
+                    .map(loc => (
+                      <option key={loc.id} value={loc.id}>{loc.name}</option>
+                    ))}
+                </select>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={onlyLocationsWithScreens}
+                    onChange={(e) => setOnlyLocationsWithScreens(e.target.checked)}
+                    className="rounded text-red-500 w-3.5 h-3.5"
+                  />
+                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Doar cu ecrane</span>
+                </label>
+              </div>
+              <div className="p-2 max-h-[calc(100vh-280px)] overflow-y-auto space-y-3">
+                {(() => {
+                  const filteredLocations = locations.filter(loc => {
+                    if (onlyLocationsWithScreens && !screens.some(s => s.location_id === loc.id)) return false;
+                    if (screenLocationFilter !== 'all' && loc.id !== screenLocationFilter) return false;
+                    return true;
+                  });
+                  if (filteredLocations.length === 0) {
+                    return <p className="text-xs text-slate-400 text-center py-4">Nu există ecrane</p>;
+                  }
+                  return filteredLocations.map(location => {
+                    const locationScreens = screens.filter(s => s.location_id === location.id);
+                    if (locationScreens.length === 0) return null;
+                    return (
+                      <div key={location.id}>
+                        <div className="flex items-center gap-1.5 px-2 mb-1">
+                          <MapPin className="w-3 h-3 text-slate-400" />
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{location.name}</span>
                         </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 overflow-hidden">
-                            <h3 className="font-bold text-slate-800 text-sm truncate" title={playlist.name}>{playlist.name}</h3>
-                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: playlist.color || '#EF4444' }}></div>
-                          </div>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 shadow-sm`}
-                              style={{
-                                backgroundColor: isActive ? (selectedPlaylists.includes(playlist.id) ? playlist.color : '#ecfdf5') : '#f1f5f9',
-                                color: isActive ? (selectedPlaylists.includes(playlist.id) ? '#fff' : '#047857') : '#64748b'
-                              }}>
-                              {isActive ? 'Activ' : 'Inactiv'}
-                            </span>
-                            {brandName && (
-                              <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 truncate max-w-[100px]" title={brandName}>
-                                {brandName}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                        <div className="space-y-1">
+                          {locationScreens.map(screen => {
+                            const zones = screenZones[screen.id] || [];
+                            const activeZone = zones.find(z => z.content_type === 'playlist' && z.playlist_id);
+                            const activePlaylist = activeZone ? playlists.find(p => p.id === activeZone.playlist_id) : null;
+                            const activeContentZone = zones.find(z => z.content_type === 'single_content' && z.content_id);
+                            const activeContent = activeContentZone ? content.find(c => c.id === activeContentZone.content_id) : null;
+                            const activeName = activePlaylist?.name || activeContent?.title || null;
 
-                      <div className="flex gap-1 shrink-0 ml-2">
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-[var(--playlist-color)]" onClick={() => handleEdit(playlist)}>
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-rose-600" onClick={() => handleDelete(playlist.id)}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Content Previews - Restored */}
-                    <div className="grid grid-cols-4 gap-1 mb-3 h-12">
-                      {playlist.items?.slice(0, 4).map((playItem, idx) => {
-                        const contentItem = content.find(c => c.id === playItem.content_id);
-                        if (!contentItem) return <div key={idx} className="bg-slate-50 rounded"></div>;
-                        return (
-                          <div key={idx} className="relative rounded overflow-hidden bg-black h-full border border-slate-100">
-                            {contentItem.type === 'video' ? (
-                              contentItem.thumbnail_url ? (
-                                <img src={contentItem.thumbnail_url} alt="" className="w-full h-full object-cover opacity-80" />
-                              ) : (
-                                <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                                  <Film className="w-3 h-3 text-slate-400" />
+                            return (
+                              <div
+                                key={screen.id}
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  setDroppingOnScreenId(screen.id);
+                                }}
+                                onDragLeave={() => setDroppingOnScreenId(null)}
+                                onDrop={(e) => {
+                                  e.preventDefault();
+                                  handleDropOnScreen(screen.id);
+                                }}
+                                className={`p-2.5 rounded-xl border-2 transition-all ${droppingOnScreenId === screen.id
+                                  ? 'border-red-400 bg-red-50 scale-[1.02] shadow-lg'
+                                  : draggedPlaylistId
+                                    ? 'border-dashed border-slate-300 bg-slate-50 hover:border-red-300 hover:bg-red-50/50'
+                                    : 'border-transparent bg-slate-50/50 hover:bg-slate-100/80'
+                                  }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Monitor className={`w-5 h-5 shrink-0 ${droppingOnScreenId === screen.id ? 'text-red-500' : 'text-slate-400'
+                                    }`} />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-slate-700 truncate">{screen.name}</p>
+                                    <div className="flex items-center gap-1">
+                                      <span className={`w-1.5 h-1.5 rounded-full ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                      <span className="text-[9px] text-slate-400 uppercase font-bold">{screen.status || 'offline'}</span>
+                                    </div>
+                                  </div>
                                 </div>
-                              )
-                            ) : (
-                              <img src={contentItem.thumbnail_url || contentItem.file_url} alt="" className="w-full h-full object-cover opacity-80" />
-                            )}
-                          </div>
-                        )
-                      })}
-                      {[...Array(Math.max(0, 4 - (playlist.items?.length || 0)))].map((_, idx) => (
-                        <div key={`empty-${idx}`} className="bg-slate-50 rounded border border-slate-100/50"></div>
-                      ))}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Conținut</p>
-                        <div className="flex items-center gap-1.5 text-slate-700">
-                          <ListIcon className="w-3.5 h-3.5" />
-                          <span className="text-xs font-semibold">{playlist.items?.length || 0} elemente</span>
+                                {activeName && (
+                                  <div className="mt-1.5 ml-7">
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-md font-bold truncate block"
+                                      style={{
+                                        backgroundColor: activePlaylist?.color ? `${activePlaylist.color}20` : '#f1f5f9',
+                                        color: activePlaylist?.color || '#64748b',
+                                        border: `1px solid ${activePlaylist?.color ? `${activePlaylist.color}40` : '#e2e8f0'}`
+                                      }}
+                                    >
+                                      ▶ {activeName}
+                                    </span>
+                                  </div>
+                                )}
+                                {!activeName && zones.length === 0 && (
+                                  <div className="mt-1.5 ml-7">
+                                    <span className="text-[10px] text-slate-300 italic">Neatribuit</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                      <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Durată</p>
-                        <div className="flex items-center gap-1.5 text-slate-700">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span className="text-xs font-semibold">{formatDuration(totalDuration)}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {playlist.is_scheduled && (
-                      <div className="flex flex-col gap-1.5 text-xs p-2.5 rounded-lg border transition-all"
-                        style={{
-                          backgroundColor: `${playlist.color || '#EF4444'}15`,
-                          borderColor: `${playlist.color || '#EF4444'}30`,
-                          color: playlist.color || '#1e1b4b'
-                        }}>
-                        <div className="flex items-center gap-2 font-black">
-                          <CalendarIcon className="w-3.5 h-3.5 opacity-80" />
-                          <span>
-                            {playlist.start_at ? format(new Date(playlist.start_at), 'dd MMM HH:mm', { locale: ro }) : 'Acum'}
-                            {' - '}
-                            {playlist.end_at ? format(new Date(playlist.end_at), 'dd MMM HH:mm', { locale: ro }) : '∞'}
-                          </span>
-                        </div>
-                        {timeInfo && <div className="text-[10px] pl-5 font-bold opacity-90">{timeInfo}</div>}
-                      </div>
-
-                    )}
-                  </div>
-
-                  <div className="p-3 border-t border-slate-100 flex justify-end gap-2 bg-slate-50/50 rounded-b-xl">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleToggleStatus(playlist)}
-                      className={`h-8 px-3 text-xs font-bold ${isActive ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"}`}
-                    >
-                      {isActive ? 'Stop' : 'Activează'}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDuplicate(playlist)}
-                      className="h-8 px-2 text-slate-500 hover:text-red-600 hover:bg-red-50 text-xs"
-                    >
-                      <Copy className="w-3.5 h-3.5 mr-1.5" />
-                      Duplică
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+                    );
+                  });
+                })()}
+              </div>
+            </div>
           </div>
-        )}
 
-        {/* Screens Drop Target Panel */}
-        <div className="mt-6">
-          <button
-            onClick={() => setShowScreensPanel(!showScreensPanel)}
-            className="flex items-center gap-2 mb-3 text-sm font-bold text-slate-700 hover:text-red-600 transition-colors"
-          >
-            <Monitor className="w-4 h-4" />
-            Ecrane — Trage playlist peste ecran
-            <span className={`text-xs transition-transform ${showScreensPanel ? 'rotate-90' : ''}`}>▶</span>
-          </button>
-          {showScreensPanel && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-              {locations.filter(loc => screens.some(s => s.location_id === loc.id)).length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-4">Nu există ecrane disponibile</p>
-              ) : (
-                <div className="space-y-4">
-                  {locations.filter(loc => screens.some(s => s.location_id === loc.id)).map(location => (
-                    <div key={location.id}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{location.name}</span>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                        {screens.filter(s => s.location_id === location.id).map(screen => (
-                          <div
-                            key={screen.id}
-                            onDragOver={(e) => {
-                              e.preventDefault();
-                              setDroppingOnScreenId(screen.id);
-                            }}
-                            onDragLeave={() => setDroppingOnScreenId(null)}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              handleDropOnScreen(screen.id);
-                            }}
-                            className={`p-3 rounded-xl border-2 transition-all text-center ${droppingOnScreenId === screen.id
-                                ? 'border-red-400 bg-red-50 scale-105 shadow-lg'
-                                : draggedPlaylistId
-                                  ? 'border-dashed border-slate-300 bg-slate-50 hover:border-red-300 hover:bg-red-50/50'
-                                  : 'border-slate-200 bg-slate-50/50'
-                              }`}
-                          >
-                            <Monitor className={`w-6 h-6 mx-auto mb-1 ${droppingOnScreenId === screen.id ? 'text-red-500' : 'text-slate-400'
-                              }`} />
-                            <p className="text-xs font-bold text-slate-700 truncate">{screen.name}</p>
-                            <div className="flex items-center justify-center gap-1 mt-1">
-                              <span className={`w-1.5 h-1.5 rounded-full ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                              <span className="text-[9px] text-slate-400 uppercase font-bold">{screen.status || 'offline'}</span>
+          {/* RIGHT: Playlists */}
+          <div className="flex-1 min-w-0">
+            {filteredPlaylists.length === 0 ? (
+              <div className="glass-card p-12 text-center" data-testid="no-playlists">
+                <ListIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-slate-800 mb-2">
+                  Niciun playlist găsit
+                </h3>
+                <p className="text-slate-500 mb-6">
+                  Încearcă să schimbi filtrele sau adaugă un playlist nou
+                </p>
+              </div>
+            ) : viewMode === 'list' ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm text-slate-600">
+                    <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-bold text-slate-500">
+                      <tr>
+                        <th className="px-6 py-4 w-10">
+                          <input
+                            type="checkbox"
+                            checked={filteredPlaylists.length > 0 && selectedPlaylists.length === filteredPlaylists.length}
+                            onChange={toggleSelectAll}
+                            className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                          />
+                        </th>
+                        <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4">Brand / Nume</th>
+                        <th className="px-6 py-4">Creat de / Data</th>
+                        <th className="px-6 py-4">Elemente</th>
+                        <th className="px-6 py-4">Configurări</th>
+                        <th className="px-6 py-4 text-right">Acțiuni</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredPlaylists.map((playlist) => (
+                        <tr key={playlist.id} className={`hover:bg-slate-50/50 transition-colors ${selectedPlaylists.includes(playlist.id) ? 'bg-red-50/30' : ''}`}>
+                          <td className="px-6 py-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedPlaylists.includes(playlist.id)}
+                              onChange={() => toggleSelectPlaylist(playlist.id)}
+                              className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                            />
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${playlist.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${playlist.status === 'active' ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
+                              {playlist.status === 'active' ? 'Activ' : 'Inactiv'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 font-semibold text-slate-800">
+                            <div className="flex items-center gap-3">
+                              {playlist.brand && getBrandLogo(playlist.brand) && (
+                                <div className="w-8 h-8 rounded-lg border border-slate-100 flex items-center justify-center bg-white overflow-hidden shrink-0 shadow-sm">
+                                  <img src={getBrandLogo(playlist.brand)} alt="" className="w-full h-full object-contain" />
+                                </div>
+                              )}
+                              <div className="flex flex-col">
+                                {playlist.brand && <span className="text-[10px] font-bold text-red-600 uppercase mb-0.5">{playlist.brand}</span>}
+                                <span>{playlist.name}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col text-xs">
+                              <span className="text-slate-700 font-medium">{playlist.created_by_name || 'System'}</span>
+                              <span className="text-slate-400">
+                                {playlist.created_at ? new Date(playlist.created_at).toLocaleDateString('ro-RO') : '-'}
+                              </span>
+                              {playlist.is_scheduled && playlist.start_at && (
+                                <div className="mt-1 flex items-center gap-1 text-red-600 font-bold">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{format(new Date(playlist.start_at), 'dd.MM HH:mm', { locale: ro })}</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-tight">
+                              {playlist.items?.length || 0} elemente • {formatDuration(calculateTotalDuration(playlist.items))}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex gap-1.5">
+                              {playlist.loop && (
+                                <span className="text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">
+                                  Loop
+                                </span>
+                              )}
+                              {playlist.autoplay && (
+                                <span className="text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">
+                                  Autoplay
+                                </span>
+                              )}
+                              {playlist.is_scheduled && (
+                                <span className="text-[10px] text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter flex items-center gap-1">
+                                  <CalendarIcon className="w-2.5 h-2.5" />
+                                  Programat
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleToggleStatus(playlist)}
+                                className={`p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all shadow-sm hover:shadow ${playlist.status === 'active' ? 'text-rose-500 hover:text-rose-600' : 'text-emerald-500 hover:text-emerald-600'}`}
+                                title={playlist.status === 'active' ? 'Oprește' : 'Activează'}
+                              >
+                                <div className={`w-3 h-3 ${playlist.status === 'active' ? 'bg-rose-500' : 'bg-emerald-500'} rounded-sm`}></div>
+                              </button>
+                              <button
+                                onClick={() => handleDuplicate(playlist)}
+                                className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                                title="Duplică"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleEdit(playlist)}
+                                className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                                title="Editează"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(playlist.id)}
+                                className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all text-slate-400 hover:text-rose-600"
+                                title="Șterge"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {sortedPlaylists.map((playlist) => {
+                  const isActive = playlist.status === 'active';
+                  const totalDuration = calculateTotalDuration(playlist.items);
+                  const brandName = Array.isArray(playlist.brand) ? playlist.brand[0] : playlist.brand;
+                  const brandLogo = getBrandLogo(brandName);
+
+                  // Calculate duration/remaining time
+                  let timeInfo = null;
+                  if (playlist.is_scheduled && playlist.start_at) {
+                    const start = new Date(playlist.start_at);
+                    const end = playlist.end_at ? new Date(playlist.end_at) : null;
+                    const now = new Date();
+
+                    if (now < start) {
+                      const diff = start - now;
+                      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                      timeInfo = <span className="text-amber-600 font-bold">Începe în {days}z {hours}h</span>;
+                    } else if (end && now > end) {
+                      timeInfo = <span className="text-slate-400 font-bold">Finalizat</span>;
+                    } else if (end) {
+                      const diff = end - now;
+                      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                      timeInfo = <span className="text-emerald-600 font-bold">Rămas: {days}z {hours}h</span>;
+                    } else {
+                      timeInfo = <span className="text-emerald-600 font-bold">Rulează continuu</span>;
+                    }
+                  }
+
+                  return (
+                    <div
+                      key={playlist.id}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', playlist.id);
+                        setDraggedPlaylistId(playlist.id);
+                      }}
+                      onDragEnd={() => {
+                        setDraggedPlaylistId(null);
+                        setDroppingOnScreenId(null);
+                      }}
+                      className={`bg-white rounded-xl border transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''}`}
+                      style={{
+                        borderColor: playlist.color || '#EF4444',
+                        borderWidth: '2px',
+                        boxShadow: selectedPlaylists.includes(playlist.id) ? `0 0 0 1px ${playlist.color || '#EF4444'}, 0 15px 40px -10px ${(playlist.color || '#EF4444')}80` : 'none',
+                        '--playlist-color': playlist.color || '#EF4444'
+                      }}
+                      data-testid={`playlist-card-${playlist.id}`}
+                    >
+                      <div className="p-4 flex-1">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3 overflow-hidden">
+                            <input
+                              type="checkbox"
+                              checked={selectedPlaylists.includes(playlist.id)}
+                              onChange={() => toggleSelectPlaylist(playlist.id)}
+                              className="rounded text-red-600 focus:ring-red-500 w-4 h-4 cursor-pointer shrink-0"
+                            />
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden ${brandLogo ? 'bg-white' : (isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400')
+                              }`}>
+                              {brandLogo ? (
+                                <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-1" />
+                              ) : (
+                                <PlaySquare className="w-5 h-5" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 overflow-hidden">
+                                <h3 className="font-bold text-slate-800 text-sm truncate" title={playlist.name}>{playlist.name}</h3>
+                                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: playlist.color || '#EF4444' }}></div>
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 shadow-sm`}
+                                  style={{
+                                    backgroundColor: isActive ? (selectedPlaylists.includes(playlist.id) ? playlist.color : '#ecfdf5') : '#f1f5f9',
+                                    color: isActive ? (selectedPlaylists.includes(playlist.id) ? '#fff' : '#047857') : '#64748b'
+                                  }}>
+                                  {isActive ? 'Activ' : 'Inactiv'}
+                                </span>
+                                {brandName && (
+                                  <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 truncate max-w-[100px]" title={brandName}>
+                                    {brandName}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        ))}
+
+                          <div className="flex gap-1 shrink-0 ml-2">
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-[var(--playlist-color)]" onClick={() => handleEdit(playlist)}>
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-rose-600" onClick={() => handleDelete(playlist.id)}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Content Previews - Restored */}
+                        <div className="grid grid-cols-4 gap-1 mb-3 h-12">
+                          {playlist.items?.slice(0, 4).map((playItem, idx) => {
+                            const contentItem = content.find(c => c.id === playItem.content_id);
+                            if (!contentItem) return <div key={idx} className="bg-slate-50 rounded"></div>;
+                            return (
+                              <div key={idx} className="relative rounded overflow-hidden bg-black h-full border border-slate-100">
+                                {contentItem.type === 'video' ? (
+                                  contentItem.thumbnail_url ? (
+                                    <img src={contentItem.thumbnail_url} alt="" className="w-full h-full object-cover opacity-80" />
+                                  ) : (
+                                    <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                                      <Film className="w-3 h-3 text-slate-400" />
+                                    </div>
+                                  )
+                                ) : (
+                                  <img src={contentItem.thumbnail_url || contentItem.file_url} alt="" className="w-full h-full object-cover opacity-80" />
+                                )}
+                              </div>
+                            )
+                          })}
+                          {[...Array(Math.max(0, 4 - (playlist.items?.length || 0)))].map((_, idx) => (
+                            <div key={`empty-${idx}`} className="bg-slate-50 rounded border border-slate-100/50"></div>
+                          ))}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                          <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Conținut</p>
+                            <div className="flex items-center gap-1.5 text-slate-700">
+                              <ListIcon className="w-3.5 h-3.5" />
+                              <span className="text-xs font-semibold">{playlist.items?.length || 0} elemente</span>
+                            </div>
+                          </div>
+                          <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                            <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Durată</p>
+                            <div className="flex items-center gap-1.5 text-slate-700">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span className="text-xs font-semibold">{formatDuration(totalDuration)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {playlist.is_scheduled && (
+                          <div className="flex flex-col gap-1.5 text-xs p-2.5 rounded-lg border transition-all"
+                            style={{
+                              backgroundColor: `${playlist.color || '#EF4444'}15`,
+                              borderColor: `${playlist.color || '#EF4444'}30`,
+                              color: playlist.color || '#1e1b4b'
+                            }}>
+                            <div className="flex items-center gap-2 font-black">
+                              <CalendarIcon className="w-3.5 h-3.5 opacity-80" />
+                              <span>
+                                {playlist.start_at ? format(new Date(playlist.start_at), 'dd MMM HH:mm', { locale: ro }) : 'Acum'}
+                                {' - '}
+                                {playlist.end_at ? format(new Date(playlist.end_at), 'dd MMM HH:mm', { locale: ro }) : '∞'}
+                              </span>
+                            </div>
+                            {timeInfo && <div className="text-[10px] pl-5 font-bold opacity-90">{timeInfo}</div>}
+                          </div>
+
+                        )}
+                      </div>
+
+                      <div className="p-3 border-t border-slate-100 flex justify-end gap-2 bg-slate-50/50 rounded-b-xl">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleStatus(playlist)}
+                          className={`h-8 px-3 text-xs font-bold ${isActive ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"}`}
+                        >
+                          {isActive ? 'Stop' : 'Activează'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDuplicate(playlist)}
+                          className="h-8 px-2 text-slate-500 hover:text-red-600 hover:bg-red-50 text-xs"
+                        >
+                          <Copy className="w-3.5 h-3.5 mr-1.5" />
+                          Duplică
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </DashboardLayout >
