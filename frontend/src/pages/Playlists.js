@@ -57,7 +57,6 @@ export const Playlists = () => {
   // Screen zones (active content per screen)
   const [screenZones, setScreenZones] = useState({});
   const [screenLocationFilter, setScreenLocationFilter] = useState('all');
-  const [onlyLocationsWithScreens, setOnlyLocationsWithScreens] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -1047,25 +1046,16 @@ export const Playlists = () => {
                 >
                   <option value="all">Toate locațiile</option>
                   {locations
-                    .filter(loc => !onlyLocationsWithScreens || screens.some(s => s.location_id === loc.id))
+                    .filter(loc => screens.some(s => s.location_id === loc.id))
                     .map(loc => (
                       <option key={loc.id} value={loc.id}>{loc.name}</option>
                     ))}
                 </select>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={onlyLocationsWithScreens}
-                    onChange={(e) => setOnlyLocationsWithScreens(e.target.checked)}
-                    className="rounded text-red-500 w-3.5 h-3.5"
-                  />
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Doar cu ecrane</span>
-                </label>
               </div>
               <div className="p-2 max-h-[calc(100vh-280px)] overflow-y-auto space-y-3">
                 {(() => {
                   const filteredLocations = locations.filter(loc => {
-                    if (onlyLocationsWithScreens && !screens.some(s => s.location_id === loc.id)) return false;
+                    if (!screens.some(s => s.location_id === loc.id)) return false;
                     if (screenLocationFilter !== 'all' && loc.id !== screenLocationFilter) return false;
                     return true;
                   });
