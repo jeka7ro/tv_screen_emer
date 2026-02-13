@@ -847,7 +847,7 @@ export const ScreenDesigner = () => {
                           aspectRatio: '16/9',
                           backgroundImage: `url(${useStorefront ? storefrontUrl : 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000'})`,
                           backgroundSize: 'cover',
-                          backgroundPosition: 'center 15%',
+                          backgroundPosition: 'center 5%',
                           backgroundRepeat: 'no-repeat'
                         }}
                       >
@@ -856,9 +856,9 @@ export const ScreenDesigner = () => {
                           // Precise coordinates for storefront.jpg televisions (3 screens)
                           <>
                             {[
-                              { left: '27.4%', top: '38.2%', width: '14.1%', height: '10.5%', idx: 0 },
-                              { left: '42.4%', top: '38.4%', width: '14.0%', height: '10.3%', idx: 1 },
-                              { left: '56.7%', top: '39.2%', width: '14.0%', height: '10.1%', idx: 2 }
+                              { left: '27.4%', top: '48%', width: '14.1%', height: '12%', idx: 0 },
+                              { left: '42.4%', top: '48%', width: '14.0%', height: '12%', idx: 1 },
+                              { left: '56.7%', top: '49%', width: '14.0%', height: '12%', idx: 2 }
                             ].map((pos, idx) => {
                               const s = groupScreens[idx];
                               if (!s) return null;
