@@ -4,10 +4,13 @@ import { MapPin, Tv, FileImage, ShoppingBag, TrendingUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 import { toast } from 'sonner';
+import { EventsCalendar } from '../components/EventsCalendar';
 
 export const Dashboard = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
+  const [playlists, setPlaylists] = useState([]);
+  const [happyHours, setHappyHours] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,10 +19,16 @@ export const Dashboard = () => {
 
   const loadStats = async () => {
     try {
-      const response = await api.get('/dashboard/stats');
-      setStats(response.data);
+      const [statsRes, playlistsRes, happyHoursRes] = await Promise.all([
+        api.get('/dashboard/stats'),
+        api.get('/playlists'),
+        api.get('/happy-hours')
+      ]);
+      setStats(statsRes.data);
+      setPlaylists(playlistsRes.data);
+      setHappyHours(happyHoursRes.data);
     } catch (error) {
-      toast.error('Eroare la încărcarea statisticilor');
+      toast.error('Eroare la încărcarea datelor');
     } finally {
       setLoading(false);
     }
@@ -30,14 +39,14 @@ export const Dashboard = () => {
       label: 'Locații',
       value: stats?.locations || 0,
       icon: MapPin,
-      color: 'indigo',
+      color: 'red',
       testId: 'stat-locations'
     },
     {
       label: 'Ecrane',
       value: stats?.screens || 0,
       icon: Tv,
-      color: 'blue',
+      color: 'red',
       testId: 'stat-screens'
     },
     {
@@ -90,7 +99,7 @@ export const Dashboard = () => {
             const Icon = stat.icon;
             const bgColor = `bg-${stat.color}-100`;
             const textColor = `text-${stat.color}-600`;
-            
+
             return (
               <div key={stat.label} className="glass-card p-6" data-testid={stat.testId}>
                 <div className="flex items-start justify-between">
@@ -111,6 +120,18 @@ export const Dashboard = () => {
           })}
         </div>
 
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <TrendingUp className="w-6 h-6 text-red-600" />
+            Calendar Evenimente & Programe
+          </h2>
+          <EventsCalendar
+            playlists={playlists}
+            happyHours={happyHours}
+            defaultView="month"
+          />
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="glass-card p-6">
             <h2 className="text-xl font-semibold text-slate-800 mb-4">
@@ -118,7 +139,7 @@ export const Dashboard = () => {
             </h2>
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-bold">
+                <div className="flex-shrink-0 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs font-bold">
                   1
                 </div>
                 <div>
@@ -127,7 +148,7 @@ export const Dashboard = () => {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-bold">
+                <div className="flex-shrink-0 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs font-bold">
                   2
                 </div>
                 <div>
@@ -136,7 +157,7 @@ export const Dashboard = () => {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-bold">
+                <div className="flex-shrink-0 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs font-bold">
                   3
                 </div>
                 <div>
@@ -145,7 +166,7 @@ export const Dashboard = () => {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-xs font-bold">
+                <div className="flex-shrink-0 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs font-bold">
                   4
                 </div>
                 <div>
@@ -162,23 +183,23 @@ export const Dashboard = () => {
             </h2>
             <div className="space-y-3">
               <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl">
-                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Management multi-locații</p>
               </div>
               <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl">
-                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Template-uri personalizabile</p>
               </div>
               <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl">
-                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Sincronizare ecrane</p>
               </div>
               <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl">
-                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Upload imagini și video-uri</p>
               </div>
               <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl">
-                <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Proteție cu cod de securitate</p>
               </div>
             </div>

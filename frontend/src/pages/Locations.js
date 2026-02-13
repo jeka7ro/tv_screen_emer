@@ -269,7 +269,7 @@ export const Locations = () => {
                           type="checkbox"
                           checked={selectedItems.size === locations.length && locations.length > 0}
                           onChange={() => toggleSelectAll(locations)}
-                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          className="rounded border-slate-300 text-red-600 focus:ring-red-500"
                         />
                       </th>
                     )}
@@ -281,21 +281,21 @@ export const Locations = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {locations.map((location) => (
-                    <tr key={location.id} className={`hover:bg-slate-50/50 transition-colors ${selectedItems.has(location.id) ? 'bg-indigo-50/30' : ''}`}>
+                    <tr key={location.id} className={`hover:bg-slate-50/50 transition-colors ${selectedItems.has(location.id) ? 'bg-red-50/30' : ''}`}>
                       {isAdmin() && (
                         <td className="px-6 py-4">
                           <input
                             type="checkbox"
                             checked={selectedItems.has(location.id)}
                             onChange={() => toggleSelectItem(location.id)}
-                            className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
                           />
                         </td>
                       )}
                       <td className="px-6 py-4 font-medium text-slate-800">
                         <div className="flex items-center gap-3">
-                          <div className="bg-indigo-100 p-2 rounded-lg">
-                            <MapPin className="w-4 h-4 text-indigo-600" />
+                          <div className="bg-red-100 p-2 rounded-lg">
+                            <MapPin className="w-4 h-4 text-red-600" />
                           </div>
                           {location.name}
                         </div>
@@ -324,10 +324,10 @@ export const Locations = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 hover:bg-indigo-50"
+                              className="h-8 w-8 hover:bg-red-50"
                               onClick={() => handleEdit(location)}
                             >
-                              <Edit2 className="w-4 h-4 text-indigo-500" />
+                              <Edit2 className="w-4 h-4 text-red-500" />
                             </Button>
                             <Button
                               variant="ghost"
@@ -349,12 +349,12 @@ export const Locations = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {locations.map((location) => (
-              <div key={location.id} className={`glass-card p-6 relative group ${selectedItems.has(location.id) ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}`} data-testid={`location-card-${location.id}`}>
+              <div key={location.id} className={`glass-card p-6 relative group ${selectedItems.has(location.id) ? 'ring-2 ring-red-500 ring-offset-2' : ''}`} data-testid={`location-card-${location.id}`}>
                 {isAdmin() && (
                   <div className="absolute top-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                     <input
                       type="checkbox"
-                      className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 shadow-sm cursor-pointer"
+                      className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500 shadow-sm cursor-pointer"
                       checked={selectedItems.has(location.id)}
                       onChange={(e) => {
                         e.stopPropagation();
@@ -364,14 +364,14 @@ export const Locations = () => {
                   </div>
                 )}
                 <div className="flex items-start justify-between mb-4">
-                  <div className="bg-indigo-100 p-3 rounded-2xl">
-                    <MapPin className="w-6 h-6 text-indigo-600" />
+                  <div className="bg-red-100 p-3 rounded-2xl">
+                    <MapPin className="w-6 h-6 text-red-600" />
                   </div>
                   {isAdmin() && (
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleEdit(location)}
-                        className="p-2 bg-indigo-500 text-white rounded-lg shadow-sm hover:bg-indigo-600 transition-colors"
+                        className="p-2 bg-red-500 text-white rounded-lg shadow-sm hover:bg-red-600 transition-colors"
                         data-testid={`edit-location-${location.id}`}
                       >
                         <Edit2 className="w-4 h-4" />

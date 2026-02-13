@@ -185,8 +185,8 @@ export const Invitations = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="glass-card p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-xl">
-                <Link2 className="w-5 h-5 text-blue-600" />
+              <div className="p-2 bg-red-100 rounded-xl">
+                <Link2 className="w-5 h-5 text-red-600" />
               </div>
               <div>
                 <p className="text-sm text-slate-500">Total invitații</p>
@@ -257,7 +257,7 @@ export const Invitations = () => {
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <code className="text-lg font-mono font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">
+                        <code className="text-lg font-mono font-bold text-red-600 bg-red-50 px-3 py-1 rounded-lg">
                           {invitation.code}
                         </code>
                         {status === 'active' && (
@@ -271,7 +271,7 @@ export const Invitations = () => {
                           </span>
                         )}
                         {status === 'exhausted' && (
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                          <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
                             Utilizări epuizate
                           </span>
                         )}

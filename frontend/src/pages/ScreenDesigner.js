@@ -480,17 +480,26 @@ export const ScreenDesigner = () => {
                 // Find master content (assuming Zone 1 of Master screen has distinct content)
                 // For preview, we mostly care about visual aid. 
                 // We'll use a placeholder or the actual content of the current screen's Zone 1 if available.
-                const configZone1 = zoneConfigs.find(z => z.zone_id === 'zone-1');
+                const configZone1 = zoneConfigs.find(z =>
+                  z.zone_id === 'zone-1' ||
+                  z.zone_id === 'zone1' ||
+                  z.zone_id?.toLowerCase() === 'main'
+                ) || zoneConfigs[0];
                 let previewImage = 'https://via.placeholder.com/800x450?text=No+Content';
 
                 if (configZone1?.content_id) {
                   const item = content.find(c => c.id === configZone1.content_id);
-                  if (item) previewImage = item.file_url.startsWith('/api') ? `${process.env.REACT_APP_BACKEND_URL}${item.file_url}` : item.file_url;
+                  if (item) previewImage = getFileUrl(item.file_url);
                 } else if (configZone1?.content_type === 'digital_menu') {
                   previewImage = 'https://via.placeholder.com/800x450?text=Digital+Menu';
                 }
 
-                if (screen.sync_type === 'matrix') {
+                // Check for 3x1 configuration for storefront photo
+                const isThreeByOne = groupScreens.length === 3 && (screen.sync_type?.startsWith('matrix') || screen.sync_type?.startsWith('cascade'));
+                const useStorefront = isThreeByOne;
+                const storefrontUrl = '/storefront.jpg';
+
+                if (screen.sync_type?.startsWith('matrix')) {
                   // Calculate grid dimensions
                   const count = groupScreens.length;
                   const cols = count <= 2 ? 2 : Math.ceil(Math.sqrt(count));
@@ -499,40 +508,100 @@ export const ScreenDesigner = () => {
                   return (
                     <div className="flex flex-col items-center">
                       <div
-                        className="relative bg-black"
+                        className="relative bg-black rounded-lg overflow-hidden shadow-2xl border-4 border-slate-800"
                         style={{
-                          width: '800px',
+                          width: '1000px',
+                          maxWidth: '100%',
                           aspectRatio: '16/9',
-                          backgroundImage: `url(${previewImage})`,
-                          backgroundSize: '100% 100%',
+                          backgroundImage: `url(${useStorefront ? storefrontUrl : 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000'})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
                           backgroundRepeat: 'no-repeat'
                         }}
                       >
-                        {/* Overlay Grid */}
-                        <div
-                          className="absolute inset-0 grid gap-1 p-1 bg-slate-900/50"
-                          style={{
-                            gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                            gridTemplateRows: `repeat(${rows}, 1fr)`
-                          }}
-                        >
-                          {groupScreens.map((s, idx) => (
-                            <div
-                              key={s.id}
-                              className={`border-2 flex items-center justify-center p-2 relative overflow-hidden backdrop-blur-sm ${s.id === screen.id ? 'border-yellow-400 bg-yellow-500/20' : 'border-white/30 bg-white/10'}`}
-                            >
-                              <div className="text-center">
-                                <p className="font-bold text-white drop-shadow-md text-xl">{idx + 1}</p>
-                                <p className="text-xs text-white/80 truncate px-1">{s.name}</p>
-                                {s.id === screen.id && <p className="text-[10px] text-yellow-300 font-bold">(This Screen)</p>}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                        {/* Overlay Matrix/Cascade Slices */}
+                        {useStorefront ? (
+                          // Precise coordinates for storefront.jpg televisions (3 screens)
+                          <>
+                            {[
+                              { left: '27.4%', top: '38.2%', width: '14.1%', height: '10.5%', idx: 0 },
+                              { left: '42.4%', top: '38.4%', width: '14.0%', height: '10.3%', idx: 1 },
+                              { left: '56.7%', top: '39.2%', width: '14.0%', height: '10.1%', idx: 2 }
+                            ].map((pos, idx) => {
+                              const s = groupScreens[idx];
+                              if (!s) return null;
+                              return (
+                                <div
+                                  key={s.id}
+                                  className={`absolute border-2 overflow-hidden shadow-[0_0_15px_rgba(0,0,0,0.5)] transition-all duration-500 ${s.id === screen.id ? 'border-yellow-400 z-10 scale-[1.02]' : 'border-white/40'}`}
+                                  style={{
+                                    left: pos.left,
+                                    top: pos.top,
+                                    width: pos.width,
+                                    height: pos.height,
+                                    backgroundImage: `url(${previewImage})`,
+                                    backgroundSize: `${100 * 3}% 100%`, // 3 screens wide
+                                    backgroundPosition: `${(idx / (3 - 1)) * 100}% center`
+                                  }}
+                                >
+                                  <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+                                    <div className="text-center group-hover:opacity-100 transition-opacity">
+                                      <p className="font-black text-white text-[10px] drop-shadow-md leading-none bg-black/40 px-1 rounded">{idx + 1}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </>
+                        ) : (
+                          // Standard Grid for other matrixes
+                          <div
+                            className="absolute inset-0 grid gap-1 p-4 bg-slate-900/60 backdrop-blur-sm"
+                            style={{
+                              gridTemplateColumns: `repeat(${cols}, 1fr)`,
+                              gridTemplateRows: `repeat(${rows}, 1fr)`
+                            }}
+                          >
+                            {Array.from({ length: cols * rows }).map((_, idx) => {
+                              const s = groupScreens[idx];
+                              if (!s) {
+                                return <div key={idx} className="bg-slate-800/50 border border-slate-700/50 rounded-lg flex items-center justify-center text-slate-600 text-[10px] font-bold uppercase italic">Empty Slot</div>;
+                              }
+                              return (
+                                <div
+                                  key={s.id}
+                                  className={`border-4 rounded-lg flex items-center justify-center relative overflow-hidden transition-all shadow-lg ${s.id === screen.id ? 'border-yellow-400 z-10 scale-[1.05]' : 'border-white/20 hover:border-white/40'}`}
+                                  style={{
+                                    backgroundImage: `url(${previewImage})`,
+                                    backgroundSize: `${cols * 100}% ${rows * 100}%`,
+                                    backgroundPosition: `${(idx % cols) / (cols - 1 || 1) * 100}% ${Math.floor(idx / cols) / (rows - 1 || 1) * 100}%`
+                                  }}
+                                >
+                                  <div className="absolute inset-0 bg-black/20 flex flex-col items-center justify-center">
+                                    <span className="font-black text-white text-3xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{idx + 1}</span>
+                                    <span className="text-[10px] text-white/90 font-black uppercase tracking-tighter bg-black/50 px-2 py-0.5 rounded mt-1 border border-white/10">{s.name}</span>
+                                    {s.id === screen.id && <span className="absolute top-2 right-2 flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span></span>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
-                      <p className="mt-4 text-slate-500 text-sm">
-                        Simulare Video Wall ({cols}x{rows}). Imaginea este întinsă pe toate ecranele.
-                      </p>
+                      <div className="mt-6 flex items-center gap-6 text-slate-100/60 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded border-2 border-yellow-400 bg-yellow-400/20"></div>
+                          <span className="text-xs font-bold uppercase tracking-widest text-white">Ecranul Curent</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded border-2 border-white/40 bg-white/5"></div>
+                          <span className="text-xs font-bold uppercase tracking-widest text-white">Alte Ecrane în Grup</span>
+                        </div>
+                        <div className="h-4 w-px bg-white/20 mx-2"></div>
+                        <p className="text-xs font-bold text-white uppercase tracking-tighter italic shadow-sm">
+                          {useStorefront ? "Vedere Reală Locație (Simulare 3 TV)" : `Matrice Sincronizată (${cols}x${rows})`}
+                        </p>
+                      </div>
                     </div>
                   );
                 }

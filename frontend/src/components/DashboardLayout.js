@@ -18,7 +18,8 @@ import {
   Eye,
   Music,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Activity
 } from 'lucide-react';
 
 const menuItems = [
@@ -39,6 +40,7 @@ const menuItems = [
 const adminMenuItems = [
   { path: '/users', icon: Users, label: 'Utilizatori' },
   { path: '/invitations', icon: UserPlus, label: 'Invitații' },
+  { path: '/activity-logs', icon: Activity, label: 'Jurnale Activitate' },
 ];
 
 export const DashboardLayout = ({ children }) => {
@@ -65,12 +67,12 @@ export const DashboardLayout = ({ children }) => {
           <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden">
             <img
               src="/favicon.png"
-              alt="Media Screens Logo"
+              alt="Screen Media Logo"
               className={`${isSidebarCollapsed ? 'w-10 h-10' : 'w-14 h-14'} object-contain shrink-0 transition-all duration-300`}
             />
             {!isSidebarCollapsed && (
               <div className="animate-in fade-in duration-300">
-                <h1 className="text-lg font-bold text-slate-800 whitespace-nowrap">Media Screens</h1>
+                <h1 className="text-lg font-bold text-slate-800 whitespace-nowrap">Screen Media</h1>
                 <p className="text-xs text-slate-500 whitespace-nowrap">Digital Signage System</p>
               </div>
             )}

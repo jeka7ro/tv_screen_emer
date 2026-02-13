@@ -19,6 +19,7 @@ import { ScreenSync } from './pages/ScreenSync';
 import { DisplayScreen } from './pages/DisplayScreen';
 import { Invitations } from './pages/Invitations';
 import { Users } from './pages/Users';
+import ActivityLogs from './pages/ActivityLogs';
 import { LivePreviewDashboard } from './pages/LivePreviewDashboard';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
@@ -155,10 +156,17 @@ function App() {
             }
           />
           <Route
-            path="/users"
             element={
               <ProtectedRoute>
                 <Users />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/activity-logs"
+            element={
+              <ProtectedRoute>
+                <ActivityLogs />
               </ProtectedRoute>
             }
           />

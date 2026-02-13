@@ -222,10 +222,10 @@ export const Brands = () => {
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-8 w-8 hover:bg-indigo-50"
+                                                            className="h-8 w-8 hover:bg-red-50"
                                                             onClick={() => handleEdit(brand)}
                                                         >
-                                                            <Edit2 className="w-4 h-4 text-indigo-500" />
+                                                            <Edit2 className="w-4 h-4 text-red-500" />
                                                         </Button>
                                                         <Button
                                                             variant="ghost"
@@ -260,7 +260,7 @@ export const Brands = () => {
                                         <div className="flex gap-1">
                                             <button
                                                 onClick={() => handleEdit(brand)}
-                                                className="p-2 bg-indigo-500 text-white rounded-lg shadow-sm hover:bg-indigo-600 transition-colors"
+                                                className="p-2 bg-red-500 text-white rounded-lg shadow-sm hover:bg-red-600 transition-colors"
                                                 data-testid={`edit-brand-${brand.id}`}
                                             >
                                                 <Edit2 className="w-4 h-4" />

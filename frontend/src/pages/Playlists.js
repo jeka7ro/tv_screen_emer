@@ -11,44 +11,65 @@ import { Textarea } from '../components/ui/textarea';
 import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, addWeeks, subWeeks, isSameWeek, parseISO } from 'date-fns';
 import { ro } from 'date-fns/locale';
+import { EventsCalendar } from '../components/EventsCalendar';
 
 export const Playlists = () => {
   const [playlists, setPlaylists] = useState([]);
+  const [happyHours, setHappyHours] = useState([]);
   const [content, setContent] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState(new Date());
+
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     autoplay: true,
     loop: true,
     brand: '',
+    color: '#EF4444',
     is_scheduled: false,
     start_at: '',
     end_at: ''
   });
   const [brands, setBrands] = useState([]);
+  const [screens, setScreens] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [playlistItems, setPlaylistItems] = useState([]);
+  const [locationSearch, setLocationSearch] = useState('');
   const [viewMode, setViewMode] = useViewMode('view_mode_playlists', 'grid');
 
   const [editingPlaylist, setEditingPlaylist] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [calendarView, setCalendarView] = useState('week');
+  // Fix: Add missing state for selectedPlaylists
+  const [selectedPlaylists, setSelectedPlaylists] = useState([]);
+  const [filterWithScreens, setFilterWithScreens] = useState(false);
 
   useEffect(() => {
     loadData();
+    // Update current date every minute to keep the red line accurate
+    const interval = setInterval(() => setCurrentDate(new Date()), 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadData = async () => {
     try {
-      const [playlistsRes, contentRes, brandsRes] = await Promise.all([
-        api.get('/playlists'),
+      const [playlistsRes, contentRes, brandsRes, screensRes, locationsRes, happyHoursRes] = await Promise.all([
+        api.get(`/playlists?t=${new Date().getTime()}`),
         api.get('/content'),
-        api.get('/brands')
+        api.get('/brands'),
+        api.get('/screens'),
+        api.get('/locations'),
+        api.get('/happy-hours')
       ]);
       setPlaylists(playlistsRes.data);
       setContent(contentRes.data);
       setBrands(brandsRes.data);
+      setScreens(screensRes.data);
+      setLocations(locationsRes.data);
+      setHappyHours(happyHoursRes.data);
     } catch (error) {
       toast.error('Eroare la încărcarea datelor');
     } finally {
@@ -59,7 +80,7 @@ export const Playlists = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const submitData = {
+      const dataToSend = {
         ...formData,
         brand: formData.brand ? [formData.brand] : [],
         start_at: (formData.is_scheduled && formData.start_at) ? formData.start_at : null,
@@ -68,13 +89,15 @@ export const Playlists = () => {
           content_id: item.content_id,
           order: index,
           duration: item.duration || 10
-        }))
+        })),
+        screen_ids: formData.is_scheduled ? formData.screen_ids : []
       };
+
       if (editingPlaylist) {
-        await api.put(`/playlists/${editingPlaylist.id}`, submitData);
+        await api.put(`/playlists/${editingPlaylist.id}`, dataToSend);
         toast.success('Playlist actualizat!');
       } else {
-        await api.post('/playlists', submitData);
+        await api.post('/playlists', dataToSend);
         toast.success('Playlist creat!');
       }
       setShowDialog(false);
@@ -92,9 +115,11 @@ export const Playlists = () => {
       autoplay: playlist.autoplay,
       loop: playlist.loop,
       brand: (Array.isArray(playlist.brand) ? playlist.brand[0] : playlist.brand) || '',
+      color: playlist.color || '#EF4444',
       is_scheduled: playlist.is_scheduled || false,
       start_at: playlist.start_at || '',
-      end_at: playlist.end_at || ''
+      end_at: playlist.end_at || '',
+      screen_ids: playlist.screen_ids || []
     });
     setPlaylistItems(playlist.items || []);
     setShowDialog(true);
@@ -117,12 +142,14 @@ export const Playlists = () => {
         name: `${playlist.name} (Copie)`,
         autoplay: playlist.autoplay,
         loop: playlist.loop,
-        brand: playlist.brand || '',
+        brand: playlist.brand || [],
         items: (playlist.items || []).map((item, index) => ({
           content_id: item.content_id,
           order: index,
           duration: item.duration || 10
-        }))
+        })),
+        is_scheduled: false,
+        screen_ids: []
       };
 
       await api.post('/playlists', duplicatedData);
@@ -130,6 +157,17 @@ export const Playlists = () => {
       loadData();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Eroare la duplicare');
+    }
+  };
+
+  const handleToggleStatus = async (playlist) => {
+    try {
+      const newStatus = playlist.status === 'active' ? 'inactive' : 'active';
+      await api.put(`/playlists/${playlist.id}`, { ...playlist, status: newStatus });
+      toast.success(`Playlist ${newStatus === 'active' ? 'activat' : 'dezactivat'}!`);
+      loadData();
+    } catch (error) {
+      toast.error('Eroare la schimbarea statusului');
     }
   };
 
@@ -169,12 +207,15 @@ export const Playlists = () => {
       autoplay: true,
       loop: true,
       brand: '',
+      color: '#EF4444',
       is_scheduled: false,
       start_at: '',
-      end_at: ''
+      end_at: '',
+      screen_ids: []
     });
     setPlaylistItems([]);
     setEditingPlaylist(null);
+    setLocationSearch('');
   };
 
   const getBrandLogo = (brandName) => {
@@ -203,12 +244,42 @@ export const Playlists = () => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const calculateEffectiveHours = (playlist, dayDate) => {
+    if (!playlist.is_scheduled || !playlist.start_at) return null;
+
+    // Operating window: 10:00 - 22:00
+    const startLimit = new Date(dayDate);
+    startLimit.setHours(10, 0, 0, 0);
+    const endLimit = new Date(dayDate);
+    endLimit.setHours(22, 0, 0, 0);
+
+    const pStart = new Date(playlist.start_at);
+    const pEnd = playlist.end_at ? new Date(playlist.end_at) : endLimit;
+
+    const effectiveStart = new Date(Math.max(pStart.getTime(), startLimit.getTime()));
+    const effectiveEnd = new Date(Math.min(pEnd.getTime(), endLimit.getTime()));
+
+    if (effectiveStart >= effectiveEnd) return null;
+
+    const durationMs = effectiveEnd - effectiveStart;
+    const hours = (durationMs / (1000 * 60 * 60)).toFixed(1);
+
+    return {
+      start: format(effectiveStart, 'HH:mm'),
+      end: format(effectiveEnd, 'HH:mm'),
+      hours: parseFloat(hours).toString() + 'h'
+    };
+  };
+
   // Brands logic
   const [selectedBrands, setSelectedBrands] = useState([]);
 
   const filteredPlaylists = selectedBrands.length === 0
     ? playlists
-    : playlists.filter(p => selectedBrands.includes(p.brand));
+    : playlists.filter(p => {
+      const brand = Array.isArray(p.brand) ? p.brand[0] : p.brand;
+      return selectedBrands.includes(brand);
+    });
 
   const toggleBrandFilter = (brandName) => {
     if (selectedBrands.includes(brandName)) {
@@ -270,6 +341,8 @@ export const Playlists = () => {
               <p className="text-slate-500">Creează și gestionează secvențe de conținut</p>
             </div>
             <div className="flex gap-3">
+
+
               <Dialog open={showDialog} onOpenChange={(open) => {
                 setShowDialog(open);
                 if (!open) resetForm();
@@ -290,32 +363,65 @@ export const Playlists = () => {
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Nume playlist</Label>
-                        <Input
-                          id="name"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="Ex: Meniu Prânz"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="brand">Brand</Label>
-                        <Select
-                          value={formData.brand}
-                          onValueChange={(value) => setFormData({ ...formData, brand: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selectează brand" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {brands.map(brand => (
-                              <SelectItem key={brand.id} value={brand.name || "unknown"}>{brand.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    <div className="space-y-4 py-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 space-y-1.5">
+                          <Label htmlFor="name" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nume playlist</Label>
+                          <Input
+                            id="name"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="font-medium bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                            placeholder="Ex: Campanie Primăvară 2024"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5 w-[160px]">
+                          <Label htmlFor="brand" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Brand</Label>
+                          <Select
+                            value={formData.brand}
+                            onValueChange={(value) => setFormData({ ...formData, brand: value })}
+                          >
+                            <SelectTrigger className="bg-slate-50 border-slate-200">
+                              <SelectValue placeholder="Brand" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="unknown">Fără brand</SelectItem>
+                              {brands.map(brand => (
+                                <SelectItem key={brand.id} value={brand.name || "unknown"}>
+                                  <div className="flex items-center gap-2">
+                                    {brand.logo_url && (
+                                      <img src={brand.logo_url} alt="" className="w-4 h-4 object-contain" />
+                                    )}
+                                    <span>{brand.name}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-1.5 flex-1 max-w-[120px]">
+                          <Label htmlFor="color" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Culoare</Label>
+                          <div className="flex items-center gap-2">
+                            <div className="relative w-10 h-10 rounded-lg border border-slate-200 shadow-sm overflow-hidden shrink-0" style={{ backgroundColor: formData.color }}>
+                              <input
+                                type="color"
+                                id="color"
+                                value={formData.color}
+                                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                title="Alege culoare"
+                              />
+                            </div>
+                            <Input
+                              value={formData.color}
+                              onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                              className="h-10 text-xs font-mono font-bold bg-slate-50 uppercase"
+                              placeholder="#HEX"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -342,36 +448,174 @@ export const Playlists = () => {
                         <input
                           type="checkbox"
                           checked={formData.is_scheduled}
-                          onChange={(e) => setFormData({ ...formData, is_scheduled: e.target.checked })}
-                          className="rounded text-indigo-600 focus:ring-indigo-500"
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            // Calculate local ISO string for defaults
+                            const now = new Date();
+                            const toLocalISO = (date) => {
+                              const offsetMs = date.getTimezoneOffset() * 60000;
+                              return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+                            };
+
+                            const defaultStart = toLocalISO(now);
+                            // Default end NO LONGER set automatically to allow infinite play
+
+                            setFormData({
+                              ...formData,
+                              is_scheduled: checked,
+                              start_at: checked && !formData.start_at ? defaultStart : formData.start_at,
+                              end_at: checked ? formData.end_at : '' // Keep existing or reset if unchecked
+                            });
+                          }}
+                          className="rounded text-red-600 focus:ring-red-500"
                         />
                         <span className="text-sm font-medium text-slate-700">Programează</span>
                       </label>
                     </div>
 
                     {formData.is_scheduled && (
-                      <div className="grid grid-cols-2 gap-4 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="grid grid-cols-2 gap-4 p-4 bg-red-50/50 rounded-xl border border-red-100 animate-in fade-in slide-in-from-top-2 duration-300">
                         <div className="space-y-2">
-                          <Label htmlFor="start_at" className="text-xs font-bold text-indigo-700 uppercase tracking-wider">Începe la</Label>
+                          <Label htmlFor="start_at" className="text-xs font-bold text-red-700 uppercase tracking-wider">Începe la</Label>
                           <Input
                             id="start_at"
                             type="datetime-local"
                             value={formData.start_at ? formData.start_at.substring(0, 16) : ''}
                             onChange={(e) => setFormData({ ...formData, start_at: e.target.value })}
-                            className="bg-white border-indigo-200 focus:border-indigo-500 rounded-lg shadow-sm h-10"
+                            className="bg-white border-red-200 focus:border-red-500 rounded-lg shadow-sm h-10"
                             required={formData.is_scheduled}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="end_at" className="text-xs font-bold text-indigo-700 uppercase tracking-wider">Se termină la</Label>
+                          <Label htmlFor="end_at" className="text-xs font-bold text-red-700 uppercase tracking-wider">Se termină la (Opțional)</Label>
                           <Input
                             id="end_at"
                             type="datetime-local"
                             value={formData.end_at ? formData.end_at.substring(0, 16) : ''}
                             onChange={(e) => setFormData({ ...formData, end_at: e.target.value })}
-                            className="bg-white border-indigo-200 focus:border-indigo-500 rounded-lg shadow-sm h-10"
-                            required={formData.is_scheduled}
+                            className="bg-white border-red-200 focus:border-red-500 rounded-lg shadow-sm h-10"
                           />
+                          <p className="text-[10px] text-slate-500">Lasă gol pentru a rula până la oprire manuală</p>
+                        </div>
+
+                        <div className="col-span-2 space-y-2 mt-2 pt-2 border-t border-red-200/50">
+                          <div className="flex items-center justify-between mb-2">
+                            <Label className="text-xs font-bold text-red-700 uppercase tracking-wider">
+                              Selectează Ecrane {formData.screen_ids?.length > 0 && <span className="ml-1 text-red-500 font-normal">({formData.screen_ids.length} selectate)</span>}
+                            </Label>
+                            <div className="flex items-center gap-2">
+                              <label className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-slate-600 hover:text-red-600">
+                                <input
+                                  type="checkbox"
+                                  checked={filterWithScreens}
+                                  onChange={(e) => setFilterWithScreens(e.target.checked)}
+                                  className="rounded w-3 h-3 text-red-600 focus:ring-1 focus:ring-red-500 border-slate-300"
+                                />
+                                Doar locații cu ecrane
+                              </label>
+                            </div>
+                          </div>
+
+                          {/* Location Filter */}
+                          <div className="bg-white p-3 rounded-lg border border-red-100 mb-2">
+                            <input
+                              type="text"
+                              placeholder="Caută locație..."
+                              value={locationSearch}
+                              onChange={(e) => setLocationSearch(e.target.value)}
+                              className="w-full text-xs p-1.5 border border-slate-200 rounded mb-2 focus:ring-1 focus:ring-red-500 outline-none"
+                            />
+                            <div className="max-h-24 overflow-y-auto space-y-1">
+                              <label className="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-50 p-1 rounded font-bold text-red-700 border-b border-red-100 pb-1 mb-1">
+                                <input
+                                  type="checkbox"
+                                  checked={screens.length > 0 && formData.screen_ids?.length === screens.length}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setFormData(prev => ({ ...prev, screen_ids: screens.map(s => s.id) }));
+                                    } else {
+                                      setFormData(prev => ({ ...prev, screen_ids: [] }));
+                                    }
+                                  }}
+                                  className="rounded text-red-600 focus:ring-red-500 w-3 h-3"
+                                />
+                                <span>Selectează Tot</span>
+                              </label>
+                              {locations
+                                .filter(loc => loc.name.toLowerCase().includes(locationSearch.toLowerCase()))
+                                .map(loc => {
+                                  const locScreens = screens.filter(s => s.location_id === loc.id);
+
+                                  // Filter: Only locations with screens
+                                  if (filterWithScreens && locScreens.length === 0) return null;
+
+                                  const allSelected = locScreens.length > 0 && locScreens.every(s => formData.screen_ids?.includes(s.id));
+                                  const someSelected = locScreens.some(s => formData.screen_ids?.includes(s.id));
+
+                                  return (
+                                    <label key={loc.id} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-slate-50 p-1 rounded">
+                                      <input
+                                        type="checkbox"
+                                        checked={allSelected}
+                                        ref={input => { if (input) input.indeterminate = someSelected && !allSelected; }}
+                                        onChange={(e) => {
+                                          const checked = e.target.checked;
+                                          const screenIds = locScreens.map(s => s.id);
+                                          setFormData(prev => {
+                                            const current = new Set(prev.screen_ids || []);
+                                            if (checked) {
+                                              screenIds.forEach(id => current.add(id));
+                                            } else {
+                                              screenIds.forEach(id => current.delete(id));
+                                            }
+                                            return { ...prev, screen_ids: Array.from(current) };
+                                          });
+                                        }}
+                                        className="rounded text-red-600 focus:ring-red-500 w-3 h-3"
+                                      />
+                                      <span className="font-medium text-slate-700">{loc.name}</span>
+                                      <span className="text-slate-400 text-[10px]">({locScreens.length} ecrane)</span>
+                                    </label>
+                                  );
+                                })
+                              }
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-red-200">
+                            {screens.map(screen => (
+                              <label key={screen.id} className={`flex items-start gap-2 p-2 rounded-lg border transition-all cursor-pointer ${formData.screen_ids?.includes(screen.id)
+                                ? 'bg-red-100 border-red-300 shadow-sm'
+                                : 'bg-white border-red-100 hover:bg-red-50'
+                                }`}>
+                                <input
+                                  type="checkbox"
+                                  checked={formData.screen_ids?.includes(screen.id) || false}
+                                  onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setFormData(prev => {
+                                      const currentIds = prev.screen_ids || [];
+                                      if (checked) {
+                                        return { ...prev, screen_ids: [...currentIds, screen.id] };
+                                      } else {
+                                        return { ...prev, screen_ids: currentIds.filter(id => id !== screen.id) };
+                                      }
+                                    });
+                                  }}
+                                  className="mt-1 rounded text-red-600 focus:ring-red-500"
+                                />
+                                <div>
+                                  <div className="text-xs font-bold text-slate-700">{screen.name}</div>
+                                  <div className="text-[10px] text-slate-500">{screen.location_name || screen.city || 'No Location'}</div>
+                                </div>
+                              </label>
+                            ))}
+                            {screens.length === 0 && (
+                              <div className="col-span-2 text-center py-4 text-xs text-slate-400 italic">
+                                Nu există ecrane disponibile. Adaugă ecrane din meniul Ecrane.
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -386,10 +630,10 @@ export const Playlists = () => {
                           {content.map(item => (
                             <div
                               key={item.id}
-                              className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-xl hover:border-indigo-200 hover:shadow-md transition-all group"
+                              className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-lg hover:border-red-200 hover:shadow-sm transition-all group"
                             >
-                              <div className="flex items-center gap-4 flex-1">
-                                <div className="w-20 h-14 rounded-lg border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center shadow-sm relative group/thumb">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="w-10 h-10 rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center shadow-sm relative group/thumb">
                                   {item.type === 'video' ? (
                                     <>
                                       {item.thumbnail_url ? (
@@ -419,7 +663,7 @@ export const Playlists = () => {
                               <Button
                                 type="button"
                                 onClick={() => addContentToPlaylist(item.id)}
-                                className="bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white transition-all text-xs font-bold px-4 py-2 h-9 rounded-xl border-none shadow-none"
+                                className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-lg border-none shadow-none"
                               >
                                 Adaugă
                               </Button>
@@ -430,7 +674,7 @@ export const Playlists = () => {
 
                       <div className="space-y-3">
                         <Label className="text-base font-bold text-slate-700 flex items-center gap-2">
-                          <ListIcon className="w-4 h-4 text-indigo-500" />
+                          <ListIcon className="w-4 h-4 text-red-500" />
                           Playlist ({playlistItems.length} elemente • {formatDuration(calculateTotalDuration(playlistItems))})
                         </Label>
                         <div className="max-h-[500px] overflow-y-auto space-y-3 border border-slate-100 rounded-2xl p-4 bg-slate-50 shadow-inner">
@@ -445,92 +689,74 @@ export const Playlists = () => {
                               return (
                                 <div
                                   key={index}
-                                  className="bg-white border-2 border-indigo-100/50 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all relative group"
+                                  className="bg-white border border-slate-100 rounded-lg p-2 shadow-sm hover:shadow-md transition-all relative group flex items-center gap-3"
                                 >
-                                  <div className="flex items-center gap-4">
-                                    {/* Order controls */}
-                                    <div className="flex flex-col gap-1">
-                                      <button
-                                        type="button"
-                                        onClick={() => moveItem(index, 'up')}
-                                        disabled={index === 0}
-                                        className="p-1.5 hover:bg-slate-100 rounded-lg disabled:opacity-30 transition-colors"
-                                      >
-                                        <ArrowUp className="w-4 h-4" />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => moveItem(index, 'down')}
-                                        disabled={index === playlistItems.length - 1}
-                                        className="p-1.5 hover:bg-slate-100 rounded-lg disabled:opacity-30 transition-colors"
-                                      >
-                                        <ArrowDown className="w-4 h-4" />
-                                      </button>
-                                    </div>
-
-                                    <div className="w-24 h-16 rounded-xl border-2 border-slate-50 overflow-hidden shrink-0 bg-black flex items-center justify-center shadow-inner relative group/item-thumb">
-                                      {contentItem?.type === 'video' ? (
-                                        <>
-                                          {contentItem.thumbnail_url ? (
-                                            <img src={contentItem.thumbnail_url} alt="" className="w-full h-full object-cover group-hover/item-thumb:hidden" />
-                                          ) : null}
-                                          <video
-                                            src={contentItem.file_url}
-                                            className={`w-full h-full object-cover ${contentItem.thumbnail_url ? 'hidden group-hover/item-thumb:block' : ''}`}
-                                            muted
-                                            playsInline
-                                            onMouseOver={(e) => e.target.play()}
-                                            onMouseOut={(e) => { e.target.pause(); e.target.currentTime = 0; }}
-                                          />
-                                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-100 group-hover/item-thumb:opacity-0 transition-opacity">
-                                            <Film className="w-4 h-4 text-white shadow-sm" />
-                                          </div>
-                                        </>
-                                      ) : contentItem?.thumbnail_url || (contentItem?.type === 'image' && contentItem?.file_url) ? (
-                                        <img src={contentItem.thumbnail_url || contentItem.file_url} alt="" className="w-full h-full object-cover" />
-                                      ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                          <ImageIcon className="w-5 h-5" />
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {/* Info */}
-                                    <div className="flex-1 min-w-0 pr-8">
-                                      <p className="text-sm font-black text-slate-800 line-clamp-1 flex items-center gap-2">
-                                        <span className="text-indigo-500 font-black">#{index + 1}</span>
-                                        {contentItem?.title || 'Unknown'}
-                                      </p>
-
-                                      {/* Duration / Timer Input */}
-                                      <div className="mt-2 flex items-center gap-2">
-                                        <div className="relative">
-                                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                                            <Clock className="w-3.5 h-3.5" />
-                                          </div>
-                                          <Input
-                                            type="number"
-                                            min="1"
-                                            value={item.duration || 10}
-                                            onChange={(e) => updateItemDuration(index, e.target.value)}
-                                            className="h-8 w-24 pl-8 text-xs font-bold rounded-lg border-slate-200"
-                                            placeholder="Secunde"
-                                          />
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Secunde</span>
-                                      </div>
-                                    </div>
-
-                                    {/* Delete button (Absolute) */}
+                                  {/* Order controls */}
+                                  <div className="flex flex-col gap-0.5">
                                     <button
                                       type="button"
-                                      onClick={() => removeFromPlaylist(index)}
-                                      className="absolute top-2 right-2 p-1.5 bg-rose-50 hover:bg-rose-500 text-rose-500 hover:text-white rounded-lg transition-all shadow-sm"
-                                      title="Șterge element"
+                                      onClick={() => moveItem(index, 'up')}
+                                      disabled={index === 0}
+                                      className="p-0.5 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
                                     >
-                                      <Trash2 className="w-4 h-4" />
+                                      <ArrowUp className="w-3 h-3 text-slate-400" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => moveItem(index, 'down')}
+                                      disabled={index === playlistItems.length - 1}
+                                      className="p-0.5 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
+                                    >
+                                      <ArrowDown className="w-3 h-3 text-slate-400" />
                                     </button>
                                   </div>
+
+                                  {/* Thumbnail */}
+                                  <div className="w-12 h-8 rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center relative group/item-thumb">
+                                    {contentItem?.type === 'video' ? (
+                                      <>
+                                        {contentItem.thumbnail_url ? (
+                                          <img src={contentItem.thumbnail_url} alt="" className="w-full h-full object-cover group-hover/item-thumb:hidden" />
+                                        ) : null}
+                                        <video
+                                          src={contentItem.file_url}
+                                          className={`w-full h-full object-cover ${contentItem.thumbnail_url ? 'hidden group-hover/item-thumb:block' : ''}`}
+                                          muted
+                                        />
+                                      </>
+                                    ) : (
+                                      <img src={contentItem?.thumbnail_url || contentItem?.file_url} alt="" className="w-full h-full object-cover" />
+                                    )}
+                                  </div>
+
+                                  {/* Info */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] font-black text-red-500">#{index + 1}</span>
+                                      <p className="text-xs font-bold text-slate-700 truncate">{contentItem?.title || 'Unknown'}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1 mt-0.5">
+                                      <Clock className="w-2.5 h-2.5 text-slate-400" />
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        value={item.duration || 10}
+                                        onChange={(e) => updateItemDuration(index, e.target.value)}
+                                        className="h-5 w-12 px-1 text-[10px] font-bold text-slate-600 bg-slate-50 border-none rounded focus:ring-1 focus:ring-red-500"
+                                      />
+                                      <span className="text-[9px] text-slate-400 uppercase">sec</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Delete button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeFromPlaylist(index)}
+                                    className="p-1.5 hover:bg-rose-50 text-slate-300 hover:text-rose-500 rounded-md transition-colors"
+                                    title="Șterge"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               );
                             })
@@ -557,6 +783,8 @@ export const Playlists = () => {
             </div>
           </div>
 
+
+
           {/* Filters Row */}
           <div className="flex flex-wrap items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
             <div className="flex items-center gap-3 overflow-x-auto py-2 max-w-4xl scrollbar-hide">
@@ -574,7 +802,7 @@ export const Playlists = () => {
                       className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                       title={`${brand.name} (${count})`}
                     >
-                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${selectedBrands.includes(brand.name) ? 'border-indigo-500' : 'border-slate-100'}`}>
+                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${selectedBrands.includes(brand.name) ? 'border-red-500' : 'border-slate-100'}`}>
                         {brand.logo_url ? (
                           <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
                         ) : (
@@ -605,26 +833,34 @@ export const Playlists = () => {
             <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200 shrink-0">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 <ListIcon className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('calendar')}
-                className={`p-1.5 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                title="Calendar"
-              >
-                <CalendarIcon className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
+
+        {/* Horizontal Timeline Calendar (Reusable Component) */}
+        <EventsCalendar
+          playlists={playlists}
+          happyHours={happyHours}
+          loading={loading}
+          onEventClick={(event) => {
+            if (event.type === 'playlist') {
+              handleEdit(event.original);
+            } else {
+              // Redirect to happy hour or just show info
+              toast.info(`Happy Hour: ${event.original.name}`);
+            }
+          }}
+        />
 
         {filteredPlaylists.length === 0 ? (
           <div className="glass-card p-12 text-center" data-testid="no-playlists">
@@ -647,7 +883,7 @@ export const Playlists = () => {
                         type="checkbox"
                         checked={filteredPlaylists.length > 0 && selectedPlaylists.length === filteredPlaylists.length}
                         onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
                       />
                     </th>
                     <th className="px-6 py-4">Status</th>
@@ -660,13 +896,13 @@ export const Playlists = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredPlaylists.map((playlist) => (
-                    <tr key={playlist.id} className={`hover:bg-slate-50/50 transition-colors ${selectedPlaylists.includes(playlist.id) ? 'bg-indigo-50/30' : ''}`}>
+                    <tr key={playlist.id} className={`hover:bg-slate-50/50 transition-colors ${selectedPlaylists.includes(playlist.id) ? 'bg-red-50/30' : ''}`}>
                       <td className="px-6 py-4">
                         <input
                           type="checkbox"
                           checked={selectedPlaylists.includes(playlist.id)}
                           onChange={() => toggleSelectPlaylist(playlist.id)}
-                          className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
                         />
                       </td>
                       <td className="px-6 py-4">
@@ -683,7 +919,7 @@ export const Playlists = () => {
                             </div>
                           )}
                           <div className="flex flex-col">
-                            {playlist.brand && <span className="text-[10px] font-bold text-indigo-600 uppercase mb-0.5">{playlist.brand}</span>}
+                            {playlist.brand && <span className="text-[10px] font-bold text-red-600 uppercase mb-0.5">{playlist.brand}</span>}
                             <span>{playlist.name}</span>
                           </div>
                         </div>
@@ -695,7 +931,7 @@ export const Playlists = () => {
                             {playlist.created_at ? new Date(playlist.created_at).toLocaleDateString('ro-RO') : '-'}
                           </span>
                           {playlist.is_scheduled && playlist.start_at && (
-                            <div className="mt-1 flex items-center gap-1 text-indigo-600 font-bold">
+                            <div className="mt-1 flex items-center gap-1 text-red-600 font-bold">
                               <Clock className="w-3 h-3" />
                               <span>{format(new Date(playlist.start_at), 'dd.MM HH:mm', { locale: ro })}</span>
                             </div>
@@ -720,7 +956,7 @@ export const Playlists = () => {
                             </span>
                           )}
                           {playlist.is_scheduled && (
-                            <span className="text-[10px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter flex items-center gap-1">
+                            <span className="text-[10px] text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter flex items-center gap-1">
                               <CalendarIcon className="w-2.5 h-2.5" />
                               Programat
                             </span>
@@ -730,15 +966,22 @@ export const Playlists = () => {
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
+                            onClick={() => handleToggleStatus(playlist)}
+                            className={`p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all shadow-sm hover:shadow ${playlist.status === 'active' ? 'text-rose-500 hover:text-rose-600' : 'text-emerald-500 hover:text-emerald-600'}`}
+                            title={playlist.status === 'active' ? 'Oprește' : 'Activează'}
+                          >
+                            <div className={`w-3 h-3 ${playlist.status === 'active' ? 'bg-rose-500' : 'bg-emerald-500'} rounded-sm`}></div>
+                          </button>
+                          <button
                             onClick={() => handleDuplicate(playlist)}
-                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                             title="Duplică"
                           >
                             <Copy className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleEdit(playlist)}
-                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                             title="Editează"
                           >
                             <Edit className="w-4 h-4" />
@@ -758,209 +1001,179 @@ export const Playlists = () => {
               </table>
             </div>
           </div>
-        ) : viewMode === 'calendar' ? (
-          <div className="bg-white rounded-3xl shadow-xl border border-slate-200/60 overflow-hidden flex flex-col min-h-[700px]">
-            {/* Calendar Header */}
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-10">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-indigo-50 rounded-2xl">
-                  <CalendarIcon className="w-6 h-6 text-indigo-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black text-slate-800 capitalize leading-tight">
-                    {format(currentMonth, 'MMMM yyyy', { locale: ro })}
-                  </h2>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Calendar Programe</p>
-                </div>
-              </div>
-              <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200/50">
-                <button
-                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                  className="p-2 hover:bg-white rounded-xl transition-all text-slate-600 hover:text-indigo-600 shadow-sm hover:shadow"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <div className="w-px bg-slate-200 mx-1"></div>
-                <button
-                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                  className="p-2 hover:bg-white rounded-xl transition-all text-slate-600 hover:text-indigo-600 shadow-sm hover:shadow"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Calendar Grid */}
-            <div className="flex-1 overflow-auto bg-slate-50/30 p-4">
-              <div className="grid grid-cols-7 gap-3 h-full">
-                {['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm', 'Dum'].map(day => (
-                  <div key={day} className="py-3 text-center text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">{day}</div>
-                ))}
-
-                {(() => {
-                  const monthStart = startOfMonth(currentMonth);
-                  const monthEnd = endOfMonth(monthStart);
-                  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
-                  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
-                  const calendarDays = eachDayOfInterval({ start: startDate, end: endDate });
-
-                  return calendarDays.map((date, idx) => {
-                    const dayPlaylists = sortedPlaylists.filter(p =>
-                      p.is_scheduled && p.start_at && isSameDay(new Date(p.start_at), date)
-                    );
-
-                    return (
-                      <div
-                        key={idx}
-                        className={`min-h-[140px] p-3 rounded-2xl border transition-all ${!isSameMonth(date, monthStart)
-                          ? 'bg-slate-50/50 border-transparent opacity-30 select-none'
-                          : isSameDay(date, new Date())
-                            ? 'bg-white border-indigo-400 shadow-[0_8px_30px_rgb(79,70,229,0.12)] ring-1 ring-indigo-400 ring-offset-4'
-                            : 'bg-white border-slate-100/80 hover:border-indigo-200 shadow-sm hover:shadow-md'
-                          }`}
-                      >
-                        <div className="flex flex-col gap-2 h-full">
-                          <span className={`text-sm font-black w-8 h-8 flex items-center justify-center rounded-xl transition-colors ${isSameDay(date, new Date())
-                            ? 'bg-indigo-600 text-white shadow-lg'
-                            : 'text-slate-400 group-hover:text-indigo-600'
-                            }`}>
-                            {format(date, 'd')}
-                          </span>
-
-                          <div className="space-y-1.5 overflow-hidden flex-1">
-                            {dayPlaylists.map(p => (
-                              <div
-                                key={p.id}
-                                onClick={() => handleEdit(p)}
-                                className="px-2 py-1.5 bg-indigo-50 border border-indigo-100 rounded-lg text-[10px] font-bold text-indigo-700 truncate hover:bg-indigo-600 hover:text-white transition-all cursor-pointer group shadow-sm flex items-center gap-1.5"
-                                title={`${format(new Date(p.start_at), 'HH:mm')} - ${p.name}`}
-                              >
-                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 group-hover:bg-white shrink-0"></div>
-                                <span className="font-black text-[9px] opacity-70 italic">{format(new Date(p.start_at), 'HH:mm')}</span>
-                                <span className="truncate">{p.name}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-            </div>
-          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sortedPlaylists.map((playlist) => (
-              <div key={playlist.id} className="glass-card p-6 flex flex-col h-full hover:shadow-lg transition-all border-slate-200/60" data-testid={`playlist-card-${playlist.id}`}>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex flex-col">
-                    {playlist.brand && (
-                      <div className="flex items-center gap-2 mb-1">
-                        {getBrandLogo(playlist.brand) && (
-                          <div className="w-6 h-6 rounded-md border border-slate-100 flex items-center justify-center bg-white overflow-hidden shrink-0">
-                            <img src={getBrandLogo(playlist.brand)} alt="" className="w-full h-full object-contain" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {sortedPlaylists.map((playlist) => {
+              const isActive = playlist.status === 'active';
+              const totalDuration = calculateTotalDuration(playlist.items);
+              const brandName = Array.isArray(playlist.brand) ? playlist.brand[0] : playlist.brand;
+              const brandLogo = getBrandLogo(brandName);
+
+              // Calculate duration/remaining time
+              let timeInfo = null;
+              if (playlist.is_scheduled && playlist.start_at) {
+                const start = new Date(playlist.start_at);
+                const end = playlist.end_at ? new Date(playlist.end_at) : null;
+                const now = new Date();
+
+                if (now < start) {
+                  const diff = start - now;
+                  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                  timeInfo = <span className="text-amber-600 font-bold">Începe în {days}z {hours}h</span>;
+                } else if (end && now > end) {
+                  timeInfo = <span className="text-slate-400 font-bold">Finalizat</span>;
+                } else if (end) {
+                  const diff = end - now;
+                  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                  timeInfo = <span className="text-emerald-600 font-bold">Rămas: {days}z {hours}h</span>;
+                } else {
+                  timeInfo = <span className="text-emerald-600 font-bold">Rulează continuu</span>;
+                }
+              }
+
+              return (
+                <div
+                  key={playlist.id}
+                  className={`bg-white rounded-xl border transition-all hover:shadow-lg group flex flex-col relative overflow-hidden`}
+                  style={{
+                    borderColor: playlist.color || '#EF4444',
+                    borderWidth: '2px',
+                    boxShadow: selectedPlaylists.includes(playlist.id) ? `0 0 0 1px ${playlist.color || '#EF4444'}, 0 15px 40px -10px ${(playlist.color || '#EF4444')}80` : 'none',
+                    '--playlist-color': playlist.color || '#EF4444'
+                  }}
+                  data-testid={`playlist-card-${playlist.id}`}
+                >
+                  <div className="p-4 flex-1">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <input
+                          type="checkbox"
+                          checked={selectedPlaylists.includes(playlist.id)}
+                          onChange={() => toggleSelectPlaylist(playlist.id)}
+                          className="rounded text-red-600 focus:ring-red-500 w-4 h-4 cursor-pointer shrink-0"
+                        />
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden ${brandLogo ? 'bg-white' : (isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400')
+                          }`}>
+                          {brandLogo ? (
+                            <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-1" />
+                          ) : (
+                            <PlaySquare className="w-5 h-5" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <h3 className="font-bold text-slate-800 text-sm truncate" title={playlist.name}>{playlist.name}</h3>
+                            <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: playlist.color || '#EF4444' }}></div>
                           </div>
-                        )}
-                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest underline decoration-2 decoration-indigo-200 underline-offset-4">
-                          {playlist.brand}
-                        </span>
-                      </div>
-                    )}
-                    <h3 className="text-xl font-bold text-slate-800 leading-tight">
-                      {playlist.name}
-                    </h3>
-                  </div>
-                  <div className="flex gap-1.5">
-                    <button
-                      onClick={() => handleDuplicate(playlist)}
-                      className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-xl transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
-                      title="Duplică"
-                    >
-                      <Copy className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleEdit(playlist)}
-                      className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-xl transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
-                      title="Editează"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(playlist.id)}
-                      className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-xl transition-all text-slate-400 hover:text-rose-600"
-                      title="Șterge"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-4 mb-5 flex-1 flex flex-col items-center justify-center min-h-[120px]">
-                  <div className="text-center mb-4">
-                    <div className="flex items-baseline justify-center">
-                      <span className="text-4xl font-black text-slate-700 tracking-tighter">
-                        {formatDuration(calculateTotalDuration(playlist.items))}
-                      </span>
-                    </div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Durată totală</p>
-                  </div>
-
-                  <div className="flex items-center justify-between w-full mt-auto">
-                    <div className="flex -space-x-4 overflow-hidden py-1 pl-1">
-                      {playlist.items?.slice(0, 3).map((item, idx) => {
-                        const itemContent = content.find(c => c.id === item.content_id);
-                        if (!itemContent) return null;
-                        return (
-                          <div key={idx} className="inline-block h-12 w-12 rounded-full ring-2 ring-white bg-slate-100 overflow-hidden relative shadow-sm">
-                            {itemContent.type === 'video' ? (
-                              <video src={itemContent.file_url} className="h-full w-full object-cover" muted />
-                            ) : (itemContent.thumbnail_url || itemContent.file_url) ? (
-                              <img src={itemContent.thumbnail_url || itemContent.file_url} alt="" className="h-full w-full object-cover" />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center text-[10px] font-bold text-slate-400">?</div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 shadow-sm`}
+                              style={{
+                                backgroundColor: isActive ? (selectedPlaylists.includes(playlist.id) ? playlist.color : '#ecfdf5') : '#f1f5f9',
+                                color: isActive ? (selectedPlaylists.includes(playlist.id) ? '#fff' : '#047857') : '#64748b'
+                              }}>
+                              {isActive ? 'Activ' : 'Inactiv'}
+                            </span>
+                            {brandName && (
+                              <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 truncate max-w-[100px]" title={brandName}>
+                                {brandName}
+                              </span>
                             )}
                           </div>
-                        );
-                      })}
-                      {(playlist.items?.length || 0) > 3 && (
-                        <div className="inline-block h-12 w-12 rounded-full ring-2 ring-white bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500 shadow-sm">
-                          +{playlist.items.length - 3}
                         </div>
-                      )}
-                    </div>
-                    <div className="flex gap-1.5 items-center">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight mr-1">
-                        {playlist.items?.length || 0} fișiere
-                      </span>
-                      {playlist.loop && <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 ring-2 ring-white" title="Loop activ"></div>}
-                      {playlist.autoplay && <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" title="Autoplay activ"></div>}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col gap-1.5">
-                    <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${playlist.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                      {playlist.status === 'active' ? 'Filtrul Activ' : 'Inactiv'}
-                    </div>
-                    {playlist.is_scheduled && playlist.start_at && (
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-[10px] font-black uppercase tracking-wider border border-indigo-100/50 shadow-sm">
-                        <Clock className="w-3 h-3 text-indigo-400" />
-                        <span>{format(new Date(playlist.start_at), 'dd MMM HH:mm', { locale: ro })}</span>
                       </div>
+
+                      <div className="flex gap-1 shrink-0 ml-2">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-[var(--playlist-color)]" onClick={() => handleEdit(playlist)}>
+                          <Edit className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-rose-600" onClick={() => handleDelete(playlist.id)}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Content Previews - Restored */}
+                    <div className="grid grid-cols-4 gap-1 mb-3 h-12">
+                      {playlist.items?.slice(0, 4).map((playItem, idx) => {
+                        const contentItem = content.find(c => c.id === playItem.content_id);
+                        if (!contentItem) return <div key={idx} className="bg-slate-50 rounded"></div>;
+                        return (
+                          <div key={idx} className="relative rounded overflow-hidden bg-black h-full border border-slate-100">
+                            {contentItem.type === 'video' ? (
+                              <video src={contentItem.file_url} className="w-full h-full object-cover opacity-80" />
+                            ) : (
+                              <img src={contentItem.thumbnail_url || contentItem.file_url} className="w-full h-full object-cover opacity-80" />
+                            )}
+                          </div>
+                        )
+                      })}
+                      {[...Array(Math.max(0, 4 - (playlist.items?.length || 0)))].map((_, idx) => (
+                        <div key={`empty-${idx}`} className="bg-slate-50 rounded border border-slate-100/50"></div>
+                      ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Conținut</p>
+                        <div className="flex items-center gap-1.5 text-slate-700">
+                          <ListIcon className="w-3.5 h-3.5" />
+                          <span className="text-xs font-semibold">{playlist.items?.length || 0} elemente</span>
+                        </div>
+                      </div>
+                      <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Durată</p>
+                        <div className="flex items-center gap-1.5 text-slate-700">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span className="text-xs font-semibold">{formatDuration(totalDuration)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {playlist.is_scheduled && (
+                      <div className="flex flex-col gap-1.5 text-xs p-2.5 rounded-lg border transition-all"
+                        style={{
+                          backgroundColor: `${playlist.color || '#EF4444'}15`,
+                          borderColor: `${playlist.color || '#EF4444'}30`,
+                          color: playlist.color || '#1e1b4b'
+                        }}>
+                        <div className="flex items-center gap-2 font-black">
+                          <CalendarIcon className="w-3.5 h-3.5 opacity-80" />
+                          <span>
+                            {playlist.start_at ? format(new Date(playlist.start_at), 'dd MMM HH:mm', { locale: ro }) : 'Acum'}
+                            {' - '}
+                            {playlist.end_at ? format(new Date(playlist.end_at), 'dd MMM HH:mm', { locale: ro }) : '∞'}
+                          </span>
+                        </div>
+                        {timeInfo && <div className="text-[10px] pl-5 font-bold opacity-90">{timeInfo}</div>}
+                      </div>
+
                     )}
                   </div>
-                  <button
-                    onClick={() => handleEdit(playlist)}
-                    className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 group"
-                  >
-                    Vezi detalii
-                    <ArrowDown className="w-3 h-3 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
+
+                  <div className="p-3 border-t border-slate-100 flex justify-end gap-2 bg-slate-50/50 rounded-b-xl">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleStatus(playlist)}
+                      className={`h-8 px-3 text-xs font-bold ${isActive ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"}`}
+                    >
+                      {isActive ? 'Stop' : 'Activează'}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDuplicate(playlist)}
+                      className="h-8 px-2 text-slate-500 hover:text-red-600 hover:bg-red-50 text-xs"
+                    >
+                      <Copy className="w-3.5 h-3.5 mr-1.5" />
+                      Duplică
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -454,7 +454,7 @@ export const Products = () => {
                           {categories.find(c => c.value === product.category)?.label}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-semibold text-indigo-600">
+                      <td className="px-6 py-4 font-semibold text-red-600">
                         {product.price} {product.currency}
                       </td>
                       <td className="px-6 py-4">
@@ -475,7 +475,7 @@ export const Products = () => {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleEdit(product)}
-                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
@@ -532,7 +532,7 @@ export const Products = () => {
                   </p>
                 )}
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-indigo-600">
+                  <span className="text-2xl font-bold text-red-600">
                     {product.price} {product.currency}
                   </span>
                   <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full">
@@ -560,27 +560,27 @@ export const Products = () => {
               <DialogTitle>Import Produse SushiMaster</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="bg-indigo-50/50 rounded-2xl p-6">
+              <div className="bg-red-50/50 rounded-2xl p-6">
                 <h3 className="font-semibold text-slate-800 mb-3">📦 Ce se va importa:</h3>
                 <ul className="space-y-2 text-sm text-slate-600">
                   <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                     <span><strong>10 produse</strong> tipice din meniul SushiMaster</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                     <span>Nume produse în <strong>limba română</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                     <span>Prețuri în <strong>RON</strong> (actualizabile după import)</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                     <span>Imagini reprezentative de <strong>calitate înaltă</strong></span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
                     <span>Categorii: <strong>Rolls, Sushi, Sashimi, Tempura, Soup, Dessert</strong></span>
                   </li>
                 </ul>

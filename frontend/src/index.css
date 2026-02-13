@@ -35,6 +35,7 @@ code {
     @apply rounded-xl bg-white/50 border-white/60 focus:bg-white/80 focus:ring-2 focus:ring-red-200 transition-all placeholder:text-slate-400;
 }
 
+
 /* Background gradient */
 body::before {
     content: '';
@@ -57,19 +58,19 @@ body::before {
         --card-foreground: 222.2 84% 4.9%;
         --popover: 0 0% 100%;
         --popover-foreground: 222.2 84% 4.9%;
-        --primary: 350 89% 60%;
+        --primary: 0 72% 51%;
         --primary-foreground: 0 0% 100%;
         --secondary: 0 0% 96.1%;
         --secondary-foreground: 0 0% 9%;
         --muted: 0 0% 96.1%;
         --muted-foreground: 0 0% 45%;
-        --accent: 350 89% 60%;
+        --accent: 0 72% 51%;
         --accent-foreground: 0 0% 100%;
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 0 0% 98%;
         --border: 0 0% 89.8%;
         --input: 0 0% 89.8%;
-        --ring: 350 89% 60%;
+        --ring: 0 72% 51%;
         --radius: 0.75rem;
     }
 }

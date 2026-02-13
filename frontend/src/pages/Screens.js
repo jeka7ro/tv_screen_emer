@@ -402,13 +402,13 @@ export const Screens = () => {
             <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 <ListIcon className="w-4 h-4" />
               </button>
@@ -437,7 +437,7 @@ export const Screens = () => {
                         type="checkbox"
                         checked={filteredScreens.length > 0 && selectedScreens.length === filteredScreens.length}
                         onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
                       />
                     </th>
                     <th className="px-6 py-4">Status</th>
@@ -452,13 +452,13 @@ export const Screens = () => {
                   {filteredScreens.map((screen) => {
                     const location = getLocation(screen.location_id);
                     return (
-                      <tr key={screen.id} className={`hover:bg-slate-50/50 transition-colors ${selectedScreens.includes(screen.id) ? 'bg-indigo-50/30' : ''}`}>
+                      <tr key={screen.id} className={`hover:bg-slate-50/50 transition-colors ${selectedScreens.includes(screen.id) ? 'bg-red-50/30' : ''}`}>
                         <td className="px-6 py-4">
                           <input
                             type="checkbox"
                             checked={selectedScreens.includes(screen.id)}
                             onChange={() => toggleSelectScreen(screen.id)}
-                            className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
                           />
                         </td>
                         <td className="px-6 py-4">
@@ -469,7 +469,7 @@ export const Screens = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col">
-                            {screen.brand && <span className="text-[10px] font-bold text-indigo-600 uppercase mb-0.5">{screen.brand}</span>}
+                            {screen.brand && <span className="text-[10px] font-bold text-red-600 uppercase mb-0.5">{screen.brand}</span>}
                             <span className="font-semibold text-slate-800">{screen.name}</span>
                           </div>
                         </td>
@@ -496,7 +496,7 @@ export const Screens = () => {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleShowLink(screen)}
-                              className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                              className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                               title="Link TV"
                             >
                               <LinkIcon className="w-4 h-4" />
@@ -505,14 +505,14 @@ export const Screens = () => {
                               <>
                                 <Link
                                   to={`/screens/${screen.id}/design`}
-                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                                   title="Design / Conținut"
                                 >
                                   <Settings className="w-4 h-4" />
                                 </Link>
                                 <button
                                   onClick={() => handleEdit(screen)}
-                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                                   title="Editează"
                                 >
                                   <Edit className="w-4 h-4" />
@@ -542,7 +542,7 @@ export const Screens = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex flex-col">
                     {screen.brand && (
-                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1 underline decoration-2 decoration-indigo-200 underline-offset-4">
+                      <span className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1 underline decoration-2 decoration-red-200 underline-offset-4">
                         {screen.brand}
                       </span>
                     )}
@@ -555,14 +555,14 @@ export const Screens = () => {
                       <>
                         <Link
                           to={`/screens/${screen.id}/design`}
-                          className="p-2 hover:bg-white/80 rounded-xl transition-all border border-transparent hover:border-slate-200 shadow-sm hover:shadow text-slate-600 hover:text-indigo-600"
+                          className="p-2 hover:bg-white/80 rounded-xl transition-all border border-transparent hover:border-slate-200 shadow-sm hover:shadow text-slate-600 hover:text-red-600"
                           title="Configurează conținut"
                         >
                           <Settings className="w-4 h-4" />
                         </Link>
                         <button
                           onClick={() => handleEdit(screen)}
-                          className="p-2 hover:bg-white/80 rounded-xl transition-all border border-transparent hover:border-slate-200 shadow-sm hover:shadow text-slate-600 hover:text-indigo-600"
+                          className="p-2 hover:bg-white/80 rounded-xl transition-all border border-transparent hover:border-slate-200 shadow-sm hover:shadow text-slate-600 hover:text-red-600"
                           title="Editează detalii"
                         >
                           <Edit className="w-4 h-4" />
@@ -602,7 +602,7 @@ export const Screens = () => {
                   <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
                     <div className="flex flex-col">
                       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Short Link</span>
-                      <span className="text-xs font-mono font-bold text-indigo-600">/{screen.slug}</span>
+                      <span className="text-xs font-mono font-bold text-red-600">/{screen.slug}</span>
                     </div>
                     <span className="text-[10px] text-slate-400 font-bold uppercase bg-white px-2 py-0.5 rounded-md border border-slate-100">
                       {screen.resolution}
@@ -613,7 +613,7 @@ export const Screens = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleShowLink(screen)}
-                    className="flex-1 flex items-center justify-center gap-2 text-sm bg-indigo-600 text-white hover:bg-indigo-700 px-4 py-3 rounded-xl transition-all shadow-md hover:shadow-lg font-bold"
+                    className="flex-1 flex items-center justify-center gap-2 text-sm bg-red-600 text-white hover:bg-red-700 px-4 py-3 rounded-xl transition-all shadow-md hover:shadow-lg font-bold"
                   >
                     <LinkIcon className="w-4 h-4" />
                     Link TV
@@ -643,8 +643,8 @@ export const Screens = () => {
           {selectedScreenForLink && (
             <div className="space-y-6">
               {/* Short URL - PROMINENT */}
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-300">
-                <Label className="text-lg font-bold text-indigo-900 mb-3 block flex items-center gap-2">
+              <div className="bg-gradient-to-br from-red-50 to-purple-50 rounded-2xl p-6 border-2 border-red-300">
+                <Label className="text-lg font-bold text-red-900 mb-3 block flex items-center gap-2">
                   ⚡ Link Scurt pentru TV
                 </Label>
                 <div className="flex gap-2 mb-3">
@@ -652,14 +652,14 @@ export const Screens = () => {
                     value={shortUrl}
                     readOnly
                     onClick={(e) => e.target.select()}
-                    className="text-2xl font-bold text-center bg-white border-2 border-indigo-200 rounded-xl py-4 cursor-pointer"
+                    className="text-2xl font-bold text-center bg-white border-2 border-red-200 rounded-xl py-4 cursor-pointer"
                     data-testid="short-url-input"
                   />
                 </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={() => copyToClipboard(shortUrl)}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-3"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl py-3"
                     data-testid="copy-short-url-button"
                   >
                     <LinkIcon className="w-5 h-5 mr-2" />
@@ -674,7 +674,7 @@ export const Screens = () => {
                     <ExternalLink className="w-5 h-5" />
                   </a>
                 </div>
-                <p className="text-sm text-indigo-700 mt-3 text-center font-medium">
+                <p className="text-sm text-red-700 mt-3 text-center font-medium">
                   👆 Scrie acest link pe TV - ACUM E SIMPLU! (Fără tinyurl)
                 </p>
               </div>
@@ -720,19 +720,19 @@ export const Screens = () => {
                 <h3 className="font-semibold text-slate-800 mb-3">📺 Instrucțiuni TV:</h3>
                 <ol className="space-y-2 text-sm text-slate-600">
                   <li className="flex gap-2">
-                    <span className="font-bold text-indigo-600">1.</span>
+                    <span className="font-bold text-red-600">1.</span>
                     <span>Deschide browser-ul pe TV (Chrome, Firefox, Safari)</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-bold text-indigo-600">2.</span>
+                    <span className="font-bold text-red-600">2.</span>
                     <span>Introdu URL-ul de mai sus sau scanează QR code-ul</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-bold text-indigo-600">3.</span>
+                    <span className="font-bold text-red-600">3.</span>
                     <span>Apasă F11 pentru fullscreen (sau butonul fullscreen din browser)</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-bold text-indigo-600">4.</span>
+                    <span className="font-bold text-red-600">4.</span>
                     <span>Conținutul va porni automat!</span>
                   </li>
                 </ol>

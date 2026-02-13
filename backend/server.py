@@ -126,7 +126,9 @@ from db import (
     happy_hours_active_now,
     content_get_usage,
     playlist_remove_content_item,
-    content_clear_from_screen_zones
+    content_clear_from_screen_zones,
+    log_activity,
+    get_activity_logs
 )
 
 ROOT_DIR = Path(__file__).parent
@@ -474,6 +476,8 @@ class Playlist(BaseModel):
     is_scheduled: bool = False
     start_at: Optional[datetime] = None
     end_at: Optional[datetime] = None
+    screen_ids: List[str] = []
+    color: str = "#4F46E5"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class PlaylistCreate(BaseModel):
@@ -488,6 +492,8 @@ class PlaylistCreate(BaseModel):
     is_scheduled: Optional[bool] = False
     start_at: Optional[datetime] = None
     end_at: Optional[datetime] = None
+    screen_ids: Optional[List[str]] = []
+    color: Optional[str] = "#4F46E5"
     model_config = ConfigDict(extra="ignore")
 
 class Product(BaseModel):
@@ -674,8 +680,12 @@ async def register(user_data: UserCreate):
         role=invite_role,
         location_id=invite_location
     )
+    
     user_dict = user.model_dump()
     await user_insert(user_dict)
+    
+    # Log registration
+    await log_activity(user.id, user.full_name, "register", "user", user.id, "INFO", {"email": user.email, "role": user.role})
     
     # Send notification email to invitation creator (non-blocking)
     if not is_first_user and invitation:
@@ -745,7 +755,8 @@ async def login(credentials: UserLogin):
     access_token = create_access_token(data={"sub": user.email})
     
     total_time = time.time() - start
-    print(f"Login timing - DB: {db_time:.3f}s, Password verify: {verify_time:.3f}s, Total: {total_time:.3f}s")
+    # Log successful login
+    await log_activity(user.id, user.full_name, "login", "user", user.id, "INFO", {"email": user.email})
     
     return Token(
         access_token=access_token,
@@ -830,6 +841,7 @@ async def delete_user_endpoint(user_id: str, current_user: User = Depends(get_su
     ok = await user_delete(user_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Utilizator negăsit")
+    await log_activity(current_user.id, current_user.full_name, "delete", "user", user_id, "WARNING", {"target_user_id": user_id})
     return {"message": "Utilizator șters"}
 
 @api_router.patch("/users/{user_id}/status")
@@ -837,12 +849,14 @@ async def update_user_status_endpoint(user_id: str, data: UserStatusUpdate, curr
     if user_id == current_user.id:
         raise HTTPException(status_code=400, detail="Nu poți schimba propriul status")
     await user_update_status(user_id, data.status)
+    await log_activity(current_user.id, current_user.full_name, "update_status", "user", user_id, "INFO", {"new_status": data.status})
     return {"message": f"Status actualizat la {data.status}"}
 
 @api_router.post("/users/{user_id}/reset-password")
 async def reset_user_password_endpoint(user_id: str, data: UserResetPassword, current_user: User = Depends(get_super_admin)):
     hashed = get_password_hash(data.new_password)
     await user_update_password_by_id(user_id, hashed)
+    await log_activity(current_user.id, current_user.full_name, "reset_password", "user", user_id, "WARNING", {"target_user_id": user_id})
     return {"message": "Parolă resetată cu succes"}
 
 @api_router.patch("/users/{user_id}")
@@ -851,7 +865,9 @@ async def update_user_endpoint(user_id: str, data: UserUpdate, current_user: Use
     if not update_data:
         raise HTTPException(status_code=400, detail="Nu există date de actualizat")
     
+    
     await user_update(user_id, update_data)
+    await log_activity(current_user.id, current_user.full_name, "update", "user", user_id, "INFO", update_data)
     return {"message": "Utilizator actualizat cu succes"}
 
 @api_router.get("/invitations/validate/{code}")
@@ -872,6 +888,16 @@ async def validate_invitation(code: str):
 async def check_registration_open():
     return {"open": (await users_count()) == 0}
 
+@api_router.get("/activity-logs")
+async def fetch_activity_logs(
+    entity_type: Optional[str] = None,
+    level: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    current_user: User = Depends(require_admin)
+):
+    return await get_activity_logs(entity_type, level, limit, offset)
+
 # ============ LOCATIONS ROUTES ============
 
 @api_router.get("/locations", response_model=List[Location])
@@ -885,6 +911,7 @@ async def get_locations(current_user: User = Depends(get_current_user)):
 async def create_location(location_data: LocationCreate, current_user: User = Depends(require_admin)):
     location = Location(**location_data.model_dump())
     await location_insert(location.model_dump())
+    await log_activity(current_user.id, current_user.full_name, "create", "location", location.id, "INFO", {"name": location.name})
     return location
 
 @api_router.get("/locations/{location_id}", response_model=Location)
@@ -902,6 +929,7 @@ async def update_location(location_id: str, location_data: LocationCreate, curre
     update_data = location_data.model_dump()
     await location_update(location_id, update_data)
     updated = await location_get(location_id)
+    await log_activity(current_user.id, current_user.full_name, "update", "location", location_id, "INFO", update_data)
     return updated
 
 @api_router.delete("/locations/{location_id}")
@@ -909,6 +937,7 @@ async def delete_location(location_id: str, current_user: User = Depends(require
     ok = await location_delete(location_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Location not found")
+    await log_activity(current_user.id, current_user.full_name, "delete", "location", location_id, "WARNING", {})
     return {"message": "Location deleted"}
 
 # ============ SCREENS ROUTES ============
@@ -926,6 +955,7 @@ async def create_screen(screen_data: ScreenCreate, current_user: User = Depends(
         raise HTTPException(status_code=400, detail="Slug already exists")
     screen = Screen(**screen_data.model_dump())
     await screen_insert(screen.model_dump())
+    await log_activity(current_user.id, current_user.full_name, "create", "screen", screen.id, "INFO", {"name": screen.name, "location_id": screen.location_id})
     return screen
 
 @api_router.get("/screens/{screen_id}", response_model=Screen)
@@ -942,6 +972,7 @@ async def update_screen(screen_id: str, screen_data: ScreenCreate, current_user:
         raise HTTPException(status_code=404, detail="Screen not found")
     await screen_update(screen_id, screen_data.model_dump())
     updated = await screen_get(screen_id)
+    await log_activity(current_user.id, current_user.full_name, "update", "screen", screen_id, "INFO", screen_data.model_dump())
     return updated
 
 @api_router.delete("/screens/{screen_id}")
@@ -949,6 +980,7 @@ async def delete_screen(screen_id: str, current_user: User = Depends(require_adm
     ok = await screen_delete(screen_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Screen not found")
+    await log_activity(current_user.id, current_user.full_name, "delete", "screen", screen_id, "WARNING", {})
     return {"message": "Screen deleted"}
 
 @api_router.post("/screens/{screen_id}/heartbeat")
@@ -1191,50 +1223,53 @@ async def reset_password_endpoint(req: ResetPasswordRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal Reset Error: {str(e)}")
 
+# ============ SCREEN TEMPLATES HELPERS ============
+
+def get_predefined_templates() -> List[dict]:
+    return [
+        {
+            "id": "fullscreen",
+            "name": "Full Screen",
+            "description": "Single zone covering entire screen",
+            "zones": [
+                {"id": "zone1", "name": "Main", "x": 0, "y": 0, "width": 100, "height": 100, "type": "menu"}
+            ],
+            "is_default": True
+        },
+        {
+            "id": "split-horizontal",
+            "name": "Split Horizontal",
+            "description": "Two zones side by side",
+            "zones": [
+                {"id": "zone1", "name": "Left", "x": 0, "y": 0, "width": 50, "height": 100, "type": "menu"},
+                {"id": "zone2", "name": "Right", "x": 50, "y": 0, "width": 50, "height": 100, "type": "promo"}
+            ]
+        },
+        {
+            "id": "split-vertical",
+            "name": "Split Vertical",
+            "description": "Two zones top and bottom",
+            "zones": [
+                {"id": "zone1", "name": "Top", "x": 0, "y": 0, "width": 100, "height": 50, "type": "menu"},
+                {"id": "zone2", "name": "Bottom", "x": 0, "y": 50, "width": 100, "height": 50, "type": "promo"}
+            ]
+        },
+        {
+            "id": "sidebar",
+            "name": "Sidebar Layout",
+            "description": "Main content with sidebar",
+            "zones": [
+                {"id": "zone1", "name": "Main", "x": 0, "y": 0, "width": 70, "height": 100, "type": "menu"},
+                {"id": "zone2", "name": "Sidebar", "x": 70, "y": 0, "width": 30, "height": 100, "type": "promo"}
+            ]
+        }
+    ]
+
 # ============ SCREEN TEMPLATES ROUTES ============
 
 @api_router.get("/screen-templates", response_model=List[ScreenTemplate])
 async def get_screen_templates(current_user: User = Depends(get_current_user)):
-    # Predefined templates
-    templates = [
-        ScreenTemplate(
-            id="fullscreen",
-            name="Full Screen",
-            description="Single zone covering entire screen",
-            zones=[
-                {"id": "zone1", "name": "Main", "x": 0, "y": 0, "width": 100, "height": 100, "type": "menu"}
-            ],
-            is_default=True
-        ),
-        ScreenTemplate(
-            id="split-horizontal",
-            name="Split Horizontal",
-            description="Two zones side by side",
-            zones=[
-                {"id": "zone1", "name": "Left", "x": 0, "y": 0, "width": 50, "height": 100, "type": "menu"},
-                {"id": "zone2", "name": "Right", "x": 50, "y": 0, "width": 50, "height": 100, "type": "promo"}
-            ]
-        ),
-        ScreenTemplate(
-            id="split-vertical",
-            name="Split Vertical",
-            description="Two zones top and bottom",
-            zones=[
-                {"id": "zone1", "name": "Top", "x": 0, "y": 0, "width": 100, "height": 50, "type": "menu"},
-                {"id": "zone2", "name": "Bottom", "x": 0, "y": 50, "width": 100, "height": 50, "type": "promo"}
-            ]
-        ),
-        ScreenTemplate(
-            id="sidebar",
-            name="Sidebar Layout",
-            description="Main content with sidebar",
-            zones=[
-                {"id": "zone1", "name": "Main", "x": 0, "y": 0, "width": 70, "height": 100, "type": "menu"},
-                {"id": "zone2", "name": "Sidebar", "x": 70, "y": 0, "width": 30, "height": 100, "type": "promo"}
-            ]
-        )
-    ]
-    return templates
+    return [ScreenTemplate(**t) for t in get_predefined_templates()]
 
 # ========== CONTENT FOLDERS ENDPOINTS ==========
 
@@ -1263,6 +1298,7 @@ async def create_folder(folder_data: ContentFolderCreate, current_user: User = D
             "created_at": datetime.now(timezone.utc)
         }
         await folder_insert(f_dict)
+        await log_activity(current_user.id, current_user.full_name, "create", "folder", folder_id, "INFO", {"name": folder_data.name})
         return f_dict
     except Exception as e:
         tb = traceback.format_exc()
@@ -1281,6 +1317,7 @@ async def update_folder(folder_id: str, folder_data: ContentFolderUpdate, curren
         updated = await folder_get_by_id(folder_id)
         if not updated:
              raise HTTPException(status_code=404, detail="Folder not found after update")
+        await log_activity(current_user.id, current_user.full_name, "update", "folder", folder_id, "INFO", update_data)
         return updated
     except Exception as e:
         logger.error(f"Update Folder Error: {e}")
@@ -1293,6 +1330,7 @@ async def delete_folder(folder_id: str, current_user: User = Depends(require_adm
         if not existing:
             raise HTTPException(status_code=404, detail="Folder not found")
         await folder_delete(folder_id)
+        await log_activity(current_user.id, current_user.full_name, "delete", "folder", folder_id, "WARNING", {})
         return JSONResponse(content={"message": "Folder deleted, content moved to root"}, status_code=200)
     except Exception as e:
         logger.error(f"Delete Folder Error: {e}")
@@ -1305,11 +1343,13 @@ async def move_content_to_folder(content_id: str, move_data: MoveToFolder, curre
         if not folder:
             raise HTTPException(status_code=404, detail="Folder not found")
     await content_update_folder(content_id, move_data.folder_id)
+    await log_activity(current_user.id, current_user.full_name, "move", "content", content_id, "INFO", {"to_folder": move_data.folder_id})
     return JSONResponse(content={"message": "Content moved successfully"}, status_code=200)
 
 @api_router.patch("/content/{content_id}/title")
 async def rename_content(content_id: str, update_data: ContentTitleUpdate, current_user: User = Depends(require_admin)):
     await content_update_title(content_id, update_data.title)
+    await log_activity(current_user.id, current_user.full_name, "rename", "content", content_id, "INFO", {"new_title": update_data.title})
     return JSONResponse(content={"message": "Content renamed successfully"}, status_code=200)
 
 @api_router.patch("/content/{content_id}/brand")
@@ -1427,6 +1467,10 @@ async def create_content(
             }
             
             await content_insert(new_content)
+            
+            # Log action
+            await log_activity(current_user.id, current_user.full_name, "upload", "content", new_content["id"], "INFO", {"title": new_content["title"], "type": new_content["type"]})
+            
             created_items.append(new_content)
             
         except Exception as e:
@@ -1486,6 +1530,10 @@ async def delete_content_item(content_id: str, current_user: User = Depends(requ
             file_path.unlink()
     
     await content_delete(content_id)
+    
+    # Log action
+    await log_activity(current_user.id, current_user.full_name, "delete", "content", content_id, "INFO", {"title": item.get("title")})
+    
     return {"message": "Content deleted and cleaned up from playlists/screens"}
 
 # Serve uploaded files
@@ -1510,6 +1558,10 @@ async def create_playlist(playlist_data: PlaylistCreate, current_user: User = De
     playlist_dict["created_by"] = current_user.id
     playlist = Playlist(**playlist_dict)
     await playlist_insert(playlist.model_dump())
+    
+    # Log action
+    await log_activity(current_user.id, current_user.full_name, "create", "playlist", playlist.id, "INFO", {"name": playlist.name})
+    
     return playlist
 
 @api_router.get("/playlists/{playlist_id}", response_model=Playlist)
@@ -1526,13 +1578,22 @@ async def update_playlist(playlist_id: str, playlist_data: PlaylistCreate, curre
         raise HTTPException(status_code=404, detail="Playlist not found")
     await playlist_update(playlist_id, playlist_data.model_dump())
     updated = await playlist_get(playlist_id)
+    
+    # Log action
+    await log_activity(current_user.id, current_user.full_name, "update", "playlist", playlist_id, "INFO", {"name": updated.get("name") if isinstance(updated, dict) else updated.name})
+    
     return updated
 
 @api_router.delete("/playlists/{playlist_id}")
 async def delete_playlist(playlist_id: str, current_user: User = Depends(require_admin)):
+    playlist = await playlist_get(playlist_id)
     ok = await playlist_delete(playlist_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Playlist not found")
+        
+    # Log action
+    await log_activity(current_user.id, current_user.full_name, "delete", "playlist", playlist_id, "INFO", {"name": playlist.get("name") if playlist else "Unknown"})
+    
     return {"message": "Playlist deleted"}
 
 # ============ PRODUCTS ROUTES ============
@@ -1939,12 +2000,56 @@ async def get_display_data(slug: str, security_code: Optional[str] = None):
     if location and location.get("security_code"):
         if not security_code or security_code != location["security_code"]:
             raise HTTPException(status_code=403, detail="Security code required")
-    predefined = [
-        {"id": "fullscreen", "name": "Full Screen", "zones": [{"id": "zone1", "name": "Main", "x": 0, "y": 0, "width": 100, "height": 100, "type": "menu"}]},
-        {"id": "split-horizontal", "name": "Split Horizontal", "zones": [{"id": "zone1", "name": "Left", "x": 0, "y": 0, "width": 50, "height": 100, "type": "menu"}, {"id": "zone2", "name": "Right", "x": 50, "y": 0, "width": 50, "height": 100, "type": "promo"}]},
-    ]
-    template = next((t for t in predefined if t["id"] == screen.get("template_id")), None) if screen.get("template_id") else None
+
+
+    # Get template from predefined list
+    available_templates = get_predefined_templates()
+    template = next((t for t in available_templates if t["id"] == screen.get("template_id")), None) if screen.get("template_id") else None
+    
+    # CRITICAL FIX: If template lookup fails but we have zones_config, construct a fallback template
+    # This ensures the frontend always has zone definitions to render
     zones_config = await screen_zones_list(screen["id"])
+    if not template and zones_config:
+        logger.warning(f"Template '{screen.get('template_id')}' not found for screen {slug}, constructing fallback from zones_config")
+        # Build a synthetic template from the zones_config
+        template = {
+            "id": screen.get("template_id", "custom"),
+            "name": "Custom Layout",
+            "description": "Dynamically generated from zone configuration",
+            "zones": []
+        }
+        # Map zones_config to template zones with default positioning
+        for idx, zc in enumerate(zones_config):
+            zone_id = zc.get("zone_id", f"zone{idx+1}")
+            # Try to infer positioning from common patterns
+            if len(zones_config) == 1:
+                # Single zone = fullscreen
+                template["zones"].append({"id": zone_id, "name": "Main", "x": 0, "y": 0, "width": 100, "height": 100, "type": "content"})
+            elif len(zones_config) == 2:
+                # Two zones = sidebar (70/30 split)
+                if idx == 0:
+                    template["zones"].append({"id": zone_id, "name": "Main", "x": 0, "y": 0, "width": 70, "height": 100, "type": "content"})
+                else:
+                    template["zones"].append({"id": zone_id, "name": "Sidebar", "x": 70, "y": 0, "width": 30, "height": 100, "type": "content"})
+            else:
+                # Multiple zones = grid layout
+                cols = 2
+                rows = (len(zones_config) + 1) // 2
+                row = idx // cols
+                col = idx % cols
+                width = 100 // cols
+                height = 100 // rows
+                template["zones"].append({
+                    "id": zone_id,
+                    "name": f"Zone {idx+1}",
+                    "x": col * width,
+                    "y": row * height,
+                    "width": width,
+                    "height": height,
+                    "type": "content"
+                })
+    
+
     for zc in zones_config:
         if zc.get("content_type") == "digital_menu" and zc.get("digital_menu_id"):
             menu = await digital_menu_get(zc["digital_menu_id"])
@@ -2193,6 +2298,10 @@ async def create_happy_hour(data: dict, current_user: User = Depends(get_current
     
     data['created_by'] = current_user.id
     schedule = await happy_hour_insert(data)
+    
+    # Log action
+    await log_activity(current_user.id, current_user.full_name, "create", "happy_hour", schedule.get("id"), "INFO", {"name": schedule.get("name")})
+    
     return schedule
 
 @api_router.put("/happy-hours/{schedule_id}")
@@ -2204,16 +2313,59 @@ async def update_happy_hour(schedule_id: str, data: dict, current_user: User = D
     schedule = await happy_hour_update(schedule_id, data)
     if not schedule:
         raise HTTPException(status_code=404, detail="Happy hour schedule not found")
+        
+    # Log action
+    await log_activity(current_user.id, current_user.full_name, "update", "happy_hour", schedule_id, "INFO", {"name": schedule.get("name")})
+    
     return schedule
 
 @api_router.delete("/happy-hours/{schedule_id}")
-async def delete_happy_hour(schedule_id: str, current_user: dict = Depends(get_current_user)):
+async def delete_happy_hour(schedule_id: str, current_user: User = Depends(get_current_user)):
     """Delete a happy hour schedule"""
-    if current_user.get("role") not in ["super_admin", "admin"]:
+    if current_user.role not in ["super_admin", "admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     await happy_hour_delete(schedule_id)
+    
+    # Log action
+    await log_activity(current_user.id, current_user.full_name, "delete", "happy_hour", schedule_id, "INFO")
+    
     return {"message": "Happy hour schedule deleted successfully"}
+
+# ============ ACTIVITY LOGS ROUTES ============
+
+@api_router.get("/activity-logs")
+async def get_logs(
+    entity_type: Optional[str] = None, 
+    level: Optional[str] = None, 
+    user_id: Optional[str] = None,
+    location_id: Optional[str] = None,
+    limit: int = 50, 
+    offset: int = 0, 
+    current_user: User = Depends(get_current_user)
+):
+    """Fetch activity logs (Super Admin and Admin only)"""
+    if current_user.role not in ["super_admin", "admin"]:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return await get_activity_logs(entity_type, level, user_id, location_id, limit, offset)
+
+@api_router.post("/activity-logs/report")
+async def report_activity(data: dict, request: Request):
+    """Report an activity from the client-side (unauthenticated or unverified)"""
+    # Details from the client
+    action = data.get("action", "client_event")
+    details = data.get("details", {})
+    entity_type = data.get("entity_type")
+    entity_id = data.get("entity_id")
+    level = data.get("level", "INFO")
+    
+    # Optional screen info if provided
+    user_id = data.get("user_id") # could be screen_id
+    user_name = data.get("user_name", "Client App")
+    
+    await log_activity(user_id, user_name, action, entity_type, entity_id, level, details)
+    return {"status": "ok"}
+
 
 # ============ BRANDS ROUTES ============
 

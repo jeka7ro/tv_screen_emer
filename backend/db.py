@@ -205,7 +205,7 @@ def _row(r: Optional[asyncpg.Record]) -> Optional[Dict[str, Any]]:
             d[k] = v.isoformat()
         
         # Ensure list/dict fields are correctly parsed or defaulted
-        list_fields = ["tags", "playlist_urls", "items", "selected_products", "selected_categories", "promo_products", "brand"]
+        list_fields = ["tags", "playlist_urls", "items", "selected_products", "selected_categories", "promo_products", "brand", "screen_ids", "details", "days_of_week", "location_ids"]
         if k in list_fields:
             if v is None:
                 d[k] = []
@@ -699,12 +699,12 @@ async def playlists_list() -> List[Dict[str, Any]]:
 async def playlist_insert(row: Dict[str, Any]) -> None:
     items = json.dumps(row.get("items") or [])
     await _execute(
-        """INSERT INTO playlists (id, name, description, items, autoplay, loop, status, created_at, brand, created_by, is_scheduled, start_at, end_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)""",
-        row["id"], row["name"], row.get("description"), items,
+        """INSERT INTO playlists (id, name, description, items, autoplay, loop, status, created_at, brand, created_by, is_scheduled, start_at, end_at, screen_ids, color)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)""",
+        row["id"], row["name"], row.get("description"), json.dumps(row.get("items") or []),
         row.get("autoplay", True), row.get("loop", True), row.get("status", "active"), row["created_at"],
-        row.get("brand"), row.get("created_by"), row.get("is_scheduled", False),
-        row.get("start_at"), row.get("end_at")
+        json.dumps(row.get("brand") or []), row.get("created_by"), row.get("is_scheduled", False),
+        row.get("start_at"), row.get("end_at"), json.dumps(row.get("screen_ids") or []), row.get("color", "#4F46E5")
     )
 
 
@@ -712,12 +712,12 @@ async def playlist_update(id: str, data: Dict[str, Any]) -> None:
     items = json.dumps(data.get("items") or [])
     await _execute(
         """UPDATE playlists SET name = $1, description = $2, items = $3, autoplay = $4, loop = $5, status = $6, brand = $7,
-           is_scheduled = $8, start_at = $9, end_at = $10
-           WHERE id = $11""",
-        data["name"], data.get("description"), items,
+           is_scheduled = $8, start_at = $9, end_at = $10, screen_ids = $11, color = $12
+           WHERE id = $13""",
+        data["name"], data.get("description"), json.dumps(data.get("items") or []),
         data.get("autoplay", True), data.get("loop", True), data.get("status", "active"), 
-        data.get("brand"), data.get("is_scheduled", False),
-        data.get("start_at"), data.get("end_at"), id,
+        json.dumps(data.get("brand") or []), data.get("is_scheduled", False),
+        data.get("start_at"), data.get("end_at"), json.dumps(data.get("screen_ids") or []), data.get("color", "#4F46E5"), id,
     )
 
 
@@ -988,7 +988,7 @@ async def happy_hour_get(schedule_id: str):
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
             SELECT * FROM happy_hour_schedules
-            WHERE id = $1
+            WHERE id = $1::uuid
         """, schedule_id)
         return dict(row) if row else None
 
@@ -997,19 +997,21 @@ async def happy_hour_insert(data: dict):
     # Parse time strings to datetime.time objects if needed
     start_time = data.get('start_time')
     if isinstance(start_time, str):
-        try:
-            start_time = datetime.strptime(start_time, "%H:%M").time()
-        except ValueError:
-            # If parsing fails, keep original string or handle error
-            pass
+        for fmt in ("%H:%M:%S", "%H:%M"):
+            try:
+                start_time = datetime.strptime(start_time, fmt).time()
+                break
+            except ValueError:
+                continue
             
     end_time = data.get('end_time')
     if isinstance(end_time, str):
-        try:
-            end_time = datetime.strptime(end_time, "%H:%M").time()
-        except ValueError:
-            # If parsing fails, keep original string or handle error
-            pass
+        for fmt in ("%H:%M:%S", "%H:%M"):
+            try:
+                end_time = datetime.strptime(end_time, fmt).time()
+                break
+            except ValueError:
+                continue
 
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
@@ -1032,26 +1034,28 @@ async def happy_hour_insert(data: dict):
             data.get('created_by'),
             data.get('location_ids', [])
         )
-        return dict(row)
+        return dict(row) if row else None
 
 async def happy_hour_update(schedule_id: str, data: dict):
     """Update an existing happy hour schedule"""
     # Parse time strings to datetime.time objects if needed
     start_time = data.get('start_time')
     if isinstance(start_time, str):
-        try:
-            start_time = datetime.strptime(start_time, "%H:%M").time()
-        except ValueError:
-            # If parsing fails, keep original string or handle error
-            pass
+        for fmt in ("%H:%M:%S", "%H:%M"):
+            try:
+                start_time = datetime.strptime(start_time, fmt).time()
+                break
+            except ValueError:
+                continue
             
     end_time = data.get('end_time')
     if isinstance(end_time, str):
-        try:
-            end_time = datetime.strptime(end_time, "%H:%M").time()
-        except ValueError:
-            # If parsing fails, keep original string or handle error
-            pass
+        for fmt in ("%H:%M:%S", "%H:%M"):
+            try:
+                end_time = datetime.strptime(end_time, fmt).time()
+                break
+            except ValueError:
+                continue
 
     async with pool.acquire() as conn:
         row = await conn.fetchrow("""
@@ -1060,7 +1064,7 @@ async def happy_hour_update(schedule_id: str, data: dict):
                 end_time = $6, content_type = $7, content_id = $8,
                 playlist_id = $9, active = $10, days_of_week = $11,
                 location_ids = $12, updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1::uuid
             RETURNING *
         """,
             schedule_id,
@@ -1083,7 +1087,7 @@ async def happy_hour_delete(schedule_id: str):
     async with pool.acquire() as conn:
         await conn.execute("""
             DELETE FROM happy_hour_schedules
-            WHERE id = $1
+            WHERE id = $1::uuid
         """, schedule_id)
 
 async def happy_hours_active_now():
@@ -1129,6 +1133,66 @@ async def brand_delete(brand_id: str) -> bool:
         return False
     await _execute("DELETE FROM brands WHERE id = $1", brand_id)
     return True
+# ---------- activity logs ----------
+
+async def log_activity(user_id: Optional[str], user_name: Optional[str], action: str, entity_type: Optional[str] = None, entity_id: Optional[str] = None, level: str = 'INFO', details: Optional[Dict[str, Any]] = None) -> None:
+    """Record a user or system action in the logs"""
+    # Force string conversion for IDs to prevent asyncpg DataError (integer vs uuid/text)
+    user_id_str = str(user_id) if user_id is not None else None
+    entity_id_str = str(entity_id) if entity_id is not None else None
+    
+    async with pool.acquire() as conn:
+        await conn.execute("""
+            INSERT INTO activity_logs (user_id, user_name, action, entity_type, entity_id, level, details)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+        """, user_id_str, user_name, action, entity_type, entity_id_str, level, json.dumps(details) if details else None)
+
+async def get_activity_logs(
+    entity_type: Optional[str] = None, 
+    level: Optional[str] = None, 
+    user_id: Optional[str] = None,
+    location_id: Optional[str] = None,
+    limit: int = 50, 
+    offset: int = 0
+) -> List[Dict[str, Any]]:
+    """Fetch activity logs with filtering"""
+    query = """
+        SELECT a.*, u.full_name as user_real_name, u.role as user_role, u.location_id as user_location_id
+        FROM activity_logs a
+        LEFT JOIN users u ON a.user_id = u.id
+    """
+    conditions = []
+    params = []
+    
+    if entity_type:
+        params.append(entity_type)
+        conditions.append(f"a.entity_type = ${len(params)}")
+        
+    if level:
+        params.append(level)
+        conditions.append(f"a.level = ${len(params)}")
+    
+    if user_id:
+        params.append(user_id)
+        conditions.append(f"a.user_id = ${len(params)}")
+        
+    if location_id:
+        params.append(location_id)
+        # Filter by user's location OR if the entity itself is that location
+        conditions.append(f"(u.location_id = ${len(params)} OR (a.entity_type = 'location' AND a.entity_id = ${len(params)}))")
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+        
+    # Sort and Paginator
+    query += f" ORDER BY a.created_at DESC LIMIT ${len(params) + 1} OFFSET ${len(params) + 2}"
+    params.extend([limit, offset])
+    
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(query, *params)
+        return [dict(r) for r in rows]
+
+async def happy_hours_active_now() -> List[Dict[str, Any]]:
     """Get currently active happy hour schedules based on time and day"""
     async with pool.acquire() as conn:
         rows = await conn.fetch("""
