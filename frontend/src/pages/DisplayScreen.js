@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/effects.css';
+import { ValentineHearts } from '../components/ValentineHearts';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -414,6 +415,32 @@ export const DisplayScreen = () => {
           </div>
         </div>
       )}
+
+      {/* Valentine Hearts Effect */}
+      <ValentineHearts
+        enabled={(() => {
+          const saved = localStorage.getItem(`valentine_hearts_${displayData?.screen?.id}`);
+          if (saved) {
+            try {
+              return JSON.parse(saved).enabled || false;
+            } catch (e) {
+              return false;
+            }
+          }
+          return false;
+        })()}
+        intensity={(() => {
+          const saved = localStorage.getItem(`valentine_hearts_${displayData?.screen?.id}`);
+          if (saved) {
+            try {
+              return JSON.parse(saved).intensity || 'medium';
+            } catch (e) {
+              return 'medium';
+            }
+          }
+          return 'medium';
+        })()}
+      />
     </div>
   );
 };

@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, addWeeks, subWeeks, isSameWeek, parseISO } from 'date-fns';
 import { ro } from 'date-fns/locale';
 import { EventsCalendar } from '../components/EventsCalendar';
+import { PlaylistSimulation } from '../components/PlaylistSimulation';
 
 export const Playlists = () => {
   const [playlists, setPlaylists] = useState([]);
@@ -46,6 +47,7 @@ export const Playlists = () => {
   const [calendarView, setCalendarView] = useState('week');
   // Fix: Add missing state for selectedPlaylists
   const [selectedPlaylists, setSelectedPlaylists] = useState([]);
+  const [showSimulation, setShowSimulation] = useState(false);
   const [filterWithScreens, setFilterWithScreens] = useState(true); // Default to true
   const [selectedLocationForScreens, setSelectedLocationForScreens] = useState(null);
 
@@ -1426,6 +1428,18 @@ export const Playlists = () => {
                             </div>
 
                             <div className="flex gap-1 shrink-0 ml-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-slate-400 hover:text-[var(--playlist-color)]"
+                                onClick={() => {
+                                  setSelectedPlaylists([playlist.id]);
+                                  setShowSimulation(true);
+                                }}
+                                title="Simulare Ecran"
+                              >
+                                <Monitor className="w-3.5 h-3.5" />
+                              </Button>
                               <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-[var(--playlist-color)]" onClick={() => handleEdit(playlist)}>
                                 <Edit className="w-3.5 h-3.5" />
                               </Button>
@@ -1602,6 +1616,21 @@ export const Playlists = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Simulation Modal */}
+      {showSimulation && (
+        <Dialog open={showSimulation} onOpenChange={setShowSimulation}>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
+            <div className="relative w-full h-[90vh]">
+              <PlaylistSimulation
+                playlistIds={selectedPlaylists}
+                playlists={playlists}
+                onClose={() => setShowSimulation(false)}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 };

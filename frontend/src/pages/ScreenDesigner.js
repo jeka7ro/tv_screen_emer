@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Save, ArrowLeft, Eye, Check, Sparkles, Layers, Wind, Image, Monitor, List as ListIcon } from 'lucide-react';
+import { Save, ArrowLeft, Eye, Check, Sparkles, Layers, Wind, Image, Monitor, List as ListIcon, Heart } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import '../styles/effects.css';
@@ -76,6 +76,8 @@ export const ScreenDesigner = () => {
   const [selectedBrandId, setSelectedBrandId] = useState(null);
   const [logoPosition, setLogoPosition] = useState('top-right');
   const [logoSize, setLogoSize] = useState('md');
+  const [enableValentineHearts, setEnableValentineHearts] = useState(false);
+  const [valentineHeartsIntensity, setValentineHeartsIntensity] = useState('medium');
 
   // Logo position classes
   const logoPositionMap = {
@@ -179,6 +181,20 @@ export const ScreenDesigner = () => {
       setSelectedBrandId(screenRes.data.logo_brand_id || null);
       setLogoPosition(screenRes.data.logo_position || 'top-right');
       setLogoSize(screenRes.data.logo_size || 'md');
+      setEnableValentineHearts(false);
+      setValentineHeartsIntensity('medium');
+
+      // Load Valentine hearts settings from localStorage
+      const savedHearts = localStorage.getItem(`valentine_hearts_${screenId}`);
+      if (savedHearts) {
+        try {
+          const heartsSettings = JSON.parse(savedHearts);
+          setEnableValentineHearts(!!heartsSettings.enabled);
+          setValentineHeartsIntensity(heartsSettings.intensity || 'medium');
+        } catch (e) {
+          console.error('Error loading hearts settings:', e);
+        }
+      }
 
       const template = templatesRes.data.find(t => t.id === screenRes.data.template_id);
       setSelectedTemplate(template || templatesRes.data[0]);
@@ -240,6 +256,12 @@ export const ScreenDesigner = () => {
         logo_position: logoPosition,
         logo_size: logoSize
       });
+
+      // Save Valentine hearts settings to localStorage
+      localStorage.setItem(`valentine_hearts_${screenId}`, JSON.stringify({
+        enabled: enableValentineHearts,
+        intensity: valentineHeartsIntensity
+      }));
 
       // Save zone configurations
       for (const config of zoneConfigs) {
@@ -386,9 +408,15 @@ export const ScreenDesigner = () => {
                 <Wind className={`w-5 h-5 ${enableSteam ? 'text-teal-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableSteam ? 'text-teal-600' : 'text-slate-400'}`}>Steam</span>
               </button>
+            </div>
+            <div className="flex gap-2">
               <button onClick={() => setEnableLogo(!enableLogo)} title="Logo Overlay" className={`flex-1 flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all ${enableLogo ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/30'}`}>
                 <Image className={`w-5 h-5 ${enableLogo ? 'text-amber-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableLogo ? 'text-amber-600' : 'text-slate-400'}`}>Logo</span>
+              </button>
+              <button onClick={() => setEnableValentineHearts(!enableValentineHearts)} title="Valentine Hearts" className={`flex-1 flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all ${enableValentineHearts ? 'border-pink-400 bg-pink-50 shadow-sm' : 'border-slate-200 bg-white hover:border-pink-200 hover:bg-pink-50/30'}`}>
+                <Heart className={`w-5 h-5 ${enableValentineHearts ? 'text-pink-500' : 'text-slate-400'}`} />
+                <span className={`text-[9px] font-bold ${enableValentineHearts ? 'text-pink-600' : 'text-slate-400'}`}>Hearts</span>
               </button>
             </div>
             {enableLogo && (
@@ -411,6 +439,16 @@ export const ScreenDesigner = () => {
                       <button key={s.k} onClick={() => setLogoSize(s.k)} className={`flex-1 py-0.5 rounded text-[9px] font-bold border transition-all ${logoSize === s.k ? 'bg-amber-400 text-white border-amber-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-amber-50'}`}>{s.l}</button>
                     ))}
                   </div>
+                </div>
+              </div>
+            )}
+            {enableValentineHearts && (
+              <div className="space-y-2 border-t border-slate-100 pt-2 mt-2">
+                <div className="text-[9px] font-semibold text-pink-600 mb-1">Intensitate Inimioare</div>
+                <div className="flex gap-0.5">
+                  {[{ k: 'low', l: 'Puțin' }, { k: 'medium', l: 'Mediu' }, { k: 'high', l: 'Mult' }].map(s => (
+                    <button key={s.k} onClick={() => setValentineHeartsIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${valentineHeartsIntensity === s.k ? 'bg-pink-400 text-white border-pink-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-pink-50'}`}>{s.l}</button>
+                  ))}
                 </div>
               </div>
             )}

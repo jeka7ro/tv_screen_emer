@@ -388,6 +388,8 @@ class Screen(BaseModel):
     logo_brand_id: Optional[str] = None
     logo_position: Optional[str] = "top-right"
     logo_size: Optional[str] = "md"
+    valentine_hearts_enabled: Optional[bool] = False
+    valentine_hearts_intensity: Optional[str] = "medium"  # low, medium, high
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     # Extra fields from JOINs
@@ -414,6 +416,8 @@ class ScreenCreate(BaseModel):
     logo_brand_id: Optional[str] = None
     logo_position: Optional[str] = "top-right"
     logo_size: Optional[str] = "md"
+    valentine_hearts_enabled: Optional[bool] = False
+    valentine_hearts_intensity: Optional[str] = "medium"
 
 class ScreenTemplate(BaseModel):
     model_config = ConfigDict(extra="ignore")
