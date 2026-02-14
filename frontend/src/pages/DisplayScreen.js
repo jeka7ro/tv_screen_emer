@@ -384,10 +384,10 @@ export const DisplayScreen = () => {
           'bottom-center': { bottom: '12px', left: '50%', transform: 'translateX(-50%)' },
           'bottom-right': { bottom: '12px', right: '12px' },
         };
-        const sizeMap = { sm: '40px', md: '64px', lg: '96px', xl: '128px' };
+        const sizeMap = { sm: '2vw', md: '3.5vw', lg: '5vw', xl: '7vw' };
 
         if (!logoUrl) return null;
-        const dim = sizeMap[size] || '64px';
+        const dim = sizeMap[size] || '3.5vw';
         return (
           <div className="absolute z-40 pointer-events-none" style={{ ...posMap[position], width: dim, height: dim }}>
             <img
