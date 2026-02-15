@@ -65,7 +65,7 @@
   "scripts": {
     "postinstall": "patch-package",
     "start": "DISABLE_ESLINT_PLUGIN=true craco start",
-    "build": "craco build",
+    "build": "DISABLE_ESLINT_PLUGIN=true craco build",
     "test": "craco test"
   },
   "browserslist": {
