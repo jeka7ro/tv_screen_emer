@@ -300,7 +300,7 @@ async def users_count() -> int:
 
 
 async def users_list(exclude_password: bool = True) -> List[Dict[str, Any]]:
-    cols = "id, email, full_name, is_super_admin, role, location_id, status, created_at, last_login" if exclude_password else "*"
+    cols = "id, email, full_name, is_super_admin, role, location_id, status, avatar_url, created_at, last_login" if exclude_password else "*"
     return await _fetch_all(f"SELECT {cols} FROM users ORDER BY created_at DESC LIMIT 500")
 
 

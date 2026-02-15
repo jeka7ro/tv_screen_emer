@@ -190,23 +190,44 @@ export const Users = () => {
     const cameraIconSize = size === 'lg' ? 'w-4 h-4' : 'w-3 h-3';
     const isUploading = avatarUploadingId === user.id;
 
+    // Fix avatar URL - if it starts with /api/, prepend backend URL
+    const getAvatarUrl = (url) => {
+      if (!url) return null;
+      if (url.startsWith('http')) return url; // Already full URL (Supabase)
+      if (url.startsWith('/api/')) {
+        // Local storage - backend is on port 8000
+        const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
+        return `${backendUrl}${url}`;
+      }
+      return url;
+    };
+
+    const avatarUrl = getAvatarUrl(user.avatar_url);
+
     return (
       <div
         className={`${sizeClass} rounded-full relative group cursor-pointer flex-shrink-0`}
         onClick={() => handleAvatarClick(user)}
         title="Schimbă avatar"
       >
-        {user.avatar_url ? (
+        {avatarUrl ? (
           <img
-            src={user.avatar_url}
+            src={avatarUrl}
             alt={user.full_name}
             className={`${sizeClass} rounded-full object-cover border-2 border-white shadow-sm`}
+            onError={(e) => {
+              // Fallback to default avatar if image fails to load
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
           />
-        ) : (
-          <div className={`${sizeClass} rounded-full bg-indigo-100 flex items-center justify-center border-2 border-white shadow-sm`}>
-            <User className={`${iconSize} text-indigo-600`} />
-          </div>
-        )}
+        ) : null}
+        <div
+          className={`${sizeClass} rounded-full bg-indigo-100 flex items-center justify-center border-2 border-white shadow-sm`}
+          style={{ display: avatarUrl ? 'none' : 'flex' }}
+        >
+          <User className={`${iconSize} text-indigo-600`} />
+        </div>
         <div className={`absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity`}>
           {isUploading ? (
             <div className="animate-spin rounded-full border-2 border-white border-t-transparent" style={{ width: size === 'lg' ? 20 : 14, height: size === 'lg' ? 20 : 14 }} />

@@ -228,7 +228,11 @@ export const DashboardLayout = ({ children }) => {
               {/* Avatar */}
               {user?.avatar_url ? (
                 <img
-                  src={user.avatar_url}
+                  src={
+                    user.avatar_url.startsWith('http')
+                      ? user.avatar_url
+                      : `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000'}${user.avatar_url}`
+                  }
                   alt={user?.full_name}
                   className="w-9 h-9 rounded-full object-cover border-2 border-red-200 shadow-sm"
                 />

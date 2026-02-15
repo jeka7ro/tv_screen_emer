@@ -118,8 +118,8 @@ const AudioPlayer = () => {
             {/* Background Ambience */}
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-slate-900 to-black opacity-80 z-0"></div>
 
-            {/* React Player (Tiny but visible to avoid browser blocking) */}
-            <div className="absolute top-0 left-0 opacity-10 pointer-events-none" style={{ width: '1px', height: '1px', overflow: 'hidden' }}>
+            {/* React Player (Hidden off-screen but functional) */}
+            <div className="fixed -left-[9999px] top-0" style={{ width: '640px', height: '360px' }}>
                 <ReactPlayer
                     ref={playerRef}
                     url={currentTrack?.url}
