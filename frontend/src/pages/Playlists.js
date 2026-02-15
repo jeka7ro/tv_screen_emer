@@ -1432,9 +1432,42 @@ export const Playlists = () => {
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 text-slate-400 hover:text-[var(--playlist-color)]"
-                                onClick={() => {
-                                  setSelectedPlaylists([playlist.id]);
-                                  setShowSimulation(true);
+                                onClick={async () => {
+                                  try {
+                                    // Check if playlist has screens assigned
+                                    const screensRes = await api.get('/screens');
+                                    const allScreens = screensRes.data;
+
+                                    let hasScreens = false;
+                                    for (const screen of allScreens) {
+                                      try {
+                                        const zonesRes = await api.get(`/screen-zones/${screen.id}`);
+                                        const hasPlaylist = zonesRes.data.some(zone =>
+                                          (zone.playlist_id && zone.playlist_id === playlist.id) ||
+                                          (zone.content_type === 'playlist' && zone.content_id === playlist.id)
+                                        );
+                                        if (hasPlaylist) {
+                                          hasScreens = true;
+                                          break;
+                                        }
+                                      } catch (e) {
+                                        // Skip screen
+                                      }
+                                    }
+
+                                    if (!hasScreens) {
+                                      toast.warning(`Playlist-ul "${playlist.name}" nu are niciun ecran atribuit`, {
+                                        description: 'Atribuie acest playlist la un ecran pentru a vedea simularea'
+                                      });
+                                      return;
+                                    }
+
+                                    setSelectedPlaylists([playlist.id]);
+                                    setShowSimulation(true);
+                                  } catch (error) {
+                                    console.error('Error checking screens:', error);
+                                    toast.error('Eroare la verificarea ecranelor');
+                                  }
                                 }}
                                 title="Simulare Ecran"
                               >
@@ -1621,6 +1654,10 @@ export const Playlists = () => {
       {showSimulation && (
         <Dialog open={showSimulation} onOpenChange={setShowSimulation}>
           <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Simulare Live Playlist-uri</DialogTitle>
+              <DialogDescription>Previzualizare live a ecranelor care afișează playlist-urile selectate</DialogDescription>
+            </DialogHeader>
             <div className="relative w-full h-[90vh]">
               <PlaylistSimulation
                 playlistIds={selectedPlaylists}

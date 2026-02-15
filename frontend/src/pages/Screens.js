@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Edit, Trash2, Tv, ExternalLink, Settings, Link as LinkIcon, QrCode, LayoutGrid, List as ListIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Tv, ExternalLink, Settings, Link as LinkIcon, QrCode, LayoutGrid, List as ListIcon, Monitor } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { toast } from 'sonner';
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
 import { BrandSelector } from '../components/BrandSelector';
+import { ScreenSimulation } from '../components/ScreenSimulation';
 
 export const Screens = () => {
   const { isAdmin } = useAuth();
@@ -29,6 +30,7 @@ export const Screens = () => {
   const [cityFilter, setCityFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
   const [selectedScreens, setSelectedScreens] = useState([]);
+  const [showSimulation, setShowSimulation] = useState(false);
   const [viewMode, setViewMode] = useViewMode('view_mode_screens', 'grid');
   const [formData, setFormData] = useState({
     location_id: '',
@@ -143,6 +145,12 @@ export const Screens = () => {
     if (!brandId) return null;
     const brand = brands.find(b => b.id === brandId);
     return brand?.name || null;
+  };
+
+  // Helper function to get brand object from ID
+  const getBrand = (brandId) => {
+    if (!brandId) return null;
+    return brands.find(b => b.id === brandId) || null;
   };
 
   const filteredScreens = screens.filter(screen => {
@@ -490,7 +498,14 @@ export const Screens = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col">
-                            {getBrandName(screen.logo_brand_id) && <span className="text-[10px] font-bold text-red-600 uppercase mb-0.5">{getBrandName(screen.logo_brand_id)}</span>}
+                            {getBrand(screen.logo_brand_id) && (
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                {getBrand(screen.logo_brand_id).logo_url && (
+                                  <img src={getBrand(screen.logo_brand_id).logo_url} alt="" className="w-4 h-4 object-contain" />
+                                )}
+                                <span className="text-[10px] font-bold text-red-600 uppercase">{getBrand(screen.logo_brand_id).name}</span>
+                              </div>
+                            )}
                             <span className="font-semibold text-slate-800">{screen.name}</span>
                           </div>
                         </td>
@@ -515,6 +530,20 @@ export const Screens = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                // If screens are already selected via checkboxes, use those
+                                // Otherwise, select just this screen
+                                if (selectedScreens.length === 0) {
+                                  setSelectedScreens([screen.id]);
+                                }
+                                setShowSimulation(true);
+                              }}
+                              className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-blue-600 shadow-sm hover:shadow"
+                              title="Simulare"
+                            >
+                              <Monitor className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={() => handleShowLink(screen)}
                               className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
@@ -559,17 +588,30 @@ export const Screens = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredScreens.map((screen) => (
-              <div key={screen.id} className="glass-card p-6 flex flex-col h-full" data-testid={`screen-card-${screen.id}`}>
+              <div key={screen.id} className={`glass-card p-6 flex flex-col h-full transition-all ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`}>
                 <div className="flex items-start justify-between mb-4">
-                  <div className="flex flex-col">
-                    {getBrandName(screen.logo_brand_id) && (
-                      <span className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1 underline decoration-2 decoration-red-200 underline-offset-4">
-                        {getBrandName(screen.logo_brand_id)}
-                      </span>
-                    )}
-                    <h3 className="text-lg font-bold text-slate-800 leading-tight">
-                      {screen.name}
-                    </h3>
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedScreens.includes(screen.id)}
+                      onChange={() => toggleSelectScreen(screen.id)}
+                      className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 mt-1"
+                    />
+                    <div className="flex flex-col">
+                      {getBrand(screen.logo_brand_id) && (
+                        <div className="flex items-center gap-2 mb-1">
+                          {getBrand(screen.logo_brand_id).logo_url && (
+                            <img src={getBrand(screen.logo_brand_id).logo_url} alt="" className="w-5 h-5 object-contain" />
+                          )}
+                          <span className="text-[10px] font-black text-red-600 uppercase tracking-widest underline decoration-2 decoration-red-200 underline-offset-4">
+                            {getBrand(screen.logo_brand_id).name}
+                          </span>
+                        </div>
+                      )}
+                      <h3 className="text-lg font-bold text-slate-800 leading-tight">
+                        {screen.name}
+                      </h3>
+                    </div>
                   </div>
                   <div className="flex gap-1.5">
                     {isAdmin() && (
@@ -632,6 +674,20 @@ export const Screens = () => {
                 </div>
 
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      // If screens are already selected via checkboxes, use those
+                      // Otherwise, select just this screen
+                      if (selectedScreens.length === 0) {
+                        setSelectedScreens([screen.id]);
+                      }
+                      setShowSimulation(true);
+                    }}
+                    className="p-3 hover:bg-blue-50 rounded-xl transition-all text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow"
+                    title="Simulare"
+                  >
+                    <Monitor className="w-5 h-5" />
+                  </button>
                   <button
                     onClick={() => handleShowLink(screen)}
                     className="flex-1 flex items-center justify-center gap-2 text-sm bg-red-600 text-white hover:bg-red-700 px-4 py-3 rounded-xl transition-all shadow-md hover:shadow-lg font-bold"
@@ -780,6 +836,21 @@ export const Screens = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Simulation Modal */}
+      {showSimulation && (
+        <Dialog open={showSimulation} onOpenChange={setShowSimulation}>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
+            <div className="relative w-full h-[90vh]">
+              <ScreenSimulation
+                screenIds={selectedScreens}
+                screens={screens}
+                onClose={() => setShowSimulation(false)}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </DashboardLayout >
   );
 };
