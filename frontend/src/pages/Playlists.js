@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
-import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Folder, FolderOpen, Monitor, MapPin, Filter, Airplay } from 'lucide-react';
+import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Folder, FolderOpen, Monitor, MapPin, Filter, Airplay, Eye } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../components/ui/dialog';
@@ -140,6 +140,30 @@ export const Playlists = () => {
 
   const handleEdit = (playlist) => {
     setEditingPlaylist(playlist);
+
+    // Load screen IDs from screen zones instead of playlist.screen_ids
+    // This ensures consistency with the Airplay dialog
+    const screenIdsFromZones = screens
+      .filter(screen => {
+        const zones = screenZones[screen.id] || [];
+        return zones.some(z => z.content_type === 'playlist' && z.playlist_id === playlist.id);
+      })
+      .map(screen => String(screen.id)); // Ensure IDs are strings
+
+    console.log('Editing playlist:', playlist.id, playlist.name);
+    console.log('Screen IDs from zones:', screenIdsFromZones);
+    console.log('Total screens:', screens.length);
+    console.log('Screen zones:', screenZones);
+    console.log('Sample screen ID type:', typeof screens[0]?.id);
+
+    // Auto-select the first location that has selected screens
+    if (screenIdsFromZones.length > 0) {
+      const firstSelectedScreen = screens.find(s => screenIdsFromZones.includes(String(s.id)));
+      if (firstSelectedScreen) {
+        setSelectedLocationForScreens(firstSelectedScreen.location_id);
+      }
+    }
+
     setFormData({
       name: playlist.name,
       autoplay: playlist.autoplay,
@@ -149,7 +173,7 @@ export const Playlists = () => {
       is_scheduled: playlist.is_scheduled || false,
       start_at: playlist.start_at || '',
       end_at: playlist.end_at || '',
-      screen_ids: playlist.screen_ids || []
+      screen_ids: screenIdsFromZones
     });
     setPlaylistItems(playlist.items || []);
     setShowDialog(true);
@@ -713,34 +737,39 @@ export const Playlists = () => {
                                   <div className="space-y-1.5">
                                     {screens
                                       .filter(s => s.location_id === selectedLocationForScreens)
-                                      .map(screen => (
-                                        <label
-                                          key={screen.id}
-                                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs cursor-pointer transition-all border ${formData.screen_ids?.includes(screen.id)
-                                            ? 'bg-red-100 border-red-300 text-red-700 font-bold shadow-sm'
-                                            : 'bg-white border-slate-200 text-slate-600 hover:bg-red-50 hover:border-red-200'
-                                            }`}
-                                        >
-                                          <input
-                                            type="checkbox"
-                                            checked={formData.screen_ids?.includes(screen.id) || false}
-                                            onChange={(e) => {
-                                              const checked = e.target.checked;
-                                              setFormData(prev => {
-                                                const currentIds = prev.screen_ids || [];
-                                                if (checked) {
-                                                  return { ...prev, screen_ids: [...currentIds, screen.id] };
-                                                } else {
-                                                  return { ...prev, screen_ids: currentIds.filter(id => id !== screen.id) };
-                                                }
-                                              });
-                                            }}
-                                            className="rounded text-red-600 focus:ring-red-500 w-3.5 h-3.5"
-                                          />
-                                          <span className={`w-2 h-2 rounded-full shrink-0 ${formData.screen_ids?.includes(screen.id) ? 'bg-red-500' : 'bg-slate-300'}`} />
-                                          {screen.name}
-                                        </label>
-                                      ))}
+                                      .map(screen => {
+                                        const screenIdStr = String(screen.id);
+                                        const isChecked = formData.screen_ids?.includes(screenIdStr) || false;
+
+                                        return (
+                                          <label
+                                            key={screen.id}
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs cursor-pointer transition-all border ${isChecked
+                                              ? 'bg-red-100 border-red-300 text-red-700 font-bold shadow-sm'
+                                              : 'bg-white border-slate-200 text-slate-600 hover:bg-red-50 hover:border-red-200'
+                                              }`}
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={isChecked}
+                                              onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setFormData(prev => {
+                                                  const currentIds = prev.screen_ids || [];
+                                                  if (checked) {
+                                                    return { ...prev, screen_ids: [...currentIds, screenIdStr] };
+                                                  } else {
+                                                    return { ...prev, screen_ids: currentIds.filter(id => id !== screenIdStr) };
+                                                  }
+                                                });
+                                              }}
+                                              className="rounded text-red-600 focus:ring-red-500 w-3.5 h-3.5"
+                                            />
+                                            <span className={`w-2 h-2 rounded-full shrink-0 ${isChecked ? 'bg-red-500' : 'bg-slate-300'}`} />
+                                            {screen.name}
+                                          </label>
+                                        );
+                                      })}
                                     {screens.filter(s => s.location_id === selectedLocationForScreens).length === 0 && (
                                       <div className="text-center py-4 text-xs text-slate-400 italic">
                                         Niciun ecran la această locație
@@ -1397,41 +1426,36 @@ export const Playlists = () => {
                                 onChange={() => toggleSelectPlaylist(playlist.id)}
                                 className="rounded text-red-600 focus:ring-red-500 w-4 h-4 cursor-pointer shrink-0"
                               />
-                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden ${brandLogo ? 'bg-white' : (isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400')
-                                }`}>
-                                {brandLogo ? (
-                                  <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-1" />
-                                ) : (
-                                  <Film className="w-5 h-5" />
-                                )}
-                              </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 overflow-hidden">
-                                  <h3 className="font-bold text-slate-800 text-sm truncate" title={playlist.name}>{playlist.name}</h3>
-                                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: playlist.color || '#EF4444' }}></div>
-                                </div>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 shadow-sm`}
-                                    style={{
-                                      backgroundColor: isActive ? (selectedPlaylists.includes(playlist.id) ? playlist.color : '#ecfdf5') : '#f1f5f9',
-                                      color: isActive ? (selectedPlaylists.includes(playlist.id) ? '#fff' : '#047857') : '#64748b'
-                                    }}>
-                                    {isActive ? 'Activ' : 'Inactiv'}
-                                  </span>
-                                  {brandName && (
-                                    <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 truncate max-w-[100px]" title={brandName}>
-                                      {brandName}
-                                    </span>
+                              <div className="flex flex-col items-center gap-1">
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden ${brandLogo ? 'bg-white' : (isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400')
+                                  }`}>
+                                  {brandLogo ? (
+                                    <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-1" />
+                                  ) : (
+                                    <Film className="w-5 h-5" />
                                   )}
                                 </div>
+                                <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-300'}`} title={isActive ? 'Activ' : 'Inactiv'}></div>
                               </div>
                             </div>
 
                             <div className="flex gap-1 shrink-0 ml-2">
+                              <button
+                                onClick={() => setScreenAssignOpen(screenAssignOpen === playlist.id ? null : playlist.id)}
+                                className={`relative h-7 w-7 p-1.5 rounded-lg transition-all ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-red-500 hover:bg-red-100' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}
+                                title="Atribuie ecrane"
+                              >
+                                <Airplay className="w-4 h-4" />
+                                {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 && (
+                                  <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
+                                    {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length}
+                                  </span>
+                                )}
+                              </button>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-slate-400 hover:text-[var(--playlist-color)]"
+                                className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
                                 onClick={async () => {
                                   try {
                                     // Check if playlist has screens assigned
@@ -1469,14 +1493,14 @@ export const Playlists = () => {
                                     toast.error('Eroare la verificarea ecranelor');
                                   }
                                 }}
-                                title="Simulare Ecran"
+                                title="Previzualizare"
                               >
-                                <Monitor className="w-3.5 h-3.5" />
+                                <Eye className="w-3.5 h-3.5" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-[var(--playlist-color)]" onClick={() => handleEdit(playlist)}>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-amber-600 hover:bg-amber-50" onClick={() => handleEdit(playlist)} title="Editează">
                                 <Edit className="w-3.5 h-3.5" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-rose-600" onClick={() => handleDelete(playlist.id)}>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50" onClick={() => handleDelete(playlist.id)} title="Șterge">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </Button>
                             </div>
@@ -1546,19 +1570,7 @@ export const Playlists = () => {
                           )}
                         </div>
 
-                        <div className="p-3 border-t border-slate-100 flex items-center justify-between gap-2 bg-slate-50/50 rounded-b-xl">
-                          <button
-                            onClick={() => setScreenAssignOpen(screenAssignOpen === playlist.id ? null : playlist.id)}
-                            className={`relative p-1.5 rounded-lg transition-all hover:bg-red-50 ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-red-500' : 'text-slate-400 hover:text-red-600'}`}
-                            title="Setare pe ecran"
-                          >
-                            <Airplay className="w-4 h-4" />
-                            {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 && (
-                              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
-                                {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length}
-                              </span>
-                            )}
-                          </button>
+                        <div className="p-3 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50/50 rounded-b-xl">
                           <div className="flex items-center gap-1">
                             <Button
                               variant="ghost"
