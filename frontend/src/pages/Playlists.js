@@ -136,6 +136,8 @@ export const Playlists = () => {
 
       // Sync screen zones with formData.screen_ids
       const selectedScreenIds = formData.screen_ids || [];
+      console.log('Syncing screen zones for playlist:', playlistId);
+      console.log('Selected screen IDs:', selectedScreenIds);
 
       // For each screen, check if it should have this playlist assigned
       for (const screen of screens) {
@@ -144,9 +146,12 @@ export const Playlists = () => {
         const existingZone = zones.find(z => z.content_type === 'playlist' && z.playlist_id === playlistId);
         const shouldBeAssigned = selectedScreenIds.includes(screenIdStr);
 
+        console.log(`Screen ${screen.name} (${screenIdStr}): shouldBeAssigned=${shouldBeAssigned}, existingZone=${!!existingZone}`);
+
         if (shouldBeAssigned && !existingZone) {
           // Add zone
           try {
+            console.log(`Adding zone for screen ${screen.name}`);
             await api.post('/screen-zones', {
               screen_id: screen.id,
               zone_id: 'zone1',
@@ -159,12 +164,29 @@ export const Playlists = () => {
         } else if (!shouldBeAssigned && existingZone) {
           // Remove zone
           try {
+            console.log(`Removing zone ${existingZone.id} for screen ${screen.name}`);
             await api.delete(`/screen-zones/${existingZone.id}`);
           } catch (e) {
             console.error('Error removing zone:', e);
           }
         }
       }
+
+      console.log('Screen zones sync completed');
+
+      // Reload screen zones to ensure UI is up to date
+      const zonesMap = {};
+      await Promise.all(
+        screens.map(async (screen) => {
+          try {
+            const zonesRes = await api.get(`/screen-zones/${screen.id}`);
+            zonesMap[screen.id] = zonesRes.data;
+          } catch (e) {
+            zonesMap[screen.id] = [];
+          }
+        })
+      );
+      setScreenZones(zonesMap);
 
       setShowDialog(false);
       resetForm();
