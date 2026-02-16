@@ -123,13 +123,49 @@ export const Playlists = () => {
         screen_ids: formData.is_scheduled ? formData.screen_ids : []
       };
 
+      let playlistId;
       if (editingPlaylist) {
         await api.put(`/playlists/${editingPlaylist.id}`, dataToSend);
+        playlistId = editingPlaylist.id;
         toast.success('Playlist actualizat!');
       } else {
-        await api.post('/playlists', dataToSend);
+        const response = await api.post('/playlists', dataToSend);
+        playlistId = response.data.id;
         toast.success('Playlist creat!');
       }
+
+      // Sync screen zones with formData.screen_ids
+      const selectedScreenIds = formData.screen_ids || [];
+
+      // For each screen, check if it should have this playlist assigned
+      for (const screen of screens) {
+        const screenIdStr = String(screen.id);
+        const zones = screenZones[screen.id] || [];
+        const existingZone = zones.find(z => z.content_type === 'playlist' && z.playlist_id === playlistId);
+        const shouldBeAssigned = selectedScreenIds.includes(screenIdStr);
+
+        if (shouldBeAssigned && !existingZone) {
+          // Add zone
+          try {
+            await api.post('/screen-zones', {
+              screen_id: screen.id,
+              zone_id: 'zone1',
+              content_type: 'playlist',
+              playlist_id: playlistId
+            });
+          } catch (e) {
+            console.error('Error adding zone:', e);
+          }
+        } else if (!shouldBeAssigned && existingZone) {
+          // Remove zone
+          try {
+            await api.delete(`/screen-zones/${existingZone.id}`);
+          } catch (e) {
+            console.error('Error removing zone:', e);
+          }
+        }
+      }
+
       setShowDialog(false);
       resetForm();
       loadData();
