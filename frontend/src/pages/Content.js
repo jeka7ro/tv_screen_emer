@@ -711,10 +711,23 @@ export const Content = () => {
                           </div>
                         ) : item.type === 'image' ? (
                           <img src={getFileUrl(item.file_url)} className="w-full h-full object-cover" alt="" />
-                        ) : (
-                          <div className="relative w-full h-full bg-slate-900 flex items-center justify-center text-white">
-                            <Film className="w-4 h-4" />
+                        ) : item.thumbnail_url ? (
+                          <div className="relative w-full h-full">
+                            <img src={getFileUrl(item.thumbnail_url)} className="w-full h-full object-cover" alt="" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                              <div className="bg-white/30 backdrop-blur-sm rounded-full p-0.5">
+                                <Film className="w-3 h-3 text-white" />
+                              </div>
+                            </div>
                           </div>
+                        ) : (
+                          <video
+                            src={getFileUrl(item.file_url)}
+                            className="w-full h-full object-cover"
+                            muted
+                            preload="metadata"
+                            onLoadedData={(e) => { e.target.currentTime = 1; }}
+                          />
                         )}
                       </div>
                     </td>
