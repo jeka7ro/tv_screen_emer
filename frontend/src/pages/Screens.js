@@ -386,21 +386,43 @@ export const Screens = () => {
 
           {/* Filters Row */}
           <div className="flex flex-wrap items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-2">Brand:</span>
-              <Select value={brandFilter} onValueChange={setBrandFilter}>
-                <SelectTrigger className="w-[160px] h-9 text-sm bg-slate-50 border-slate-100 rounded-xl">
-                  <SelectValue placeholder="Toate brandurile" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toate brandurile</SelectItem>
-                  {brands.map(brand => (
-                    <SelectItem key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 ml-2">Brand:</span>
+              <div className="flex gap-2">
+                {brands.map(brand => {
+                  const count = screens.filter(s => s.logo_brand_id === brand.id).length;
+                  const isActive = brandFilter === brand.id;
+                  return (
+                    <button
+                      key={brand.id}
+                      onClick={() => setBrandFilter(isActive ? 'all' : brand.id)}
+                      className={`relative group transition-all duration-200 ${isActive ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
+                      title={`${brand.name} (${count})`}
+                    >
+                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${isActive ? 'border-red-500' : 'border-slate-100'}`}>
+                        {brand.logo_url ? (
+                          <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
+                        ) : (
+                          <span className="text-[8px] font-bold text-slate-400">{brand.name?.substring(0, 2).toUpperCase()}</span>
+                        )}
+                      </div>
+                      {isActive && (
+                        <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-red-600 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-20 animate-in zoom-in duration-200">
+                          {count}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {brandFilter !== 'all' && (
+                <button
+                  onClick={() => setBrandFilter('all')}
+                  className="px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors uppercase tracking-wider"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
