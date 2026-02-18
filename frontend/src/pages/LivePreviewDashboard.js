@@ -453,7 +453,7 @@ export const LivePreviewDashboard = () => {
                                                 className="relative flex-1 overflow-hidden rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)]"
                                             >
                                                 <iframe
-                                                    src={`/display/${s.slug}`}
+                                                    src={`/display/${s.slug}?preview=true`}
                                                     title={s.name}
                                                     className="absolute inset-0 border-0 w-[1920px] h-[1080px]"
                                                     style={{
@@ -541,7 +541,7 @@ export const LivePreviewDashboard = () => {
                                                             }}
                                                         >
                                                             <iframe
-                                                                src={`/display/${screen.slug}`}
+                                                                src={`/display/${screen.slug}?preview=true`}
                                                                 title={screen.name}
                                                                 className="absolute inset-0 border-0 w-[1920px] h-[1080px]"
                                                                 style={{
@@ -580,7 +580,7 @@ export const LivePreviewDashboard = () => {
                                 {/* LIVE PREVIEW */}
                                 <div className="relative aspect-video bg-slate-900 rounded-lg overflow-hidden mb-3">
                                     <iframe
-                                        src={`/display/${screen.slug}`}
+                                        src={`/display/${screen.slug}?preview=true`}
                                         title={screen.name}
                                         className="absolute inset-0 border-0 w-full h-full"
                                         style={{ pointerEvents: 'none' }}
@@ -660,7 +660,7 @@ export const LivePreviewDashboard = () => {
                             {/* Large LIVE Preview */}
                             <div className="aspect-video bg-slate-900 rounded-lg overflow-hidden">
                                 <iframe
-                                    src={`/display/${selectedScreen.slug}`}
+                                    src={`/display/${selectedScreen.slug}?preview=true`}
                                     title={selectedScreen.name}
                                     className="w-full h-full border-0"
                                     style={{

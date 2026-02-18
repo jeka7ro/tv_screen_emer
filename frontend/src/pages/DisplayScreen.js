@@ -40,6 +40,8 @@ const getYouTubeEmbedUrl = (url) => {
 export const DisplayScreen = () => {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
+  const securityCodeParam = searchParams.get('code');
+  const isPreview = searchParams.get('preview') === 'true';
   const [displayData, setDisplayData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -65,7 +67,7 @@ export const DisplayScreen = () => {
       setNeedsAuth(false);
       setLoading(false);
 
-      if (data.screen?.id) {
+      if (data.screen?.id && !isPreview) {
         axios.post(`${API}/screens/${data.screen.id}/heartbeat`).catch(() => { });
       }
 
@@ -174,7 +176,7 @@ export const DisplayScreen = () => {
 
   // Periodic heartbeat to keep screen status online
   useEffect(() => {
-    if (!displayData?.screen?.id) return;
+    if (!displayData?.screen?.id || isPreview) return;
 
     const sendHeartbeat = () => {
       axios.post(`${API}/screens/${displayData.screen.id}/heartbeat`)

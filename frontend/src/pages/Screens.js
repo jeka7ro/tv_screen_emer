@@ -666,7 +666,7 @@ export const Screens = () => {
 
                 <div className="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden mb-5 border border-slate-200 shadow-inner group">
                   <iframe
-                    src={`/display/${screen.slug}`}
+                    src={`/display/${screen.slug}?preview=true`}
                     title={screen.name}
                     className="absolute inset-0 w-full h-full border-0 pointer-events-none opacity-90 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
                     style={{ transform: 'scale(1)', transformOrigin: 'top left' }}

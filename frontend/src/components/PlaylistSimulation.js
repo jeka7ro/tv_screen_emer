@@ -129,7 +129,7 @@ export const PlaylistSimulation = ({ playlistIds, playlists, onClose }) => {
                                 className="relative flex-1 overflow-hidden rounded-sm shadow-[0_0_20px_rgba(0,0,0,0.8)]"
                             >
                                 <iframe
-                                    src={`/display/${screen.slug}`}
+                                    src={`/display/${screen.slug}?preview=true`}
                                     title={screen.name}
                                     className="absolute inset-0 border-0 w-[1920px] h-[1080px]"
                                     style={{
