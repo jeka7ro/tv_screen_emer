@@ -519,7 +519,7 @@ export const DisplayScreen = () => {
             <img
               src={getFileUrl(logoUrl)}
               className="w-full h-full object-contain"
-              style={{ mixBlendMode: 'multiply', filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
+              style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
               alt="Logo"
             />
           </div>
