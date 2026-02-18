@@ -47,6 +47,7 @@ export const DisplayScreen = () => {
   const [currentPlaylistIndex, setCurrentPlaylistIndex] = useState(0);
   const [securityCode, setSecurityCode] = useState('');
   const [needsAuth, setNeedsAuth] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(null);
   const isDebug = searchParams.get('debug') === 'true';
 
   const loadDisplayData = async () => {
@@ -67,6 +68,30 @@ export const DisplayScreen = () => {
       if (data.screen?.id) {
         axios.post(`${API}/screens/${data.screen.id}/heartbeat`).catch(() => { });
       }
+
+      // Pre-cache all media URLs via Service Worker to reduce Supabase egress
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        const mediaUrls = [];
+        const zonesList = data.zones_config || data.zones || [];
+        for (const zone of zonesList) {
+          if (zone.content?.file_url) {
+            mediaUrls.push(getFileUrl(zone.content.file_url));
+          }
+          if (zone.playlist?.content_items) {
+            for (const item of zone.playlist.content_items) {
+              if (item.file_url) mediaUrls.push(getFileUrl(item.file_url));
+            }
+          }
+        }
+        if (mediaUrls.length > 0) {
+          const channel = new MessageChannel();
+          navigator.serviceWorker.controller.postMessage(
+            { type: 'CACHE_URLS', urls: mediaUrls },
+            [channel.port2]
+          );
+          console.log(`[Display] Pre-caching ${mediaUrls.length} media URLs`);
+        }
+      }
     } catch (error) {
       console.error("Display load error:", error);
       if (error.response?.status === 403) {
@@ -78,6 +103,15 @@ export const DisplayScreen = () => {
       }
     }
   };
+
+  // Register Service Worker for media caching (reduces Supabase egress)
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/media-cache-sw.js')
+        .then(reg => console.log('[Display] Media cache SW registered:', reg.scope))
+        .catch(err => console.warn('[Display] Media cache SW failed:', err));
+    }
+  }, []);
 
   useEffect(() => {
     loadDisplayData();
@@ -136,6 +170,94 @@ export const DisplayScreen = () => {
     }, 10000);
     return () => clearInterval(pollInterval);
   }, [slug, securityCode, displayData]);
+
+  // Periodic heartbeat to keep screen status online
+  useEffect(() => {
+    if (!displayData?.screen?.id) return;
+
+    const sendHeartbeat = () => {
+      axios.post(`${API}/screens/${displayData.screen.id}/heartbeat`)
+        .catch(err => console.debug("Heartbeat failed", err));
+    };
+
+    // Send heartbeat every 30 seconds
+    const heartbeatInterval = setInterval(sendHeartbeat, 30000);
+
+    return () => clearInterval(heartbeatInterval);
+  }, [displayData?.screen?.id]);
+
+  // Happy Hour Timer Countdown - uses absolute endTimestamp for persistence
+  useEffect(() => {
+    if (!displayData?.screen?.id) return;
+
+    const savedTimer = localStorage.getItem(`happy_hour_timer_${displayData.screen.id}`);
+    if (!savedTimer) {
+      setTimerSeconds(null);
+      return;
+    }
+
+    try {
+      const timerSettings = JSON.parse(savedTimer);
+      if (!timerSettings.enabled) {
+        setTimerSeconds(null);
+        return;
+      }
+
+      // Use absolute endTimestamp for persistence across refreshes
+      const endTimestamp = timerSettings.endTimestamp;
+      if (!endTimestamp) {
+        // Fallback: parse duration if no endTimestamp (legacy format)
+        const parts = (timerSettings.endTime || '0:0:0').split(':');
+        const hours = parseInt(parts[0] || 0);
+        const minutes = parseInt(parts[1] || 0);
+        const seconds = parseInt(parts[2] || 0);
+        setTimerSeconds(hours * 3600 + minutes * 60 + seconds);
+      } else {
+        // Compute remaining seconds from absolute timestamp
+        const remaining = Math.max(0, Math.floor((endTimestamp - Date.now()) / 1000));
+        if (remaining <= 0) {
+          setTimerSeconds(0);
+          return;
+        }
+        setTimerSeconds(remaining);
+      }
+
+      // Countdown every second using endTimestamp for accuracy
+      const countdownInterval = setInterval(() => {
+        if (endTimestamp) {
+          const remaining = Math.max(0, Math.floor((endTimestamp - Date.now()) / 1000));
+          setTimerSeconds(remaining);
+          if (remaining <= 0) {
+            clearInterval(countdownInterval);
+          }
+        } else {
+          setTimerSeconds(prev => {
+            if (prev === null || prev <= 0) {
+              clearInterval(countdownInterval);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }
+      }, 1000);
+
+      return () => clearInterval(countdownInterval);
+    } catch (e) {
+      setTimerSeconds(null);
+    }
+  }, [displayData?.screen?.id]);
+
+  // Listen for config updates from ScreenDesigner (cross-tab refresh)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'screen_config_updated') {
+        // Reload the page to pick up new config
+        window.location.reload();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const handleSecuritySubmit = (e) => {
     e.preventDefault();
@@ -229,8 +351,10 @@ export const DisplayScreen = () => {
   const renderContentItem = (item, fitMode, syncType) => {
     if (!item) return isDebug ? <div className="text-red-500">NO ITEM</div> : null;
     const isMatrix = syncType?.startsWith('matrix');
+    // Map our fit modes: contain=original, cover=fill, fit=contain(same), stretch=fill(100%)
+    let objectFit = fitMode || (isMatrix ? 'cover' : 'contain');
     const style = {
-      objectFit: fitMode || (isMatrix ? 'cover' : 'contain'),
+      objectFit: objectFit === 'stretch' ? 'fill' : objectFit,
       width: '100%',
       height: '100%'
     };
@@ -322,7 +446,7 @@ export const DisplayScreen = () => {
           {/* Main Content Layer */}
           <div className="absolute inset-0 z-10 flex items-center justify-center">
             <div style={isMatrix ? matrixTransformStyle : { width: '100%', height: '100%' }}>
-              {renderContentItem(contentItem, syncInfo?.fit_mode, syncInfo?.sync_type)}
+              {renderContentItem(contentItem, zoneConfig.fit_mode || syncInfo?.fit_mode, syncInfo?.sync_type)}
             </div>
           </div>
 
@@ -441,6 +565,126 @@ export const DisplayScreen = () => {
           return 'medium';
         })()}
       />
+
+      {/* Custom Text Overlay */}
+      {(() => {
+        const saved = localStorage.getItem(`custom_text_${displayData?.screen?.id}`);
+        if (!saved) return null;
+        try {
+          const config = JSON.parse(saved);
+          if (!config.enabled || !config.content) return null;
+
+          const posMap = {
+            'top-left': 'top-4 left-4',
+            'top-center': 'top-4 left-1/2 -translate-x-1/2',
+            'top-right': 'top-4 right-4',
+            'center-left': 'top-1/2 left-4 -translate-y-1/2',
+            'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+            'center-right': 'top-1/2 right-4 -translate-y-1/2',
+            'bottom-left': 'bottom-4 left-4',
+            'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
+            'bottom-right': 'bottom-4 right-4',
+          };
+          const sizeMap = {
+            sm: 'text-2xl',
+            md: 'text-4xl',
+            lg: 'text-6xl',
+            xl: 'text-8xl',
+          };
+
+          const posClass = posMap[config.position] || posMap['top-center'];
+          const sizeClass = sizeMap[config.size] || sizeMap['md'];
+
+          return (
+            <div className={`absolute z-50 pointer-events-none ${posClass}`}>
+              <div
+                className={`${sizeClass} font-bold ${config.hasBackground ? 'px-6 py-3 rounded-2xl' : ''}`}
+                style={{
+                  color: config.color || '#FFFFFF',
+                  backgroundColor: config.hasBackground ? (config.bgColor || '#000000') : 'transparent',
+                  textShadow: config.hasBackground ? 'none' : '0 2px 8px rgba(0,0,0,0.8)',
+                }}
+              >
+                {config.content}
+              </div>
+            </div>
+          );
+        } catch (e) {
+          return null;
+        }
+      })()}
+
+      {/* Happy Hour Timer */}
+      {(() => {
+        if (timerSeconds === null) return null;
+
+        const savedTimer = localStorage.getItem(`happy_hour_timer_${displayData?.screen?.id}`);
+        if (!savedTimer) return null;
+
+        try {
+          const timerSettings = JSON.parse(savedTimer);
+          if (!timerSettings.enabled) return null;
+
+          // Convert timerSeconds back to hh:mm:ss
+          const hoursLeft = Math.floor(timerSeconds / 3600);
+          const minutesLeft = Math.floor((timerSeconds % 3600) / 60);
+          const secondsLeft = timerSeconds % 60;
+
+          const position = timerSettings.position || 'top-center';
+          const posStyles = {
+            'top-left': { top: '16px', left: '16px' },
+            'top-center': { top: '16px', left: '50%', transform: 'translateX(-50%)' },
+            'top-right': { top: '16px', right: '16px' },
+            'center-left': { top: '50%', left: '16px', transform: 'translateY(-50%)' },
+            'center': { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+            'center-right': { top: '50%', right: '16px', transform: 'translateY(-50%)' },
+            'bottom-left': { bottom: '16px', left: '16px' },
+            'bottom-center': { bottom: '16px', left: '50%', transform: 'translateX(-50%)' },
+            'bottom-right': { bottom: '16px', right: '16px' },
+          };
+
+          return (
+            <div className="absolute z-40 pointer-events-none" style={posStyles[position]}>
+              <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-2xl shadow-2xl">
+                <div className="text-xs font-semibold uppercase tracking-wider mb-1 text-center">Happy Hour se termină în</div>
+                <div className="text-3xl font-bold text-center tabular-nums">
+                  {String(hoursLeft).padStart(2, '0')}:{String(minutesLeft).padStart(2, '0')}:{String(secondsLeft).padStart(2, '0')}
+                </div>
+              </div>
+            </div>
+          );
+        } catch (e) {
+          return null;
+        }
+      })()}
+
+      {/* Sakura Effect */}
+      {displayData?.screen?.sakura_enabled && (
+        <div className={`absolute inset-0 z-30 pointer-events-none sakura-container intensity-${displayData.screen.sakura_intensity || 'medium'}`}>
+          {[...Array(25)].map((_, i) => (
+            <div key={i} className="sakura-petal"></div>
+          ))}
+        </div>
+      )}
+
+      {/* Snow Effect */}
+      {(() => {
+        const savedSnow = localStorage.getItem(`snow_effect_${displayData?.screen?.id}`);
+        if (!savedSnow) return null;
+        try {
+          const snowConfig = JSON.parse(savedSnow);
+          if (!snowConfig.enabled) return null;
+          return (
+            <div className={`absolute inset-0 z-30 pointer-events-none snow-container intensity-${snowConfig.intensity || 'medium'}`}>
+              {[...Array(35)].map((_, i) => (
+                <div key={i} className="snowflake"></div>
+              ))}
+            </div>
+          );
+        } catch (e) {
+          return null;
+        }
+      })()}
     </div>
   );
 };

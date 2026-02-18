@@ -44,6 +44,13 @@ export const Screens = () => {
 
   useEffect(() => {
     loadData();
+
+    // Poll for updates every 10 seconds
+    const interval = setInterval(() => {
+      loadData();
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const loadData = async () => {
@@ -491,9 +498,9 @@ export const Screens = () => {
                           />
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
-                            {screen.status}
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${screen.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'active' ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
+                            {screen.status === 'active' ? 'ONLINE' : 'OFFLINE'}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -645,8 +652,8 @@ export const Screens = () => {
                   <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
 
                   <div className="absolute top-3 right-3 z-20">
-                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg backdrop-blur-md shadow-lg ${screen.status === 'online' ? 'bg-emerald-500/90 text-white' : 'bg-slate-800/80 text-white'} text-[9px] font-black uppercase tracking-widest`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'online' ? 'bg-white animate-pulse' : 'bg-slate-400'}`}></div>
+                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg backdrop-blur-md shadow-lg ${screen.status === 'active' ? 'bg-emerald-500/90 text-white' : 'bg-slate-800/80 text-white'} text-[9px] font-black uppercase tracking-widest`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'active' ? 'bg-white animate-pulse' : 'bg-slate-400'}`}></div>
                       {screen.status}
                     </div>
                   </div>

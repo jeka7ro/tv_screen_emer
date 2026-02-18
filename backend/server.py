@@ -257,6 +257,17 @@ for dir in [UPLOAD_DIR, IMAGES_DIR, VIDEOS_DIR]:
 # Mount static files
 app.mount("/api/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
+# Add Cache-Control headers for media files to reduce egress
+@app.middleware("http")
+async def add_cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    # Set long cache for uploaded media files (images, videos)
+    if path.startswith("/api/uploads/"):
+        response.headers["Cache-Control"] = "public, max-age=604800, immutable"  # 7 days
+        response.headers["Vary"] = "Accept-Encoding"
+    return response
+
 @app.get("/")
 async def health_check():
     return {"status": "ok", "message": "SushiMaster TV API is running"}
@@ -1041,7 +1052,7 @@ async def delete_screen(screen_id: str, current_user: User = Depends(require_adm
 
 @api_router.post("/screens/{screen_id}/heartbeat")
 async def screen_heartbeat(screen_id: str):
-    await screen_update_heartbeat(screen_id, "online", datetime.now(timezone.utc))
+    await screen_update_heartbeat(screen_id, "active", datetime.now(timezone.utc))
     return {"message": "Heartbeat received"}
 
 

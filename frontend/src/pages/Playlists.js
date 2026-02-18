@@ -1313,10 +1313,17 @@ export const Playlists = () => {
                               />
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${playlist.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${playlist.status === 'active' ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
-                                {playlist.status === 'active' ? 'Activ' : 'Inactiv'}
-                              </span>
+                              {(() => {
+                                const hasItems = playlist.items && playlist.items.length > 0;
+                                const isAssignedToScreens = screens.some(s => isPlaylistOnScreen(playlist.id, s.id));
+                                const isActive = hasItems && isAssignedToScreens && playlist.status === 'active';
+                                return (
+                                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}>
+                                    <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
+                                    {isActive ? 'Activ' : 'Inactiv'}
+                                  </span>
+                                );
+                              })()}
                             </td>
                             <td className="px-6 py-4 font-semibold text-slate-800">
                               <div className="flex items-center gap-3">
@@ -1425,7 +1432,10 @@ export const Playlists = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {sortedPlaylists.map((playlist) => {
-                    const isActive = playlist.status === 'active';
+                    // Check if playlist is truly active: has items AND is assigned to screens
+                    const hasItems = playlist.items && playlist.items.length > 0;
+                    const isAssignedToScreens = screens.some(s => isPlaylistOnScreen(playlist.id, s.id));
+                    const isActive = hasItems && isAssignedToScreens && playlist.status === 'active';
                     const totalDuration = calculateTotalDuration(playlist.items);
                     const brandName = Array.isArray(playlist.brand) ? playlist.brand[0] : playlist.brand;
                     const brandLogo = getBrandLogo(brandName);
@@ -1493,11 +1503,11 @@ export const Playlists = () => {
                                     <Film className="w-5 h-5" />
                                   )}
                                 </div>
-                                <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-300'}`} title={isActive ? 'Activ' : 'Inactiv'}></div>
                               </div>
                             </div>
 
                             <div className="flex gap-1 shrink-0 ml-2">
+                              <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-300'} self-center`} title={isActive ? 'Activ' : 'Inactiv'}></div>
                               <button
                                 onClick={() => setScreenAssignOpen(screenAssignOpen === playlist.id ? null : playlist.id)}
                                 className={`relative h-7 w-7 p-1.5 rounded-lg transition-all ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-red-500 hover:bg-red-100' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}

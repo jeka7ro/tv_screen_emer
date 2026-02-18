@@ -42,6 +42,10 @@ const AudioStreaming = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [editPlaylistData, setEditPlaylistData] = useState({ name: '', ad_frequency: 3, location_id: '' });
 
+    // Audio Player State
+    const [playingTrackId, setPlayingTrackId] = useState(null);
+    const audioRef = React.useRef(null);
+
     useEffect(() => {
         fetchPlaylists();
         fetchLocations();
@@ -211,6 +215,26 @@ const AudioStreaming = () => {
         alert("Link copiat! Deschide-l pe dispozitivul din restaurant.");
     };
 
+    const handlePlayTrack = (track) => {
+        if (playingTrackId === track.id) {
+            // Stop playing
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+            setPlayingTrackId(null);
+        } else {
+            // Start playing
+            setPlayingTrackId(track.id);
+            if (audioRef.current) {
+                audioRef.current.src = `${API_URL}${track.file_url}`;
+                audioRef.current.play().catch(err => {
+                    console.error('Audio play error:', err);
+                    alert('Eroare la redare audio. Verifică fișierul.');
+                });
+            }
+        }
+    };
+
     if (loading && view === 'list') return (
         <DashboardLayout>
             <div className="p-8 text-slate-800">Se încarcă...</div>
@@ -336,6 +360,13 @@ const AudioStreaming = () => {
                                                     <p className="text-xs text-slate-500 uppercase font-semibold">{track.source_type}</p>
                                                 </div>
                                                 <button
+                                                    onClick={() => handlePlayTrack(track)}
+                                                    className={`p-2 rounded-lg transition-all ${playingTrackId === track.id ? 'bg-blue-600 text-white' : 'text-blue-600 hover:bg-blue-50'}`}
+                                                    title="Play"
+                                                >
+                                                    <Play size={18} fill={playingTrackId === track.id ? 'white' : 'none'} />
+                                                </button>
+                                                <button
                                                     onClick={() => handleDeleteTrack(track.id)}
                                                     className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2"
                                                 >
@@ -365,6 +396,13 @@ const AudioStreaming = () => {
                                                     <p className="text-slate-900 font-medium truncate">{track.title}</p>
                                                     <p className="text-xs text-slate-500 uppercase font-semibold">{track.source_type}</p>
                                                 </div>
+                                                <button
+                                                    onClick={() => handlePlayTrack(track)}
+                                                    className={`p-2 rounded-lg transition-all ${playingTrackId === track.id ? 'bg-orange-600 text-white' : 'text-orange-600 hover:bg-orange-50'}`}
+                                                    title="Play"
+                                                >
+                                                    <Play size={18} fill={playingTrackId === track.id ? 'white' : 'none'} />
+                                                </button>
                                                 <button
                                                     onClick={() => handleDeleteTrack(track.id)}
                                                     className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2"
@@ -611,6 +649,17 @@ const AudioStreaming = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Hidden Audio Player */}
+                <audio
+                    ref={audioRef}
+                    onEnded={() => setPlayingTrackId(null)}
+                    onError={(e) => {
+                        console.error('Audio error:', e);
+                        setPlayingTrackId(null);
+                        alert('Eroare la redare audio');
+                    }}
+                />
             </div>
         </DashboardLayout>
     );

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Edit2, Trash2, MapPin } from 'lucide-react';
+import { Plus, Edit2, Trash2, MapPin, Search, X } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
@@ -26,6 +26,8 @@ export const Locations = () => {
     status: 'active'
   });
   const [selectedItems, setSelectedItems] = useState(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCity, setSelectedCity] = useState('all');
 
   useEffect(() => {
     loadLocations();
@@ -126,6 +128,25 @@ export const Locations = () => {
     setEditingLocation(null);
   };
 
+  // Get unique cities for filter
+  const cities = useMemo(() => {
+    const uniqueCities = [...new Set(locations.map(loc => loc.city).filter(Boolean))];
+    return uniqueCities.sort();
+  }, [locations]);
+
+  // Filter locations based on search and city
+  const filteredLocations = useMemo(() => {
+    return locations.filter(location => {
+      const matchesSearch = searchQuery === '' ||
+        location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        location.address.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesCity = selectedCity === 'all' || location.city === selectedCity;
+
+      return matchesSearch && matchesCity;
+    });
+  }, [locations, searchQuery, selectedCity]);
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -139,7 +160,7 @@ export const Locations = () => {
   return (
     <DashboardLayout>
       <div className="animate-in" data-testid="locations-page">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-4xl font-bold text-slate-800 mb-2">Locații</h1>
             <p className="text-slate-500">Gestionează restaurantele și punctele de vânzare</p>
@@ -229,6 +250,50 @@ export const Locations = () => {
           </div>
         </div>
 
+        {/* Filters */}
+        <div className="glass-card p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search Filter */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Caută după nume sau adresă..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* City Filter */}
+            <div className="sm:w-64">
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm bg-white"
+              >
+                <option value="all">Toate orașele</option>
+                {cities.map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Results count */}
+            <div className="flex items-center px-4 py-2 bg-slate-50 rounded-lg text-sm text-slate-600 font-medium">
+              {filteredLocations.length} {filteredLocations.length === 1 ? 'locație' : 'locații'}
+            </div>
+          </div>
+        </div>
+
         {isAdmin() && selectedItems.size > 0 && (
           <div className="mb-6 bg-gradient-to-r from-red-600 to-rose-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
             <span className="font-semibold text-lg">{selectedItems.size} selectate</span>
@@ -249,7 +314,26 @@ export const Locations = () => {
           </div>
         )}
 
-        {locations.length === 0 ? (
+        {filteredLocations.length === 0 && locations.length > 0 ? (
+          <div className="glass-card p-12 text-center">
+            <Search className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-slate-800 mb-2">
+              Nicio locație găsită
+            </h3>
+            <p className="text-slate-500 mb-6">
+              Încearcă să modifici filtrele de căutare
+            </p>
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCity('all');
+              }}
+              className="btn-secondary"
+            >
+              Resetează filtrele
+            </button>
+          </div>
+        ) : locations.length === 0 ? (
           <div className="glass-card p-12 text-center" data-testid="no-locations">
             <MapPin className="w-16 h-16 text-slate-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-slate-800 mb-2">
@@ -282,7 +366,7 @@ export const Locations = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {locations.map((location) => (
+                  {filteredLocations.map((location) => (
                     <tr key={location.id} className={`hover:bg-slate-50/50 transition-colors ${selectedItems.has(location.id) ? 'bg-red-50/30' : ''}`}>
                       {isAdmin() && (
                         <td className="px-6 py-4">
@@ -350,7 +434,7 @@ export const Locations = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {locations.map((location) => (
+            {filteredLocations.map((location) => (
               <div key={location.id} className={`glass-card p-6 relative group ${selectedItems.has(location.id) ? 'ring-2 ring-red-500 ring-offset-2' : ''}`} data-testid={`location-card-${location.id}`}>
                 {isAdmin() && (
                   <div className="absolute top-4 left-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">

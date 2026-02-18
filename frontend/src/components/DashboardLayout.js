@@ -128,7 +128,7 @@ export const DashboardLayout = ({ children }) => {
                 data-testid={`nav-${item.path.substring(1)}`}
                 title={isSidebarCollapsed ? item.label : ''}
               >
-                <Icon className="w-5 h-5 shrink-0 text-red-600" />
+                <Icon className="w-5 h-5 shrink-0 text-slate-500" />
                 {!isSidebarCollapsed && <span className="animate-in fade-in slide-in-from-left-2 duration-300">{item.label}</span>}
               </Link>
             );
@@ -139,7 +139,7 @@ export const DashboardLayout = ({ children }) => {
             <>
               <div className="pt-4 pb-2">
                 <div className="flex items-center gap-2 px-3 text-xs font-semibold text-slate-400 uppercase">
-                  <Shield className="w-3 h-3 text-red-600" />
+                  <Shield className="w-3 h-3 text-slate-500" />
                   Admin
                 </div>
               </div>
@@ -154,7 +154,7 @@ export const DashboardLayout = ({ children }) => {
                     data-testid={`nav-${item.path.substring(1)}`}
                     title={isSidebarCollapsed ? item.label : ''}
                   >
-                    <Icon className="w-5 h-5 shrink-0 text-red-600" />
+                    <Icon className="w-5 h-5 shrink-0 text-slate-500" />
                     {!isSidebarCollapsed && <span className="animate-in fade-in slide-in-from-left-2 duration-300">{item.label}</span>}
                   </Link>
                 );
@@ -189,7 +189,7 @@ export const DashboardLayout = ({ children }) => {
             data-testid="logout-button"
             title={isSidebarCollapsed ? "Deconectare" : ""}
           >
-            <LogOut className="w-5 h-5 shrink-0 text-red-600" />
+            <LogOut className="w-5 h-5 shrink-0 text-slate-500" />
             {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">Deconectare</span>}
           </button>
         </div>

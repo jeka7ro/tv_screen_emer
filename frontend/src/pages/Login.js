@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Monitor, UserPlus, Lock, Mail, User, KeyRound, Shield } from 'lucide-react';
+import { Monitor, UserPlus, Lock, Mail, User, KeyRound, Shield, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../utils/api';
 
@@ -16,6 +16,8 @@ export const Login = () => {
   const [invitationCode, setInvitationCode] = useState(inviteCode || '');
   const [loading, setLoading] = useState(false);
   const [isOpenRegistration, setIsOpenRegistration] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState('');
   const [inviteValid, setInviteValid] = useState(false);
   const [checkingInvite, setCheckingInvite] = useState(!!inviteCode);
 
@@ -57,6 +59,7 @@ export const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setLoginError('');
 
     try {
       if (isLogin) {
@@ -74,7 +77,9 @@ export const Login = () => {
       }
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'A apărut o eroare');
+      const msg = error.response?.data?.detail || 'A apărut o eroare';
+      setLoginError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -104,7 +109,7 @@ export const Login = () => {
           </div>
 
           <h1 className="text-3xl font-bold text-center text-slate-800 mb-2">
-            SushiMaster TV
+            Screen Media
           </h1>
           <p className="text-center text-slate-500 mb-8">
             Sistem Management Meniuri Digitale
@@ -170,15 +175,26 @@ export const Login = () => {
                 <Lock className="w-4 h-4 inline mr-1" />
                 Parolă
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full glass-input px-4 py-3 border"
-                placeholder="••••••••"
-                required
-                data-testid="password-input"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full glass-input px-4 py-3 pr-12 border"
+                  placeholder="••••••••"
+                  required
+                  data-testid="password-input"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  tabIndex={-1}
+                  data-testid="toggle-password-visibility"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
             {/* Forgot Password Link */}
@@ -212,6 +228,13 @@ export const Login = () => {
                 <p className="text-xs text-slate-500 mt-1">
                   Solicitați un cod de invitație de la administratorul sistemului
                 </p>
+              </div>
+            )}
+
+            {loginError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-center gap-2">
+                <Lock className="w-4 h-4 text-red-500 flex-shrink-0" />
+                {loginError}
               </div>
             )}
 

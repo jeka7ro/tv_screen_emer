@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Save, ArrowLeft, Eye, Check, Sparkles, Layers, Wind, Image, Monitor, List as ListIcon, Heart } from 'lucide-react';
+import { Save, ArrowLeft, Eye, Check, Sparkles, Layers, Wind, Image, Monitor, List as ListIcon, Heart, Type, Clock, Flower2, Snowflake, Maximize, Minimize } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import '../styles/effects.css';
@@ -50,6 +50,23 @@ const getFileUrl = (url) => {
   return url;
 };
 
+// Helper to sanitize timer value into clean hh:mm:ss format
+const sanitizeTimerValue = (val) => {
+  if (!val) return '';
+  const raw = val.replace(/[^0-9]/g, '').slice(0, 6);
+  if (raw.length === 0) return '';
+  let formatted = '';
+  for (let i = 0; i < raw.length; i++) {
+    if (i === 2 || i === 4) formatted += ':';
+    formatted += raw[i];
+  }
+  const parts = formatted.split(':');
+  if (parts[0] && parseInt(parts[0]) > 23) parts[0] = '23';
+  if (parts[1] && parts[1].length === 2 && parseInt(parts[1]) > 59) parts[1] = '59';
+  if (parts[2] && parts[2].length === 2 && parseInt(parts[2]) > 59) parts[2] = '59';
+  return parts.join(':');
+};
+
 export const ScreenDesigner = () => {
   const { isAdmin } = useAuth();
   const { screenId } = useParams();
@@ -79,6 +96,27 @@ export const ScreenDesigner = () => {
   const [enableValentineHearts, setEnableValentineHearts] = useState(false);
   const [valentineHeartsIntensity, setValentineHeartsIntensity] = useState('medium');
 
+  // New effects
+  const [enableCustomText, setEnableCustomText] = useState(false);
+  const [customTextContent, setCustomTextContent] = useState('');
+  const [customTextPosition, setCustomTextPosition] = useState('bottom-center');
+  const [customTextSize, setCustomTextSize] = useState('md');
+  const [customTextColor, setCustomTextColor] = useState('#FFFFFF'); // Default white
+  const [customTextHasBackground, setCustomTextHasBackground] = useState(false);
+  const [customTextBgColor, setCustomTextBgColor] = useState('#000000'); // Default black
+  const [enableHappyHourTimer, setEnableHappyHourTimer] = useState(false);
+  const [happyHourEndTime, setHappyHourEndTime] = useState('');
+  const [happyHourTimerPosition, setHappyHourTimerPosition] = useState('top-center');
+  const [timerSeconds, setTimerSeconds] = useState(null);
+  const [timerTrigger, setTimerTrigger] = useState(0); // Trigger countdown manually
+  const [enableSakura, setEnableSakura] = useState(false);
+  const [sakuraIntensity, setSakuraIntensity] = useState('medium');
+  const [enableSnow, setEnableSnow] = useState(false);
+  const [snowIntensity, setSnowIntensity] = useState('medium');
+
+  // Track which effect config is currently visible
+  const [activeEffectConfig, setActiveEffectConfig] = useState(null);
+
   // Logo position classes
   const logoPositionMap = {
     'top-left': 'top-3 left-3',
@@ -95,6 +133,50 @@ export const ScreenDesigner = () => {
 
   // Get brands that have logos
   const brandsWithLogo = brands.filter(b => b.logo_url);
+
+  // Happy Hour Timer Countdown for Preview (triggered manually)
+  useEffect(() => {
+    if (!enableHappyHourTimer || timerTrigger === 0) {
+      return;
+    }
+
+    try {
+      let hours = 0, minutes = 0, seconds = 0;
+
+      // Check if input contains colons (hh:mm:ss format) or is plain digits (hhmmss format)
+      if (happyHourEndTime.includes(':')) {
+        // Parse hh:mm:ss format
+        const parts = happyHourEndTime.split(':');
+        hours = parseInt(parts[0] || 0);
+        minutes = parseInt(parts[1] || 0);
+        seconds = parseInt(parts[2] || 0);
+      } else {
+        // Parse hhmmss format (e.g., "020000" = 02:00:00)
+        const timeStr = happyHourEndTime.padStart(6, '0'); // Ensure 6 digits
+        hours = parseInt(timeStr.substring(0, 2));
+        minutes = parseInt(timeStr.substring(2, 4));
+        seconds = parseInt(timeStr.substring(4, 6));
+      }
+
+      const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+      setTimerSeconds(totalSeconds);
+
+      // Countdown every second
+      const countdownInterval = setInterval(() => {
+        setTimerSeconds(prev => {
+          if (prev === null || prev <= 0) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(countdownInterval);
+    } catch (e) {
+      setTimerSeconds(null);
+    }
+  }, [timerTrigger]);
 
   useEffect(() => {
     loadData();
@@ -196,6 +278,52 @@ export const ScreenDesigner = () => {
         }
       }
 
+      // Load sakura settings from backend
+      setEnableSakura(!!screenRes.data.sakura_enabled);
+      setSakuraIntensity(screenRes.data.sakura_intensity || 'medium');
+
+      // Load snow settings from localStorage
+      const savedSnow = localStorage.getItem(`snow_effect_${screenId}`);
+      if (savedSnow) {
+        try {
+          const snowSettings = JSON.parse(savedSnow);
+          setEnableSnow(!!snowSettings.enabled);
+          setSnowIntensity(snowSettings.intensity || 'medium');
+        } catch (e) {
+          console.error('Error loading snow settings:', e);
+        }
+      }
+
+      // Load custom text settings from localStorage
+      const savedText = localStorage.getItem(`custom_text_${screenId}`);
+      if (savedText) {
+        try {
+          const textSettings = JSON.parse(savedText);
+          setEnableCustomText(!!textSettings.enabled);
+          setCustomTextContent(textSettings.content || '');
+          setCustomTextPosition(textSettings.position || 'bottom-center');
+          setCustomTextSize(textSettings.size || 'md');
+          setCustomTextColor(textSettings.color || '#FFFFFF');
+          setCustomTextHasBackground(!!textSettings.hasBackground);
+          setCustomTextBgColor(textSettings.bgColor || '#000000');
+        } catch (e) {
+          console.error('Error loading text settings:', e);
+        }
+      }
+
+      // Load happy hour timer settings from localStorage
+      const savedTimer = localStorage.getItem(`happy_hour_timer_${screenId}`);
+      if (savedTimer) {
+        try {
+          const timerSettings = JSON.parse(savedTimer);
+          setEnableHappyHourTimer(!!timerSettings.enabled);
+          setHappyHourEndTime(sanitizeTimerValue(timerSettings.endTime || ''));
+          setHappyHourTimerPosition(timerSettings.position || 'top-center');
+        } catch (e) {
+          console.error('Error loading timer settings:', e);
+        }
+      }
+
       const template = templatesRes.data.find(t => t.id === screenRes.data.template_id);
       setSelectedTemplate(template || templatesRes.data[0]);
 
@@ -254,7 +382,9 @@ export const ScreenDesigner = () => {
         logo_enabled: enableLogo,
         logo_brand_id: selectedBrandId,
         logo_position: logoPosition,
-        logo_size: logoSize
+        logo_size: logoSize,
+        sakura_enabled: enableSakura,
+        sakura_intensity: sakuraIntensity
       });
 
       // Save Valentine hearts settings to localStorage
@@ -263,6 +393,45 @@ export const ScreenDesigner = () => {
         intensity: valentineHeartsIntensity
       }));
 
+      // Save snow settings to localStorage
+      localStorage.setItem(`snow_effect_${screenId}`, JSON.stringify({
+        enabled: enableSnow,
+        intensity: snowIntensity
+      }));
+
+      // Save custom text settings to localStorage
+      localStorage.setItem(`custom_text_${screenId}`, JSON.stringify({
+        enabled: enableCustomText,
+        content: customTextContent,
+        position: customTextPosition,
+        size: customTextSize,
+        color: customTextColor,
+        hasBackground: customTextHasBackground,
+        bgColor: customTextBgColor
+      }));
+
+      // Save happy hour timer settings to localStorage
+      // Store absolute end timestamp so timer persists across refreshes
+      if (enableHappyHourTimer && happyHourEndTime) {
+        const parts = happyHourEndTime.split(':');
+        const hours = parseInt(parts[0] || 0);
+        const minutes = parseInt(parts[1] || 0);
+        const seconds = parseInt(parts[2] || 0);
+        const durationMs = (hours * 3600 + minutes * 60 + seconds) * 1000;
+        const endTimestamp = Date.now() + durationMs;
+        localStorage.setItem(`happy_hour_timer_${screenId}`, JSON.stringify({
+          enabled: true,
+          endTimestamp: endTimestamp,
+          duration: happyHourEndTime,
+          position: happyHourTimerPosition
+        }));
+      } else {
+        localStorage.setItem(`happy_hour_timer_${screenId}`, JSON.stringify({
+          enabled: false,
+          position: happyHourTimerPosition
+        }));
+      }
+
       // Save zone configurations
       for (const config of zoneConfigs) {
         await api.post('/screen-zones', {
@@ -270,6 +439,9 @@ export const ScreenDesigner = () => {
           ...config
         });
       }
+
+      // Signal display screens to refresh (cross-tab communication via localStorage)
+      localStorage.setItem('screen_config_updated', JSON.stringify({ screenId, timestamp: Date.now() }));
 
       toast.success('Configurare salvată!');
       navigate('/screens');
@@ -297,10 +469,10 @@ export const ScreenDesigner = () => {
           <div className="flex items-center gap-4">
             <Button
               onClick={() => navigate('/screens')}
-              className="btn-ghost"
+              className="btn-secondary flex items-center justify-center w-10 h-10 p-0"
               data-testid="back-button"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5 text-indigo-600" />
             </Button>
             <div>
               <h1 className="text-4xl font-bold text-slate-800 mb-2">
@@ -353,9 +525,9 @@ export const ScreenDesigner = () => {
 
 
         {/* Row 1: Template Ecran + Efecte Vizuale */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-stretch mb-4">
           {/* Template Selector */}
-          <div className="lg:col-span-2 glass-card p-5">
+          <div className="glass-card p-5 lg:col-span-2">
             <h2 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
               <Monitor className="w-4 h-4 text-indigo-500" />
               Template Ecran
@@ -394,32 +566,46 @@ export const ScreenDesigner = () => {
           </div>
 
           {/* Efecte Vizuale - Compact Icons */}
-          <div className="glass-card p-5 flex flex-col">
+          <div className="glass-card p-5 flex flex-col lg:col-span-3">
             <h2 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-500" />
               Efecte Vizuale
             </h2>
-            <div className="flex gap-2 mb-3">
-              <button onClick={() => setEnableParallax(!enableParallax)} title="Parallax" className={`flex-1 flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all ${enableParallax ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30'}`}>
-                <Layers className={`w-5 h-5 ${enableParallax ? 'text-indigo-500' : 'text-slate-400'}`} />
+            <div className="grid grid-cols-4 gap-1.5">
+              <button onClick={() => setEnableParallax(!enableParallax)} title="Parallax" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableParallax ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30'}`}>
+                <Layers className={`w-4 h-4 ${enableParallax ? 'text-indigo-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableParallax ? 'text-indigo-600' : 'text-slate-400'}`}>Parallax</span>
               </button>
-              <button onClick={() => setEnableSteam(!enableSteam)} title="Steam" className={`flex-1 flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all ${enableSteam ? 'border-teal-400 bg-teal-50 shadow-sm' : 'border-slate-200 bg-white hover:border-teal-200 hover:bg-teal-50/30'}`}>
-                <Wind className={`w-5 h-5 ${enableSteam ? 'text-teal-500' : 'text-slate-400'}`} />
+              <button onClick={() => setEnableSteam(!enableSteam)} title="Steam" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableSteam ? 'border-teal-400 bg-teal-50 shadow-sm' : 'border-slate-200 bg-white hover:border-teal-200 hover:bg-teal-50/30'}`}>
+                <Wind className={`w-4 h-4 ${enableSteam ? 'text-teal-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableSteam ? 'text-teal-600' : 'text-slate-400'}`}>Steam</span>
               </button>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setEnableLogo(!enableLogo)} title="Logo Overlay" className={`flex-1 flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all ${enableLogo ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/30'}`}>
-                <Image className={`w-5 h-5 ${enableLogo ? 'text-amber-500' : 'text-slate-400'}`} />
+              <button onClick={() => { if (!enableLogo) { setEnableLogo(true); setActiveEffectConfig('logo'); } else if (activeEffectConfig === 'logo') { setEnableLogo(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('logo'); } }} title="Logo Overlay" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableLogo ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/30'}`}>
+                <Image className={`w-4 h-4 ${enableLogo ? 'text-amber-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableLogo ? 'text-amber-600' : 'text-slate-400'}`}>Logo</span>
               </button>
-              <button onClick={() => setEnableValentineHearts(!enableValentineHearts)} title="Valentine Hearts" className={`flex-1 flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all ${enableValentineHearts ? 'border-pink-400 bg-pink-50 shadow-sm' : 'border-slate-200 bg-white hover:border-pink-200 hover:bg-pink-50/30'}`}>
-                <Heart className={`w-5 h-5 ${enableValentineHearts ? 'text-pink-500' : 'text-slate-400'}`} />
+              <button onClick={() => { if (!enableValentineHearts) { setEnableValentineHearts(true); setActiveEffectConfig('hearts'); } else if (activeEffectConfig === 'hearts') { setEnableValentineHearts(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('hearts'); } }} title="Valentine Hearts" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableValentineHearts ? 'border-pink-400 bg-pink-50 shadow-sm' : 'border-slate-200 bg-white hover:border-pink-200 hover:bg-pink-50/30'}`}>
+                <Heart className={`w-4 h-4 ${enableValentineHearts ? 'text-pink-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableValentineHearts ? 'text-pink-600' : 'text-slate-400'}`}>Hearts</span>
               </button>
+              <button onClick={() => { if (!enableCustomText) { setEnableCustomText(true); setActiveEffectConfig('text'); } else if (activeEffectConfig === 'text') { setEnableCustomText(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('text'); } }} title="Custom Text" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableCustomText ? 'border-blue-400 bg-blue-50 shadow-sm' : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/30'}`}>
+                <Type className={`w-4 h-4 ${enableCustomText ? 'text-blue-500' : 'text-slate-400'}`} />
+                <span className={`text-[9px] font-bold ${enableCustomText ? 'text-blue-600' : 'text-slate-400'}`}>Text</span>
+              </button>
+              <button onClick={() => { if (!enableHappyHourTimer) { setEnableHappyHourTimer(true); setActiveEffectConfig('timer'); } else if (activeEffectConfig === 'timer') { setEnableHappyHourTimer(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('timer'); } }} title="Happy Hour Timer" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableHappyHourTimer ? 'border-purple-400 bg-purple-50 shadow-sm' : 'border-slate-200 bg-white hover:border-purple-200 hover:bg-purple-50/30'}`}>
+                <Clock className={`w-4 h-4 ${enableHappyHourTimer ? 'text-purple-500' : 'text-slate-400'}`} />
+                <span className={`text-[9px] font-bold ${enableHappyHourTimer ? 'text-purple-600' : 'text-slate-400'}`}>Timer</span>
+              </button>
+              <button onClick={() => { if (!enableSakura) { setEnableSakura(true); setActiveEffectConfig('sakura'); } else if (activeEffectConfig === 'sakura') { setEnableSakura(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('sakura'); } }} title="Sakura Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableSakura ? 'border-rose-400 bg-rose-50 shadow-sm' : 'border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50/30'}`}>
+                <Flower2 className={`w-4 h-4 ${enableSakura ? 'text-rose-500' : 'text-slate-400'}`} />
+                <span className={`text-[9px] font-bold ${enableSakura ? 'text-rose-600' : 'text-slate-400'}`}>Sakura</span>
+              </button>
+              <button onClick={() => { if (!enableSnow) { setEnableSnow(true); setActiveEffectConfig('snow'); } else if (activeEffectConfig === 'snow') { setEnableSnow(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('snow'); } }} title="Snow Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableSnow ? 'border-sky-400 bg-sky-50 shadow-sm' : 'border-slate-200 bg-white hover:border-sky-200 hover:bg-sky-50/30'}`}>
+                <Snowflake className={`w-4 h-4 ${enableSnow ? 'text-sky-500' : 'text-slate-400'}`} />
+                <span className={`text-[9px] font-bold ${enableSnow ? 'text-sky-600' : 'text-slate-400'}`}>Zăpadă</span>
+              </button>
             </div>
-            {enableLogo && (
+            {enableLogo && activeEffectConfig === 'logo' && (
               <div className="space-y-2 border-t border-slate-100 pt-2">
                 <div className="flex gap-1.5 overflow-x-auto">
                   {brandsWithLogo.map(brand => (
@@ -442,12 +628,106 @@ export const ScreenDesigner = () => {
                 </div>
               </div>
             )}
-            {enableValentineHearts && (
+            {enableValentineHearts && activeEffectConfig === 'hearts' && (
               <div className="space-y-2 border-t border-slate-100 pt-2 mt-2">
                 <div className="text-[9px] font-semibold text-pink-600 mb-1">Intensitate Inimioare</div>
                 <div className="flex gap-0.5">
                   {[{ k: 'low', l: 'Puțin' }, { k: 'medium', l: 'Mediu' }, { k: 'high', l: 'Mult' }].map(s => (
                     <button key={s.k} onClick={() => setValentineHeartsIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${valentineHeartsIntensity === s.k ? 'bg-pink-400 text-white border-pink-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-pink-50'}`}>{s.l}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {enableCustomText && activeEffectConfig === 'text' && (
+              <div className="space-y-2 border-t border-slate-100 pt-2 mt-2">
+                <input
+                  type="text"
+                  value={customTextContent}
+                  onChange={(e) => setCustomTextContent(e.target.value)}
+                  placeholder="Introdu textul..."
+                  className="w-full px-2 py-1 text-xs border border-blue-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                />
+                <div className="flex items-center gap-2">
+                  <div className="grid grid-cols-3 gap-0.5 w-14">
+                    {['top-left', 'top-center', 'top-right', 'center-left', 'center', 'center-right', 'bottom-left', 'bottom-center', 'bottom-right'].map(pos => (
+                      <button key={pos} onClick={() => setCustomTextPosition(pos)} className={`w-4 h-3.5 rounded-sm border transition-all ${customTextPosition === pos ? 'bg-blue-400 border-blue-500' : 'bg-slate-100 border-slate-200 hover:bg-blue-100'}`} title={pos} />
+                    ))}
+                  </div>
+                  <div className="flex gap-0.5 flex-1">
+                    {[{ k: 'sm', l: 'S' }, { k: 'md', l: 'M' }, { k: 'lg', l: 'L' }, { k: 'xl', l: 'XL' }].map(s => (
+                      <button key={s.k} onClick={() => setCustomTextSize(s.k)} className={`flex-1 py-0.5 rounded text-[9px] font-bold border transition-all ${customTextSize === s.k ? 'bg-blue-400 text-white border-blue-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-blue-50'}`}>{s.l}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 flex-1">
+                    <label className="text-[9px] font-semibold text-blue-600">Culoare:</label>
+                    <input type="color" value={customTextColor} onChange={(e) => setCustomTextColor(e.target.value)} className="w-8 h-6 rounded border border-blue-200 cursor-pointer" />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <input type="checkbox" id="text-bg-toggle" checked={customTextHasBackground} onChange={(e) => setCustomTextHasBackground(e.target.checked)} className="w-3 h-3 rounded border-blue-300 text-blue-500 focus:ring-1 focus:ring-blue-400" />
+                    <label htmlFor="text-bg-toggle" className="text-[9px] font-semibold text-blue-600">Fundal</label>
+                  </div>
+                  {customTextHasBackground && (
+                    <div className="flex items-center gap-1">
+                      <input type="color" value={customTextBgColor} onChange={(e) => setCustomTextBgColor(e.target.value)} className="w-8 h-6 rounded border border-blue-200 cursor-pointer" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {enableHappyHourTimer && activeEffectConfig === 'timer' && (
+              <div className="space-y-2 border-t border-slate-100 pt-2 mt-2">
+                <div className="text-[9px] font-semibold text-purple-600 mb-1">Durată (hh:mm:ss)</div>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={happyHourEndTime}
+                    onChange={(e) => setHappyHourEndTime(sanitizeTimerValue(e.target.value))}
+                    placeholder="02:30:00"
+                    maxLength={8}
+                    className="flex-1 px-2 py-1 text-xs border border-purple-200 rounded focus:outline-none focus:ring-1 focus:ring-purple-400 font-mono"
+                  />
+                  <div className="grid grid-cols-3 gap-0.5 w-14">
+                    {['top-left', 'top-center', 'top-right', 'center-left', 'center', 'center-right', 'bottom-left', 'bottom-center', 'bottom-right'].map(pos => (
+                      <button key={pos} onClick={() => setHappyHourTimerPosition(pos)} className={`w-4 h-3.5 rounded-sm border transition-all ${happyHourTimerPosition === pos ? 'bg-purple-400 border-purple-500' : 'bg-slate-100 border-slate-200 hover:bg-purple-100'}`} title={pos} />
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (happyHourEndTime) {
+                        setEnableHappyHourTimer(true);
+                        setTimerTrigger(prev => prev + 1); // Trigger countdown
+                      }
+                    }}
+                    disabled={!happyHourEndTime}
+                    className={`px-2 py-1 text-[9px] font-bold rounded transition-all ${happyHourEndTime
+                      ? 'bg-purple-500 text-white hover:bg-purple-600'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                      }`}
+                    title="Aplică timer în preview"
+                  >
+                    Aplică
+                  </button>
+                </div>
+              </div>
+            )}
+            {enableSakura && activeEffectConfig === 'sakura' && (
+              <div className="space-y-2 border-t border-slate-100 pt-2 mt-2">
+                <div className="text-[9px] font-semibold text-rose-600 mb-1">Intensitate Sakura</div>
+                <div className="flex gap-0.5">
+                  {[{ k: 'low', l: 'Puțin' }, { k: 'medium', l: 'Mediu' }, { k: 'high', l: 'Mult' }].map(s => (
+                    <button key={s.k} onClick={() => setSakuraIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${sakuraIntensity === s.k ? 'bg-rose-400 text-white border-rose-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-rose-50'}`}>{s.l}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {enableSnow && activeEffectConfig === 'snow' && (
+              <div className="space-y-2 border-t border-slate-100 pt-2 mt-2">
+                <div className="text-[9px] font-semibold text-sky-600 mb-1">Intensitate Zăpadă</div>
+                <div className="flex gap-0.5">
+                  {[{ k: 'low', l: 'Puțin' }, { k: 'medium', l: 'Mediu' }, { k: 'high', l: 'Mult' }].map(s => (
+                    <button key={s.k} onClick={() => setSnowIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${snowIntensity === s.k ? 'bg-sky-400 text-white border-sky-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-sky-50'}`}>{s.l}</button>
                   ))}
                 </div>
               </div>
@@ -592,6 +872,85 @@ export const ScreenDesigner = () => {
                     </div>
                   );
                 })()}
+
+                {/* Custom Text Overlay */}
+                {enableCustomText && customTextContent && (() => {
+                  const textSizeMap = { sm: 'text-sm', md: 'text-2xl', lg: 'text-4xl', xl: 'text-6xl' };
+                  const posStyles = {
+                    'top-left': { top: '12px', left: '12px' },
+                    'top-center': { top: '12px', left: '50%', transform: 'translateX(-50%)' },
+                    'top-right': { top: '12px', right: '12px' },
+                    'center-left': { top: '50%', left: '12px', transform: 'translateY(-50%)' },
+                    'center': { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+                    'center-right': { top: '50%', right: '12px', transform: 'translateY(-50%)' },
+                    'bottom-left': { bottom: '12px', left: '12px' },
+                    'bottom-center': { bottom: '12px', left: '50%', transform: 'translateX(-50%)' },
+                    'bottom-right': { bottom: '12px', right: '12px' },
+                  };
+                  return (
+                    <div className="absolute z-40 pointer-events-none" style={posStyles[customTextPosition]}>
+                      <div
+                        className={`${textSizeMap[customTextSize]} font-bold px-4 py-2 rounded-lg shadow-lg ${customTextHasBackground ? 'backdrop-blur-sm' : ''}`}
+                        style={{
+                          color: customTextColor,
+                          backgroundColor: customTextHasBackground ? customTextBgColor : 'transparent',
+                          textShadow: customTextHasBackground ? 'none' : '0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.6)'
+                        }}
+                      >
+                        {customTextContent}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Happy Hour Timer */}
+                {enableHappyHourTimer && timerSeconds !== null && (() => {
+                  // Convert timerSeconds back to hh:mm:ss
+                  const hoursLeft = Math.floor(timerSeconds / 3600);
+                  const minutesLeft = Math.floor((timerSeconds % 3600) / 60);
+                  const secondsLeft = timerSeconds % 60;
+
+                  const posStyles = {
+                    'top-left': { top: '12px', left: '12px' },
+                    'top-center': { top: '12px', left: '50%', transform: 'translateX(-50%)' },
+                    'top-right': { top: '12px', right: '12px' },
+                    'center-left': { top: '50%', left: '12px', transform: 'translateY(-50%)' },
+                    'center': { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+                    'center-right': { top: '50%', right: '12px', transform: 'translateY(-50%)' },
+                    'bottom-left': { bottom: '12px', left: '12px' },
+                    'bottom-center': { bottom: '12px', left: '50%', transform: 'translateX(-50%)' },
+                    'bottom-right': { bottom: '12px', right: '12px' },
+                  };
+
+                  return (
+                    <div className="absolute z-40 pointer-events-none" style={posStyles[happyHourTimerPosition]}>
+                      <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-2xl shadow-2xl">
+                        <div className="text-xs font-semibold uppercase tracking-wider mb-1 text-center">Happy Hour se termină în</div>
+                        <div className="text-3xl font-bold text-center tabular-nums">
+                          {String(hoursLeft).padStart(2, '0')}:{String(minutesLeft).padStart(2, '0')}:{String(secondsLeft).padStart(2, '0')}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Sakura Effect */}
+                {enableSakura && (
+                  <div className={`sakura-container intensity-${sakuraIntensity}`}>
+                    {[...Array(25)].map((_, i) => (
+                      <div key={i} className="sakura-petal"></div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Snow Effect */}
+                {enableSnow && (
+                  <div className={`snow-container intensity-${snowIntensity}`}>
+                    {[...Array(35)].map((_, i) => (
+                      <div key={i} className="snowflake"></div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -730,6 +1089,24 @@ export const ScreenDesigner = () => {
                             ))}
                           </SelectContent>
                         </Select>
+                        <div className="mt-2">
+                          <Label>Mod afișare</Label>
+                          <Select
+                            value={config.fit_mode || 'cover'}
+                            onValueChange={(value) => updateZoneConfig(zone.id, 'fit_mode', value)}
+                            disabled={!isAdmin()}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="contain">Original (păstrează proporțiile)</SelectItem>
+                              <SelectItem value="cover">Fill (umple zona)</SelectItem>
+                              <SelectItem value="fit">Fit to Screen (încadrat)</SelectItem>
+                              <SelectItem value="stretch">Întindere (stretch)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                         {/* Preview for Single Content */}
                         {config.content_id && (() => {
                           const item = content.find(c => c.id === config.content_id);

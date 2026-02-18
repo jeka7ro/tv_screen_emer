@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { MapPin, Tv, FileImage, ShoppingBag, TrendingUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,6 +9,7 @@ import { EventsCalendar } from '../components/EventsCalendar';
 
 export const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [playlists, setPlaylists] = useState([]);
   const [happyHours, setHappyHours] = useState([]);
@@ -15,6 +17,13 @@ export const Dashboard = () => {
 
   useEffect(() => {
     loadStats();
+
+    // Poll for updates every 15 seconds
+    const interval = setInterval(() => {
+      loadStats();
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const loadStats = async () => {
@@ -40,35 +49,40 @@ export const Dashboard = () => {
       value: stats?.locations || 0,
       icon: MapPin,
       color: 'red',
-      testId: 'stat-locations'
+      testId: 'stat-locations',
+      link: '/locations'
     },
     {
       label: 'Ecrane',
       value: stats?.screens || 0,
       icon: Tv,
       color: 'red',
-      testId: 'stat-screens'
+      testId: 'stat-screens',
+      link: '/screens'
     },
     {
       label: 'Ecrane Online',
       value: stats?.online_screens || 0,
       icon: TrendingUp,
       color: 'emerald',
-      testId: 'stat-online-screens'
+      testId: 'stat-online-screens',
+      link: '/screens'
     },
     {
       label: 'Produse',
       value: stats?.products || 0,
       icon: ShoppingBag,
       color: 'purple',
-      testId: 'stat-products'
+      testId: 'stat-products',
+      link: '/products'
     },
     {
       label: 'Fișiere Media',
       value: stats?.content || 0,
       icon: FileImage,
       color: 'pink',
-      testId: 'stat-content'
+      testId: 'stat-content',
+      link: '/content'
     },
   ];
 
@@ -90,7 +104,7 @@ export const Dashboard = () => {
             Bine ai venit, {user?.full_name}
           </h1>
           <p className="text-slate-500 text-lg">
-            Aici este prezentarea generală a sistemului SushiMaster TV
+            Aici este prezentarea generală a sistemului Screen Media
           </p>
         </div>
 
@@ -101,7 +115,12 @@ export const Dashboard = () => {
             const textColor = `text-${stat.color}-600`;
 
             return (
-              <div key={stat.label} className="glass-card p-6" data-testid={stat.testId}>
+              <div
+                key={stat.label}
+                className="glass-card p-6 cursor-pointer transition-all hover:shadow-lg hover:scale-105 active:scale-100"
+                data-testid={stat.testId}
+                onClick={() => navigate(stat.link)}
+              >
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-slate-500 text-sm font-medium mb-1">

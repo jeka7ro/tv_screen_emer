@@ -500,7 +500,8 @@ async def screen_update(id: str, data: Dict[str, Any]) -> None:
            template_id = $6, sync_group = $7, cascade_offset = $8, status = $9, last_active = $10, 
            sync_type = $11, sync_group_name = $12, sync_fit_mode = $13, brand = $14,
            parallax_enabled = $15, steam_enabled = $16, logo_enabled = $17, 
-           logo_brand_id = $18, logo_position = $19, logo_size = $20 WHERE id = $21""",
+           logo_brand_id = $18, logo_position = $19, logo_size = $20,
+           sakura_enabled = $21, sakura_intensity = $22 WHERE id = $23""",
         data["location_id"], data["name"], data["slug"],
         data.get("resolution", "1920x1080"), data.get("orientation", "landscape"),
         data.get("template_id"), data.get("sync_group"), data.get("cascade_offset", 0),
@@ -510,6 +511,7 @@ async def screen_update(id: str, data: Dict[str, Any]) -> None:
         data.get("parallax_enabled", False), data.get("steam_enabled", False),
         data.get("logo_enabled", False), data.get("logo_brand_id"),
         data.get("logo_position", "top-right"), data.get("logo_size", "md"),
+        data.get("sakura_enabled", False), data.get("sakura_intensity", "medium"),
         id,
     )
 
@@ -874,11 +876,11 @@ async def screen_zones_delete_by_screen_and_zone(screen_id: str, zone_id: str) -
 async def screen_zone_insert(row: Dict[str, Any]) -> None:
     await _execute(
         """INSERT INTO screen_zones (id, screen_id, zone_id, content_type, digital_menu_id, playlist_id,
-           content_id, weather_location, custom_html)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)""",
+           content_id, weather_location, custom_html, fit_mode)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)""",
         row["id"], row["screen_id"], row["zone_id"], row["content_type"],
         row.get("digital_menu_id"), row.get("playlist_id"), row.get("content_id"),
-        row.get("weather_location"), row.get("custom_html"),
+        row.get("weather_location"), row.get("custom_html"), row.get("fit_mode", "cover"),
     )
 
 
@@ -910,10 +912,21 @@ async def screens_count(location_id: Optional[str] = None) -> int:
 
 
 async def screens_count_online(location_id: Optional[str] = None) -> int:
+    # Count screens that have last_active set (have been accessed at least once)
+    # This matches the frontend logic where screens show as "active" if they have last_active
     if location_id:
-        r = await _fetch_one("SELECT count(*)::int AS c FROM screens WHERE status = 'online' AND location_id = $1", location_id)
+        r = await _fetch_one("""
+            SELECT count(*)::int AS c 
+            FROM screens 
+            WHERE last_active IS NOT NULL 
+            AND location_id = $1
+        """, location_id)
     else:
-        r = await _fetch_one("SELECT count(*)::int AS c FROM screens WHERE status = 'online'")
+        r = await _fetch_one("""
+            SELECT count(*)::int AS c 
+            FROM screens 
+            WHERE last_active IS NOT NULL
+        """)
     return r["c"] if r else 0
 
 
