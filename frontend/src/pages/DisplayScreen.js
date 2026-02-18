@@ -160,9 +160,10 @@ export const DisplayScreen = () => {
           if (newData && !newData.zones_config && newData.zones) {
             newData.zones_config = newData.zones;
           }
-          const hasSyncChanged = JSON.stringify(displayData?.sync_info) !== JSON.stringify(newData?.sync_info);
-          const hasContentChanged = JSON.stringify(displayData?.zones_config) !== JSON.stringify(newData?.zones_config);
-          if (hasSyncChanged || hasContentChanged) {
+          // Compare entire config — catches ANY change (effects, zones, sync, templates, happy hour)
+          const oldHash = JSON.stringify({ s: displayData?.screen, z: displayData?.zones_config, si: displayData?.sync_info, hh: displayData?.happy_hour_active });
+          const newHash = JSON.stringify({ s: newData?.screen, z: newData?.zones_config, si: newData?.sync_info, hh: newData?.happy_hour_active });
+          if (oldHash !== newHash) {
             setDisplayData(newData);
           }
         })
