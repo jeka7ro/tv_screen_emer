@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Edit2, Trash2, Building2, Globe, Link as LinkIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, Building2, Globe, Link as LinkIcon, Upload } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
@@ -17,6 +17,7 @@ export const Brands = () => {
     const [loading, setLoading] = useState(true);
     const [showDialog, setShowDialog] = useState(false);
     const [editingBrand, setEditingBrand] = useState(null);
+    const [uploadingLogo, setUploadingLogo] = useState(false);
     const [viewMode, setViewMode] = useViewMode('view_mode_brands', 'grid');
     const [formData, setFormData] = useState({
         name: '',
@@ -87,6 +88,32 @@ export const Brands = () => {
         setEditingBrand(null);
     };
 
+    const handleLogoUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (!editingBrand) {
+            // For new brands, we need to create first, then upload
+            toast.error('Salvează brandul mai întâi, apoi uploadează logo-ul');
+            return;
+        }
+
+        setUploadingLogo(true);
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            const response = await api.post(`/brands/${editingBrand.id}/logo`, fd, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setFormData(prev => ({ ...prev, logo_url: response.data.logo_url }));
+            toast.success('Logo încărcat cu succes!');
+        } catch (error) {
+            toast.error(error.response?.data?.detail || 'Eroare la încărcarea logo-ului');
+        } finally {
+            setUploadingLogo(false);
+        }
+    };
+
     if (loading) {
         return (
             <DashboardLayout>
@@ -120,13 +147,13 @@ export const Brands = () => {
                                         Adăugă brand
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="glass-panel max-h-[90vh] overflow-hidden flex flex-col">
+                                <DialogContent className="glass-panel max-h-[90vh] flex flex-col">
                                     <DialogHeader>
                                         <DialogTitle>
                                             {editingBrand ? 'Editează brandul' : 'Adăugă brand nou'}
                                         </DialogTitle>
                                     </DialogHeader>
-                                    <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+                                    <div className="flex-1 overflow-y-auto px-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
                                         <form onSubmit={handleSubmit} className="space-y-4">
                                             <div>
                                                 <Label>Nume brand</Label>
@@ -148,16 +175,39 @@ export const Brands = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <Label>URL Logo</Label>
-                                                <Input
-                                                    value={formData.logo_url}
-                                                    onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                                                    placeholder="https://example.com/logo.png"
-                                                    data-testid="brand-logo-input"
-                                                />
-                                                <p className="text-xs text-slate-500 mt-1">
-                                                    Introduceți URL-ul imaginii logo-ului
-                                                </p>
+                                                <Label>Logo</Label>
+                                                {/* Preview */}
+                                                {formData.logo_url && (
+                                                    <div className="mb-2 flex items-center gap-3 p-2 border border-slate-200 rounded-lg bg-slate-50">
+                                                        <img src={formData.logo_url} alt="Logo preview" className="w-12 h-12 object-contain rounded" />
+                                                        <span className="text-xs text-slate-500 truncate flex-1">{formData.logo_url.split('/').pop()}</span>
+                                                    </div>
+                                                )}
+                                                {/* Upload button */}
+                                                <div className="flex gap-2">
+                                                    <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-red-400 hover:bg-red-50/30 transition-all">
+                                                        <Upload className="w-4 h-4 text-slate-400" />
+                                                        <span className="text-sm text-slate-500">{uploadingLogo ? 'Se încarcă...' : 'Încarcă logo (PNG, JPG, SVG)'}</span>
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            onChange={handleLogoUpload}
+                                                            disabled={uploadingLogo}
+                                                            data-testid="brand-logo-upload"
+                                                        />
+                                                    </label>
+                                                </div>
+                                                {/* URL fallback */}
+                                                <div className="mt-2">
+                                                    <Input
+                                                        value={formData.logo_url}
+                                                        onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                                                        placeholder="sau lipește URL: https://..."
+                                                        className="text-xs"
+                                                        data-testid="brand-logo-input"
+                                                    />
+                                                </div>
                                             </div>
                                             <div className="flex gap-3 pt-4">
                                                 <Button type="submit" className="btn-primary flex-1" data-testid="save-brand-button">

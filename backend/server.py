@@ -2560,6 +2560,30 @@ async def update_brand_endpoint(brand_id: str, brand_data: BrandCreate, current_
     await brand_update(brand_id, brand_data.model_dump())
     return await brand_get(brand_id)
 
+@api_router.post("/brands/{brand_id}/logo")
+async def upload_brand_logo(
+    brand_id: str,
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_admin)
+):
+    """Upload logo image for a brand"""
+    existing = await brand_get(brand_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Brand not found")
+    
+    allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail=f"Tip fișier invalid: {file.content_type}")
+    
+    file_bytes = await file.read()
+    file_ext = Path(file.filename).suffix.lower() or '.png'
+    unique_filename = f"brand-logos/{brand_id}{file_ext}"
+    
+    logo_url = await upload_to_supabase(file_bytes, unique_filename, file.content_type)
+    await brand_update(brand_id, {**existing, "logo_url": logo_url})
+    
+    return {"logo_url": logo_url}
+
 @api_router.delete("/brands/{brand_id}")
 async def delete_brand_endpoint(brand_id: str, current_user: User = Depends(require_admin)):
     ok = await brand_delete(brand_id)
