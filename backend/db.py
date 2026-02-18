@@ -420,6 +420,12 @@ async def screen_get_by_slug(slug: str) -> Optional[Dict[str, Any]]:
 
 
 async def screens_list() -> List[Dict[str, Any]]:
+    # Auto-cleanup: mark screens as offline if no heartbeat for 2+ minutes
+    await _execute("""
+        UPDATE screens SET status = 'offline'
+        WHERE status = 'active' 
+        AND (last_active IS NULL OR last_active < NOW() - INTERVAL '2 minutes')
+    """)
     return await _fetch_all("""
         SELECT 
             s.*,
@@ -912,20 +918,21 @@ async def screens_count(location_id: Optional[str] = None) -> int:
 
 
 async def screens_count_online(location_id: Optional[str] = None) -> int:
-    # Count screens that have last_active set (have been accessed at least once)
-    # This matches the frontend logic where screens show as "active" if they have last_active
+    # Count screens that have active heartbeat (within last 2 minutes)
     if location_id:
         r = await _fetch_one("""
             SELECT count(*)::int AS c 
             FROM screens 
-            WHERE last_active IS NOT NULL 
+            WHERE status = 'active' 
+            AND last_active >= NOW() - INTERVAL '2 minutes'
             AND location_id = $1
         """, location_id)
     else:
         r = await _fetch_one("""
             SELECT count(*)::int AS c 
             FROM screens 
-            WHERE last_active IS NOT NULL
+            WHERE status = 'active' 
+            AND last_active >= NOW() - INTERVAL '2 minutes'
         """)
     return r["c"] if r else 0
 
