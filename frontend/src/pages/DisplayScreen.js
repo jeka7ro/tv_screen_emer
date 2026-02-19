@@ -153,7 +153,17 @@ export const DisplayScreen = () => {
   }, [displayData, currentPlaylistIndex]);
 
   useEffect(() => {
+    // Preview iframes don't need polling at all — saves egress
+    if (isPreview) return;
+
     const pollInterval = setInterval(() => {
+      // Off-hours check: restaurants closed 22:00-09:00, skip polling to save Supabase egress
+      const hour = new Date().getHours();
+      if (hour >= 22 || hour < 9) {
+        console.debug('[Display] Off-hours (22:00-09:00), skipping poll');
+        return;
+      }
+
       const code = securityCode || searchParams.get('code');
       const params = code ? `?security_code=${code}` : '';
       axios.get(`${API}/display/${slug}${params}`)
@@ -169,14 +179,14 @@ export const DisplayScreen = () => {
             setDisplayData(newData);
           }
           // Piggyback heartbeat on every poll — keeps status accurate
-          if (newData?.screen?.id && !isPreview) {
+          if (newData?.screen?.id) {
             axios.post(`${API}/screens/${newData.screen.id}/heartbeat`).catch(() => { });
           }
         })
         .catch(err => console.debug("Poll failed", err));
     }, 30000); // Poll every 30 seconds (also serves as heartbeat)
     return () => clearInterval(pollInterval);
-  }, [slug, securityCode, displayData]);
+  }, [slug, securityCode, displayData, isPreview]);
 
   // Happy Hour Timer Countdown - uses absolute endTimestamp for persistence
   useEffect(() => {

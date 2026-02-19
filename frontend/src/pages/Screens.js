@@ -708,6 +708,7 @@ export const Screens = () => {
                             <iframe
                               src={`/display/${screen.slug}?preview=true`}
                               title={screen.name}
+                              loading="lazy"
                               className="absolute inset-0 w-full h-full border-0 pointer-events-none opacity-90 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
                               style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
                             />
