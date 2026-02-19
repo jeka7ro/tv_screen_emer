@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Edit, Trash2, Tv, ExternalLink, Settings, Link as LinkIcon, QrCode, LayoutGrid, List as ListIcon, Monitor } from 'lucide-react';
+import { Plus, Edit, Trash2, Tv, ExternalLink, Settings, Link as LinkIcon, QrCode, LayoutGrid, List as ListIcon, Monitor, RotateCw, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { toast } from 'sonner';
@@ -31,6 +31,7 @@ export const Screens = () => {
   const [locationFilter, setLocationFilter] = useState('all');
   const [selectedScreens, setSelectedScreens] = useState([]);
   const [showSimulation, setShowSimulation] = useState(false);
+  const [rotationFilter, setRotationFilter] = useState('all');
   const [viewMode, setViewMode] = useViewMode('view_mode_screens', 'grid');
   const [formData, setFormData] = useState({
     location_id: '',
@@ -165,8 +166,26 @@ export const Screens = () => {
     const matchesBrand = brandFilter === 'all' || screen.logo_brand_id === brandFilter;
     const matchesCity = cityFilter === 'all' || location?.city === cityFilter;
     const matchesLocation = locationFilter === 'all' || screen.location_id === locationFilter;
-    return matchesBrand && matchesCity && matchesLocation;
+    const matchesRotation = rotationFilter === 'all' || (screen.orientation || '0') === rotationFilter;
+    return matchesBrand && matchesCity && matchesLocation && matchesRotation;
   });
+
+  // Group filtered screens by location
+  const screensByLocation = filteredScreens.reduce((acc, screen) => {
+    const locId = screen.location_id;
+    if (!acc[locId]) acc[locId] = [];
+    acc[locId].push(screen);
+    return acc;
+  }, {});
+
+  // Sort location groups by name
+  const sortedLocationGroups = Object.entries(screensByLocation).sort((a, b) => {
+    const nameA = getLocationName(a[0]);
+    const nameB = getLocationName(b[0]);
+    return nameA.localeCompare(nameB);
+  });
+
+  const rotationLabels = { '0': '0°', '90': '90°', '180': '180°', '270': '270°' };
 
   const toggleSelectAll = () => {
     if (selectedScreens.length === filteredScreens.length) {
@@ -457,6 +476,25 @@ export const Screens = () => {
               </Select>
             </div>
 
+            <div className="flex items-center gap-2 border-l border-slate-100 pl-4">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <RotateCw className="w-3.5 h-3.5 inline mr-1" />
+                Rotație:
+              </span>
+              <Select value={rotationFilter} onValueChange={setRotationFilter}>
+                <SelectTrigger className="w-[130px] h-9 text-sm bg-slate-50 border-slate-100 rounded-xl">
+                  <SelectValue placeholder="Toate" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toate</SelectItem>
+                  <SelectItem value="0">0° — Normal</SelectItem>
+                  <SelectItem value="90">90° — Dreapta</SelectItem>
+                  <SelectItem value="180">180° — Inversat</SelectItem>
+                  <SelectItem value="270">270° — Stânga</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex-1"></div>
 
             <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200">
@@ -617,131 +655,154 @@ export const Screens = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredScreens.map((screen) => (
-              <div key={screen.id} className={`glass-card p-6 flex flex-col h-full transition-all ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`}>
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedScreens.includes(screen.id)}
-                      onChange={() => toggleSelectScreen(screen.id)}
-                      className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 mt-1"
-                    />
-                    <div className="flex flex-col">
-                      {getBrand(screen.logo_brand_id) && (
-                        <div className="flex items-center gap-2 mb-1">
-                          {getBrand(screen.logo_brand_id).logo_url && (
-                            <img src={getBrand(screen.logo_brand_id).logo_url} alt="" className="w-5 h-5 object-contain" />
-                          )}
-                          <span className="text-[10px] font-black text-red-600 uppercase tracking-widest underline decoration-2 decoration-red-200 underline-offset-4">
-                            {getBrand(screen.logo_brand_id).name}
-                          </span>
-                        </div>
-                      )}
-                      <h3 className="text-lg font-bold text-slate-800 leading-tight">
-                        {screen.name}
-                      </h3>
-                    </div>
+          <div className="space-y-8">
+            {sortedLocationGroups.map(([locationId, locationScreens]) => (
+              <div key={locationId}>
+                {/* Location Header */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+                    <MapPin className="w-4 h-4 text-red-500" />
+                    <span className="text-sm font-bold text-slate-700">{getLocationName(locationId)}</span>
+                    <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">{locationScreens.length}</span>
                   </div>
-                  <div className="flex gap-1.5">
-                    {isAdmin() && (
-                      <>
-                        <Link
-                          to={`/screens/${screen.id}/design`}
-                          className="p-2 hover:bg-white/80 rounded-xl transition-all border border-transparent hover:border-slate-200 shadow-sm hover:shadow text-slate-600 hover:text-red-600"
-                          title="Configurează conținut"
-                        >
-                          <Settings className="w-4 h-4" />
-                        </Link>
-                        <button
-                          onClick={() => handleEdit(screen)}
-                          className="p-2 hover:bg-white/80 rounded-xl transition-all border border-transparent hover:border-slate-200 shadow-sm hover:shadow text-slate-600 hover:text-red-600"
-                          title="Editează detalii"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
                 </div>
-
-                {(() => {
-                  const rot = parseInt(screen.orientation || '0', 10);
-                  const isVertical = rot === 90 || rot === 270;
-                  return (
-                    <div className={`relative bg-slate-900 rounded-2xl overflow-hidden mb-5 border border-slate-200 shadow-inner group ${isVertical ? 'mx-auto' : ''}`}
-                      style={{ aspectRatio: isVertical ? '9/16' : '16/9', width: isVertical ? '56.25%' : '100%' }}>
-                      <iframe
-                        src={`/display/${screen.slug}?preview=true`}
-                        title={screen.name}
-                        className="absolute inset-0 w-full h-full border-0 pointer-events-none opacity-90 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
-                        style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
-                      />
-                      <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
-
-                      <div className="absolute top-3 right-3 z-20">
-                        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg backdrop-blur-md shadow-lg ${screen.status === 'active' ? 'bg-emerald-500/90 text-white' : 'bg-slate-800/80 text-white'} text-[9px] font-black uppercase tracking-widest`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'active' ? 'bg-white animate-pulse' : 'bg-slate-400'}`}></div>
-                          {screen.status}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {locationScreens.map((screen) => (
+                    <div key={screen.id} className={`glass-card p-6 flex flex-col h-full transition-all ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`}>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedScreens.includes(screen.id)}
+                            onChange={() => toggleSelectScreen(screen.id)}
+                            className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 mt-1"
+                          />
+                          <div className="flex flex-col">
+                            {getBrand(screen.logo_brand_id) && (
+                              <div className="flex items-center gap-2 mb-1">
+                                {getBrand(screen.logo_brand_id).logo_url && (
+                                  <img src={getBrand(screen.logo_brand_id).logo_url} alt="" className="w-5 h-5 object-contain" />
+                                )}
+                                <span className="text-[10px] font-black text-red-600 uppercase tracking-widest underline decoration-2 decoration-red-200 underline-offset-4">
+                                  {getBrand(screen.logo_brand_id).name}
+                                </span>
+                              </div>
+                            )}
+                            <h3 className="text-lg font-bold text-slate-800 leading-tight">
+                              {screen.name}
+                            </h3>
+                          </div>
+                        </div>
+                        <div className="flex gap-1.5">
+                          {isAdmin() && (
+                            <>
+                              <Link
+                                to={`/screens/${screen.id}/design`}
+                                className="p-2 hover:bg-white/80 rounded-xl transition-all border border-transparent hover:border-slate-200 shadow-sm hover:shadow text-slate-600 hover:text-red-600"
+                                title="Configurează conținut"
+                              >
+                                <Settings className="w-4 h-4" />
+                              </Link>
+                              <button
+                                onClick={() => handleEdit(screen)}
+                                className="p-2 hover:bg-white/80 rounded-xl transition-all border border-transparent hover:border-slate-200 shadow-sm hover:shadow text-slate-600 hover:text-red-600"
+                                title="Editează detalii"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  );
-                })()}
 
-                <div className="flex-1 space-y-3 mb-5">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
-                      <ExternalLink className="w-4 h-4 text-slate-400" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Locație</p>
-                      <p className="text-sm font-bold text-slate-700">{getLocationName(screen.location_id)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Short Link</span>
-                      <span className="text-xs font-mono font-bold text-red-600">/{screen.slug}</span>
-                    </div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase bg-white px-2 py-0.5 rounded-md border border-slate-100">
-                      {screen.resolution}
-                    </span>
-                  </div>
-                </div>
+                      {(() => {
+                        const rot = parseInt(screen.orientation || '0', 10);
+                        const isVertical = rot === 90 || rot === 270;
+                        return (
+                          <div className={`relative bg-slate-900 rounded-2xl overflow-hidden mb-5 border border-slate-200 shadow-inner group ${isVertical ? 'mx-auto' : ''}`}
+                            style={{ aspectRatio: isVertical ? '9/16' : '16/9', width: isVertical ? '56.25%' : '100%' }}>
+                            <iframe
+                              src={`/display/${screen.slug}?preview=true`}
+                              title={screen.name}
+                              className="absolute inset-0 w-full h-full border-0 pointer-events-none opacity-90 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
+                              style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
+                            />
+                            <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      // If screens are already selected via checkboxes, use those
-                      // Otherwise, select just this screen
-                      if (selectedScreens.length === 0) {
-                        setSelectedScreens([screen.id]);
-                      }
-                      setShowSimulation(true);
-                    }}
-                    className="p-3 hover:bg-blue-50 rounded-xl transition-all text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow"
-                    title="Simulare"
-                  >
-                    <Monitor className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => handleShowLink(screen)}
-                    className="flex-1 flex items-center justify-center gap-2 text-sm bg-red-600 text-white hover:bg-red-700 px-4 py-3 rounded-xl transition-all shadow-md hover:shadow-lg font-bold"
-                  >
-                    <LinkIcon className="w-4 h-4" />
-                    Link TV
-                  </button>
-                  {isAdmin() && (
-                    <button
-                      onClick={() => handleDelete(screen.id)}
-                      className="p-3 hover:bg-rose-50 rounded-xl transition-all text-slate-300 hover:text-rose-600 group"
-                      title="Șterge ecran"
-                    >
-                      <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    </button>
-                  )}
+                            <div className="absolute top-3 right-3 z-20">
+                              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg backdrop-blur-md shadow-lg ${screen.status === 'active' ? 'bg-emerald-500/90 text-white' : 'bg-slate-800/80 text-white'} text-[9px] font-black uppercase tracking-widest`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'active' ? 'bg-white animate-pulse' : 'bg-slate-400'}`}></div>
+                                {screen.status}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      <div className="flex-1 space-y-3 mb-5">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                            <ExternalLink className="w-4 h-4 text-slate-400" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Locație</p>
+                            <p className="text-sm font-bold text-slate-700">{getLocationName(screen.location_id)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Short Link</span>
+                            <span className="text-xs font-mono font-bold text-red-600">/{screen.slug}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {parseInt(screen.orientation || '0', 10) !== 0 && (
+                              <span className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+                                <RotateCw className="w-3 h-3" />
+                                {screen.orientation}°
+                              </span>
+                            )}
+                            <span className="text-[10px] text-slate-400 font-bold uppercase bg-white px-2 py-0.5 rounded-md border border-slate-100">
+                              {screen.resolution}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            // If screens are already selected via checkboxes, use those
+                            // Otherwise, select just this screen
+                            if (selectedScreens.length === 0) {
+                              setSelectedScreens([screen.id]);
+                            }
+                            setShowSimulation(true);
+                          }}
+                          className="p-3 hover:bg-blue-50 rounded-xl transition-all text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow"
+                          title="Simulare"
+                        >
+                          <Monitor className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleShowLink(screen)}
+                          className="flex-1 flex items-center justify-center gap-2 text-sm bg-red-600 text-white hover:bg-red-700 px-4 py-3 rounded-xl transition-all shadow-md hover:shadow-lg font-bold"
+                        >
+                          <LinkIcon className="w-4 h-4" />
+                          Link TV
+                        </button>
+                        {isAdmin() && (
+                          <button
+                            onClick={() => handleDelete(screen.id)}
+                            className="p-3 hover:bg-rose-50 rounded-xl transition-all text-slate-300 hover:text-rose-600 group"
+                            title="Șterge ecran"
+                          >
+                            <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
