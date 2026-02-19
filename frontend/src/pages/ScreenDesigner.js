@@ -744,7 +744,8 @@ export const ScreenDesigner = () => {
                 <Eye className="w-5 h-5 text-indigo-500" />
                 Previzualizare
               </h2>
-              <div className="bg-slate-100 rounded-2xl p-4 aspect-video relative overflow-hidden shadow-inner border-2 border-slate-200">
+              <div className={`bg-slate-100 rounded-2xl p-4 relative overflow-hidden shadow-inner border-2 border-slate-200 ${parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270 ? 'mx-auto' : ''}`}
+                style={{ aspectRatio: (parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270) ? '9/16' : '16/9', width: (parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270) ? '56.25%' : '100%' }}>
                 {selectedTemplate?.zones.map(zone => {
                   const config = zoneConfigs.find(c => c.zone_id === zone.id);
                   let previewUrl = null;
@@ -1320,7 +1321,8 @@ export const ScreenDesigner = () => {
 
             <div className="space-y-4">
               {/* Large Preview */}
-              <div className="relative bg-black rounded-lg overflow-hidden border border-slate-700 shadow-2xl" style={{ aspectRatio: '16/9' }}>
+              <div className={`relative bg-black rounded-lg overflow-hidden border border-slate-700 shadow-2xl ${parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270 ? 'mx-auto' : ''}`}
+                style={{ aspectRatio: (parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270) ? '9/16' : '16/9', width: (parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270) ? '56.25%' : '100%' }}>
                 <div className="w-full h-full">
                   {(() => {
                     // Smart Preview Logic: Improved detection
