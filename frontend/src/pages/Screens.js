@@ -667,60 +667,43 @@ export const Screens = () => {
                   </div>
                   <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {locationScreens.map((screen) => (
-                    <div key={screen.id} className={`glass-card p-6 flex flex-col h-full transition-all ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`} style={{ border: screen.status === 'active' ? '2px solid #10b981' : '2px solid #ef4444', boxShadow: screen.status === 'active' ? '0 0 15px 4px rgba(16, 185, 129, 0.35), 0 0 30px 8px rgba(16, 185, 129, 0.15)' : '0 0 15px 4px rgba(239, 68, 68, 0.35), 0 0 30px 8px rgba(239, 68, 68, 0.15)' }}>
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-start gap-3">
+                    <div key={screen.id} className={`glass-card p-3 flex flex-col h-full transition-all rounded-xl ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`} style={{ border: screen.status === 'active' ? '2px solid #10b981' : '2px solid #ef4444', boxShadow: screen.status === 'active' ? '0 0 8px 2px rgba(16, 185, 129, 0.25)' : '0 0 8px 2px rgba(239, 68, 68, 0.25)' }}>
+                      {/* Header: checkbox + brand + name + actions — compact */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           <input
                             type="checkbox"
                             checked={selectedScreens.includes(screen.id)}
                             onChange={() => toggleSelectScreen(screen.id)}
-                            className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 mt-1"
+                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
                           />
-                          <div className="flex flex-col">
-                            {getBrand(screen.logo_brand_id) && (
-                              <div className="flex items-center gap-2 mb-1">
-                                {getBrand(screen.logo_brand_id).logo_url && (
-                                  <img src={getBrand(screen.logo_brand_id).logo_url} alt="" className="w-5 h-5 object-contain" />
-                                )}
-                                <span className="text-[10px] font-black text-red-600 uppercase tracking-widest underline decoration-2 decoration-red-200 underline-offset-4">
-                                  {getBrand(screen.logo_brand_id).name}
-                                </span>
-                              </div>
-                            )}
-                            <h3 className="text-lg font-bold text-slate-800 leading-tight">
-                              {screen.name}
-                            </h3>
-                          </div>
+                          {getBrand(screen.logo_brand_id) && getBrand(screen.logo_brand_id).logo_url && (
+                            <img src={getBrand(screen.logo_brand_id).logo_url} alt={getBrand(screen.logo_brand_id).name} title={getBrand(screen.logo_brand_id).name} className="w-5 h-5 object-contain shrink-0" />
+                          )}
+                          <h3 className="text-sm font-bold text-slate-800 truncate">{screen.name}</h3>
                         </div>
-                        <div className="flex gap-1.5">
+                        <div className="flex gap-1 shrink-0">
                           {isAdmin() && (
                             <>
-                              <Link
-                                to={`/screens/${screen.id}/design`}
-                                className="p-2 hover:bg-white/80 rounded-xl transition-all border border-transparent hover:border-slate-200 shadow-sm hover:shadow text-slate-600 hover:text-red-600"
-                                title="Configurează conținut"
-                              >
-                                <Settings className="w-4 h-4" />
+                              <Link to={`/screens/${screen.id}/design`} className="p-1.5 hover:bg-white/80 rounded-lg text-slate-400 hover:text-red-600" title="Configurează">
+                                <Settings className="w-3.5 h-3.5" />
                               </Link>
-                              <button
-                                onClick={() => handleEdit(screen)}
-                                className="p-2 hover:bg-white/80 rounded-xl transition-all border border-transparent hover:border-slate-200 shadow-sm hover:shadow text-slate-600 hover:text-red-600"
-                                title="Editează detalii"
-                              >
-                                <Edit className="w-4 h-4" />
+                              <button onClick={() => handleEdit(screen)} className="p-1.5 hover:bg-white/80 rounded-lg text-slate-400 hover:text-red-600" title="Editează">
+                                <Edit className="w-3.5 h-3.5" />
                               </button>
                             </>
                           )}
                         </div>
                       </div>
 
+                      {/* Preview iframe */}
                       {(() => {
                         const rot = parseInt(screen.orientation || '0', 10);
                         const isVertical = rot === 90 || rot === 270;
                         return (
-                          <div className={`relative bg-slate-900 rounded-2xl overflow-hidden mb-5 border border-slate-200 shadow-inner group ${isVertical ? 'mx-auto' : ''}`}
+                          <div className={`relative bg-slate-900 rounded-xl overflow-hidden mb-2 group ${isVertical ? 'mx-auto' : ''}`}
                             style={{ aspectRatio: isVertical ? '9/16' : '16/9', width: isVertical ? '56.25%' : '100%' }}>
                             <iframe
                               src={`/display/${screen.slug}?preview=true`}
@@ -729,75 +712,56 @@ export const Screens = () => {
                               style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
                             />
                             <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
-
-                            <div className="absolute top-3 right-3 z-20">
-                              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg backdrop-blur-md ${screen.status === 'active' ? 'bg-emerald-500/90 text-white' : 'bg-red-600/90 text-white'} text-[9px] font-black uppercase tracking-widest`} style={screen.status === 'active' ? { boxShadow: '0 0 12px 3px rgba(16, 185, 129, 0.5)' } : { boxShadow: '0 0 12px 3px rgba(239, 68, 68, 0.5)' }}>
-                                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'active' ? 'bg-white' : 'bg-red-200'}`}></div>
-                                {screen.status}
-                              </div>
-                            </div>
                           </div>
                         );
                       })()}
 
-                      <div className="flex-1 space-y-3 mb-5">
-                        <div className="flex items-center gap-3">
-                          <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
-                            <ExternalLink className="w-4 h-4 text-slate-400" />
-                          </div>
-                          <div>
-                            <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Locație</p>
-                            <p className="text-sm font-bold text-slate-700">{getLocationName(screen.location_id)}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Short Link</span>
-                            <span className="text-xs font-mono font-bold text-red-600">/{screen.slug}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {parseInt(screen.orientation || '0', 10) !== 0 && (
-                              <span className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
-                                <RotateCw className="w-3 h-3" />
-                                {screen.orientation}°
-                              </span>
-                            )}
-                            <span className="text-[10px] text-slate-400 font-bold uppercase bg-white px-2 py-0.5 rounded-md border border-slate-100">
-                              {screen.resolution}
-                            </span>
-                          </div>
-                        </div>
+                      {/* Info bar: status · location · slug · rotation · resolution */}
+                      <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 mb-2 px-1">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-black uppercase tracking-wider ${screen.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`} style={screen.status === 'active' ? { boxShadow: '0 0 6px 1px rgba(16, 185, 129, 0.3)' } : { boxShadow: '0 0 6px 1px rgba(239, 68, 68, 0.3)' }}>
+                          <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                          {screen.status === 'active' ? 'ONLINE' : 'OFFLINE'}
+                        </span>
+                        <span className="flex items-center gap-1 font-medium">
+                          <MapPin className="w-3 h-3 text-red-400" />
+                          {getLocationName(screen.location_id)}
+                        </span>
+                        <span className="font-mono font-bold text-red-600">/{screen.slug}</span>
+                        {parseInt(screen.orientation || '0', 10) !== 0 && (
+                          <span className="flex items-center gap-0.5 font-bold text-indigo-500">
+                            <RotateCw className="w-2.5 h-2.5" />
+                            {screen.orientation}°
+                          </span>
+                        )}
+                        <span className="font-medium text-slate-400">{screen.resolution}</span>
                       </div>
 
-                      <div className="flex gap-2">
+                      {/* Action buttons — compact */}
+                      <div className="flex gap-1.5 mt-auto">
                         <button
                           onClick={() => {
-                            // If screens are already selected via checkboxes, use those
-                            // Otherwise, select just this screen
-                            if (selectedScreens.length === 0) {
-                              setSelectedScreens([screen.id]);
-                            }
+                            if (selectedScreens.length === 0) setSelectedScreens([screen.id]);
                             setShowSimulation(true);
                           }}
-                          className="p-3 hover:bg-blue-50 rounded-xl transition-all text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 shadow-sm hover:shadow"
+                          className="p-2 hover:bg-blue-50 rounded-lg text-blue-500 border border-blue-200"
                           title="Simulare"
                         >
-                          <Monitor className="w-5 h-5" />
+                          <Monitor className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleShowLink(screen)}
-                          className="flex-1 flex items-center justify-center gap-2 text-sm bg-red-600 text-white hover:bg-red-700 px-4 py-3 rounded-xl transition-all shadow-md hover:shadow-lg font-bold"
+                          className="flex-1 flex items-center justify-center gap-1.5 text-xs bg-red-600 text-white hover:bg-red-700 px-3 py-2 rounded-lg font-bold shadow-sm"
                         >
-                          <LinkIcon className="w-4 h-4" />
+                          <LinkIcon className="w-3.5 h-3.5" />
                           Link TV
                         </button>
                         {isAdmin() && (
                           <button
                             onClick={() => handleDelete(screen.id)}
-                            className="p-3 hover:bg-rose-50 rounded-xl transition-all text-slate-300 hover:text-rose-600 group"
-                            title="Șterge ecran"
+                            className="p-2 hover:bg-rose-50 rounded-lg text-slate-300 hover:text-rose-600"
+                            title="Șterge"
                           >
-                            <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                       </div>
