@@ -682,7 +682,7 @@ export const Screens = () => {
                           {getBrand(screen.logo_brand_id) && getBrand(screen.logo_brand_id).logo_url && (
                             <img src={getBrand(screen.logo_brand_id).logo_url} alt={getBrand(screen.logo_brand_id).name} title={getBrand(screen.logo_brand_id).name} className="w-5 h-5 object-contain shrink-0" />
                           )}
-                          <h3 className="text-sm font-bold text-slate-800 truncate">{screen.name}</h3>
+                          <h3 className="text-xs font-bold text-slate-800 leading-tight">{screen.name}</h3>
                         </div>
                         <div className="flex gap-1 shrink-0">
                           {isAdmin() && (
