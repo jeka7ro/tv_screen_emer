@@ -469,8 +469,23 @@ export const DisplayScreen = () => {
     );
   };
 
+  // Calculate rotation style based on screen orientation
+  const rotation = parseInt(displayData?.screen?.orientation || '0', 10);
+  const isRotated = rotation === 90 || rotation === 270;
+  const rotationStyle = rotation !== 0 ? {
+    transform: `rotate(${rotation}deg)`,
+    transformOrigin: 'center center',
+    width: isRotated ? '100vh' : '100vw',
+    height: isRotated ? '100vw' : '100vh',
+    position: 'fixed',
+    top: '50%',
+    left: '50%',
+    marginTop: isRotated ? 'calc(-50vw)' : 'calc(-50vh)',
+    marginLeft: isRotated ? 'calc(-50vh)' : 'calc(-50vw)',
+  } : {};
+
   return (
-    <div className="display-fullscreen relative bg-black font-sans">
+    <div className="display-fullscreen relative bg-black font-sans" style={rotationStyle}>
       {(displayData?.template?.zones || []).map(zone => {
         const zcList = displayData?.zones_config || displayData?.zones || [];
         const zoneConfig = zcList.find(zc =>

@@ -37,7 +37,7 @@ export const Screens = () => {
     name: '',
     slug: '',
     resolution: '1920x1080',
-    orientation: 'landscape',
+    orientation: '0',
     template_id: 'fullscreen',
     logo_brand_id: ''  // Changed from 'brand' to 'logo_brand_id'
   });
@@ -104,7 +104,7 @@ export const Screens = () => {
       name: screen.name,
       slug: screen.slug,
       resolution: screen.resolution,
-      orientation: screen.orientation,
+      orientation: screen.orientation || '0',
       template_id: screen.template_id || 'fullscreen',
       logo_brand_id: screen.logo_brand_id || ''
     });
@@ -128,7 +128,7 @@ export const Screens = () => {
       name: '',
       slug: '',
       resolution: '1920x1080',
-      orientation: 'landscape',
+      orientation: '0',
       template_id: 'fullscreen',
       logo_brand_id: ''
     });
@@ -350,7 +350,7 @@ export const Screens = () => {
                           </Select>
                         </div>
                         <div>
-                          <Label>Orientare</Label>
+                          <Label>Rotație ecran</Label>
                           <Select
                             value={formData.orientation}
                             onValueChange={(value) => setFormData({ ...formData, orientation: value })}
@@ -359,8 +359,10 @@ export const Screens = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="landscape">Landscape</SelectItem>
-                              <SelectItem value="portrait">Portrait</SelectItem>
+                              <SelectItem value="0">0° — Normal</SelectItem>
+                              <SelectItem value="90">90° — Rotit dreapta</SelectItem>
+                              <SelectItem value="180">180° — Inversat</SelectItem>
+                              <SelectItem value="270">270° — Rotit stânga</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>

@@ -492,7 +492,7 @@ async def screen_insert(row: Dict[str, Any]) -> None:
            sync_group, cascade_offset, status, last_active, sync_type, created_at, sync_group_name, sync_fit_mode, brand)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)""",
         row["id"], row["location_id"], row["name"], row["slug"],
-        row.get("resolution", "1920x1080"), row.get("orientation", "landscape"),
+        row.get("resolution", "1920x1080"), row.get("orientation", "0"),
         row.get("template_id"), row.get("sync_group"), row.get("cascade_offset", 0),
         row.get("status", "offline"), row.get("last_active"), row.get("sync_type", "simple"), 
         row["created_at"], row.get("sync_group_name"), row.get("sync_fit_mode", "cover"),

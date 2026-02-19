@@ -385,7 +385,7 @@ class Screen(BaseModel):
     name: str
     slug: str
     resolution: Optional[str] = "1920x1080"
-    orientation: Optional[str] = "landscape"  # landscape, portrait
+    orientation: Optional[str] = "0"  # 0, 90, 180, 270 degrees
     template_id: Optional[str] = None
     sync_group: Optional[str] = None
     cascade_offset: int = 0
@@ -414,7 +414,7 @@ class ScreenCreate(BaseModel):
     name: str
     slug: str
     resolution: Optional[str] = "1920x1080"
-    orientation: Optional[str] = "landscape"
+    orientation: Optional[str] = "0"
     template_id: Optional[str] = None
     sync_group: Optional[str] = None
     cascade_offset: int = 0
