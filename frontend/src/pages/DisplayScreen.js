@@ -470,9 +470,10 @@ export const DisplayScreen = () => {
   };
 
   // Calculate rotation style based on screen orientation
+  // In preview mode (iframe), skip rotation — the container already has correct aspect ratio
   const rotation = parseInt(displayData?.screen?.orientation || '0', 10);
   const isRotated = rotation === 90 || rotation === 270;
-  const rotationStyle = rotation !== 0 ? {
+  const rotationStyle = (rotation !== 0 && !isPreview) ? {
     transform: `rotate(${rotation}deg)`,
     transformOrigin: 'center center',
     width: isRotated ? '100vh' : '100vw',
