@@ -663,13 +663,13 @@ export const Screens = () => {
                   <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
                     <MapPin className="w-4 h-4 text-red-500" />
                     <span className="text-sm font-bold text-slate-700">{getLocationName(locationId)}</span>
-                    <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">{locationScreens.length}</span>
+                    <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">{locationScreens.length}</span>
                   </div>
                   <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {locationScreens.map((screen) => (
-                    <div key={screen.id} className={`glass-card p-6 flex flex-col h-full transition-all ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`}>
+                    <div key={screen.id} className={`glass-card p-6 flex flex-col h-full transition-all ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`} style={{ border: screen.status === 'active' ? '2px solid #10b981' : '2px solid #ef4444', boxShadow: screen.status === 'active' ? '0 0 15px 4px rgba(16, 185, 129, 0.35), 0 0 30px 8px rgba(16, 185, 129, 0.15)' : '0 0 15px 4px rgba(239, 68, 68, 0.35), 0 0 30px 8px rgba(239, 68, 68, 0.15)' }}>
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-start gap-3">
                           <input
