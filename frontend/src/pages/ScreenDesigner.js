@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Save, ArrowLeft, Eye, Check, Sparkles, Layers, Wind, Image, Monitor, List as ListIcon, Heart, Type, Clock, Flower2, Snowflake, Maximize, Minimize } from 'lucide-react';
+import { Save, ArrowLeft, Eye, Check, Sparkles, Layers, Wind, Image, Monitor, List as ListIcon, Heart, Type, Clock, Flower2, Snowflake, Maximize, Minimize, RotateCw } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import '../styles/effects.css';
@@ -500,6 +500,34 @@ export const ScreenDesigner = () => {
                 Simulare Live
               </Button>
             )}
+
+            {/* Rotation Control */}
+            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
+              <RotateCw className="w-4 h-4 text-indigo-500" />
+              <Select
+                value={screen?.orientation || '0'}
+                onValueChange={async (val) => {
+                  try {
+                    await api.put(`/screens/${screen.id}`, { ...screen, orientation: val });
+                    setScreen({ ...screen, orientation: val });
+                    toast.success(`Rotație setată la ${val}°`);
+                  } catch (err) {
+                    toast.error('Eroare la salvarea rotației');
+                  }
+                }}
+              >
+                <SelectTrigger className="w-[150px] h-8 text-sm border-0 bg-transparent shadow-none focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">0° — Normal</SelectItem>
+                  <SelectItem value="90">90° — Dreapta</SelectItem>
+                  <SelectItem value="180">180° — Inversat</SelectItem>
+                  <SelectItem value="270">270° — Stânga</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {isAdmin() && (
               <Button
                 onClick={handleSave}
