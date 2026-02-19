@@ -666,22 +666,29 @@ export const Screens = () => {
                   </div>
                 </div>
 
-                <div className="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden mb-5 border border-slate-200 shadow-inner group">
-                  <iframe
-                    src={`/display/${screen.slug}?preview=true`}
-                    title={screen.name}
-                    className="absolute inset-0 w-full h-full border-0 pointer-events-none opacity-90 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
-                    style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
-                  />
-                  <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
+                {(() => {
+                  const rot = parseInt(screen.orientation || '0', 10);
+                  const isVertical = rot === 90 || rot === 270;
+                  return (
+                    <div className={`relative bg-slate-900 rounded-2xl overflow-hidden mb-5 border border-slate-200 shadow-inner group ${isVertical ? 'mx-auto' : ''}`}
+                      style={{ aspectRatio: isVertical ? '9/16' : '16/9', width: isVertical ? '56.25%' : '100%' }}>
+                      <iframe
+                        src={`/display/${screen.slug}?preview=true`}
+                        title={screen.name}
+                        className="absolute inset-0 w-full h-full border-0 pointer-events-none opacity-90 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
+                        style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
+                      />
+                      <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
 
-                  <div className="absolute top-3 right-3 z-20">
-                    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg backdrop-blur-md shadow-lg ${screen.status === 'active' ? 'bg-emerald-500/90 text-white' : 'bg-slate-800/80 text-white'} text-[9px] font-black uppercase tracking-widest`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'active' ? 'bg-white animate-pulse' : 'bg-slate-400'}`}></div>
-                      {screen.status}
+                      <div className="absolute top-3 right-3 z-20">
+                        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg backdrop-blur-md shadow-lg ${screen.status === 'active' ? 'bg-emerald-500/90 text-white' : 'bg-slate-800/80 text-white'} text-[9px] font-black uppercase tracking-widest`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'active' ? 'bg-white animate-pulse' : 'bg-slate-400'}`}></div>
+                          {screen.status}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 <div className="flex-1 space-y-3 mb-5">
                   <div className="flex items-center gap-3">
