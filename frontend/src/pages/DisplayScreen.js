@@ -168,26 +168,15 @@ export const DisplayScreen = () => {
           if (oldHash !== newHash) {
             setDisplayData(newData);
           }
+          // Piggyback heartbeat on every poll — keeps status accurate
+          if (newData?.screen?.id && !isPreview) {
+            axios.post(`${API}/screens/${newData.screen.id}/heartbeat`).catch(() => { });
+          }
         })
         .catch(err => console.debug("Poll failed", err));
-    }, 10000);
+    }, 30000); // Poll every 30 seconds (also serves as heartbeat)
     return () => clearInterval(pollInterval);
   }, [slug, securityCode, displayData]);
-
-  // Periodic heartbeat to keep screen status online
-  useEffect(() => {
-    if (!displayData?.screen?.id || isPreview) return;
-
-    const sendHeartbeat = () => {
-      axios.post(`${API}/screens/${displayData.screen.id}/heartbeat`)
-        .catch(err => console.debug("Heartbeat failed", err));
-    };
-
-    // Send heartbeat every 30 seconds
-    const heartbeatInterval = setInterval(sendHeartbeat, 30000);
-
-    return () => clearInterval(heartbeatInterval);
-  }, [displayData?.screen?.id]);
 
   // Happy Hour Timer Countdown - uses absolute endTimestamp for persistence
   useEffect(() => {
