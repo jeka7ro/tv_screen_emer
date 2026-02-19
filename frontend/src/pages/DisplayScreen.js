@@ -485,30 +485,33 @@ export const DisplayScreen = () => {
   } : {};
 
   return (
-    <div className="display-fullscreen relative bg-black font-sans" style={rotationStyle}>
-      {(displayData?.template?.zones || []).map(zone => {
-        const zcList = displayData?.zones_config || displayData?.zones || [];
-        const zoneConfig = zcList.find(zc =>
-          zc.zone_id === zone.id ||
-          zc.zone_id === zone.id.replace('zone', 'zone-') ||
-          (zc.zone_id && zc.zone_id.replace('-', '') === zone.id)
-        );
+    <div className="display-fullscreen relative bg-black font-sans">
+      {/* Content zones wrapper — only this rotates */}
+      <div className="absolute inset-0" style={rotationStyle}>
+        {(displayData?.template?.zones || []).map(zone => {
+          const zcList = displayData?.zones_config || displayData?.zones || [];
+          const zoneConfig = zcList.find(zc =>
+            zc.zone_id === zone.id ||
+            zc.zone_id === zone.id.replace('zone', 'zone-') ||
+            (zc.zone_id && zc.zone_id.replace('-', '') === zone.id)
+          );
 
-        return (
-          <div
-            key={zone.id}
-            className="absolute overflow-hidden"
-            style={{
-              left: `${zone.x}%`,
-              top: `${zone.y}%`,
-              width: `${zone.width}%`,
-              height: `${zone.height}%`
-            }}
-          >
-            {renderZone(zone, zoneConfig)}
-          </div>
-        );
-      })}
+          return (
+            <div
+              key={zone.id}
+              className="absolute overflow-hidden"
+              style={{
+                left: `${zone.x}%`,
+                top: `${zone.y}%`,
+                width: `${zone.width}%`,
+                height: `${zone.height}%`
+              }}
+            >
+              {renderZone(zone, zoneConfig)}
+            </div>
+          );
+        })}
+      </div>
 
       {/* Logo Overlay */}
       {displayData?.screen?.logo_enabled && displayData?.screen?.logo_brand_id && (() => {
