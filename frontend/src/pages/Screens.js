@@ -560,8 +560,8 @@ export const Screens = () => {
                           />
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${screen.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'active' ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${screen.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`} style={screen.status === 'active' ? { boxShadow: '0 0 8px 2px rgba(16, 185, 129, 0.4)' } : { boxShadow: '0 0 8px 2px rgba(239, 68, 68, 0.4)' }}>
+                            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
                             {screen.status === 'active' ? 'ONLINE' : 'OFFLINE'}
                           </span>
                         </td>
@@ -731,8 +731,8 @@ export const Screens = () => {
                             <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
 
                             <div className="absolute top-3 right-3 z-20">
-                              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg backdrop-blur-md shadow-lg ${screen.status === 'active' ? 'bg-emerald-500/90 text-white' : 'bg-slate-800/80 text-white'} text-[9px] font-black uppercase tracking-widest`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${screen.status === 'active' ? 'bg-white animate-pulse' : 'bg-slate-400'}`}></div>
+                              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg backdrop-blur-md ${screen.status === 'active' ? 'bg-emerald-500/90 text-white' : 'bg-red-600/90 text-white'} text-[9px] font-black uppercase tracking-widest`} style={screen.status === 'active' ? { boxShadow: '0 0 12px 3px rgba(16, 185, 129, 0.5)' } : { boxShadow: '0 0 12px 3px rgba(239, 68, 68, 0.5)' }}>
+                                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'active' ? 'bg-white' : 'bg-red-200'}`}></div>
                                 {screen.status}
                               </div>
                             </div>
