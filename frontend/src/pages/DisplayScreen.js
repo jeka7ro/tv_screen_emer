@@ -7,8 +7,22 @@ import { ValentineHearts } from '../components/ValentineHearts';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+const SUPABASE_CONTENT_PREFIX = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/content/';
+const SUPABASE_AUDIO_PREFIX = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/audio/';
+
 const getFileUrl = (url) => {
   if (!url) return '';
+
+  // Proxy Supabase Storage through Netlify CDN to reduce egress
+  // Instead of: https://xxx.supabase.co/storage/v1/object/public/content/file.jpg
+  // Uses:       /supabase-media/file.jpg (served by Netlify CDN, cached)
+  if (url.startsWith(SUPABASE_CONTENT_PREFIX)) {
+    return '/supabase-media/' + url.substring(SUPABASE_CONTENT_PREFIX.length);
+  }
+  if (url.startsWith(SUPABASE_AUDIO_PREFIX)) {
+    return '/supabase-audio/' + url.substring(SUPABASE_AUDIO_PREFIX.length);
+  }
+
   if (url.startsWith('http')) return url;
   if (url.startsWith('/api/uploads') || url.startsWith('/uploads')) {
     const cleanUrl = url.startsWith('/api') ? url : `/api${url}`;

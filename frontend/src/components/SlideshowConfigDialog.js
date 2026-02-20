@@ -12,9 +12,13 @@ export const SlideshowConfigDialog = ({ open, onOpenChange, onConfirm, count, se
     const [timeUnit, setTimeUnit] = React.useState('seconds');
     const [transition, setTransition] = React.useState('fade');
 
-    // Helper to get file URL (same as in Content.js)
+    // Helper to get file URL — routes Supabase through Netlify CDN proxy
     const getFileUrl = (fileUrl) => {
         if (!fileUrl) return '';
+        const SUPABASE_CONTENT = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/content/';
+        const SUPABASE_AUDIO = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/audio/';
+        if (fileUrl.startsWith(SUPABASE_CONTENT)) return '/supabase-media/' + fileUrl.substring(SUPABASE_CONTENT.length);
+        if (fileUrl.startsWith(SUPABASE_AUDIO)) return '/supabase-audio/' + fileUrl.substring(SUPABASE_AUDIO.length);
         if (fileUrl.startsWith('http')) return fileUrl;
         if (fileUrl.startsWith('/')) return fileUrl;
         return fileUrl;
@@ -94,9 +98,9 @@ export const SlideshowConfigDialog = ({ open, onOpenChange, onConfirm, count, se
                                         {/* Content Type Badge */}
                                         <div className="absolute top-1 right-1">
                                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${item.type === 'youtube' ? 'bg-red-600 text-white' :
-                                                    item.type === 'web' ? 'bg-blue-600 text-white' :
-                                                        item.type === 'image' ? 'bg-green-600 text-white' :
-                                                            'bg-purple-600 text-white'
+                                                item.type === 'web' ? 'bg-blue-600 text-white' :
+                                                    item.type === 'image' ? 'bg-green-600 text-white' :
+                                                        'bg-purple-600 text-white'
                                                 }`}>
                                                 {item.type === 'youtube' ? 'YT' :
                                                     item.type === 'web' ? 'WEB' :

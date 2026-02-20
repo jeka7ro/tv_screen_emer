@@ -539,6 +539,12 @@ export const Content = () => {
   };
 
   const getFileUrl = (fileUrl) => {
+    if (!fileUrl) return '';
+    // Proxy Supabase Storage through Netlify CDN to reduce egress
+    const SUPABASE_CONTENT = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/content/';
+    const SUPABASE_AUDIO = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/audio/';
+    if (fileUrl.startsWith(SUPABASE_CONTENT)) return '/supabase-media/' + fileUrl.substring(SUPABASE_CONTENT.length);
+    if (fileUrl.startsWith(SUPABASE_AUDIO)) return '/supabase-audio/' + fileUrl.substring(SUPABASE_AUDIO.length);
     // If it's a relative URL (starts with /api/uploads), prepend backend URL
     if (fileUrl.startsWith('/api/uploads')) {
       return `${process.env.REACT_APP_BACKEND_URL}${fileUrl}`;
