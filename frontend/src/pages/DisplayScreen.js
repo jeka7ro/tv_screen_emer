@@ -144,19 +144,18 @@ export const DisplayScreen = () => {
   useEffect(() => {
     // 1. Simulate activity every 30s — small DOM changes trick TV into staying awake
     const keepAlive = setInterval(() => {
-      // Tiny scroll event simulation
       window.dispatchEvent(new Event('scroll'));
-      // Touch the title briefly (invisible to user)
       const orig = document.title;
       document.title = orig + ' ';
       setTimeout(() => { document.title = orig; }, 100);
     }, 30000);
 
-    // 2. Auto-reload when page becomes visible again (TV woke from standby)
+    // 2. Soft refresh when page becomes visible again (TV woke from standby)
+    //    Only re-fetch API data — media stays cached by Service Worker (no extra egress)
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        console.log('[Display] Page became visible, reloading to refresh content...');
-        window.location.reload();
+        console.log('[Display] Page became visible, re-fetching data (no full reload)...');
+        loadDisplayData();
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);

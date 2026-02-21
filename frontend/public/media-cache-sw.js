@@ -10,8 +10,9 @@
  * - Cache is versioned and can be busted when content changes
  */
 
-const CACHE_NAME = 'media-cache-v1';
+const CACHE_NAME = 'media-cache-v2';
 const SUPABASE_STORAGE_PATTERN = /supabase\.co\/storage/;
+const NETLIFY_PROXY_PATTERN = /\/supabase-(media|audio)\//;
 const MEDIA_EXTENSIONS = /\.(mp4|webm|mov|avi|jpg|jpeg|png|gif|webp|svg|mp3|wav|ogg)(\?.*)?$/i;
 const LOCAL_UPLOADS_PATTERN = /\/api\/uploads\//;
 
@@ -45,12 +46,14 @@ self.addEventListener('fetch', (event) => {
     // Only cache GET requests for media files
     if (event.request.method !== 'GET') return;
 
-    // Check if this is a media file from Supabase Storage or local uploads
+    // Check if this is a media file from Supabase, Netlify proxy, or local uploads
     const isSupabaseMedia = SUPABASE_STORAGE_PATTERN.test(url);
+    const isNetlifyProxy = NETLIFY_PROXY_PATTERN.test(url);
     const isLocalUploads = LOCAL_UPLOADS_PATTERN.test(url);
     const isMediaFile = MEDIA_EXTENSIONS.test(url);
 
-    if ((isSupabaseMedia || isLocalUploads) && isMediaFile) {
+    // Cache proxied URLs (/supabase-media/*) even without file extension (Supabase UUIDs)
+    if (isNetlifyProxy || ((isSupabaseMedia || isLocalUploads) && isMediaFile)) {
         event.respondWith(cacheFirstStrategy(event.request));
     }
 });
