@@ -129,6 +129,17 @@ export const DisplayScreen = () => {
     }
   }, []);
 
+  // Auto-reload safety net: if content doesn't load within 15s, refresh the page
+  useEffect(() => {
+    const reloadTimer = setTimeout(() => {
+      if (!displayData) {
+        console.warn('[Display] Content not loaded after 15s, reloading...');
+        window.location.reload();
+      }
+    }, 15000);
+    return () => clearTimeout(reloadTimer);
+  }, [displayData]);
+
   useEffect(() => {
     loadDisplayData();
   }, [slug]);
