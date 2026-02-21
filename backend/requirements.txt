@@ -6,6 +6,7 @@ uvicorn
 asyncpg==0.30.0
 Pillow==11.1.0
 supabase==2.27.3
+boto3
 python-dotenv
 
 # Auth and Security

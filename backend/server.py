@@ -134,40 +134,66 @@ from db import (
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
-# Initialize Supabase client for storage
-from supabase import create_client, Client
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
+# Initialize Cloudflare R2 Storage (S3-compatible, zero egress)
+import boto3
+R2_ACCOUNT_ID = os.environ.get("R2_ACCOUNT_ID", "")
+R2_ACCESS_KEY_ID = os.environ.get("R2_ACCESS_KEY_ID", "")
+R2_SECRET_ACCESS_KEY = os.environ.get("R2_SECRET_ACCESS_KEY", "")
+R2_BUCKET_NAME = os.environ.get("R2_BUCKET_NAME", "smr-media")
+R2_PUBLIC_URL = os.environ.get("R2_PUBLIC_URL", "")
+R2_ENDPOINT = f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com" if R2_ACCOUNT_ID else None
+
+s3_client = None
+if R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY and R2_ENDPOINT:
+    s3_client = boto3.client(
+        "s3",
+        endpoint_url=R2_ENDPOINT,
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        region_name="auto",
+    )
+    print(f"✅ R2 Storage initialized: {R2_BUCKET_NAME}")
+else:
+    print("⚠️ R2 Storage not configured, using local fallback")
+
 STORAGE_BUCKET = "content"
 
+# Keep Supabase client for backward compatibility (DB auth only)
+try:
+    from supabase import create_client, Client
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
+except Exception:
+    supabase = None
+
 # Local storage fallback will use UPLOAD_DIR (defined below)
-# Helper functions for Supabase Storage
+# Helper functions for R2 Storage (replaces Supabase Storage)
 async def upload_to_supabase(file_bytes: bytes, file_path: str, content_type: str) -> str:
-    """Upload file to Supabase Storage with local fallback"""
-    # Try Supabase first
-    if supabase:
+    """Upload file to Cloudflare R2 Storage with local fallback"""
+    # Try R2 first
+    if s3_client:
         try:
-            supabase.storage.from_(STORAGE_BUCKET).upload(
-                file_path,
-                file_bytes,
-                {"content-type": content_type, "upsert": "true"}
+            s3_client.put_object(
+                Bucket=R2_BUCKET_NAME,
+                Key=file_path,
+                Body=file_bytes,
+                ContentType=content_type,
             )
-            public_url = supabase.storage.from_(STORAGE_BUCKET).get_public_url(file_path)
+            public_url = f"{R2_PUBLIC_URL}/{file_path}"
+            print(f"✅ Uploaded to R2: {file_path}")
             return public_url
         except Exception as e:
-            print(f"Supabase upload failed, falling back to local storage: {e}")
+            print(f"R2 upload failed, falling back to local storage: {e}")
     
     # Fallback: save locally
     try:
-        # UPLOAD_DIR is defined below but directories are created at startup
         local_uploads_dir = ROOT_DIR / "uploads"
         local_path = local_uploads_dir / file_path
         local_path.parent.mkdir(parents=True, exist_ok=True)
         with open(local_path, "wb") as f:
             f.write(file_bytes)
         
-        # Return URL that points to our static file endpoint
         public_url = f"/api/uploads/{file_path}"
         print(f"File saved locally: {local_path} -> {public_url}")
         return public_url
@@ -176,13 +202,14 @@ async def upload_to_supabase(file_bytes: bytes, file_path: str, content_type: st
         raise HTTPException(status_code=500, detail=f"Storage upload failed: {str(e)}")
 
 async def delete_from_supabase(file_path: str):
-    """Delete file from Supabase Storage"""
-    if not supabase:
+    """Delete file from R2 Storage"""
+    if not s3_client:
         return
     try:
-        supabase.storage.from_(STORAGE_BUCKET).remove([file_path])
+        s3_client.delete_object(Bucket=R2_BUCKET_NAME, Key=file_path)
+        print(f"🗑 Deleted from R2: {file_path}")
     except Exception as e:
-        print(f"Supabase delete error: {e}")
+        print(f"R2 delete error: {e}")
 
 # JWT settings
 SECRET_KEY = os.environ.get("SECRET_KEY", "sushimaster-secret-key-change-in-production")

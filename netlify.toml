@@ -12,20 +12,20 @@
   NODE_VERSION = "20"
   DISABLE_ESLINT_PLUGIN = "true"
 
-# Proxy Supabase Storage through Netlify CDN to reduce Supabase egress (5GB free → 100GB Netlify free)
-# Media requests go: TV → Netlify CDN (cached) → Supabase Storage (only on cache miss)
+# Proxy media through Netlify CDN → Cloudflare R2 (zero egress)
+# Media requests go: TV → Netlify CDN (cached) → R2 (zero egress)
 [[redirects]]
   from = "/supabase-media/*"
-  to   = "https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/content/:splat"
+  to   = "https://pub-cd1de53230f443a194fe03b7d619b451.r2.dev/:splat"
   status = 200
   force = true
   [redirects.headers]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Audio bucket proxy
+# Audio bucket proxy → R2
 [[redirects]]
   from = "/supabase-audio/*"
-  to   = "https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/audio/:splat"
+  to   = "https://pub-cd1de53230f443a194fe03b7d619b451.r2.dev/audio/:splat"
   status = 200
   force = true
   [redirects.headers]
