@@ -278,7 +278,10 @@ export const Screens = () => {
         <div className="flex flex-col gap-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-slate-800 mb-2">Ecrane</h1>
+              <h1 className="text-4xl font-bold text-slate-800 mb-2">
+                Ecrane
+                <span className="ml-3 inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-full bg-red-600 text-white text-lg font-bold align-middle">{screens.length}</span>
+              </h1>
               <p className="text-slate-500">Gestionează ecranele digitale și conținutul lor</p>
             </div>
             {isAdmin() && (
