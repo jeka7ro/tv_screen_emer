@@ -191,7 +191,7 @@ export const DashboardLayout = ({ children }) => {
             data-testid="logout-button"
             title={isSidebarCollapsed ? "Deconectare" : ""}
           >
-            <LogOut className="w-5 h-5 shrink-0 text-slate-400" />
+            <LogOut className="w-5 h-5 shrink-0" />
             {!isSidebarCollapsed && <span className="animate-in fade-in duration-300">Deconectare</span>}
           </button>
         </div>
@@ -216,12 +216,14 @@ export const DashboardLayout = ({ children }) => {
               </div>
             </div>
 
-            {/* Version / Build Date */}
-            <div className="px-2 py-1 rounded-md bg-white/5 border border-white/10">
-              <span className="text-[10px] font-mono text-slate-500">
-                v{process.env.REACT_APP_BUILD_DATE || 'DEV'}
-              </span>
-            </div>
+            {/* Version / Build Date – only for Super Admin */}
+            {isSuperAdmin() && (
+              <div className="px-2 py-1 rounded-md bg-white/5 border border-white/10">
+                <span className="text-[10px] font-mono text-slate-500">
+                  v{process.env.REACT_APP_BUILD_DATE || 'DEV'}
+                </span>
+              </div>
+            )}
 
             {/* Separator */}
             <div className="w-px h-8 bg-white/20" />
@@ -231,7 +233,7 @@ export const DashboardLayout = ({ children }) => {
               <div className="text-right">
                 <p className="text-sm font-semibold text-white leading-tight">{user?.full_name}</p>
                 <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
-                  {isSuperAdmin() ? 'Super Admin' : user?.role === 'manager' ? 'Manager' : 'Admin'}
+                  {isSuperAdmin() ? 'Admin' : user?.role === 'manager' ? 'Manager' : 'Admin'}
                 </p>
               </div>
               {/* Avatar */}

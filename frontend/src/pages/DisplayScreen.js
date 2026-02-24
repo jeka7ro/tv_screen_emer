@@ -68,6 +68,55 @@ export const DisplayScreen = () => {
   const [timerSeconds, setTimerSeconds] = useState(null);
   const isDebug = searchParams.get('debug') === 'true';
 
+  // Anti-standby: keep TV screen awake using Wake Lock API + invisible video fallback
+  useEffect(() => {
+    let wakeLock = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (e) { /* not supported */ }
+    };
+    requestWakeLock();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') requestWakeLock();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Fallback: invisible 1px video generated from canvas (for older TVs without Wake Lock)
+    let videoEl = null;
+    try {
+      const c = document.createElement('canvas');
+      c.width = 2; c.height = 2;
+      const ctx = c.getContext('2d');
+      ctx.fillRect(0, 0, 2, 2);
+      const stream = c.captureStream(1);
+      const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      const chunks = [];
+      rec.ondataavailable = (e) => chunks.push(e.data);
+      rec.onstop = () => {
+        const url = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' }));
+        videoEl = document.createElement('video');
+        videoEl.src = url;
+        videoEl.loop = true;
+        videoEl.muted = true;
+        videoEl.playsInline = true;
+        videoEl.style.cssText = 'width:1px;height:1px;position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
+        document.body.appendChild(videoEl);
+        videoEl.play().catch(() => { });
+      };
+      rec.start();
+      setTimeout(() => rec.stop(), 500);
+    } catch (e) { /* not supported */ }
+
+    return () => {
+      if (wakeLock) wakeLock.release().catch(() => { });
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (videoEl) { videoEl.pause(); videoEl.remove(); }
+    };
+  }, []);
+
   const loadDisplayData = async () => {
     try {
       const code = securityCode || searchParams.get('code');

@@ -300,9 +300,9 @@ export const Screens = () => {
                     Adaugă ecran
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="glass-panel max-h-[90vh] overflow-hidden flex flex-col">
-                  <DialogHeader>
-                    <DialogTitle>
+                <DialogContent className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col overflow-hidden [&>button]:text-white [&>button]:hover:bg-white/20">
+                  <DialogHeader className="px-8 py-4 -mx-8 -mt-8 mb-2" style={{ background: 'linear-gradient(90deg, #dc2626 0%, #e11d48 100%)' }}>
+                    <DialogTitle className="text-white text-lg font-bold">
                       {editingScreen ? 'Editează ecranul' : 'Adaugă ecran nou'}
                     </DialogTitle>
                   </DialogHeader>
@@ -315,7 +315,7 @@ export const Screens = () => {
                           value={formData.logo_brand_id}
                           onValueChange={(value) => setFormData({ ...formData, logo_brand_id: value === 'none' ? '' : value })}
                           placeholder="Selectează brand"
-                          style={formData.logo_brand_id ? { border: '2px solid #ef4444', borderRadius: '0.5rem' } : {}}
+                          style={formData.logo_brand_id ? { borderColor: '#ef4444', borderWidth: '2px', borderStyle: 'solid' } : {}}
                         />
                       </div>
                       <div>
@@ -424,7 +424,7 @@ export const Screens = () => {
                         <Button
                           type="button"
                           onClick={() => setShowDialog(false)}
-                          className="btn-secondary"
+                          className="bg-white text-slate-700 border border-slate-300 rounded-full px-6 py-2.5 font-medium hover:bg-slate-50 transition-colors"
                         >
                           Anulează
                         </Button>

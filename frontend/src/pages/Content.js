@@ -12,6 +12,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'; import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { SlideshowConfigDialog } from '../components/SlideshowConfigDialog';
+import { Switch } from '../components/ui/switch';
 
 export const Content = () => {
   const { isAdmin } = useAuth();
@@ -1154,14 +1155,16 @@ export const Content = () => {
                 </button>
               )}
               {/* Video Autoplay Toggle */}
-              <button
-                onClick={() => setVideoAutoplay(!videoAutoplay)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 border ml-2 ${videoAutoplay ? 'bg-red-50 text-red-600 border-red-200 shadow-sm' : 'bg-white/50 text-slate-400 border-slate-200 hover:text-slate-600'}`}
-                title={videoAutoplay ? 'Dezactivează autoplay video' : 'Activează autoplay video'}
-              >
-                <Film className="w-3.5 h-3.5" />
-                Video {videoAutoplay ? '▶' : '⏸'}
-              </button>
+              <div className="flex items-center gap-2 ml-2">
+                <Switch
+                  checked={videoAutoplay}
+                  onCheckedChange={setVideoAutoplay}
+                  className="data-[state=checked]:bg-red-500"
+                />
+                <span className={`text-xs font-semibold ${videoAutoplay ? 'text-red-600' : 'text-slate-400'}`}>
+                  Autoplay Video
+                </span>
+              </div>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
               {/* View Mode Switcher */}
