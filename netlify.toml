@@ -3,7 +3,7 @@
 
 [build]
   base    = "frontend"
-  command = "npm run build"
+  command = "REACT_APP_BUILD_DATE=$(date '+%d.%m.%Y %H:%M') npm run build"
   publish = "build"
 
 # Setează în Netlify UI: REACT_APP_BACKEND_URL = https://xxx.onrender.com

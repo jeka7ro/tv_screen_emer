@@ -216,6 +216,13 @@ export const DashboardLayout = ({ children }) => {
               </div>
             </div>
 
+            {/* Version / Build Date */}
+            <div className="px-2 py-1 rounded-md bg-white/5 border border-white/10">
+              <span className="text-[10px] font-mono text-slate-500">
+                v{process.env.REACT_APP_BUILD_DATE || 'DEV'}
+              </span>
+            </div>
+
             {/* Separator */}
             <div className="w-px h-8 bg-white/20" />
 
