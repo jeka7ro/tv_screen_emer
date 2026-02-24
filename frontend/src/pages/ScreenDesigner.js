@@ -44,11 +44,14 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 // Helper function to get full URL for files
 const getFileUrl = (url) => {
   if (!url) return '';
-  // Proxy Supabase Storage through Netlify CDN to reduce egress
+  // Proxy Supabase Storage through CDN (only in production)
   const SUPABASE_CONTENT = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/content/';
   const SUPABASE_AUDIO = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/audio/';
-  if (url.startsWith(SUPABASE_CONTENT)) return '/supabase-media/' + url.substring(SUPABASE_CONTENT.length);
-  if (url.startsWith(SUPABASE_AUDIO)) return '/supabase-audio/' + url.substring(SUPABASE_AUDIO.length);
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (!isLocal) {
+    if (url.startsWith(SUPABASE_CONTENT)) return '/supabase-media/' + url.substring(SUPABASE_CONTENT.length);
+    if (url.startsWith(SUPABASE_AUDIO)) return '/supabase-audio/' + url.substring(SUPABASE_AUDIO.length);
+  }
   if (url.startsWith('/api/uploads')) {
     return `${BACKEND_URL}${url}`;
   }

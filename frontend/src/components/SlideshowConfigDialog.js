@@ -12,13 +12,16 @@ export const SlideshowConfigDialog = ({ open, onOpenChange, onConfirm, count, se
     const [timeUnit, setTimeUnit] = React.useState('seconds');
     const [transition, setTransition] = React.useState('fade');
 
-    // Helper to get file URL — routes Supabase through Netlify CDN proxy
+    // Helper to get file URL — routes Supabase through CDN proxy (production only)
     const getFileUrl = (fileUrl) => {
         if (!fileUrl) return '';
         const SUPABASE_CONTENT = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/content/';
         const SUPABASE_AUDIO = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/audio/';
-        if (fileUrl.startsWith(SUPABASE_CONTENT)) return '/supabase-media/' + fileUrl.substring(SUPABASE_CONTENT.length);
-        if (fileUrl.startsWith(SUPABASE_AUDIO)) return '/supabase-audio/' + fileUrl.substring(SUPABASE_AUDIO.length);
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (!isLocal) {
+            if (fileUrl.startsWith(SUPABASE_CONTENT)) return '/supabase-media/' + fileUrl.substring(SUPABASE_CONTENT.length);
+            if (fileUrl.startsWith(SUPABASE_AUDIO)) return '/supabase-audio/' + fileUrl.substring(SUPABASE_AUDIO.length);
+        }
         if (fileUrl.startsWith('http')) return fileUrl;
         if (fileUrl.startsWith('/')) return fileUrl;
         return fileUrl;

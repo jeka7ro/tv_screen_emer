@@ -13,14 +13,16 @@ const SUPABASE_AUDIO_PREFIX = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/
 const getFileUrl = (url) => {
   if (!url) return '';
 
-  // Proxy Supabase Storage through Netlify CDN to reduce egress
-  // Instead of: https://xxx.supabase.co/storage/v1/object/public/content/file.jpg
-  // Uses:       /supabase-media/file.jpg (served by Netlify CDN, cached)
-  if (url.startsWith(SUPABASE_CONTENT_PREFIX)) {
-    return '/supabase-media/' + url.substring(SUPABASE_CONTENT_PREFIX.length);
-  }
-  if (url.startsWith(SUPABASE_AUDIO_PREFIX)) {
-    return '/supabase-audio/' + url.substring(SUPABASE_AUDIO_PREFIX.length);
+  // Proxy Supabase Storage through CDN (only in production)
+  // On localhost, use direct Supabase URLs
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (!isLocal) {
+    if (url.startsWith(SUPABASE_CONTENT_PREFIX)) {
+      return '/supabase-media/' + url.substring(SUPABASE_CONTENT_PREFIX.length);
+    }
+    if (url.startsWith(SUPABASE_AUDIO_PREFIX)) {
+      return '/supabase-audio/' + url.substring(SUPABASE_AUDIO_PREFIX.length);
+    }
   }
 
   if (url.startsWith('http')) return url;

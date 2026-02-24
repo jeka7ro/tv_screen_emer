@@ -43,6 +43,7 @@ export const Content = () => {
   const [previewItem, setPreviewItem] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [viewMode, setViewMode] = useState('list');
+  const [videoAutoplay, setVideoAutoplay] = useState(false);
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
   const [screens, setScreens] = useState([]);
@@ -540,16 +541,19 @@ export const Content = () => {
 
   const getFileUrl = (fileUrl) => {
     if (!fileUrl) return '';
-    // Proxy Supabase Storage through Netlify CDN to reduce egress
+    // Proxy Supabase Storage through CDN to reduce egress (only in production)
     const SUPABASE_CONTENT = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/content/';
     const SUPABASE_AUDIO = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/audio/';
-    if (fileUrl.startsWith(SUPABASE_CONTENT)) return '/supabase-media/' + fileUrl.substring(SUPABASE_CONTENT.length);
-    if (fileUrl.startsWith(SUPABASE_AUDIO)) return '/supabase-audio/' + fileUrl.substring(SUPABASE_AUDIO.length);
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isLocal) {
+      if (fileUrl.startsWith(SUPABASE_CONTENT)) return '/supabase-media/' + fileUrl.substring(SUPABASE_CONTENT.length);
+      if (fileUrl.startsWith(SUPABASE_AUDIO)) return '/supabase-audio/' + fileUrl.substring(SUPABASE_AUDIO.length);
+    }
     // If it's a relative URL (starts with /api/uploads), prepend backend URL
     if (fileUrl.startsWith('/api/uploads')) {
       return `${process.env.REACT_APP_BACKEND_URL}${fileUrl}`;
     }
-    // Otherwise it's an external URL
+    // Otherwise it's an external URL (or direct Supabase on localhost)
     return fileUrl;
   };
 
@@ -728,11 +732,14 @@ export const Content = () => {
                           </div>
                         ) : (
                           <video
+                            key={`v-${item.id}-${videoAutoplay}`}
                             src={getFileUrl(item.file_url)}
                             className="w-full h-full object-cover"
                             muted
+                            autoPlay={videoAutoplay}
+                            loop={videoAutoplay}
+                            playsInline
                             preload="metadata"
-                            onLoadedData={(e) => { e.target.currentTime = 1; }}
                           />
                         )}
                       </div>
@@ -1137,8 +1144,16 @@ export const Content = () => {
                   Resetează
                 </button>
               )}
+              {/* Video Autoplay Toggle */}
+              <button
+                onClick={() => setVideoAutoplay(!videoAutoplay)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 border ml-2 ${videoAutoplay ? 'bg-red-50 text-red-600 border-red-200 shadow-sm' : 'bg-white/50 text-slate-400 border-slate-200 hover:text-slate-600'}`}
+                title={videoAutoplay ? 'Dezactivează autoplay video' : 'Activează autoplay video'}
+              >
+                <Film className="w-3.5 h-3.5" />
+                Video {videoAutoplay ? '▶' : '⏸'}
+              </button>
             </div>
-
             <div className="flex items-center gap-3 w-full sm:w-auto">
               {/* View Mode Switcher */}
               <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200">
