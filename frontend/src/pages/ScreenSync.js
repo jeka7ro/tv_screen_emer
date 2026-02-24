@@ -383,6 +383,8 @@ export const ScreenSync = () => {
                       <th className="text-left py-3 px-4 font-medium text-slate-600">Nume Grup</th>
                       <th className="text-left py-3 px-4 font-medium text-slate-600">Tip</th>
                       <th className="text-left py-3 px-4 font-medium text-slate-600">Ecrane</th>
+                      <th className="text-left py-3 px-4 font-medium text-slate-600">Creat de</th>
+                      <th className="text-left py-3 px-4 font-medium text-slate-600">Data</th>
                       <th className="text-right py-3 px-4 font-medium text-slate-600">Acțiuni</th>
                     </tr>
                   </thead>
@@ -407,6 +409,17 @@ export const ScreenSync = () => {
                               </span>
                             ))}
                           </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-sm text-slate-700 font-medium">{group.created_by || '-'}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          {group.created_at ? (
+                            <div>
+                              <div className="text-sm text-slate-700">{new Date(group.created_at).toLocaleDateString('ro-RO')}</div>
+                              <div className="text-xs text-slate-400">{new Date(group.created_at).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}</div>
+                            </div>
+                          ) : <span className="text-slate-400">-</span>}
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">

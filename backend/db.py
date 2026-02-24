@@ -198,6 +198,8 @@ async def init_db() -> None:
         ("logo_size", "TEXT", "'md'"),
         ("sakura_enabled", "BOOLEAN", "FALSE"),
         ("sakura_intensity", "TEXT", "'medium'"),
+        ("sync_created_by", "TEXT", "NULL"),
+        ("sync_created_at", "TIMESTAMPTZ", "NULL"),
     ]:
         try:
             await pool.execute(f"ALTER TABLE screens ADD COLUMN IF NOT EXISTS {col} {col_type} DEFAULT {default}")
@@ -471,6 +473,8 @@ async def sync_groups_list() -> List[Dict[str, Any]]:
                 sync_type,
                 MAX(sync_group_name) as name,
                 MAX(sync_fit_mode) as fit_mode,
+                MAX(sync_created_by) as created_by,
+                MAX(sync_created_at) as created_at,
                 array_agg(name ORDER BY cascade_offset ASC) as names,
                 array_agg(id ORDER BY cascade_offset ASC) as ids,
                 count(id) as counts
@@ -483,6 +487,8 @@ async def sync_groups_list() -> List[Dict[str, Any]]:
             gd.sync_type,
             gd.name,
             gd.fit_mode,
+            gd.created_by,
+            gd.created_at,
             gd.names as screen_names,
             gd.ids as screen_ids,
             gd.counts as screen_count,
@@ -546,11 +552,17 @@ async def screen_update(id: str, data: Dict[str, Any]) -> None:
     )
 
 
-async def screen_update_sync(id: str, group_id: Optional[str], offset: int, template_id: Optional[str], sync_type: str, group_name: Optional[str] = None, fit_mode: Optional[str] = 'cover') -> None:
-    await _execute(
-        "UPDATE screens SET sync_group = $2, cascade_offset = $3, template_id = $4, sync_type = $5, sync_group_name = $6, sync_fit_mode = $7 WHERE id = $1",
-        id, group_id, offset, template_id, sync_type, group_name, fit_mode
-    )
+async def screen_update_sync(id: str, group_id: Optional[str], offset: int, template_id: Optional[str], sync_type: str, group_name: Optional[str] = None, fit_mode: Optional[str] = 'cover', created_by: Optional[str] = None, created_at: Optional[str] = None) -> None:
+    if created_by and created_at:
+        await _execute(
+            "UPDATE screens SET sync_group = $2, cascade_offset = $3, template_id = $4, sync_type = $5, sync_group_name = $6, sync_fit_mode = $7, sync_created_by = $8, sync_created_at = $9 WHERE id = $1",
+            id, group_id, offset, template_id, sync_type, group_name, fit_mode, created_by, created_at
+        )
+    else:
+        await _execute(
+            "UPDATE screens SET sync_group = $2, cascade_offset = $3, template_id = $4, sync_type = $5, sync_group_name = $6, sync_fit_mode = $7 WHERE id = $1",
+            id, group_id, offset, template_id, sync_type, group_name, fit_mode
+        )
 
 
 async def screen_update_heartbeat(id: str, status: str, last_active: Any) -> None:

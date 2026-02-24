@@ -1913,15 +1913,15 @@ async def sync_screens(sync_data: ScreenSync, current_user: User = Depends(requi
     
     group_name = sync_data.group_name
     if not group_name:
-        # Fallback to something like "Group {short_uuid}"
         group_name = f"Group {sync_group[:8]}"
+
+    creator_name = current_user.full_name or current_user.email
+    created_at_str = datetime.now(timezone.utc).isoformat()
 
     if sync_data.sync_type == "simple":
         for sid in sync_data.screen_ids:
-            # Skip update if logic requires, but usually we just sync all
-            await screen_update_sync(sid, sync_group, 0, tpl, "simple", group_name, sync_data.fit_mode)
+            await screen_update_sync(sid, sync_group, 0, tpl, "simple", group_name, sync_data.fit_mode, creator_name, created_at_str)
             
-            # Copy zones from leader (if sid is leader, it just rewrites same zones, or skip)
             if sid != leader_screen_id:
                 master_zones = await screen_zones_list(leader_screen_id)
                 await screen_zones_delete_by_screen(sid)
@@ -1929,13 +1929,12 @@ async def sync_screens(sync_data: ScreenSync, current_user: User = Depends(requi
                     new_z = {**z, "id": str(uuid.uuid4()), "screen_id": sid}
                     await screen_zone_insert(new_z)
         
-        # Ensure leader also gets sync info updated
         if leader_screen_id in sync_data.screen_ids:
-             await screen_update_sync(leader_screen_id, sync_group, 0, tpl, "simple", group_name, sync_data.fit_mode)
+             await screen_update_sync(leader_screen_id, sync_group, 0, tpl, "simple", group_name, sync_data.fit_mode, creator_name, created_at_str)
 
     elif sync_data.sync_type == "cascade":
         for idx, sid in enumerate(sync_data.screen_ids):
-            await screen_update_sync(sid, sync_group, idx, tpl, "cascade", group_name, sync_data.fit_mode)
+            await screen_update_sync(sid, sync_group, idx, tpl, "cascade", group_name, sync_data.fit_mode, creator_name, created_at_str)
             if sid != leader_screen_id:
                 master_zones = await screen_zones_list(leader_screen_id)
                 await screen_zones_delete_by_screen(sid)
@@ -1944,16 +1943,12 @@ async def sync_screens(sync_data: ScreenSync, current_user: User = Depends(requi
                     await screen_zone_insert(new_z)
                     
     elif sync_data.sync_type == "matrix":
-        # Matrix works similar to cascade (assigning indexes 0..N)
-        # Frontend uses the index to calculate grid position
-        
-        # If grid dimensions are provided, encode them in sync_type
         actual_sync_type = "matrix"
         if sync_data.grid_cols and sync_data.grid_rows:
             actual_sync_type = f"matrix:{sync_data.grid_cols}x{sync_data.grid_rows}"
             
         for idx, sid in enumerate(sync_data.screen_ids):
-            await screen_update_sync(sid, sync_group, idx, tpl, actual_sync_type, group_name, sync_data.fit_mode)
+            await screen_update_sync(sid, sync_group, idx, tpl, actual_sync_type, group_name, sync_data.fit_mode, creator_name, created_at_str)
             if sid != leader_screen_id:
                 master_zones = await screen_zones_list(leader_screen_id)
                 await screen_zones_delete_by_screen(sid)
