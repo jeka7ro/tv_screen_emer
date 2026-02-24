@@ -208,6 +208,21 @@ async def init_db() -> None:
     except Exception:
         pass
 
+    # Billing config table (single-row config for superadmin)
+    await pool.execute("""
+        CREATE TABLE IF NOT EXISTS billing_config (
+            id TEXT PRIMARY KEY DEFAULT 'default',
+            price_per_screen NUMERIC(10,2) DEFAULT 0,
+            currency TEXT DEFAULT 'EUR',
+            notes TEXT DEFAULT '',
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        );
+    """)
+    # Ensure default row exists
+    await pool.execute("""
+        INSERT INTO billing_config (id) VALUES ('default') ON CONFLICT (id) DO NOTHING;
+    """)
+
 
 async def close_db() -> None:
     global pool
@@ -1234,3 +1249,60 @@ async def happy_hours_active_now() -> List[Dict[str, Any]]:
             AND EXTRACT(ISODOW FROM (CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Bucharest')::date)::int = ANY(days_of_week)
         """)
         return [dict(r) for r in rows]
+
+
+# ---------- billing ----------
+
+async def billing_config_get() -> Optional[Dict[str, Any]]:
+    return await _fetch_one("SELECT * FROM billing_config WHERE id = 'default'")
+
+
+async def billing_config_upsert(data: Dict[str, Any]) -> None:
+    await _execute(
+        """INSERT INTO billing_config (id, price_per_screen, currency, notes, updated_at)
+           VALUES ('default', $1, $2, $3, NOW())
+           ON CONFLICT (id) DO UPDATE SET
+             price_per_screen = EXCLUDED.price_per_screen,
+             currency = EXCLUDED.currency,
+             notes = EXCLUDED.notes,
+             updated_at = NOW()""",
+        float(data.get("price_per_screen", 0)),
+        data.get("currency", "EUR"),
+        data.get("notes", ""),
+    )
+
+
+async def billing_summary(date_from: Optional[str] = None, date_to: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Get screen counts per location for billing purposes, optionally filtered by date range.
+    A screen counts if it was created before date_to (existed during the period).
+    """
+    conditions = []
+    params = []
+    idx = 1
+    if date_from:
+        conditions.append(f"s.created_at >= ${idx}::timestamptz")
+        params.append(date_from)
+        idx += 1
+    if date_to:
+        conditions.append(f"s.created_at <= ${idx}::timestamptz")
+        params.append(date_to)
+        idx += 1
+
+    screen_where = (" AND " + " AND ".join(conditions)) if conditions else ""
+
+    query = f"""
+        SELECT
+            l.id,
+            l.name,
+            l.city,
+            COUNT(s.id) FILTER (WHERE s.id IS NOT NULL{screen_where})::int AS screen_count,
+            COUNT(s.id) FILTER (WHERE s.status = 'active'{screen_where})::int AS screens_online,
+            MIN(s.created_at) FILTER (WHERE s.id IS NOT NULL{screen_where}) AS first_screen_date
+        FROM locations l
+        LEFT JOIN screens s ON s.location_id = l.id
+        GROUP BY l.id, l.name, l.city
+        ORDER BY l.city ASC, l.name ASC
+    """
+    return await _fetch_all(query, *params)
+
+

@@ -21,7 +21,8 @@ import {
   ChevronRight,
   Activity,
   Clock,
-  Calendar
+  Calendar,
+  DollarSign
 } from 'lucide-react';
 
 const menuItems = [
@@ -43,6 +44,7 @@ const adminMenuItems = [
   { path: '/users', icon: Users, label: 'Utilizatori' },
   { path: '/invitations', icon: UserPlus, label: 'Invitații' },
   { path: '/activity-logs', icon: Activity, label: 'Jurnale Activitate' },
+  { path: '/billing', icon: DollarSign, label: 'Facturare' },
 ];
 
 export const DashboardLayout = ({ children }) => {

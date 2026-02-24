@@ -128,7 +128,10 @@ from db import (
     playlist_remove_content_item,
     content_clear_from_screen_zones,
     log_activity,
-    get_activity_logs
+    get_activity_logs,
+    billing_config_get,
+    billing_config_upsert,
+    billing_summary
 )
 
 ROOT_DIR = Path(__file__).parent
@@ -2617,6 +2620,40 @@ async def delete_brand_endpoint(brand_id: str, current_user: User = Depends(requ
     if not ok:
         raise HTTPException(status_code=404, detail="Brand not found")
     return {"message": "Brand deleted"}
+
+# ============ BILLING ROUTES (Super Admin only) ============
+
+class BillingConfigUpdate(BaseModel):
+    price_per_screen: float = 0
+    currency: str = "EUR"
+    notes: str = ""
+
+@api_router.get("/billing/summary")
+async def get_billing_summary(
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    current_user: User = Depends(get_super_admin)
+):
+    config = await billing_config_get()
+    locations = await billing_summary(date_from=date_from, date_to=date_to)
+    price = float(config.get("price_per_screen", 0)) if config else 0
+    total_screens = sum(loc.get("screen_count", 0) for loc in locations)
+    return {
+        "config": config,
+        "locations": locations,
+        "total_screens": total_screens,
+        "total_monthly": round(total_screens * price, 2),
+    }
+
+@api_router.get("/billing/config")
+async def get_billing_config(current_user: User = Depends(get_super_admin)):
+    return await billing_config_get()
+
+@api_router.put("/billing/config")
+async def update_billing_config(data: BillingConfigUpdate, current_user: User = Depends(get_super_admin)):
+    await billing_config_upsert(data.model_dump())
+    await log_activity(current_user.id, current_user.full_name, "update", "billing_config", "default", "INFO", data.model_dump())
+    return {"message": "Configurație billing actualizată"}
 
 # Include the router in the main app AFTER all routes are defined
 app.include_router(api_router)

@@ -673,7 +673,7 @@ export const Screens = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {locationScreens.map((screen) => (
                     <div key={screen.id} className={`glass-card p-3 flex flex-col h-full transition-all rounded-xl ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`} style={{ border: screen.status === 'active' ? '2px solid #10b981' : '2px solid #ef4444', boxShadow: screen.status === 'active' ? '0 0 8px 2px rgba(16, 185, 129, 0.25)' : '0 0 8px 2px rgba(239, 68, 68, 0.25)' }}>
-                      {/* Header: checkbox + brand + name + actions — compact */}
+                      {/* Header: checkbox + brand + name + actions */}
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <input
@@ -685,7 +685,7 @@ export const Screens = () => {
                           {getBrand(screen.logo_brand_id) && getBrand(screen.logo_brand_id).logo_url && (
                             <img src={getBrand(screen.logo_brand_id).logo_url} alt={getBrand(screen.logo_brand_id).name} title={getBrand(screen.logo_brand_id).name} className="w-5 h-5 object-contain shrink-0" />
                           )}
-                          <h3 className="text-xs font-bold text-slate-800 leading-tight">{screen.name}</h3>
+                          <h3 className="text-sm font-bold text-slate-800 leading-tight truncate" title={screen.name}>{screen.name}</h3>
                         </div>
                         <div className="flex gap-1 shrink-0">
                           {isAdmin() && (
