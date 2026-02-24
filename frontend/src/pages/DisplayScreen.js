@@ -68,52 +68,74 @@ export const DisplayScreen = () => {
   const [timerSeconds, setTimerSeconds] = useState(null);
   const isDebug = searchParams.get('debug') === 'true';
 
-  // Anti-standby: keep TV screen awake using Wake Lock API + invisible video fallback
+  // Anti-standby: AGGRESSIVE multi-layer approach to prevent TV sleep
   useEffect(() => {
     let wakeLock = null;
+    const intervals = [];
+
+    // Layer 1: Wake Lock API (modern browsers)
     const requestWakeLock = async () => {
       try {
         if ('wakeLock' in navigator) {
           wakeLock = await navigator.wakeLock.request('screen');
+          console.log('[AntiStandby] Wake Lock acquired');
+          wakeLock.addEventListener('release', () => {
+            console.log('[AntiStandby] Wake Lock released, re-acquiring...');
+            setTimeout(requestWakeLock, 1000);
+          });
         }
-      } catch (e) { /* not supported */ }
+      } catch (e) { console.log('[AntiStandby] Wake Lock not available'); }
     };
     requestWakeLock();
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') requestWakeLock();
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
+    const handleVis = () => { if (document.visibilityState === 'visible') requestWakeLock(); };
+    document.addEventListener('visibilitychange', handleVis);
 
-    // Fallback: invisible 1px video generated from canvas (for older TVs without Wake Lock)
+    // Layer 2: Invisible base64 MP4 video loop (strongest for TVs)
     let videoEl = null;
     try {
-      const c = document.createElement('canvas');
-      c.width = 2; c.height = 2;
-      const ctx = c.getContext('2d');
-      ctx.fillRect(0, 0, 2, 2);
-      const stream = c.captureStream(1);
-      const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
-      const chunks = [];
-      rec.ondataavailable = (e) => chunks.push(e.data);
-      rec.onstop = () => {
-        const url = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' }));
-        videoEl = document.createElement('video');
-        videoEl.src = url;
-        videoEl.loop = true;
-        videoEl.muted = true;
-        videoEl.playsInline = true;
-        videoEl.style.cssText = 'width:1px;height:1px;position:fixed;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
-        document.body.appendChild(videoEl);
-        videoEl.play().catch(() => { });
-      };
-      rec.start();
-      setTimeout(() => rec.stop(), 500);
-    } catch (e) { /* not supported */ }
+      const base64Mp4 = 'AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAAu1tZGF0AAACrQYF//+p3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE0OCByMjYwMSBhMGNkN2QzIC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAxNSAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTEgcmVmPTMgZGVibG9jaz0xOjA6MCBhbmFseXNlPTB4MzoweDExMyBtZT1oZXggc3VibWU9NyBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0xIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MSA4eDhkY3Q9MSBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiB0aHJlYWRzPTEgbG9va2FoZWFkX3RocmVhZHM9MSBzbGljZWRfdGhyZWFkcz0wIG5yPTAgZGVjaW1hdGU9MSBpbnRlcmxhY2VkPTAgYmx1cmF5X2NvbXBhdD0wIGNvbnN0cmFpbmVkX2ludHJhPTAgYmZyYW1lcz0zIGJfcHlyYW1pZD0yIGJfYWRhcHQ9MSBiX2JpYXM9MCBkaXJlY3Q9MSB3ZWlnaHRiPTEgb3Blbl9nb3A9MSB3ZWlnaHRwPTIga2V5aW50PTI1MCBrZXlpbnRfbWluPTI1IHNjZW5lY3V0PTQwIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9NDAgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMACAAAAAD2WIhAA3//728P4FNjuZQQAAAu5tb292AAAAbG12aGQAAAAAAAAAAAAAAAAAAAPoAAAAZAABAAABAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAACGHRyYWsAAABcdGtoZAAAAAMAAAAAAAAAAAAAAAEAAAAAAAAAZAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAEAAAAAAAgAAAAIAAAAAACRlZHRzAAAAHGVsc3QAAAAAAAAAAQAAAGQAAAAAAAEAAAAAAZBtZGlhAAAAIG1kaGQAAAAAAAAAAAAAAAAAACgAAAAEAFXEAAAAAAAtaGRscgAAAAAAAAAAdmlkZQAAAAAAAAAAAAAAAFZpZGVvSGFuZGxlcgAAAAE7bWluZgAAABR2bWhkAAAAAQAAAAAAAAAAAAAAJGRpbmYAAAAcZHJlZgAAAAAAAAABAAAADHVybCAAAAABAAAA+3N0YmwAAACXc3RzZAAAAAAAAAABAAAAh2F2YzEAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAACAAIASAAAAEgAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABj//wAAADFhdmNDAWQAH//hABhnZAAfrNlBIBeX5YQAAAMABAAAAwAoPGDGWAEABmjr48siwAAAABhzdHRzAAAAAAAAAAEAAAABAAAEAAAAABRzdHNzAAAAAAAAAAEAAAABAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAABAAAAAQAAABRzdHN6AAAAAAAAAsUAAAABAAAAFHN0Y28AAAAAAAAAAQAAADAAAABidWR0YQAAAFptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABtZGlyYXBwbAAAAAAAAAAAAAAAAC1pbHN0AAAAJal0b28AAAAdZGF0YQAAAAEAAAAATGF2ZjU2LjQwLjEwMQ==';
+      videoEl = document.createElement('video');
+      videoEl.src = 'data:video/mp4;base64,' + base64Mp4;
+      videoEl.loop = true;
+      videoEl.muted = true;
+      videoEl.playsInline = true;
+      videoEl.setAttribute('playsinline', '');
+      videoEl.setAttribute('webkit-playsinline', '');
+      videoEl.style.cssText = 'width:1px;height:1px;position:fixed;top:-9999px;left:-9999px;opacity:0.01;pointer-events:none;z-index:-1;';
+      document.body.appendChild(videoEl);
+      videoEl.play().catch(() => { });
+      // Re-play every 10s if paused
+      intervals.push(setInterval(() => {
+        if (videoEl && videoEl.paused) videoEl.play().catch(() => { });
+      }, 10000));
+      console.log('[AntiStandby] Video fallback started');
+    } catch (e) { console.log('[AntiStandby] Video fallback failed'); }
+
+    // Layer 3: DOM mutations + fake user activity every 15s
+    intervals.push(setInterval(() => {
+      const orig = document.title;
+      document.title = orig + ' ';
+      setTimeout(() => { document.title = orig; }, 50);
+      window.dispatchEvent(new Event('scroll'));
+      window.dispatchEvent(new MouseEvent('mousemove', { clientX: Math.random() * 100, clientY: Math.random() * 100 }));
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;width:1px;height:1px;top:0;left:0;opacity:0.001;';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 100);
+    }, 15000));
+
+    // Layer 4: Touch simulation for touch-screen TVs
+    intervals.push(setInterval(() => {
+      try {
+        document.dispatchEvent(new TouchEvent('touchstart', { touches: [new Touch({ identifier: 1, target: document.body })] }));
+      } catch (e) { /* not all browsers support Touch */ }
+    }, 30000));
 
     return () => {
       if (wakeLock) wakeLock.release().catch(() => { });
-      document.removeEventListener('visibilitychange', handleVisibility);
+      document.removeEventListener('visibilitychange', handleVis);
       if (videoEl) { videoEl.pause(); videoEl.remove(); }
+      intervals.forEach(clearInterval);
     };
   }, []);
 

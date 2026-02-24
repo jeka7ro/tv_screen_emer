@@ -46,6 +46,7 @@ export const ScreenSync = () => {
   const [editContentId, setEditContentId] = useState('');
   const [editSelectedScreens, setEditSelectedScreens] = useState([]);
   const [editFitMode, setEditFitMode] = useState('cover');
+  const [deleteGroupId, setDeleteGroupId] = useState(null);
 
   // ... (keep createModalOpen)
 
@@ -149,10 +150,10 @@ export const ScreenSync = () => {
   };
 
   const handleUnsync = async (groupId) => {
-    if (!window.confirm('Sigur dorești să oprești sincronizarea pentru acest grup?')) return;
     try {
       await api.delete(`/screen-sync/groups/${groupId}`);
       toast.success('Grup șters!');
+      setDeleteGroupId(null);
       loadData();
     } catch (error) {
       toast.error('Eroare la ștergere');
@@ -435,7 +436,7 @@ export const ScreenSync = () => {
                             <Button
                               variant="destructive"
                               size="sm"
-                              onClick={() => handleUnsync(group.id)}
+                              onClick={() => setDeleteGroupId(group.id)}
                               className="h-8 gap-1 bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 shadow-sm"
                             >
                               Oprește
@@ -1055,6 +1056,27 @@ export const ScreenSync = () => {
                   Salvează Modificările
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={!!deleteGroupId} onOpenChange={() => setDeleteGroupId(null)}>
+          <DialogContent className="sm:max-w-[420px]">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-slate-800">Confirmare Ștergere</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-slate-600">Sigur dorești să oprești sincronizarea pentru acest grup?</p>
+              <p className="text-sm text-slate-400 mt-2">Ecranele vor fi decuplate și vor funcționa independent.</p>
+            </div>
+            <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
+              <Button variant="outline" onClick={() => setDeleteGroupId(null)}>Anulează</Button>
+              <Button
+                onClick={() => handleUnsync(deleteGroupId)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Șterge Grupul
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
