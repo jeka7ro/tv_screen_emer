@@ -11,6 +11,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/
 
 export const ScreenSync = () => {
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
+  const getFileUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/api/uploads') || url.startsWith('/uploads')) {
+      const cleanUrl = url.startsWith('/api') ? url : `/api${url}`;
+      return `${BACKEND_URL}${cleanUrl}`;
+    }
+    return `${BACKEND_URL}${url}`;
+  };
   const [screens, setScreens] = useState([]);
   const [locations, setLocations] = useState([]);
   const [contents, setContents] = useState([]); // New state for content
@@ -53,7 +62,7 @@ export const ScreenSync = () => {
         // Construct URL assuming /uploads mount
         const url = content.type === 'video' && !content.thumbnail_url
           ? null
-          : `${BACKEND_URL}${content.thumbnail_url || content.file_url}`;
+          : getFileUrl(content.thumbnail_url || content.file_url);
         setPreviewContent({ type: content.type, url, name: content.name });
       }
     } else {
@@ -91,26 +100,21 @@ export const ScreenSync = () => {
       toast.error('Selectează cel puțin 2 ecrane');
       return;
     }
-    if (!selectedContentId) {
-      toast.error('Selectează conținutul');
-      return;
-    }
-
-    // Require Group Name if wanted? Or optional. Let's make it optional but good UI practice to have it.
-    // User said "sa pot edita. redenumi. etc." - implies managing names.
 
     setSyncing(true);
     try {
-      // Use selectedScreens order directly to respect user choice
       let orderedScreens = [...selectedScreens];
 
       const payload = {
         screen_ids: orderedScreens,
         sync_type: syncType,
-        content_id: selectedContentId,
         group_name: groupName || undefined,
         fit_mode: fitMode
       };
+
+      if (selectedContentId) {
+        payload.content_id = selectedContentId;
+      }
 
       if (syncType === 'matrix') {
         payload.grid_cols = parseInt(gridCols);
@@ -681,6 +685,40 @@ export const ScreenSync = () => {
               </div>
             </div>
 
+            {/* SECTION 5: Content Selection */}
+            <div className="pt-2">
+              <Label className="text-base font-semibold text-slate-800 mb-2 block border-b pb-2">5. Selectează Conținutul</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 border border-slate-200 rounded-xl p-3 bg-slate-50/30">
+                {contents.map(content => {
+                  const isSelected = selectedContentId === content.id;
+                  const imageUrl = content.thumbnail_url || content.file_url;
+                  const fullUrl = getFileUrl(imageUrl);
+
+                  return (
+                    <div
+                      key={content.id}
+                      onClick={() => setSelectedContentId(content.id === selectedContentId ? '' : content.id)}
+                      className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500' : 'border-slate-200 bg-white'}`}
+                    >
+                      <div className="w-14 h-9 flex-shrink-0 bg-slate-900 rounded overflow-hidden relative shadow-inner">
+                        {content.type === 'video' && (
+                          <Film className="absolute inset-0 m-auto w-3 h-3 text-white/40 z-10" />
+                        )}
+                        {fullUrl && <img src={fullUrl} className="w-full h-full object-cover opacity-80" alt="" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className={`text-[11px] font-bold truncate ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>{content.title || content.name}</h4>
+                        <p className="text-[9px] text-slate-400 uppercase font-medium">{content.type}</p>
+                      </div>
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'}`}>
+                        {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
               <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
                 Anulează
@@ -690,7 +728,7 @@ export const ScreenSync = () => {
                   handleSync();
                   setCreateModalOpen(false);
                 }}
-                disabled={syncing || selectedScreens.length < 2 || !selectedContentId}
+                disabled={syncing || selectedScreens.length < 2}
                 className="btn-primary"
               >
                 {syncing ? (
@@ -814,7 +852,7 @@ export const ScreenSync = () => {
                         const cols = editGridCols || 1;
                         const rows = editGridRows || 1;
                         const previewCont = contents.find(c => c.id === editContentId) || contents.find(c => editingGroup && editingGroup.current_content_id === c.id);
-                        const prevUrl = previewCont ? `${BACKEND_URL}${previewCont.thumbnail_url || previewCont.file_url}` : null;
+                        const prevUrl = previewCont ? getFileUrl(previewCont.thumbnail_url || previewCont.file_url) : null;
 
                         return (
                           <div className="relative w-full aspect-video bg-black border border-slate-700 rounded shadow-2xl overflow-hidden flex items-center justify-center">
@@ -839,7 +877,7 @@ export const ScreenSync = () => {
                       <div className="flex gap-1 overflow-x-auto pb-1 justify-center w-full">
                         {editSelectedScreens.length > 0 ? editSelectedScreens.map((id, idx) => {
                           const previewCont = contents.find(c => c.id === editContentId) || contents.find(c => editingGroup && editingGroup.current_content_id === c.id);
-                          const prevUrl = previewCont ? `${BACKEND_URL}${previewCont.thumbnail_url || previewCont.file_url}` : null;
+                          const prevUrl = previewCont ? getFileUrl(previewCont.thumbnail_url || previewCont.file_url) : null;
                           return (
                             <div key={id} className="relative flex-shrink-0 w-16 aspect-video bg-indigo-600 border border-indigo-400 rounded-sm flex items-center justify-center shadow-lg overflow-hidden">
                               {previewCont?.type === 'image' && prevUrl && (
@@ -950,7 +988,7 @@ export const ScreenSync = () => {
                   {contents.map(content => {
                     const isSelected = editContentId === content.id;
                     const imageUrl = content.thumbnail_url || content.file_url;
-                    const fullUrl = imageUrl ? `${BACKEND_URL}${imageUrl}` : null;
+                    const fullUrl = getFileUrl(imageUrl);
 
                     return (
                       <div
