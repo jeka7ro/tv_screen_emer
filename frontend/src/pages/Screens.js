@@ -33,6 +33,7 @@ export const Screens = () => {
   const [showSimulation, setShowSimulation] = useState(false);
   const [rotationFilter, setRotationFilter] = useState('all');
   const [viewMode, setViewMode] = useViewMode('view_mode_screens', 'grid');
+  const [gridSize, setGridSize] = useState(() => localStorage.getItem('screens_grid_size') || 'sm');
   const [formCityFilter, setFormCityFilter] = useState('all');
   const [formData, setFormData] = useState({
     location_id: '',
@@ -542,6 +543,19 @@ export const Screens = () => {
                 <ListIcon className="w-4 h-4" />
               </button>
             </div>
+            {viewMode === 'grid' && (
+              <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200 gap-0.5">
+                {[['sm', 'S'], ['md', 'M'], ['lg', 'L']].map(([size, label]) => (
+                  <button
+                    key={size}
+                    onClick={() => { setGridSize(size); localStorage.setItem('screens_grid_size', size); }}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${gridSize === size ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -698,7 +712,7 @@ export const Screens = () => {
                   </div>
                   <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className={`grid gap-4 ${gridSize === 'sm' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : gridSize === 'md' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
                   {locationScreens.map((screen) => (
                     <div key={screen.id} className={`glass-card p-3 flex flex-col h-full transition-all rounded-xl ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`} style={{ border: screen.status === 'active' ? '2px solid #10b981' : '2px solid #ef4444', boxShadow: screen.status === 'active' ? '0 0 8px 2px rgba(16, 185, 129, 0.25)' : '0 0 8px 2px rgba(239, 68, 68, 0.25)' }}>
                       {/* Header: checkbox + brand + name + actions */}
