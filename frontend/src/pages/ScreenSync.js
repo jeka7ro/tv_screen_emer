@@ -100,6 +100,17 @@ export const ScreenSync = () => {
       toast.error('Selectează cel puțin 2 ecrane');
       return;
     }
+    if (!selectedContentId) {
+      toast.error('Selectează conținutul de afișat');
+      return;
+    }
+    if (syncType === 'matrix') {
+      const totalSlots = parseInt(gridCols) * parseInt(gridRows);
+      if (selectedScreens.length !== totalSlots) {
+        toast.error(`Matrix ${gridCols}x${gridRows} necesită exact ${totalSlots} ecrane. Ai selectat ${selectedScreens.length}.`);
+        return;
+      }
+    }
 
     setSyncing(true);
     try {
@@ -728,7 +739,7 @@ export const ScreenSync = () => {
                   handleSync();
                   setCreateModalOpen(false);
                 }}
-                disabled={syncing || selectedScreens.length < 2}
+                disabled={syncing || selectedScreens.length < 2 || !selectedContentId}
                 className="btn-primary"
               >
                 {syncing ? (
