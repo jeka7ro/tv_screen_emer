@@ -33,6 +33,7 @@ export const Screens = () => {
   const [showSimulation, setShowSimulation] = useState(false);
   const [rotationFilter, setRotationFilter] = useState('all');
   const [viewMode, setViewMode] = useViewMode('view_mode_screens', 'grid');
+  const [formCityFilter, setFormCityFilter] = useState('all');
   const [formData, setFormData] = useState({
     location_id: '',
     name: '',
@@ -100,6 +101,9 @@ export const Screens = () => {
 
   const handleEdit = (screen) => {
     setEditingScreen(screen);
+    // Pre-set city filter to the screen's location city
+    const loc = locations.find(l => l.id === screen.location_id);
+    setFormCityFilter(loc?.city || 'all');
     setFormData({
       location_id: screen.location_id,
       name: screen.name,
@@ -133,6 +137,7 @@ export const Screens = () => {
       template_id: 'fullscreen',
       logo_brand_id: ''
     });
+    setFormCityFilter('all');
     setEditingScreen(null);
   };
 
@@ -310,7 +315,28 @@ export const Screens = () => {
                           value={formData.logo_brand_id}
                           onValueChange={(value) => setFormData({ ...formData, logo_brand_id: value === 'none' ? '' : value })}
                           placeholder="Selectează brand"
+                          style={formData.logo_brand_id ? { border: '2px solid #ef4444', borderRadius: '0.5rem' } : {}}
                         />
+                      </div>
+                      <div>
+                        <Label>Oraș</Label>
+                        <Select
+                          value={formCityFilter}
+                          onValueChange={(value) => {
+                            setFormCityFilter(value);
+                            setFormData({ ...formData, location_id: '' });
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Toate orașele" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Toate orașele</SelectItem>
+                            {[...new Set(locations.map(l => l.city).filter(Boolean))].sort().map(city => (
+                              <SelectItem key={city} value={city}>{city}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <Label>Locație</Label>
@@ -323,11 +349,13 @@ export const Screens = () => {
                             <SelectValue placeholder="Selectează locația" />
                           </SelectTrigger>
                           <SelectContent>
-                            {locations.map(location => (
-                              <SelectItem key={location.id} value={location.id}>
-                                {location.city} - {location.name}
-                              </SelectItem>
-                            ))}
+                            {locations
+                              .filter(l => formCityFilter === 'all' || l.city === formCityFilter)
+                              .map(location => (
+                                <SelectItem key={location.id} value={location.id}>
+                                  {location.city} - {location.name}
+                                </SelectItem>
+                              ))}
                           </SelectContent>
                         </Select>
                       </div>

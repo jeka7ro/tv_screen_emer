@@ -2,13 +2,13 @@ import React from 'react';
 import { Building2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-export const BrandSelector = ({ brands, value, onValueChange, placeholder = "Selectează brand", className = "" }) => {
+export const BrandSelector = ({ brands, value, onValueChange, placeholder = "Selectează brand", className = "", style }) => {
     // Find selected brand for display
     const selectedBrand = brands.find(b => b.id === value);
 
     return (
         <Select value={value} onValueChange={onValueChange}>
-            <SelectTrigger className={className} data-testid="brand-select">
+            <SelectTrigger className={className} style={style} data-testid="brand-select">
                 <SelectValue placeholder={placeholder}>
                     {selectedBrand && (
                         <div className="flex items-center gap-2">

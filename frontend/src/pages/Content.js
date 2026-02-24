@@ -721,6 +721,17 @@ export const Content = () => {
                           </div>
                         ) : item.type === 'image' ? (
                           <img src={getFileUrl(item.file_url)} className="w-full h-full object-cover" alt="" />
+                        ) : (videoAutoplay ? (
+                          <video
+                            key={`v-${item.id}-${videoAutoplay}`}
+                            src={getFileUrl(item.file_url)}
+                            className="w-full h-full object-cover"
+                            muted
+                            autoPlay
+                            loop
+                            playsInline
+                            preload="metadata"
+                          />
                         ) : item.thumbnail_url ? (
                           <div className="relative w-full h-full">
                             <img src={getFileUrl(item.thumbnail_url)} className="w-full h-full object-cover" alt="" />
@@ -736,12 +747,10 @@ export const Content = () => {
                             src={getFileUrl(item.file_url)}
                             className="w-full h-full object-cover"
                             muted
-                            autoPlay={videoAutoplay}
-                            loop={videoAutoplay}
                             playsInline
                             preload="metadata"
                           />
-                        )}
+                        ))}
                       </div>
                     </td>
                     <td className="p-4">

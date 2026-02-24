@@ -196,6 +196,8 @@ async def init_db() -> None:
         ("logo_brand_id", "TEXT", "NULL"),
         ("logo_position", "TEXT", "'top-right'"),
         ("logo_size", "TEXT", "'md'"),
+        ("sakura_enabled", "BOOLEAN", "FALSE"),
+        ("sakura_intensity", "TEXT", "'medium'"),
     ]:
         try:
             await pool.execute(f"ALTER TABLE screens ADD COLUMN IF NOT EXISTS {col} {col_type} DEFAULT {default}")
@@ -504,14 +506,21 @@ async def screen_exists_by_slug(slug: str) -> bool:
 async def screen_insert(row: Dict[str, Any]) -> None:
     await _execute(
         """INSERT INTO screens (id, location_id, name, slug, resolution, orientation, template_id,
-           sync_group, cascade_offset, status, last_active, sync_type, created_at, sync_group_name, sync_fit_mode, brand)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)""",
+           sync_group, cascade_offset, status, last_active, sync_type, created_at, sync_group_name, sync_fit_mode, brand,
+           parallax_enabled, steam_enabled, logo_enabled, logo_brand_id, logo_position, logo_size,
+           sakura_enabled, sakura_intensity)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+                   $17, $18, $19, $20, $21, $22, $23, $24)""",
         row["id"], row["location_id"], row["name"], row["slug"],
         row.get("resolution", "1920x1080"), row.get("orientation", "0"),
         row.get("template_id"), row.get("sync_group"), row.get("cascade_offset", 0),
         row.get("status", "offline"), row.get("last_active"), row.get("sync_type", "simple"), 
         row["created_at"], row.get("sync_group_name"), row.get("sync_fit_mode", "cover"),
-        row.get("brand")
+        row.get("brand"),
+        row.get("parallax_enabled", False), row.get("steam_enabled", False),
+        row.get("logo_enabled", False), row.get("logo_brand_id"),
+        row.get("logo_position", "top-right"), row.get("logo_size", "md"),
+        row.get("sakura_enabled", False), row.get("sakura_intensity", "medium")
     )
 
 
