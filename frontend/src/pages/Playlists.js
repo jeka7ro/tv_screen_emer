@@ -1476,15 +1476,18 @@ export const Playlists = () => {
                           setDraggedPlaylistId(null);
                           setDroppingOnScreenId(null);
                         }}
-                        className={`bg-white rounded-xl border transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''}`}
+                        className={`bg-white rounded-xl border border-slate-200 transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''} ${selectedPlaylists.includes(playlist.id) ? 'ring-2 ring-red-500 shadow-xl scale-[1.02]' : ''}`}
                         style={{
-                          borderColor: playlist.color || '#EF4444',
-                          borderWidth: '2px',
-                          boxShadow: selectedPlaylists.includes(playlist.id) ? `0 0 0 1px ${playlist.color || '#EF4444'}, 0 15px 40px -10px ${(playlist.color || '#EF4444')}80` : 'none',
+                          boxShadow: selectedPlaylists.includes(playlist.id) ? `0 15px 40px -10px ${(playlist.color || '#EF4444')}80` : 'none',
                           '--playlist-color': playlist.color || '#EF4444'
                         }}
                         data-testid={`playlist-card-${playlist.id}`}
                       >
+                        {/* Thin Colored Line at Top */}
+                        <div
+                          className="w-full h-2 rounded-t-xl relative overflow-hidden"
+                          style={{ background: `linear-gradient(90deg, ${playlist.color || '#EF4444'} 0%, ${playlist.color || '#EF4444'}dd 100%)` }}
+                        ></div>
                         <div className="p-4 flex-1">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-3 overflow-hidden min-w-0">
@@ -1494,8 +1497,7 @@ export const Playlists = () => {
                                 onChange={() => toggleSelectPlaylist(playlist.id)}
                                 className="rounded text-red-600 focus:ring-red-500 w-4 h-4 cursor-pointer shrink-0"
                               />
-                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden ${brandLogo ? 'bg-white' : (isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400')
-                                }`}>
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden ${brandLogo ? 'bg-white' : (isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400')}`}>
                                 {brandLogo ? (
                                   <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-1" />
                                 ) : (
@@ -1525,7 +1527,6 @@ export const Playlists = () => {
                                 className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
                                 onClick={async () => {
                                   try {
-                                    // Check if playlist has screens assigned
                                     const screensRes = await api.get('/screens');
                                     const allScreens = screensRes.data;
 
@@ -1572,7 +1573,6 @@ export const Playlists = () => {
                               </Button>
                             </div>
                           </div>
-
                           {/* Content Previews - Restored */}
                           <div className="grid grid-cols-4 gap-1 mb-3 h-12">
                             {playlist.items?.slice(0, 4).map((playItem, idx) => {
@@ -1640,13 +1640,15 @@ export const Playlists = () => {
                           )}
                         </div>
 
-                        <div className="p-3 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50/50 rounded-b-xl">
+                        <div className="p-3 border-t flex items-center justify-end gap-2 rounded-b-xl"
+                          style={{ backgroundColor: playlist.color || '#EF4444', borderColor: playlist.color || '#EF4444' }}
+                        >
                           <div className="flex items-center gap-1">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleToggleStatus(playlist)}
-                              className={`h-8 px-3 text-xs font-bold ${isActive ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50" : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"}`}
+                              className="h-8 px-3 text-xs font-bold text-white/90 hover:text-white hover:bg-white/20"
                             >
                               {isActive ? 'Stop' : 'Activează'}
                             </Button>
@@ -1654,7 +1656,7 @@ export const Playlists = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDuplicate(playlist)}
-                              className="h-8 px-2 text-slate-500 hover:text-red-600 hover:bg-red-50 text-xs"
+                              className="h-8 px-2 text-white/80 hover:text-white hover:bg-white/20 text-xs"
                             >
                               <Copy className="w-3.5 h-3.5 mr-1.5" />
                               Duplică
@@ -1665,14 +1667,16 @@ export const Playlists = () => {
                     );
                   })}
                 </div>
-              )}
+              )
+              }
             </div>
           </div>
         </div>
-      </DashboardLayout>
+      </DashboardLayout >
 
       {/* Screen Assignment Dialog */}
-      <Dialog open={!!screenAssignOpen} onOpenChange={(open) => { if (!open) setScreenAssignOpen(null); }}>
+      < Dialog open={!!screenAssignOpen
+      } onOpenChange={(open) => { if (!open) setScreenAssignOpen(null); }}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
@@ -1730,26 +1734,28 @@ export const Playlists = () => {
             })}
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Simulation Modal */}
-      {showSimulation && (
-        <Dialog open={showSimulation} onOpenChange={setShowSimulation}>
-          <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
-            <DialogHeader className="sr-only">
-              <DialogTitle>Simulare Live Playlist-uri</DialogTitle>
-              <DialogDescription>Previzualizare live a ecranelor care afișează playlist-urile selectate</DialogDescription>
-            </DialogHeader>
-            <div className="relative w-full h-[90vh]">
-              <PlaylistSimulation
-                playlistIds={selectedPlaylists}
-                playlists={playlists}
-                onClose={() => setShowSimulation(false)}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      {
+        showSimulation && (
+          <Dialog open={showSimulation} onOpenChange={setShowSimulation}>
+            <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 overflow-hidden">
+              <DialogHeader className="sr-only">
+                <DialogTitle>Simulare Live Playlist-uri</DialogTitle>
+                <DialogDescription>Previzualizare live a ecranelor care afișează playlist-urile selectate</DialogDescription>
+              </DialogHeader>
+              <div className="relative w-full h-[90vh]">
+                <PlaylistSimulation
+                  playlistIds={selectedPlaylists}
+                  playlists={playlists}
+                  onClose={() => setShowSimulation(false)}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )
+      }
     </>
   );
 };

@@ -301,9 +301,9 @@ export const Screens = () => {
                     Adaugă ecran
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col overflow-hidden [&>button]:text-white [&>button]:hover:bg-white/20">
-                  <DialogHeader className="px-8 py-4 -mx-8 -mt-8 mb-2" style={{ background: 'linear-gradient(90deg, #dc2626 0%, #e11d48 100%)' }}>
-                    <DialogTitle className="text-white text-lg font-bold">
+                <DialogContent className="max-h-[90vh] flex flex-col">
+                  <DialogHeader>
+                    <DialogTitle>
                       {editingScreen ? 'Editează ecranul' : 'Adaugă ecran nou'}
                     </DialogTitle>
                   </DialogHeader>
