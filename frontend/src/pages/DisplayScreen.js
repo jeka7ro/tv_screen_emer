@@ -94,11 +94,38 @@ export const DisplayScreen = () => {
       }
     }, 10000);
 
+    // LG WebOS SPECIFIC HACK: 
+    // WebOS ignores WakeLock/NoSleep after 30 mins. It only stays awake if a REAL video (not base64) is playing.
+    let lgVideoEl = null;
+    try {
+      if (navigator.userAgent.indexOf('Web0S') >= 0 || navigator.userAgent.indexOf('WebOS') >= 0 || navigator.userAgent.indexOf('SmartTV') >= 0) {
+        console.log('[AntiStandby] LG WebOS detected. Deploying native screensaver hack.');
+        lgVideoEl = document.createElement('video');
+        // Must be a real external URL, WebOS ignores data URIs for screensaver prevention
+        lgVideoEl.src = 'https://televiziune.s3.eu-central-1.amazonaws.com/black-1sec.mp4';
+        lgVideoEl.loop = true;
+        lgVideoEl.muted = true;
+        lgVideoEl.playsInline = true;
+        lgVideoEl.setAttribute('playsinline', '');
+        lgVideoEl.setAttribute('webkit-playsinline', '');
+        lgVideoEl.style.cssText = 'width:2px;height:2px;position:fixed;top:0px;left:0px;opacity:0.01;pointer-events:none;z-index:9999;';
+        document.body.appendChild(lgVideoEl);
+
+        lgVideoEl.play().catch(() => { });
+
+        // WebOS sometimes pauses background videos. Force play every 15s.
+        setInterval(() => {
+          if (lgVideoEl && lgVideoEl.paused) lgVideoEl.play().catch(() => { });
+        }, 15000);
+      }
+    } catch (e) { }
+
     return () => {
       document.removeEventListener('click', enableNoSleep, false);
       document.removeEventListener('touchstart', enableNoSleep, false);
       clearInterval(aggressiveInterval);
       noSleep.disable();
+      if (lgVideoEl) { lgVideoEl.pause(); lgVideoEl.remove(); }
     };
   }, []);
 
