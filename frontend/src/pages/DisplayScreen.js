@@ -486,13 +486,13 @@ export const DisplayScreen = () => {
     };
 
     if (item.type === 'image') {
-      return <img src={getFileUrl(item.file_url)} alt="" className="shadow-2xl" style={style} />;
+      return <img key={item.id} src={getFileUrl(item.file_url)} alt="" className="shadow-2xl" style={style} />;
     } else if (item.type === 'video') {
-      return <video src={getFileUrl(item.file_url)} autoPlay loop muted playsInline className="shadow-2xl" style={style} />;
+      return <video key={item.id} src={getFileUrl(item.file_url)} autoPlay loop muted playsInline className="shadow-2xl" style={style} />;
     } else if (item.type === 'youtube') {
-      return <iframe src={getYouTubeEmbedUrl(item.file_url)} className="w-full h-full border-0" allow="autoplay; encrypted-media" allowFullScreen title={item.title || ''} />;
+      return <iframe key={item.id} src={getYouTubeEmbedUrl(item.file_url)} className="w-full h-full border-0" allow="autoplay; encrypted-media" allowFullScreen title={item.title || ''} />;
     } else if (item.type === 'web') {
-      return <iframe src={item.file_url} className="w-full h-full border-0 bg-white" title={item.title || ''} />;
+      return <iframe key={item.id} src={item.file_url} className="w-full h-full border-0 bg-white" title={item.title || ''} />;
     }
     return isDebug ? <div className="text-red-500">UNKNOWN TYPE: {item.type}</div> : null;
   };
