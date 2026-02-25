@@ -501,6 +501,34 @@ export const Playlists = () => {
     return new Date(b.created_at || 0) - new Date(a.created_at || 0);
   });
 
+  // Group sorted playlists by location (via assigned screens)
+  const getPlaylistLocationIds = (playlistId) => {
+    const assignedScreens = screens.filter(s => isPlaylistOnScreen(playlistId, s.id));
+    const locIds = [...new Set(assignedScreens.map(s => s.location_id).filter(Boolean))];
+    return locIds.length > 0 ? locIds : [null]; // null = no location
+  };
+
+  const getLocationName = (locationId) => {
+    if (!locationId) return 'Fără locație';
+    return locations.find(l => l.id === locationId)?.name || 'Locație necunoscută';
+  };
+
+  const playlistsByLocation = {};
+  sortedPlaylists.forEach(playlist => {
+    const locIds = getPlaylistLocationIds(playlist.id);
+    locIds.forEach(locId => {
+      const key = locId || '__none__';
+      if (!playlistsByLocation[key]) playlistsByLocation[key] = [];
+      playlistsByLocation[key].push(playlist);
+    });
+  });
+
+  const sortedPlaylistLocationGroups = Object.entries(playlistsByLocation).sort((a, b) => {
+    if (a[0] === '__none__') return 1;
+    if (b[0] === '__none__') return -1;
+    return getLocationName(a[0]).localeCompare(getLocationName(b[0]));
+  });
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -1430,249 +1458,263 @@ export const Playlists = () => {
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {sortedPlaylists.map((playlist) => {
-                    // Check if playlist is truly active: has items AND is assigned to screens
-                    const hasItems = playlist.items && playlist.items.length > 0;
-                    const isAssignedToScreens = screens.some(s => isPlaylistOnScreen(playlist.id, s.id));
-                    const isActive = hasItems && isAssignedToScreens && playlist.status === 'active';
-                    const totalDuration = calculateTotalDuration(playlist.items);
-                    const brandName = Array.isArray(playlist.brand) ? playlist.brand[0] : playlist.brand;
-                    const brandLogo = getBrandLogo(brandName);
-
-                    // Calculate duration/remaining time
-                    let timeInfo = null;
-                    if (playlist.is_scheduled && playlist.start_at) {
-                      const start = new Date(playlist.start_at);
-                      const end = playlist.end_at ? new Date(playlist.end_at) : null;
-                      const now = new Date();
-
-                      if (now < start) {
-                        const diff = start - now;
-                        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                        timeInfo = <span className="text-amber-600 font-bold">Începe în {days}z {hours}h</span>;
-                      } else if (end && now > end) {
-                        timeInfo = <span className="text-slate-400 font-bold">Finalizat</span>;
-                      } else if (end) {
-                        const diff = end - now;
-                        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                        timeInfo = <span className="text-emerald-600 font-bold">Rămas: {days}z {hours}h</span>;
-                      } else {
-                        timeInfo = <span className="text-emerald-600 font-bold">Rulează continuu</span>;
-                      }
-                    }
-
-                    return (
-                      <div
-                        key={playlist.id}
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData('text/plain', playlist.id);
-                          setDraggedPlaylistId(playlist.id);
-                        }}
-                        onDragEnd={() => {
-                          setDraggedPlaylistId(null);
-                          setDroppingOnScreenId(null);
-                        }}
-                        className={`bg-white rounded-xl border border-slate-200 transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''} ${selectedPlaylists.includes(playlist.id) ? 'ring-2 ring-red-500 shadow-xl scale-[1.02]' : ''}`}
-                        style={{
-                          boxShadow: selectedPlaylists.includes(playlist.id) ? `0 15px 40px -10px ${(playlist.color || '#EF4444')}80` : 'none',
-                          '--playlist-color': playlist.color || '#EF4444'
-                        }}
-                        data-testid={`playlist-card-${playlist.id}`}
-                      >
-                        {/* Thin Colored Line at Top */}
-                        <div
-                          className="w-full h-2 rounded-t-xl relative overflow-hidden"
-                          style={{ background: `linear-gradient(90deg, ${playlist.color || '#EF4444'} 0%, ${playlist.color || '#EF4444'}dd 100%)` }}
-                        ></div>
-                        <div className="p-4 flex-1">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3 overflow-hidden min-w-0">
-                              <input
-                                type="checkbox"
-                                checked={selectedPlaylists.includes(playlist.id)}
-                                onChange={() => toggleSelectPlaylist(playlist.id)}
-                                className="rounded text-red-600 focus:ring-red-500 w-4 h-4 cursor-pointer shrink-0"
-                              />
-                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden ${brandLogo ? 'bg-white' : (isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400')}`}>
-                                {brandLogo ? (
-                                  <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-1" />
-                                ) : (
-                                  <Film className="w-5 h-5" />
-                                )}
-                              </div>
-                              <span className="text-xs font-semibold text-slate-800 truncate" title={playlist.name}>{playlist.name}</span>
-                            </div>
-
-                            <div className="flex gap-1 shrink-0 ml-2">
-                              <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-300'} self-center`} title={isActive ? 'Activ' : 'Inactiv'}></div>
-                              <button
-                                onClick={() => setScreenAssignOpen(screenAssignOpen === playlist.id ? null : playlist.id)}
-                                className={`relative h-7 w-7 p-1.5 rounded-lg transition-all ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-red-500 hover:bg-red-100' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}
-                                title="Atribuie ecrane"
-                              >
-                                <Airplay className="w-4 h-4" />
-                                {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 && (
-                                  <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
-                                    {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length}
-                                  </span>
-                                )}
-                              </button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
-                                onClick={async () => {
-                                  try {
-                                    const screensRes = await api.get('/screens');
-                                    const allScreens = screensRes.data;
-
-                                    let hasScreens = false;
-                                    for (const screen of allScreens) {
-                                      try {
-                                        const zonesRes = await api.get(`/screen-zones/${screen.id}`);
-                                        const hasPlaylist = zonesRes.data.some(zone =>
-                                          (zone.playlist_id && zone.playlist_id === playlist.id) ||
-                                          (zone.content_type === 'playlist' && zone.content_id === playlist.id)
-                                        );
-                                        if (hasPlaylist) {
-                                          hasScreens = true;
-                                          break;
-                                        }
-                                      } catch (e) {
-                                        // Skip screen
-                                      }
-                                    }
-
-                                    if (!hasScreens) {
-                                      toast.warning(`Playlist-ul "${playlist.name}" nu are niciun ecran atribuit`, {
-                                        description: 'Atribuie acest playlist la un ecran pentru a vedea simularea'
-                                      });
-                                      return;
-                                    }
-
-                                    setSelectedPlaylists([playlist.id]);
-                                    setShowSimulation(true);
-                                  } catch (error) {
-                                    console.error('Error checking screens:', error);
-                                    toast.error('Eroare la verificarea ecranelor');
-                                  }
-                                }}
-                                title="Previzualizare"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-amber-600 hover:bg-amber-50" onClick={() => handleEdit(playlist)} title="Editează">
-                                <Edit className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50" onClick={() => handleDelete(playlist.id)} title="Șterge">
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          </div>
-                          {/* Content Previews - Restored */}
-                          <div className="grid grid-cols-4 gap-1 mb-3 h-12">
-                            {playlist.items?.slice(0, 4).map((playItem, idx) => {
-                              const contentItem = content.find(c => c.id === playItem.content_id);
-                              if (!contentItem) return <div key={idx} className="bg-slate-50 rounded"></div>;
-                              const resolveUrl = (url) => {
-                                if (!url) return '';
-                                if (url.startsWith('/api/uploads')) return `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000'}${url}`;
-                                return url;
-                              };
-                              return (
-                                <div key={idx} className="relative rounded overflow-hidden bg-black h-full border border-slate-100">
-                                  {contentItem.type === 'video' ? (
-                                    contentItem.thumbnail_url ? (
-                                      <img src={resolveUrl(contentItem.thumbnail_url)} alt="" className="w-full h-full object-cover opacity-80" />
-                                    ) : (
-                                      <video src={resolveUrl(contentItem.file_url)} className="w-full h-full object-cover opacity-80" muted autoPlay loop playsInline preload="metadata" />
-                                    )
-                                  ) : (
-                                    <img src={resolveUrl(contentItem.thumbnail_url || contentItem.file_url)} alt="" className="w-full h-full object-cover opacity-80" />
-                                  )}
-                                </div>
-                              )
-                            })}
-                            {[...Array(Math.max(0, 4 - (playlist.items?.length || 0)))].map((_, idx) => (
-                              <div key={`empty-${idx}`} className="bg-slate-50 rounded border border-slate-100/50"></div>
-                            ))}
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2 mb-3">
-                            <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
-                              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Conținut</p>
-                              <div className="flex items-center gap-1.5 text-slate-700">
-                                <ListIcon className="w-3.5 h-3.5" />
-                                <span className="text-xs font-semibold">{playlist.items?.length || 0} elemente</span>
-                              </div>
-                            </div>
-                            <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
-                              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Durată</p>
-                              <div className="flex items-center gap-1.5 text-slate-700">
-                                <Clock className="w-3.5 h-3.5" />
-                                <span className="text-xs font-semibold">{formatDuration(totalDuration)}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {playlist.is_scheduled && (
-                            <div className="flex flex-col gap-1.5 text-xs p-2.5 rounded-lg border transition-all"
-                              style={{
-                                backgroundColor: `${playlist.color || '#EF4444'}15`,
-                                borderColor: `${playlist.color || '#EF4444'}30`,
-                                color: playlist.color || '#1e1b4b'
-                              }}>
-                              <div className="flex items-center gap-2 font-black">
-                                <CalendarIcon className="w-3.5 h-3.5 opacity-80" />
-                                <span>
-                                  {playlist.start_at ? format(new Date(playlist.start_at), 'dd MMM HH:mm', { locale: ro }) : 'Acum'}
-                                  {' - '}
-                                  {playlist.end_at ? format(new Date(playlist.end_at), 'dd MMM HH:mm', { locale: ro }) : '∞'}
-                                </span>
-                              </div>
-                              {timeInfo && <div className="text-[10px] pl-5 font-bold opacity-90">{timeInfo}</div>}
-                            </div>
-
-                          )}
+                <div className="space-y-8">
+                  {sortedPlaylistLocationGroups.map(([locationKey, groupPlaylists]) => (
+                    <div key={locationKey}>
+                      {/* Location Header */}
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+                          <MapPin className="w-4 h-4 text-red-500" />
+                          <span className="text-sm font-bold text-slate-700">{getLocationName(locationKey === '__none__' ? null : locationKey)}</span>
+                          <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">{groupPlaylists.length}</span>
                         </div>
-
-                        <div className="p-3 border-t flex items-center justify-end gap-2 rounded-b-xl"
-                          style={{ backgroundColor: playlist.color || '#EF4444', borderColor: playlist.color || '#EF4444' }}
-                        >
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleToggleStatus(playlist)}
-                              className="h-8 px-3 text-xs font-bold text-white/90 hover:text-white hover:bg-white/20"
-                            >
-                              {isActive ? 'Stop' : 'Activează'}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDuplicate(playlist)}
-                              className="h-8 px-2 text-white/80 hover:text-white hover:bg-white/20 text-xs"
-                            >
-                              <Copy className="w-3.5 h-3.5 mr-1.5" />
-                              Duplică
-                            </Button>
-                          </div>
-                        </div>
+                        <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
                       </div>
-                    );
-                  })}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {groupPlaylists.map((playlist) => {
+                          // Check if playlist is truly active: has items AND is assigned to screens
+                          const hasItems = playlist.items && playlist.items.length > 0;
+                          const isAssignedToScreens = screens.some(s => isPlaylistOnScreen(playlist.id, s.id));
+                          const isActive = hasItems && isAssignedToScreens && playlist.status === 'active';
+                          const totalDuration = calculateTotalDuration(playlist.items);
+                          const brandName = Array.isArray(playlist.brand) ? playlist.brand[0] : playlist.brand;
+                          const brandLogo = getBrandLogo(brandName);
+
+                          // Calculate duration/remaining time
+                          let timeInfo = null;
+                          if (playlist.is_scheduled && playlist.start_at) {
+                            const start = new Date(playlist.start_at);
+                            const end = playlist.end_at ? new Date(playlist.end_at) : null;
+                            const now = new Date();
+
+                            if (now < start) {
+                              const diff = start - now;
+                              const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                              const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                              timeInfo = <span className="text-amber-600 font-bold">Începe în {days}z {hours}h</span>;
+                            } else if (end && now > end) {
+                              timeInfo = <span className="text-slate-400 font-bold">Finalizat</span>;
+                            } else if (end) {
+                              const diff = end - now;
+                              const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                              const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                              timeInfo = <span className="text-emerald-600 font-bold">Rămas: {days}z {hours}h</span>;
+                            } else {
+                              timeInfo = <span className="text-emerald-600 font-bold">Rulează continuu</span>;
+                            }
+                          }
+
+                          return (
+                            <div
+                              key={playlist.id}
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData('text/plain', playlist.id);
+                                setDraggedPlaylistId(playlist.id);
+                              }}
+                              onDragEnd={() => {
+                                setDraggedPlaylistId(null);
+                                setDroppingOnScreenId(null);
+                              }}
+                              className={`bg-white rounded-xl border border-slate-200 transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''} ${selectedPlaylists.includes(playlist.id) ? 'ring-2 ring-red-500 shadow-xl scale-[1.02]' : ''}`}
+                              style={{
+                                boxShadow: selectedPlaylists.includes(playlist.id) ? `0 15px 40px -10px ${(playlist.color || '#EF4444')}80` : 'none',
+                                '--playlist-color': playlist.color || '#EF4444'
+                              }}
+                              data-testid={`playlist-card-${playlist.id}`}
+                            >
+                              {/* Thin Colored Line at Top */}
+                              <div
+                                className="w-full h-2 rounded-t-xl relative overflow-hidden"
+                                style={{ background: `linear-gradient(90deg, ${playlist.color || '#EF4444'} 0%, ${playlist.color || '#EF4444'}dd 100%)` }}
+                              ></div>
+                              <div className="p-4 flex-1">
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex items-center gap-3 overflow-hidden min-w-0">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedPlaylists.includes(playlist.id)}
+                                      onChange={() => toggleSelectPlaylist(playlist.id)}
+                                      className="rounded text-red-600 focus:ring-red-500 w-4 h-4 cursor-pointer shrink-0"
+                                    />
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden ${brandLogo ? 'bg-white' : (isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400')}`}>
+                                      {brandLogo ? (
+                                        <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-1" />
+                                      ) : (
+                                        <Film className="w-5 h-5" />
+                                      )}
+                                    </div>
+                                    <span className="text-xs font-semibold text-slate-800 truncate" title={playlist.name}>{playlist.name}</span>
+                                  </div>
+
+                                  <div className="flex gap-1 shrink-0 ml-2">
+                                    <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-300'} self-center`} title={isActive ? 'Activ' : 'Inactiv'}></div>
+                                    <button
+                                      onClick={() => setScreenAssignOpen(screenAssignOpen === playlist.id ? null : playlist.id)}
+                                      className={`relative h-7 w-7 p-1.5 rounded-lg transition-all ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-red-500 hover:bg-red-100' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}
+                                      title="Atribuie ecrane"
+                                    >
+                                      <Airplay className="w-4 h-4" />
+                                      {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
+                                          {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length}
+                                        </span>
+                                      )}
+                                    </button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                                      onClick={async () => {
+                                        try {
+                                          const screensRes = await api.get('/screens');
+                                          const allScreens = screensRes.data;
+
+                                          let hasScreens = false;
+                                          for (const screen of allScreens) {
+                                            try {
+                                              const zonesRes = await api.get(`/screen-zones/${screen.id}`);
+                                              const hasPlaylist = zonesRes.data.some(zone =>
+                                                (zone.playlist_id && zone.playlist_id === playlist.id) ||
+                                                (zone.content_type === 'playlist' && zone.content_id === playlist.id)
+                                              );
+                                              if (hasPlaylist) {
+                                                hasScreens = true;
+                                                break;
+                                              }
+                                            } catch (e) {
+                                              // Skip screen
+                                            }
+                                          }
+
+                                          if (!hasScreens) {
+                                            toast.warning(`Playlist-ul "${playlist.name}" nu are niciun ecran atribuit`, {
+                                              description: 'Atribuie acest playlist la un ecran pentru a vedea simularea'
+                                            });
+                                            return;
+                                          }
+
+                                          setSelectedPlaylists([playlist.id]);
+                                          setShowSimulation(true);
+                                        } catch (error) {
+                                          console.error('Error checking screens:', error);
+                                          toast.error('Eroare la verificarea ecranelor');
+                                        }
+                                      }}
+                                      title="Previzualizare"
+                                    >
+                                      <Eye className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-amber-600 hover:bg-amber-50" onClick={() => handleEdit(playlist)} title="Editează">
+                                      <Edit className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50" onClick={() => handleDelete(playlist.id)} title="Șterge">
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                {/* Content Previews - Restored */}
+                                <div className="grid grid-cols-4 gap-1 mb-3 h-12">
+                                  {playlist.items?.slice(0, 4).map((playItem, idx) => {
+                                    const contentItem = content.find(c => c.id === playItem.content_id);
+                                    if (!contentItem) return <div key={idx} className="bg-slate-50 rounded"></div>;
+                                    const resolveUrl = (url) => {
+                                      if (!url) return '';
+                                      if (url.startsWith('/api/uploads')) return `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000'}${url}`;
+                                      return url;
+                                    };
+                                    return (
+                                      <div key={idx} className="relative rounded overflow-hidden bg-black h-full border border-slate-100">
+                                        {contentItem.type === 'video' ? (
+                                          contentItem.thumbnail_url ? (
+                                            <img src={resolveUrl(contentItem.thumbnail_url)} alt="" className="w-full h-full object-cover opacity-80" />
+                                          ) : (
+                                            <video src={resolveUrl(contentItem.file_url)} className="w-full h-full object-cover opacity-80" muted autoPlay loop playsInline preload="metadata" />
+                                          )
+                                        ) : (
+                                          <img src={resolveUrl(contentItem.thumbnail_url || contentItem.file_url)} alt="" className="w-full h-full object-cover opacity-80" />
+                                        )}
+                                      </div>
+                                    )
+                                  })}
+                                  {[...Array(Math.max(0, 4 - (playlist.items?.length || 0)))].map((_, idx) => (
+                                    <div key={`empty-${idx}`} className="bg-slate-50 rounded border border-slate-100/50"></div>
+                                  ))}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                  <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                                    <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Conținut</p>
+                                    <div className="flex items-center gap-1.5 text-slate-700">
+                                      <ListIcon className="w-3.5 h-3.5" />
+                                      <span className="text-xs font-semibold">{playlist.items?.length || 0} elemente</span>
+                                    </div>
+                                  </div>
+                                  <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                                    <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Durată</p>
+                                    <div className="flex items-center gap-1.5 text-slate-700">
+                                      <Clock className="w-3.5 h-3.5" />
+                                      <span className="text-xs font-semibold">{formatDuration(totalDuration)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {playlist.is_scheduled && (
+                                  <div className="flex flex-col gap-1.5 text-xs p-2.5 rounded-lg border transition-all"
+                                    style={{
+                                      backgroundColor: `${playlist.color || '#EF4444'}15`,
+                                      borderColor: `${playlist.color || '#EF4444'}30`,
+                                      color: playlist.color || '#1e1b4b'
+                                    }}>
+                                    <div className="flex items-center gap-2 font-black">
+                                      <CalendarIcon className="w-3.5 h-3.5 opacity-80" />
+                                      <span>
+                                        {playlist.start_at ? format(new Date(playlist.start_at), 'dd MMM HH:mm', { locale: ro }) : 'Acum'}
+                                        {' - '}
+                                        {playlist.end_at ? format(new Date(playlist.end_at), 'dd MMM HH:mm', { locale: ro }) : '∞'}
+                                      </span>
+                                    </div>
+                                    {timeInfo && <div className="text-[10px] pl-5 font-bold opacity-90">{timeInfo}</div>}
+                                  </div>
+
+                                )}
+                              </div>
+
+                              <div className="p-3 border-t flex items-center justify-end gap-2 rounded-b-xl"
+                                style={{ backgroundColor: playlist.color || '#EF4444', borderColor: playlist.color || '#EF4444' }}
+                              >
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleToggleStatus(playlist)}
+                                    className="h-8 px-3 text-xs font-bold text-white/90 hover:text-white hover:bg-white/20"
+                                  >
+                                    {isActive ? 'Stop' : 'Activează'}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDuplicate(playlist)}
+                                    className="h-8 px-2 text-white/80 hover:text-white hover:bg-white/20 text-xs"
+                                  >
+                                    <Copy className="w-3.5 h-3.5 mr-1.5" />
+                                    Duplică
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              )
-              }
+              )}
             </div>
           </div>
         </div>
-      </DashboardLayout >
+      </DashboardLayout>
 
       {/* Screen Assignment Dialog */}
       < Dialog open={!!screenAssignOpen
