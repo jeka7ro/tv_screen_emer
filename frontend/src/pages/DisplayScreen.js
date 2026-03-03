@@ -142,6 +142,14 @@ export const DisplayScreen = () => {
             document.body.click();
           } catch (err) { }
         }, 15000); // Trigger every 15s
+
+        // 3. Ultimate Fallback: The 14-Minute Refresh Rule
+        // WebOS natively forces a screensaver around the 15-minute mark if no physical magic remote interaction is detected.
+        // Reloading the page slightly before this (14 minutes) resets the WebOS browser's internal idle timer.
+        setTimeout(() => {
+          console.log('[AntiStandby] Reaching 14-minute limit for SmartTVs. Forcing page reload to reset system screensaver timer.');
+          window.location.reload();
+        }, 14 * 60 * 1000); // 14 mins
       }
     } catch (e) { }
 
