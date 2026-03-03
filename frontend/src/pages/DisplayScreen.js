@@ -123,7 +123,7 @@ export const DisplayScreen = () => {
 
         lgVideoEl.play().catch(() => { });
 
-        // 2. DOM Jitter & Scroll Hack (simulates user activity every 30s)
+        // 2. DOM Jitter & Scroll Hack + Fake Input Events (simulates user activity every 30s)
         let jitterPhase = 0;
         screensaverHackerInterval = setInterval(() => {
           jitterPhase = 1 - jitterPhase;
@@ -141,9 +141,16 @@ export const DisplayScreen = () => {
           // Micro-scroll to trigger viewport rendering updates
           window.scrollBy(0, jitterPhase ? 1 : -1);
 
+          // Dispatch dummy events for Hisense/VIDAA which requires actual input to reset idle timer
+          try {
+            document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: jitterPhase ? 100 : 101, clientY: 100 }));
+            document.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Shift' }));
+            document.body.click();
+          } catch (err) { }
+
           // Ensure video keeps playing
           if (lgVideoEl && lgVideoEl.paused) lgVideoEl.play().catch(() => { });
-        }, 30000);
+        }, 15000); // Trigger more aggressively (15s) for VIDAA
       }
     } catch (e) { }
 
