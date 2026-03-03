@@ -95,9 +95,9 @@ export const DisplayScreen = () => {
     }, 10000);
 
     // LG WebOS & Hisense VIDAA SPECIFIC HACK:
-    // WebOS/VIDAA ignores WakeLock/NoSleep after 15-30 mins. It only stays awake if a REAL video (not base64) is playing, or if there is active DOM culling/scrolling.
-    let lgVideoEl = null;
+    // WebOS/VIDAA ignores WakeLock/NoSleep.
     let screensaverHackerInterval = null;
+    let lgIframe = null;
 
     try {
       if (
@@ -107,50 +107,41 @@ export const DisplayScreen = () => {
         navigator.userAgent.indexOf('VIDAA') >= 0 ||
         navigator.userAgent.indexOf('Hisense') >= 0
       ) {
-        console.log('[AntiStandby] SmartTV detected. Deploying aggressive native screensaver hack.');
+        console.log('[AntiStandby] SmartTV detected. Deploying iframe-based media hack.');
 
-        // 1. Native Video Playback Hack (must be external URL, not data URI)
-        lgVideoEl = document.createElement('video');
-        lgVideoEl.src = window.location.origin + '/blank.mp4';
-        lgVideoEl.loop = true;
-        lgVideoEl.muted = true;
-        lgVideoEl.playsInline = true;
-        lgVideoEl.setAttribute('playsinline', '');
-        lgVideoEl.setAttribute('webkit-playsinline', '');
-        // Make it large enough (100px) so the OS doesn't cull it, but invisible
-        lgVideoEl.style.cssText = 'width:100px;height:100px;position:fixed;top:0px;left:0px;opacity:0.01;pointer-events:none;z-index:9999;';
-        document.body.appendChild(lgVideoEl);
+        // 1. YouTube iframe hack (Keeps LG WebOS awake. Native videos lacking audio are ignored by WebOS)
+        // We use a 10-hour black screen video. It sits behind the content, fully opaque so the OS doesn't cull it.
+        lgIframe = document.createElement('iframe');
+        lgIframe.src = 'https://www.youtube.com/embed/g4mHPeMGTJM?autoplay=1&mute=1&controls=0&loop=1&playlist=g4mHPeMGTJM';
+        lgIframe.allow = 'autoplay; encrypted-media';
+        lgIframe.style.cssText = 'position:fixed;top:0px;left:0px;width:300px;height:300px;z-index:-9999;border:none;pointer-events:none;opacity:0.1;';
+        document.body.appendChild(lgIframe);
 
-        lgVideoEl.play().catch(() => { });
-
-        // 2. DOM Jitter & Scroll Hack + Fake Input Events (simulates user activity every 30s)
+        // 2. DOM Jitter & Fake Input Events (for Hisense VIDAA idle timers)
         let jitterPhase = 0;
         screensaverHackerInterval = setInterval(() => {
           jitterPhase = 1 - jitterPhase;
 
-          // Tiny color shift to force GPU paint
+          // Tiny visible color shift to force global GPU paint update in browser
           const jitterDiv = document.getElementById('anti-standby-jitter') || (() => {
             const div = document.createElement('div');
             div.id = 'anti-standby-jitter';
-            div.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;z-index:99999;pointer-events:none;opacity:0.01;';
+            div.style.cssText = 'position:fixed;top:0;left:0;width:2px;height:2px;z-index:99999;pointer-events:none;opacity:0.02;';
             document.body.appendChild(div);
             return div;
           })();
-          jitterDiv.style.backgroundColor = jitterPhase ? '#000' : '#111';
+          jitterDiv.style.backgroundColor = jitterPhase ? '#fff' : '#000';
 
           // Micro-scroll to trigger viewport rendering updates
           window.scrollBy(0, jitterPhase ? 1 : -1);
 
-          // Dispatch dummy events for Hisense/VIDAA which requires actual input to reset idle timer
+          // Dispatch dummy events which resets idle timers on some strict Smart TVs
           try {
             document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: jitterPhase ? 100 : 101, clientY: 100 }));
             document.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Shift' }));
             document.body.click();
           } catch (err) { }
-
-          // Ensure video keeps playing
-          if (lgVideoEl && lgVideoEl.paused) lgVideoEl.play().catch(() => { });
-        }, 15000); // Trigger more aggressively (15s) for VIDAA
+        }, 15000); // Trigger every 15s
       }
     } catch (e) { }
 
@@ -160,9 +151,9 @@ export const DisplayScreen = () => {
       clearInterval(aggressiveInterval);
       if (screensaverHackerInterval) clearInterval(screensaverHackerInterval);
       noSleep.disable();
-      if (lgVideoEl) { lgVideoEl.pause(); lgVideoEl.remove(); }
       const jDiv = document.getElementById('anti-standby-jitter');
       if (jDiv) jDiv.remove();
+      if (lgIframe) lgIframe.remove();
     };
   }, []);
 
