@@ -94,10 +94,12 @@ export const DisplayScreen = () => {
       }
     }, 10000);
 
-    // LG WebOS & Hisense VIDAA SPECIFIC HACK:
-    // WebOS/VIDAA ignores WakeLock/NoSleep.
-    let screensaverHackerInterval = null;
-    let lgIframe = null;
+    // SmartTV (LG WebOS, Hisense VIDAA, Tizen) SPECIFIC BYPASS
+    // Hardware manufacturers (especially LG and Hisense) aggressively kill or dim the screen 
+    // after 10-15 minutes if no physical remote control button is pressed, ignoring videos/DOM changes.
+    // The only software-only way to reset this OS-level idle timer from a browser sandbox 
+    // is to perform a strict top-level URL navigation before the timer hits 10 minutes.
+    let tvRefreshInterval = null;
 
     try {
       if (
@@ -105,64 +107,19 @@ export const DisplayScreen = () => {
         navigator.userAgent.indexOf('WebOS') >= 0 ||
         navigator.userAgent.indexOf('SmartTV') >= 0 ||
         navigator.userAgent.indexOf('VIDAA') >= 0 ||
-        navigator.userAgent.indexOf('Hisense') >= 0
+        navigator.userAgent.indexOf('Hisense') >= 0 ||
+        navigator.userAgent.indexOf('Tizen') >= 0
       ) {
-        console.log('[AntiStandby] SmartTV detected. Deploying TPC Anti-Dim video and Jitter.');
+        console.log('[AntiStandby] SmartTV detected. Initiating 9-minute Hard-Navigation bypass.');
 
-        // 1. Base64 Micro-Video Hack (Hardware Decoder Keeper)
-        // Some LG WebOS versions strictly check for hardware decoding active state to delay Auto-Dimming (TPC).
-        // This is a 1x1 black pixel mp4 data URI to avoid external fetching issues.
-        const microVideo = document.createElement('video');
-        microVideo.src = window.location.origin + '/blank.mp4'; // Use our known working local video
-        microVideo.loop = true;
-        microVideo.muted = true;
-        microVideo.playsInline = true;
-        microVideo.setAttribute('playsinline', '');
-        microVideo.setAttribute('webkit-playsinline', '');
-        // Must be somewhat large to not be ignored by WebOS compositing pipeline
-        microVideo.style.cssText = 'width:50px;height:50px;position:fixed;top:0px;left:0px;opacity:0.01;pointer-events:none;z-index:99999;';
-        document.body.appendChild(microVideo);
-        lgIframe = microVideo; // Reuse variable for cleanup
-
-        microVideo.play().catch(() => { });
-
-        // 2. TPC (Temporal Peak Luminance Control) Defeat & Input Simulation
-        let jitterPhase = 0;
-        screensaverHackerInterval = setInterval(() => {
-          jitterPhase = 1 - jitterPhase;
-
-          // Force WebOS to register a "meaningful" screen change by dramatically altering a fixed block's opacity,
-          // then immediately reversing it. This bypasses the static image detector.
-          const antiDimDiv = document.getElementById('anti-standby-antidim') || (() => {
-            const div = document.createElement('div');
-            div.id = 'anti-standby-antidim';
-            div.style.cssText = 'position:fixed;top:50%;left:50%;width:50px;height:50px;background:white;z-index:99999;pointer-events:none;';
-            document.body.appendChild(div);
-            return div;
-          })();
-
-          // Flash the div, then instantly hide it. The TV renderer processes the frame, 
-          // breaking the static image counter, but the user barely notices (or it's invisible to human eye if fast enough).
-          antiDimDiv.style.opacity = '0.05';
-          setTimeout(() => { antiDimDiv.style.opacity = '0'; }, 30);
-
-          // Force video to keep playing if WebOS paused it
-          if (microVideo.paused) microVideo.play().catch(() => { });
-
-          // Dispatch dummy events for strict Smart TVs (like VIDAA)
-          try {
-            document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: jitterPhase ? 100 : 101, clientY: 100 }));
-            document.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Shift' }));
-            document.body.click();
-          } catch (err) { }
-        }, 10000); // Trigger every 10s to stay under LG's aggressive ABL timers
-
-        // 3. Ultimate Fallback: The 14-Minute Refresh Rule
-        // WebOS natively forces a screensaver around the 15-minute mark if no physical interaction is detected.
-        setTimeout(() => {
-          console.log('[AntiStandby] Reaching 14-minute limit for SmartTVs. Forcing page reload to reset system screensaver timer.');
-          window.location.reload();
-        }, 14 * 60 * 1000);
+        // 9 minutes (540,000 ms) beats both the 10-min Auto-Dimming and 15-min Screensaver features
+        tvRefreshInterval = setInterval(() => {
+          console.log('[AntiStandby] Forcing hard navigation to reset TV OS idle timers.');
+          const currentUrl = new URL(window.location.href);
+          // Append a timestamp to completely bypass TV browser caching and force a real page load
+          currentUrl.searchParams.set('t', Date.now().toString());
+          window.location.replace(currentUrl.toString());
+        }, 9 * 60 * 1000);
       }
     } catch (e) { }
 
@@ -170,14 +127,8 @@ export const DisplayScreen = () => {
       document.removeEventListener('click', enableNoSleep, false);
       document.removeEventListener('touchstart', enableNoSleep, false);
       clearInterval(aggressiveInterval);
-      if (screensaverHackerInterval) clearInterval(screensaverHackerInterval);
+      if (tvRefreshInterval) clearInterval(tvRefreshInterval);
       noSleep.disable();
-      const adDiv = document.getElementById('anti-standby-antidim');
-      if (adDiv) adDiv.remove();
-      if (lgIframe) {
-        lgIframe.pause && lgIframe.pause();
-        lgIframe.remove();
-      }
     };
   }, []);
 
