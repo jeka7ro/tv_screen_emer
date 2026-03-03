@@ -94,15 +94,21 @@ export const DisplayScreen = () => {
       }
     }, 10000);
 
-    // LG WebOS SPECIFIC HACK: 
-    // WebOS ignores WakeLock/NoSleep after 30 mins. It only stays awake if a REAL video (not base64) is playing.
+    // LG WebOS & Hisense VIDAA SPECIFIC HACK:
+    // WebOS/VIDAA ignores WakeLock/NoSleep after 15-30 mins. It only stays awake if a REAL video (not base64) is playing.
     let lgVideoEl = null;
     try {
-      if (navigator.userAgent.indexOf('Web0S') >= 0 || navigator.userAgent.indexOf('WebOS') >= 0 || navigator.userAgent.indexOf('SmartTV') >= 0) {
-        console.log('[AntiStandby] LG WebOS detected. Deploying native screensaver hack.');
+      if (
+        navigator.userAgent.indexOf('Web0S') >= 0 ||
+        navigator.userAgent.indexOf('WebOS') >= 0 ||
+        navigator.userAgent.indexOf('SmartTV') >= 0 ||
+        navigator.userAgent.indexOf('VIDAA') >= 0 ||
+        navigator.userAgent.indexOf('Hisense') >= 0
+      ) {
+        console.log('[AntiStandby] SmartTV detected. Deploying native screensaver hack.');
         lgVideoEl = document.createElement('video');
         // Must be a real external URL, WebOS ignores data URIs for screensaver prevention
-        lgVideoEl.src = 'https://televiziune.s3.eu-central-1.amazonaws.com/black-1sec.mp4';
+        lgVideoEl.src = window.location.origin + '/blank.mp4';
         lgVideoEl.loop = true;
         lgVideoEl.muted = true;
         lgVideoEl.playsInline = true;
