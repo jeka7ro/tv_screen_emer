@@ -105,19 +105,47 @@ export const DisplayScreen = () => {
       }
     } catch (err) { }
 
-    // 2. <meta http-equiv="refresh"> — THIS IS THE KEY FIX.
-    // JavaScript setInterval gets SUSPENDED by LG WebOS when the page is "idle".
-    // But <meta refresh> is handled by the HTML parser engine itself, NOT by JS.
-    // LG's browser engine CANNOT suspend it. This forces a real page reload every 8 minutes.
+    // 2. <meta http-equiv="refresh"> every 3 MINUTES (180 seconds).
+    // This is handled by the HTML engine, NOT JavaScript — cannot be suspended.
     const metaRefresh = document.createElement('meta');
     metaRefresh.httpEquiv = 'refresh';
-    metaRefresh.content = '480'; // 8 minutes in seconds
+    metaRefresh.content = '180'; // 3 minutes
     document.head.appendChild(metaRefresh);
-    console.log('[AntiStandby] Injected <meta http-equiv="refresh" content="480"> — browser-level reload every 8 min.');
+    console.log('[AntiStandby] Injected <meta refresh> — browser-level reload every 3 min.');
 
-    // 3. Generate a REAL MP4 video blob from canvas and play it continuously.
-    // LG WebOS ignores data-URI videos but respects blob: URLs from MediaRecorder.
-    // This tricks the TV media engine into thinking a real video is being played.
+    // 3. LG webOS Luna API — BLOCK SCREENSAVER DIRECTLY AT OS LEVEL.
+    // This is the undocumented but proven method used by LG digital signage apps.
+    // We register to receive screensaver activation requests, then respond with ack:false
+    // to tell the TV OS "do NOT activate screensaver".
+    try {
+      if (window.webOS && window.webOS.service && window.webOS.service.request) {
+        console.log('[AntiStandby] webOS Luna API detected! Registering screensaver blocker.');
+
+        window.webOS.service.request('luna://com.webos.service.tvpower/power/registerScreenSaverRequest', {
+          parameters: { subscribe: true, clientName: 'screenMedia' },
+          onSuccess: function (res) {
+            console.log('[AntiStandby] Luna screensaver request received:', JSON.stringify(res));
+            if (res.timestamp) {
+              // Respond with ack:false to BLOCK the screensaver
+              window.webOS.service.request('luna://com.webos.service.tvpower/power/responseScreenSaverRequest', {
+                parameters: { clientName: 'screenMedia', ack: false, timestamp: res.timestamp },
+                onSuccess: function () { console.log('[AntiStandby] Screensaver BLOCKED via Luna API!'); },
+                onFailure: function (err) { console.warn('[AntiStandby] Luna response failed:', JSON.stringify(err)); }
+              });
+            }
+          },
+          onFailure: function (err) {
+            console.warn('[AntiStandby] Luna register failed:', JSON.stringify(err));
+          }
+        });
+      } else {
+        console.log('[AntiStandby] No webOS Luna API available (not an LG TV or browser lacks access).');
+      }
+    } catch (e) {
+      console.warn('[AntiStandby] Luna API error:', e);
+    }
+
+    // 4. Generate a REAL video blob from canvas and play it continuously.
     try {
       const canvas = document.createElement('canvas');
       canvas.width = 2;
@@ -126,7 +154,7 @@ export const DisplayScreen = () => {
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, 2, 2);
 
-      const stream = canvas.captureStream(1); // 1 fps
+      const stream = canvas.captureStream(1);
       const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
       const chunks = [];
 
@@ -137,8 +165,6 @@ export const DisplayScreen = () => {
       recorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'video/webm' });
         const blobUrl = URL.createObjectURL(blob);
-
-        // Create a REAL video element with a blob URL
         const vid = document.createElement('video');
         vid.src = blobUrl;
         vid.autoplay = true;
@@ -148,16 +174,16 @@ export const DisplayScreen = () => {
         vid.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-9999';
         document.body.appendChild(vid);
         vid.play().catch(() => { });
-        console.log('[AntiStandby] Real blob video playing — TV media engine tricked into active playback.');
+        console.log('[AntiStandby] Real blob video playing.');
       };
 
       recorder.start();
-      setTimeout(() => recorder.stop(), 2000); // Record 2 seconds of black
+      setTimeout(() => recorder.stop(), 2000);
     } catch (e) {
       console.warn('[AntiStandby] MediaRecorder fallback failed:', e);
     }
 
-    // 4. Simulated interaction every 5 minutes (backup — may not work if JS is suspended)
+    // 5. Simulated interaction every 2 minutes (backup)
     const simulateInteractionInterval = setInterval(() => {
       try {
         document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, view: window, clientX: Math.random() * 100, clientY: Math.random() * 100 }));
@@ -166,9 +192,8 @@ export const DisplayScreen = () => {
         const origTitle = document.title;
         document.title = origTitle + '\u200B';
         setTimeout(() => { document.title = origTitle; }, 50);
-        console.log('[AntiStandby] 5min interaction ping sent.');
       } catch (e) { }
-    }, 5 * 60 * 1000);
+    }, 2 * 60 * 1000); // every 2 mins
 
     window.__standbySimInt = simulateInteractionInterval;
 
