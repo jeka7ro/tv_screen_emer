@@ -112,7 +112,14 @@ export const DisplayScreen = () => {
         // As requested: Smart interaction + 10-minute hard refresh
         console.log('[AntiStandby] SmartTV detected. Activating smart autorefresh and interaction simulation.');
 
-        // 1. "Smart" Interaction: Simulate mouse move/click & keydown every 1 minute
+        // 1. WakeLock API (where supported)
+        try {
+          if ('wakeLock' in navigator) {
+            navigator.wakeLock.request('screen').catch(() => { });
+          }
+        } catch (err) { }
+
+        // 2. "Smart" Interaction: Simulate mouse move/click & keydown every 1 minute
         // This is meant to spoof activity for WebOS / Tizen.
         const simulateInteractionInterval = setInterval(() => {
           try {
@@ -129,14 +136,15 @@ export const DisplayScreen = () => {
           } catch (e) { }
         }, 60000); // every 1 min
 
-        // 2. Hard Refresh: Force page reload every 10 minutes to reset OS system hardware timers 
-        // to prevent the native 15-min screensaver.
+        // 3. Hard Refresh: Force page reload every 25 minutes to reset OS system hardware timers 
+        // to prevent the native 30-min typical deep sleep (sometimes 15-min depending on model).
+        // Using assign() instead of replace() to force the browser to treat it as a new navigation.
         tvRefreshInterval = setInterval(() => {
-          console.log('[AntiStandby] Forcing 10-minute autorefresh to bypass OS hardware timers.');
+          console.log('[AntiStandby] Forcing 25-minute autorefresh to bypass OS hardware timers.');
           const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.set('t', Date.now().toString());
-          window.location.replace(currentUrl.toString());
-        }, 10 * 60 * 1000);
+          currentUrl.searchParams.set('hw_ping', Date.now().toString());
+          window.location.assign(currentUrl.toString());
+        }, 25 * 60 * 1000);
 
         // Bind to cleanup
         window.__standbySimInt = simulateInteractionInterval;
@@ -847,8 +855,9 @@ export const DisplayScreen = () => {
 
       {/* 
         ULTIMATE STANDBY BYPASS:
-        A 1x1 invisible looping video. Hardware TVs (LG WebOS, Tizen) will not enter sleep mode 
-        or drop to Live TV if they detect active media playback, even if it's muted and 1x1.
+        LG WebOS actually measures the rendered size of video players. If it's 2x2 pixels, it decides 
+        it's a tracking pixel and drops the browser to Live TV after 30 mins to save screen burn.
+        We make it large (50vw/50vh) but completely invisible through opacity & z-index.
       */}
       <video
         src="data:video/webm;base64,GkXfo0AgQoaBAUL3gQFC8oEEQvOBCEKCQAR3ZWJtQoeBAkKFgQIwgQCGQ02BSgKgQERgTBBzQ0OEUaAABAAAARowtwAAEARziwEAAQAAH4EAAAB1iYEDm1sAmqAAiYEDm4YAmsCqgQOaoQKgQA=="
@@ -858,11 +867,11 @@ export const DisplayScreen = () => {
         playsInline
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '2px',
-          height: '2px',
-          opacity: 0.01,
+          top: '25%',
+          left: '25%',
+          width: '50vw',
+          height: '50vh',
+          opacity: 0.05,
           pointerEvents: 'none',
           zIndex: -9999
         }}
