@@ -95,9 +95,8 @@ export const DisplayScreen = () => {
     }, 10000);
 
     // SmartTV (LG WebOS, Hisense VIDAA, Tizen) SPECIFIC BYPASS
-    // Removed the "hard navigation" (window.location.replace) because it causes 
-    // a black screen during the reload, which is undesirable.
-    // We now rely purely on the continuous invisible <video> playback added at the bottom of the component.
+    // Reverting to the most stable approach: 9-minute hard URL replace.
+    // Simulated keyboard/mouse events and giant hidden videos trigger memory/security crashes on Hisense VIDAA.
     let tvRefreshInterval = null;
 
     try {
@@ -109,45 +108,16 @@ export const DisplayScreen = () => {
         navigator.userAgent.indexOf('Hisense') >= 0 ||
         navigator.userAgent.indexOf('Tizen') >= 0
       ) {
-        // As requested: Smart interaction + 10-minute hard refresh
-        console.log('[AntiStandby] SmartTV detected. Activating smart autorefresh and interaction simulation.');
+        console.log('[AntiStandby] SmartTV detected. Using stable 9-minute hard navigation.');
 
-        // 1. WakeLock API (where supported)
-        try {
-          if ('wakeLock' in navigator) {
-            navigator.wakeLock.request('screen').catch(() => { });
-          }
-        } catch (err) { }
-
-        // 2. "Smart" Interaction: Simulate mouse move/click & keydown every 1 minute
-        // This is meant to spoof activity for WebOS / Tizen.
-        const simulateInteractionInterval = setInterval(() => {
-          try {
-            document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, view: window, clientX: Math.random() * 100, clientY: Math.random() * 100 }));
-            document.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift', code: 'ShiftLeft', bubbles: true }));
-
-            // Soft DOM ping
-            const origTitle = document.title;
-            document.title = origTitle + '\u200B';
-            setTimeout(() => { document.title = origTitle; }, 50);
-
-            console.log('[AntiStandby] Simulated user actions & DOM ping sent.');
-          } catch (e) { }
-        }, 60000); // every 1 min
-
-        // 3. Hard Refresh: Force page reload every 13 minutes to reset OS system hardware timers 
-        // to prevent the native 15-min or 30-min sleep (depending on TV model).
-        // Using assign() instead of replace() to force the browser to treat it as a new navigation.
+        // 9 minutes (540,000 ms) beats both the 10-min Auto-Dimming and 15-min Screensaver features
         tvRefreshInterval = setInterval(() => {
-          console.log('[AntiStandby] Forcing 13-minute autorefresh to bypass OS hardware timers.');
+          console.log('[AntiStandby] Forcing hard navigation to reset TV OS idle timers.');
           const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.set('hw_ping', Date.now().toString());
-          window.location.assign(currentUrl.toString());
-        }, 13 * 60 * 1000);
-
-        // Bind to cleanup
-        window.__standbySimInt = simulateInteractionInterval;
+          // Append a timestamp to completely bypass TV browser caching and force a real page load
+          currentUrl.searchParams.set('t', Date.now().toString());
+          window.location.replace(currentUrl.toString());
+        }, 9 * 60 * 1000);
       }
     } catch (e) { }
 
@@ -156,7 +126,6 @@ export const DisplayScreen = () => {
       document.removeEventListener('touchstart', enableNoSleep, false);
       clearInterval(aggressiveInterval);
       if (tvRefreshInterval) clearInterval(tvRefreshInterval);
-      if (window.__standbySimInt) clearInterval(window.__standbySimInt);
       noSleep.disable();
     };
   }, []);
@@ -855,9 +824,8 @@ export const DisplayScreen = () => {
 
       {/* 
         ULTIMATE STANDBY BYPASS:
-        LG WebOS actually measures the rendered size of video players. If it's 2x2 pixels, it decides 
-        it's a tracking pixel and drops the browser to Live TV after 30 mins to save screen burn.
-        We make it large (50vw/50vh) but completely invisible through opacity & z-index.
+        A 1x1 invisible looping video. Hardware TVs (LG WebOS, Tizen) will not enter sleep mode 
+        or drop to Live TV if they detect active media playback, even if it's muted and 1x1.
       */}
       <video
         src="data:video/webm;base64,GkXfo0AgQoaBAUL3gQFC8oEEQvOBCEKCQAR3ZWJtQoeBAkKFgQIwgQCGQ02BSgKgQERgTBBzQ0OEUaAABAAAARowtwAAEARziwEAAQAAH4EAAAB1iYEDm1sAmqAAiYEDm4YAmsCqgQOaoQKgQA=="
@@ -867,11 +835,11 @@ export const DisplayScreen = () => {
         playsInline
         style={{
           position: 'fixed',
-          top: '25%',
-          left: '25%',
-          width: '50vw',
-          height: '50vh',
-          opacity: 0.05,
+          top: 0,
+          left: 0,
+          width: '1px',
+          height: '1px',
+          opacity: 0.01,
           pointerEvents: 'none',
           zIndex: -9999
         }}
