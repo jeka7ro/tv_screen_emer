@@ -94,56 +94,51 @@ export const DisplayScreen = () => {
       }
     }, 10000);
 
-    // SmartTV SPECIFIC BYPASS
-    // Returning to the aggressive combo of WakeLock + 13min reload + Simulated keystrokes + giant hidden video
-    // as requested by the user, prioritizing LG WebOS stability.
+    // ANTI-STANDBY — runs on ALL devices unconditionally.
+    // Previously gated behind user-agent detection which was FAILING on LG TVs,
+    // meaning NONE of the bypass code ever ran. That's why it kept sleeping at 30min.
     let tvRefreshInterval = null;
 
-    try {
-      if (
-        navigator.userAgent.indexOf('Web0S') >= 0 ||
-        navigator.userAgent.indexOf('WebOS') >= 0 ||
-        navigator.userAgent.indexOf('SmartTV') >= 0 ||
-        navigator.userAgent.indexOf('VIDAA') >= 0 ||
-        navigator.userAgent.indexOf('Hisense') >= 0 ||
-        navigator.userAgent.indexOf('Tizen') >= 0
-      ) {
-        console.log('[AntiStandby] SmartTV detected. Activating aggressive WakeLock and 13m refresh.');
+    console.log('[AntiStandby] UserAgent:', navigator.userAgent);
+    console.log('[AntiStandby] Activating unconditional anti-standby: WakeLock + 5min interaction + 9min refresh.');
 
-        // 1. WakeLock API (where supported)
-        try {
-          if ('wakeLock' in navigator) {
+    // 1. WakeLock API (where supported)
+    try {
+      if ('wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').catch(() => { });
+        // Re-acquire on visibility change (browser releases it when tab is hidden)
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible' && 'wakeLock' in navigator) {
             navigator.wakeLock.request('screen').catch(() => { });
           }
-        } catch (err) { }
-
-        // 2. "Smart" Interaction: Simulate mouse move/click & keydown every 5 minutes
-        const simulateInteractionInterval = setInterval(() => {
-          try {
-            document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, view: window, clientX: Math.random() * 100, clientY: Math.random() * 100 }));
-            document.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift', code: 'ShiftLeft', bubbles: true }));
-
-            // Soft DOM ping
-            const origTitle = document.title;
-            document.title = origTitle + '\u200B';
-            setTimeout(() => { document.title = origTitle; }, 50);
-          } catch (e) { }
-        }, 5 * 60 * 1000); // every 5 mins
-
-        // 3. Hard Refresh: Force page reload every 9 minutes to bypass OS 15m sleeps.
-        // `replace` is much more aggressive in WebOS (doesn't write to history cache, acts like a fresh open)
-        tvRefreshInterval = setInterval(() => {
-          console.log('[AntiStandby] Forcing 9-minute autorefresh to bypass OS hardware timers.');
-          const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.set('ping', Date.now().toString());
-          window.location.replace(currentUrl.toString());
-        }, 9 * 60 * 1000);
-
-        // Bind to cleanup
-        window.__standbySimInt = simulateInteractionInterval;
+        });
       }
-    } catch (e) { }
+    } catch (err) { }
+
+    // 2. Simulate mouse move/click & keydown every 5 minutes
+    const simulateInteractionInterval = setInterval(() => {
+      try {
+        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, view: window, clientX: Math.random() * 100, clientY: Math.random() * 100 }));
+        document.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift', code: 'ShiftLeft', bubbles: true }));
+
+        // Soft DOM ping
+        const origTitle = document.title;
+        document.title = origTitle + '\u200B';
+        setTimeout(() => { document.title = origTitle; }, 50);
+        console.log('[AntiStandby] 5min interaction ping sent.');
+      } catch (e) { }
+    }, 5 * 60 * 1000); // every 5 mins
+
+    // 3. Hard Refresh every 9 minutes — unconditional safety net
+    tvRefreshInterval = setInterval(() => {
+      console.log('[AntiStandby] 9-minute hard refresh triggered.');
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set('ping', Date.now().toString());
+      window.location.replace(currentUrl.toString());
+    }, 9 * 60 * 1000);
+
+    window.__standbySimInt = simulateInteractionInterval;
 
     return () => {
       document.removeEventListener('click', enableNoSleep, false);
