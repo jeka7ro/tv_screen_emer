@@ -131,13 +131,14 @@ export const DisplayScreen = () => {
           } catch (e) { }
         }, 60000); // every 1 min
 
-        // 3. Hard Refresh: Force page reload every 13 minutes to bypass OS 15m/30m sleeps.
+        // 3. Hard Refresh: Force page reload every 9 minutes to bypass OS 15m sleeps.
+        // `replace` is much more aggressive in WebOS (doesn't write to history cache, acts like a fresh open)
         tvRefreshInterval = setInterval(() => {
-          console.log('[AntiStandby] Forcing 13-minute autorefresh to bypass OS hardware timers.');
+          console.log('[AntiStandby] Forcing 9-minute autorefresh to bypass OS hardware timers.');
           const currentUrl = new URL(window.location.href);
           currentUrl.searchParams.set('ping', Date.now().toString());
-          window.location.assign(currentUrl.toString());
-        }, 13 * 60 * 1000);
+          window.location.replace(currentUrl.toString());
+        }, 9 * 60 * 1000);
 
         // Bind to cleanup
         window.__standbySimInt = simulateInteractionInterval;
