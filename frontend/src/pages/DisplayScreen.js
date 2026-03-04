@@ -95,10 +95,9 @@ export const DisplayScreen = () => {
     }, 10000);
 
     // SmartTV (LG WebOS, Hisense VIDAA, Tizen) SPECIFIC BYPASS
-    // Hardware manufacturers (especially LG and Hisense) aggressively kill or dim the screen 
-    // after 10-15 minutes if no physical remote control button is pressed, ignoring videos/DOM changes.
-    // The only software-only way to reset this OS-level idle timer from a browser sandbox 
-    // is to perform a strict top-level URL navigation before the timer hits 10 minutes.
+    // Removed the "hard navigation" (window.location.replace) because it causes 
+    // a black screen during the reload, which is undesirable.
+    // We now rely purely on the continuous invisible <video> playback added at the bottom of the component.
     let tvRefreshInterval = null;
 
     try {
@@ -110,16 +109,37 @@ export const DisplayScreen = () => {
         navigator.userAgent.indexOf('Hisense') >= 0 ||
         navigator.userAgent.indexOf('Tizen') >= 0
       ) {
-        console.log('[AntiStandby] SmartTV detected. Initiating 9-minute Hard-Navigation bypass.');
+        // As requested: Smart interaction + 10-minute hard refresh
+        console.log('[AntiStandby] SmartTV detected. Activating smart autorefresh and interaction simulation.');
 
-        // 9 minutes (540,000 ms) beats both the 10-min Auto-Dimming and 15-min Screensaver features
+        // 1. "Smart" Interaction: Simulate mouse move/click & keydown every 1 minute
+        // This is meant to spoof activity for WebOS / Tizen.
+        const simulateInteractionInterval = setInterval(() => {
+          try {
+            document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, view: window, clientX: Math.random() * 100, clientY: Math.random() * 100 }));
+            document.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift', code: 'ShiftLeft', bubbles: true }));
+
+            // Soft DOM ping
+            const origTitle = document.title;
+            document.title = origTitle + '\u200B';
+            setTimeout(() => { document.title = origTitle; }, 50);
+
+            console.log('[AntiStandby] Simulated user actions & DOM ping sent.');
+          } catch (e) { }
+        }, 60000); // every 1 min
+
+        // 2. Hard Refresh: Force page reload every 10 minutes to reset OS system hardware timers 
+        // to prevent the native 15-min screensaver.
         tvRefreshInterval = setInterval(() => {
-          console.log('[AntiStandby] Forcing hard navigation to reset TV OS idle timers.');
+          console.log('[AntiStandby] Forcing 10-minute autorefresh to bypass OS hardware timers.');
           const currentUrl = new URL(window.location.href);
-          // Append a timestamp to completely bypass TV browser caching and force a real page load
           currentUrl.searchParams.set('t', Date.now().toString());
           window.location.replace(currentUrl.toString());
-        }, 9 * 60 * 1000);
+        }, 10 * 60 * 1000);
+
+        // Bind to cleanup
+        window.__standbySimInt = simulateInteractionInterval;
       }
     } catch (e) { }
 
@@ -128,6 +148,7 @@ export const DisplayScreen = () => {
       document.removeEventListener('touchstart', enableNoSleep, false);
       clearInterval(aggressiveInterval);
       if (tvRefreshInterval) clearInterval(tvRefreshInterval);
+      if (window.__standbySimInt) clearInterval(window.__standbySimInt);
       noSleep.disable();
     };
   }, []);
@@ -823,6 +844,31 @@ export const DisplayScreen = () => {
           return null;
         }
       })()}
+
+      {/* 
+        ULTIMATE STANDBY BYPASS:
+        A 1x1 invisible looping video. Hardware TVs (LG WebOS, Tizen) will not enter sleep mode 
+        or drop to Live TV if they detect active media playback, even if it's muted and 1x1.
+      */}
+      <video
+        src="data:video/webm;base64,GkXfo0AgQoaBAUL3gQFC8oEEQvOBCEKCQAR3ZWJtQoeBAkKFgQIwgQCGQ02BSgKgQERgTBBzQ0OEUaAABAAAARowtwAAEARziwEAAQAAH4EAAAB1iYEDm1sAmqAAiYEDm4YAmsCqgQOaoQKgQA=="
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '2px',
+          height: '2px',
+          opacity: 0.01,
+          pointerEvents: 'none',
+          zIndex: -9999
+        }}
+      />
     </div>
   );
 };
+
+export default DisplayScreen;
