@@ -136,15 +136,15 @@ export const DisplayScreen = () => {
           } catch (e) { }
         }, 60000); // every 1 min
 
-        // 3. Hard Refresh: Force page reload every 25 minutes to reset OS system hardware timers 
-        // to prevent the native 30-min typical deep sleep (sometimes 15-min depending on model).
+        // 3. Hard Refresh: Force page reload every 13 minutes to reset OS system hardware timers 
+        // to prevent the native 15-min or 30-min sleep (depending on TV model).
         // Using assign() instead of replace() to force the browser to treat it as a new navigation.
         tvRefreshInterval = setInterval(() => {
-          console.log('[AntiStandby] Forcing 25-minute autorefresh to bypass OS hardware timers.');
+          console.log('[AntiStandby] Forcing 13-minute autorefresh to bypass OS hardware timers.');
           const currentUrl = new URL(window.location.href);
           currentUrl.searchParams.set('hw_ping', Date.now().toString());
           window.location.assign(currentUrl.toString());
-        }, 25 * 60 * 1000);
+        }, 13 * 60 * 1000);
 
         // Bind to cleanup
         window.__standbySimInt = simulateInteractionInterval;
