@@ -117,7 +117,7 @@ export const DisplayScreen = () => {
           }
         } catch (err) { }
 
-        // 2. "Smart" Interaction: Simulate mouse move/click & keydown every 1 minute
+        // 2. "Smart" Interaction: Simulate mouse move/click & keydown every 5 minutes
         const simulateInteractionInterval = setInterval(() => {
           try {
             document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, view: window, clientX: Math.random() * 100, clientY: Math.random() * 100 }));
@@ -129,7 +129,7 @@ export const DisplayScreen = () => {
             document.title = origTitle + '\u200B';
             setTimeout(() => { document.title = origTitle; }, 50);
           } catch (e) { }
-        }, 60000); // every 1 min
+        }, 5 * 60 * 1000); // every 5 mins
 
         // 3. Hard Refresh: Force page reload every 9 minutes to bypass OS 15m sleeps.
         // `replace` is much more aggressive in WebOS (doesn't write to history cache, acts like a fresh open)
