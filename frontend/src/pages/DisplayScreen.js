@@ -70,43 +70,33 @@ export const DisplayScreen = () => {
 
   // Anti-standby: using NoSleep.js (industry standard for WebOS/Tizen)
   useEffect(() => {
-    // We must require it dynamically or import at top
     const NoSleep = require('nosleep.js');
     const noSleep = new NoSleep();
 
-    // NoSleep must be enabled upon a user interaction (click/touch)
+    // NoSleep: enable on any user interaction
     const enableNoSleep = () => {
       noSleep.enable();
       console.log('[AntiStandby] NoSleep.js enabled');
-      // Once enabled, we don't need the listeners anymore
       document.removeEventListener('click', enableNoSleep, false);
       document.removeEventListener('touchstart', enableNoSleep, false);
     };
-
-    // Attach to any interaction
     document.addEventListener('click', enableNoSleep, false);
     document.addEventListener('touchstart', enableNoSleep, false);
 
-    // Also try to enable it aggressively every few seconds in case the TV allows it without interaction
+    // Aggressive NoSleep retry
     const aggressiveInterval = setInterval(() => {
       if (!noSleep.isEnabled) {
         try { noSleep.enable(); } catch (e) { }
       }
     }, 10000);
 
-    // ANTI-STANDBY — runs on ALL devices unconditionally.
-    // Previously gated behind user-agent detection which was FAILING on LG TVs,
-    // meaning NONE of the bypass code ever ran. That's why it kept sleeping at 30min.
-    let tvRefreshInterval = null;
-
+    // ===== ANTI-STANDBY: RUNS ON ALL DEVICES UNCONDITIONALLY =====
     console.log('[AntiStandby] UserAgent:', navigator.userAgent);
-    console.log('[AntiStandby] Activating unconditional anti-standby: WakeLock + 5min interaction + 9min refresh.');
 
-    // 1. WakeLock API (where supported)
+    // 1. WakeLock API 
     try {
       if ('wakeLock' in navigator) {
         navigator.wakeLock.request('screen').catch(() => { });
-        // Re-acquire on visibility change (browser releases it when tab is hidden)
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible' && 'wakeLock' in navigator) {
             navigator.wakeLock.request('screen').catch(() => { });
@@ -115,28 +105,70 @@ export const DisplayScreen = () => {
       }
     } catch (err) { }
 
-    // 2. Simulate mouse move/click & keydown every 5 minutes
+    // 2. <meta http-equiv="refresh"> — THIS IS THE KEY FIX.
+    // JavaScript setInterval gets SUSPENDED by LG WebOS when the page is "idle".
+    // But <meta refresh> is handled by the HTML parser engine itself, NOT by JS.
+    // LG's browser engine CANNOT suspend it. This forces a real page reload every 8 minutes.
+    const metaRefresh = document.createElement('meta');
+    metaRefresh.httpEquiv = 'refresh';
+    metaRefresh.content = '480'; // 8 minutes in seconds
+    document.head.appendChild(metaRefresh);
+    console.log('[AntiStandby] Injected <meta http-equiv="refresh" content="480"> — browser-level reload every 8 min.');
+
+    // 3. Generate a REAL MP4 video blob from canvas and play it continuously.
+    // LG WebOS ignores data-URI videos but respects blob: URLs from MediaRecorder.
+    // This tricks the TV media engine into thinking a real video is being played.
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 2;
+      canvas.height = 2;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, 2, 2);
+
+      const stream = canvas.captureStream(1); // 1 fps
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      const chunks = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Create a REAL video element with a blob URL
+        const vid = document.createElement('video');
+        vid.src = blobUrl;
+        vid.autoplay = true;
+        vid.loop = true;
+        vid.muted = true;
+        vid.playsInline = true;
+        vid.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-9999';
+        document.body.appendChild(vid);
+        vid.play().catch(() => { });
+        console.log('[AntiStandby] Real blob video playing — TV media engine tricked into active playback.');
+      };
+
+      recorder.start();
+      setTimeout(() => recorder.stop(), 2000); // Record 2 seconds of black
+    } catch (e) {
+      console.warn('[AntiStandby] MediaRecorder fallback failed:', e);
+    }
+
+    // 4. Simulated interaction every 5 minutes (backup — may not work if JS is suspended)
     const simulateInteractionInterval = setInterval(() => {
       try {
         document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, view: window, clientX: Math.random() * 100, clientY: Math.random() * 100 }));
         document.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift', code: 'ShiftLeft', bubbles: true }));
-
-        // Soft DOM ping
         const origTitle = document.title;
         document.title = origTitle + '\u200B';
         setTimeout(() => { document.title = origTitle; }, 50);
         console.log('[AntiStandby] 5min interaction ping sent.');
       } catch (e) { }
-    }, 5 * 60 * 1000); // every 5 mins
-
-    // 3. Hard Refresh every 9 minutes — unconditional safety net
-    tvRefreshInterval = setInterval(() => {
-      console.log('[AntiStandby] 9-minute hard refresh triggered.');
-      const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set('ping', Date.now().toString());
-      window.location.replace(currentUrl.toString());
-    }, 9 * 60 * 1000);
+    }, 5 * 60 * 1000);
 
     window.__standbySimInt = simulateInteractionInterval;
 
@@ -144,8 +176,9 @@ export const DisplayScreen = () => {
       document.removeEventListener('click', enableNoSleep, false);
       document.removeEventListener('touchstart', enableNoSleep, false);
       clearInterval(aggressiveInterval);
-      if (tvRefreshInterval) clearInterval(tvRefreshInterval);
       if (window.__standbySimInt) clearInterval(window.__standbySimInt);
+      // Remove meta refresh on cleanup
+      if (metaRefresh.parentNode) metaRefresh.parentNode.removeChild(metaRefresh);
       noSleep.disable();
     };
   }, []);
