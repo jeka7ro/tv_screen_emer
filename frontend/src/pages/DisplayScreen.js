@@ -94,9 +94,9 @@ export const DisplayScreen = () => {
       }
     }, 10000);
 
-    // SmartTV (LG WebOS, Hisense VIDAA, Tizen) SPECIFIC BYPASS
-    // Reverting to the most stable approach: 9-minute hard URL replace.
-    // Simulated keyboard/mouse events and giant hidden videos trigger memory/security crashes on Hisense VIDAA.
+    // SmartTV SPECIFIC BYPASS
+    // Returning to the aggressive combo of WakeLock + 13min reload + Simulated keystrokes + giant hidden video
+    // as requested by the user, prioritizing LG WebOS stability.
     let tvRefreshInterval = null;
 
     try {
@@ -108,16 +108,39 @@ export const DisplayScreen = () => {
         navigator.userAgent.indexOf('Hisense') >= 0 ||
         navigator.userAgent.indexOf('Tizen') >= 0
       ) {
-        console.log('[AntiStandby] SmartTV detected. Using stable 9-minute hard navigation.');
+        console.log('[AntiStandby] SmartTV detected. Activating aggressive WakeLock and 13m refresh.');
 
-        // 9 minutes (540,000 ms) beats both the 10-min Auto-Dimming and 15-min Screensaver features
+        // 1. WakeLock API (where supported)
+        try {
+          if ('wakeLock' in navigator) {
+            navigator.wakeLock.request('screen').catch(() => { });
+          }
+        } catch (err) { }
+
+        // 2. "Smart" Interaction: Simulate mouse move/click & keydown every 1 minute
+        const simulateInteractionInterval = setInterval(() => {
+          try {
+            document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, view: window, clientX: Math.random() * 100, clientY: Math.random() * 100 }));
+            document.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift', code: 'ShiftLeft', bubbles: true }));
+
+            // Soft DOM ping
+            const origTitle = document.title;
+            document.title = origTitle + '\u200B';
+            setTimeout(() => { document.title = origTitle; }, 50);
+          } catch (e) { }
+        }, 60000); // every 1 min
+
+        // 3. Hard Refresh: Force page reload every 13 minutes to bypass OS 15m/30m sleeps.
         tvRefreshInterval = setInterval(() => {
-          console.log('[AntiStandby] Forcing hard navigation to reset TV OS idle timers.');
+          console.log('[AntiStandby] Forcing 13-minute autorefresh to bypass OS hardware timers.');
           const currentUrl = new URL(window.location.href);
-          // Append a timestamp to completely bypass TV browser caching and force a real page load
-          currentUrl.searchParams.set('t', Date.now().toString());
-          window.location.replace(currentUrl.toString());
-        }, 9 * 60 * 1000);
+          currentUrl.searchParams.set('ping', Date.now().toString());
+          window.location.assign(currentUrl.toString());
+        }, 13 * 60 * 1000);
+
+        // Bind to cleanup
+        window.__standbySimInt = simulateInteractionInterval;
       }
     } catch (e) { }
 
@@ -126,6 +149,7 @@ export const DisplayScreen = () => {
       document.removeEventListener('touchstart', enableNoSleep, false);
       clearInterval(aggressiveInterval);
       if (tvRefreshInterval) clearInterval(tvRefreshInterval);
+      if (window.__standbySimInt) clearInterval(window.__standbySimInt);
       noSleep.disable();
     };
   }, []);
