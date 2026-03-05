@@ -209,21 +209,60 @@
                 nextSlide();
             }
 
-            // Anti-standby: title flicker every 15s
+            // Anti-standby: AGGRESSIVE multi-layer approach for LG WebOS
+            // Layer 1: Title flicker every 10s
             setInterval(function () {
                 var t = document.title;
                 document.title = t + ' ';
                 setTimeout(function () { document.title = t; }, 100);
-                // Also dispatch scroll event
                 try { window.dispatchEvent(new Event('scroll')); } catch (e) { }
-            }, 15000);
+                try { window.dispatchEvent(new Event('mousemove')); } catch (e) { }
+            }, 10000);
 
-            // WakeLock
+            // Layer 2: WakeLock API
+            function reqWakeLock() {
+                try {
+                    if ('wakeLock' in navigator) {
+                        navigator.wakeLock.request('screen').catch(function () { });
+                    }
+                } catch (e) { }
+            }
+            reqWakeLock();
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'visible') reqWakeLock();
+            });
+
+            // Layer 3: Hidden video element — LG won't screensaver if video is playing
             try {
-                if ('wakeLock' in navigator) {
-                    navigator.wakeLock.request('screen').catch(function () { });
-                }
-            } catch (e) { }
+                var canvas = document.createElement('canvas');
+                canvas.width = 2;
+                canvas.height = 2;
+                var ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, 2, 2);
+                var stream = canvas.captureStream(1);
+                var antiSleepVideo = document.createElement('video');
+                antiSleepVideo.srcObject = stream;
+                antiSleepVideo.muted = true;
+                antiSleepVideo.loop = true;
+                antiSleepVideo.setAttribute('playsinline', '');
+                antiSleepVideo.style.cssText = 'position:fixed;top:-1px;left:-1px;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-1';
+                document.body.appendChild(antiSleepVideo);
+                antiSleepVideo.play().catch(function () { });
+                // Keep canvas alive with micro-changes
+                setInterval(function () {
+                    ctx.fillStyle = ctx.fillStyle === '#000' ? '#001' : '#000';
+                    ctx.fillRect(0, 0, 2, 2);
+                }, 30000);
+            } catch (e) { /* canvas.captureStream not supported, ignore */ }
+
+            // Layer 4: Periodic DOM mutation (some TVs detect DOM inactivity)
+            var mutDiv = document.createElement('div');
+            mutDiv.style.cssText = 'position:fixed;bottom:0;right:0;width:1px;height:1px;overflow:hidden;opacity:0.01';
+            document.body.appendChild(mutDiv);
+            setInterval(function () {
+                mutDiv.textContent = Date.now().toString(36);
+            }, 20000);
 
             // Re-fetch data every 5 minutes (in case content changed)
             setInterval(function () {
