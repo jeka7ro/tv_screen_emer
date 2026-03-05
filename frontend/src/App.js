@@ -28,7 +28,6 @@ import AudioPlayer from './pages/AudioPlayer';
 import { ShortLinkRedirect } from './components/ShortLinkRedirect';
 import { HappyHour } from './pages/HappyHour';
 import { Brands } from './pages/Brands';
-import { Billing } from './pages/Billing';
 
 function App() {
   return (
@@ -169,14 +168,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <ActivityLogs />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/billing"
-            element={
-              <ProtectedRoute>
-                <Billing />
               </ProtectedRoute>
             }
           />
