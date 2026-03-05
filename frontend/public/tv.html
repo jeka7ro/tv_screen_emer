@@ -128,10 +128,11 @@
 </head>
 
 <body>
-    <!-- REAL H.264 MP4 through hardware decoder — full opacity, full screen, behind content -->
-    <!-- This is what Netflix/YouTube do: real video = TV thinks "active media" = no screensaver -->
+    <!-- REAL H.264 MP4 through hardware decoder — hidden behind content -->
     <video id="hw-video" loop playsinline webkit-playsinline src="/keepalive.mp4"
-        style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;opacity:1;pointer-events:none;object-fit:cover;background:#000"></video>
+        style="position:fixed;top:0;left:0;width:1px;height:1px;z-index:-2;opacity:0.01;pointer-events:none"></video>
+    <!-- Meta refresh at 90s — ONLY method proven to reset WebOS screensaver timer -->
+    <meta http-equiv="refresh" content="90">
     <div id="slides"></div>
     <div id="loader">⏳</div>
     <div id="err"></div>
