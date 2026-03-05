@@ -13,16 +13,14 @@ const SUPABASE_AUDIO_PREFIX = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/
 const getFileUrl = (url) => {
   if (!url) return '';
 
-  // Proxy Supabase Storage through CDN (only in production)
-  // On localhost, use direct Supabase URLs
-  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  if (!isLocal) {
-    if (url.startsWith(SUPABASE_CONTENT_PREFIX)) {
-      return '/supabase-media/' + url.substring(SUPABASE_CONTENT_PREFIX.length);
-    }
-    if (url.startsWith(SUPABASE_AUDIO_PREFIX)) {
-      return '/supabase-audio/' + url.substring(SUPABASE_AUDIO_PREFIX.length);
-    }
+  // Proxy Supabase Storage through Netlify CDN to reduce egress
+  // Instead of: https://xxx.supabase.co/storage/v1/object/public/content/file.jpg
+  // Uses:       /supabase-media/file.jpg (served by Netlify CDN, cached)
+  if (url.startsWith(SUPABASE_CONTENT_PREFIX)) {
+    return '/supabase-media/' + url.substring(SUPABASE_CONTENT_PREFIX.length);
+  }
+  if (url.startsWith(SUPABASE_AUDIO_PREFIX)) {
+    return '/supabase-audio/' + url.substring(SUPABASE_AUDIO_PREFIX.length);
   }
 
   if (url.startsWith('http')) return url;
@@ -67,11 +65,6 @@ export const DisplayScreen = () => {
   const [needsAuth, setNeedsAuth] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(null);
   const isDebug = searchParams.get('debug') === 'true';
-
-  // Anti-standby temporarily disabled for LG TV debugging
-  // Will be re-added once we confirm the page loads on LG
-
-
 
   const loadDisplayData = async () => {
     try {
@@ -146,32 +139,6 @@ export const DisplayScreen = () => {
     }, 15000);
     return () => clearTimeout(reloadTimer);
   }, [displayData]);
-
-  // TV Keep-Alive: prevent TV from going to standby by simulating browser activity
-  useEffect(() => {
-    // 1. Simulate activity every 30s — small DOM changes trick TV into staying awake
-    const keepAlive = setInterval(() => {
-      window.dispatchEvent(new Event('scroll'));
-      const orig = document.title;
-      document.title = orig + ' ';
-      setTimeout(() => { document.title = orig; }, 100);
-    }, 30000);
-
-    // 2. Soft refresh when page becomes visible again (TV woke from standby)
-    //    Only re-fetch API data — media stays cached by Service Worker (no extra egress)
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('[Display] Page became visible, re-fetching data (no full reload)...');
-        loadDisplayData();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      clearInterval(keepAlive);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, []);
 
   useEffect(() => {
     loadDisplayData();
@@ -420,13 +387,13 @@ export const DisplayScreen = () => {
     };
 
     if (item.type === 'image') {
-      return <img key={item.id} src={getFileUrl(item.file_url)} alt="" className="shadow-2xl" style={style} />;
+      return <img src={getFileUrl(item.file_url)} alt="" className="shadow-2xl" style={style} />;
     } else if (item.type === 'video') {
-      return <video key={item.id} src={getFileUrl(item.file_url)} autoPlay loop muted playsInline className="shadow-2xl" style={style} />;
+      return <video src={getFileUrl(item.file_url)} autoPlay loop muted playsInline className="shadow-2xl" style={style} />;
     } else if (item.type === 'youtube') {
-      return <iframe key={item.id} src={getYouTubeEmbedUrl(item.file_url)} className="w-full h-full border-0" allow="autoplay; encrypted-media" allowFullScreen title={item.title || ''} />;
+      return <iframe src={getYouTubeEmbedUrl(item.file_url)} className="w-full h-full border-0" allow="autoplay; encrypted-media" allowFullScreen title={item.title || ''} />;
     } else if (item.type === 'web') {
-      return <iframe key={item.id} src={item.file_url} className="w-full h-full border-0 bg-white" title={item.title || ''} />;
+      return <iframe src={item.file_url} className="w-full h-full border-0 bg-white" title={item.title || ''} />;
     }
     return isDebug ? <div className="text-red-500">UNKNOWN TYPE: {item.type}</div> : null;
   };
@@ -764,10 +731,6 @@ export const DisplayScreen = () => {
           return null;
         }
       })()}
-
-
     </div>
   );
 };
-
-export default DisplayScreen;
