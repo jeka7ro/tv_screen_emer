@@ -128,13 +128,13 @@
 </head>
 
 <body>
+    <!-- REAL H.264 MP4 through hardware decoder — full opacity, full screen, behind content -->
+    <!-- This is what Netflix/YouTube do: real video = TV thinks "active media" = no screensaver -->
+    <video id="hw-video" loop playsinline webkit-playsinline src="/keepalive.mp4"
+        style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;opacity:1;pointer-events:none;object-fit:cover;background:#000"></video>
     <div id="slides"></div>
     <div id="loader">⏳</div>
     <div id="err"></div>
-
-    <!-- Invisible video that plays a real mp4 to trigger hardware decoder -->
-    <video id="hw-video" muted loop playsinline webkit-playsinline
-        style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;opacity:0.01;pointer-events:none;object-fit:cover"></video>
     <script>
         // Parse slug from URL: /tv/SLUG or /display/SLUG
         var path = window.location.pathname;
@@ -373,45 +373,44 @@
                 if (document.visibilityState === 'visible') reqWakeLock();
             });
 
-            // Layer 3: REAL video through hardware decoder + Media Session API + AudioContext
-            // Make the hardware video element play one of the ACTUAL content videos/images
+            // Layer 3: Play REAL MP4 through hardware decoder (loaded via HTTP, not base64)
             try {
                 var hwVideo = document.getElementById('hw-video');
-                // Find a video item from content, or use any item URL
-                var videoItem = null;
-                for (var vi = 0; vi < allSlides.length; vi++) {
-                    if (allSlides[vi].type === 'video') { videoItem = allSlides[vi]; break; }
-                }
-                if (videoItem) {
-                    hwVideo.src = videoItem.url;
-                    hwVideo.play().catch(function () { });
-                } else {
-                    // No video content — create a blob video from canvas
-                    try {
-                        var c = document.createElement('canvas');
-                        c.width = 16; c.height = 16;
-                        var cx = c.getContext('2d');
-                        cx.fillStyle = '#000';
-                        cx.fillRect(0, 0, 16, 16);
-                        var mediaRecorder;
-                        var chunks = [];
-                        var cStream = c.captureStream(1);
-                        mediaRecorder = new MediaRecorder(cStream, { mimeType: 'video/webm' });
-                        mediaRecorder.ondataavailable = function (e) { chunks.push(e.data); };
-                        mediaRecorder.onstop = function () {
-                            var blob = new Blob(chunks, { type: 'video/webm' });
-                            hwVideo.src = URL.createObjectURL(blob);
-                            hwVideo.play().catch(function () { });
-                        };
-                        mediaRecorder.start();
-                        setTimeout(function () { mediaRecorder.stop(); }, 1000);
-                    } catch (e) { }
-                }
-                // Retry play every 3s
+                hwVideo.volume = 0.001; // NOT muted — volume near-zero so OS detects audio playback
+                hwVideo.play().catch(function () { });
+                // Retry play every 3s 
                 setInterval(function () {
-                    if (hwVideo.paused) hwVideo.play().catch(function () { });
+                    if (hwVideo.paused) {
+                        hwVideo.play().catch(function () { });
+                    }
+                    hwVideo.volume = 0.001;
                 }, 3000);
             } catch (e) { }
+
+            // Layer 3b: Simulate LG WebOS REMOTE CONTROL key presses
+            // These are the actual keyCodes the LG remote sends to WebOS
+            var lgRemoteKeys = [
+                { key: 'VolumeUp', code: 447 },
+                { key: 'VolumeDown', code: 448 },
+                { key: 'ArrowRight', code: 39 },
+                { key: 'ArrowLeft', code: 37 },
+                { key: 'Enter', code: 13 },
+                { key: 'MediaPlay', code: 415 },
+                { key: 'ChannelUp', code: 33 },
+                { key: 'ChannelDown', code: 34 }
+            ];
+            var lgKeyIdx = 0;
+            setInterval(function () {
+                try {
+                    var k = lgRemoteKeys[lgKeyIdx % lgRemoteKeys.length];
+                    lgKeyIdx++;
+                    // Volume up then immediately volume down (net zero change)
+                    var down = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: k.key, keyCode: k.code, which: k.code });
+                    var up = new KeyboardEvent('keyup', { bubbles: true, cancelable: true, key: k.key, keyCode: k.code, which: k.code });
+                    document.dispatchEvent(down);
+                    setTimeout(function () { document.dispatchEvent(up); }, 50);
+                } catch (e) { }
+            }, 5000);
 
             // Media Session API — register as active media player with OS
             try {
