@@ -37,6 +37,11 @@
   to = "/tv.html"
   status = 200
 
+[[redirects]]
+  from = "/display/*"
+  to = "/tv.html"
+  status = 200
+
 # SPA: toate rutele -> index.html (NO CACHE — critical for LG TV browsers)
 [[redirects]]
   from = "/*"
