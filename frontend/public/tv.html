@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
     <meta http-equiv="cache-control" content="no-cache,no-store,must-revalidate">
     <meta http-equiv="pragma" content="no-cache">
-    <meta http-equiv="refresh" content="120">
+
     <title>Screen Media</title>
     <style>
         * {
@@ -243,7 +243,16 @@
             }
 
             // Anti-standby: MAXIMUM AGGRESSION for LG CX WebOS OLED
-            // Layer 1: Simulate REAL hardware input events every 8s
+            // Layer 0: Hidden iframe that navigates every 30s (browser-level activity, no visible flash)
+            var keepFrame = document.createElement('iframe');
+            keepFrame.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-999;border:none';
+            document.body.appendChild(keepFrame);
+            setInterval(function() {
+                try { keepFrame.contentWindow.location.replace('about:blank#' + Date.now()); } catch(e) {}
+                try { keepFrame.src = 'about:blank?t=' + Date.now(); } catch(e) {}
+            }, 30000);
+
+            // Layer 1: Simulate REAL hardware input events every 3s
             setInterval(function () {
                 // Title flicker
                 var t = document.title;
@@ -295,7 +304,7 @@
                     history.replaceState({ ts: ts }, '', window.location.pathname + '?_=' + (ts % 10000));
                 } catch (e) { }
 
-            }, 8000);
+            }, 3000);
 
             // Layer 1b: WebOS specific API calls
             setInterval(function () {
@@ -371,7 +380,7 @@
             document.body.appendChild(mutDiv);
             setInterval(function () {
                 mutDiv.textContent = Date.now().toString(36);
-            }, 20000);
+            }, 5000);
 
             // Re-fetch data every 5 minutes (in case content changed)
             setInterval(function () {
