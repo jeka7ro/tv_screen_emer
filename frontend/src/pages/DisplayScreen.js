@@ -460,17 +460,7 @@ export const DisplayScreen = () => {
     return (
       <div className="relative w-full h-full bg-black overflow-hidden group">
         <div className={`w-full h-full relative ${parallaxEnabled ? 'parallax-container' : ''}`}>
-          {/* Background Layer (Blur) */}
-          <div className="absolute inset-0 z-0">
-            {contentItem.type === 'image' && (
-              <img src={getFileUrl(contentItem.file_url)} className="w-full h-full object-cover opacity-50 blur-xl scale-110" alt="" />
-            )}
-            {contentItem.type === 'video' && (
-              <video src={getFileUrl(contentItem.file_url)} className="w-full h-full object-cover opacity-50 blur-xl scale-110" muted loop autoPlay playsInline />
-            )}
-          </div>
-
-          {/* Main Content Layer */}
+          {/* Main Content Layer — no blur background (too heavy for TV GPUs) */}
           <div className="absolute inset-0 z-10 flex items-center justify-center">
             <div style={isMatrix ? matrixTransformStyle : { width: '100%', height: '100%' }}>
               {renderContentItem(contentItem, zoneConfig.fit_mode || syncInfo?.fit_mode, syncInfo?.sync_type)}
