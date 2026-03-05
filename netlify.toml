@@ -31,8 +31,11 @@
   [redirects.headers]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# SPA: toate rutele -> index.html
+# SPA: toate rutele -> index.html (NO CACHE — critical for LG TV browsers)
 [[redirects]]
   from = "/*"
   to   = "/index.html"
   status = 200
+  [redirects.headers]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
