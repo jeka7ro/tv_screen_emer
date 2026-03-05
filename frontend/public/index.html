@@ -49,15 +49,36 @@
 
 <body>
     <script>
+        // EMERGENCY: Unregister ALL service workers and clear ALL caches
+        // This fixes LG TV browsers that cached a broken version via SW
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                for (var i = 0; i < registrations.length; i++) {
+                    registrations[i].unregister();
+                    console.log('[SW-KILL] Unregistered SW:', registrations[i].scope);
+                }
+            });
+        }
+        if ('caches' in window) {
+            caches.keys().then(function (names) {
+                for (var i = 0; i < names.length; i++) {
+                    caches.delete(names[i]);
+                    console.log('[SW-KILL] Deleted cache:', names[i]);
+                }
+            });
+        }
+    </script>
+    <script>
         // Suppress ResizeObserver loop error (harmless browser quirk)
-        const _origRO = window.ResizeObserver;
-        window.ResizeObserver = class extends _origRO {
-            constructor(cb) {
-                super((entries, observer) => {
-                    requestAnimationFrame(() => { cb(entries, observer); });
+        var _origRO = window.ResizeObserver;
+        if (_origRO) {
+            window.ResizeObserver = function (cb) {
+                return new _origRO(function (entries, observer) {
+                    requestAnimationFrame(function () { cb(entries, observer); });
                 });
-            }
-        };
+            };
+            window.ResizeObserver.prototype = _origRO.prototype;
+        }
     </script>
     <div id="root"></div>
     <!--
