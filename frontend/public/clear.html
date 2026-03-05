@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Clearing cache...</title>
+</head>
+
+<body
+    style="background:#000;color:#fff;font-family:Arial;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+    <div id="msg" style="text-align:center;font-size:24px">Se curăță cache-ul...</div>
+    <script>
+        // Kill ALL service workers
+        var p1 = Promise.resolve();
+        if ('serviceWorker' in navigator) {
+            p1 = navigator.serviceWorker.getRegistrations().then(function (regs) {
+                var promises = [];
+                for (var i = 0; i < regs.length; i++) {
+                    promises.push(regs[i].unregister());
+                }
+                return Promise.all(promises);
+            });
+        }
+
+        // Delete ALL caches
+        var p2 = Promise.resolve();
+        if ('caches' in window) {
+            p2 = caches.keys().then(function (names) {
+                var promises = [];
+                for (var i = 0; i < names.length; i++) {
+                    promises.push(caches.delete(names[i]));
+                }
+                return Promise.all(promises);
+            });
+        }
+
+        Promise.all([p1, p2]).then(function () {
+            document.getElementById('msg').textContent = 'Cache șters! Se redirecționează...';
+            // Redirect to the page they want, or home
+            var params = new URLSearchParams(window.location.search);
+            var target = params.get('to') || '/';
+            setTimeout(function () {
+                window.location.href = target + '?_=' + Date.now();
+            }, 1000);
+        }).catch(function () {
+            document.getElementById('msg').textContent = 'Eroare. Se redirecționează...';
+            setTimeout(function () { window.location.href = '/'; }, 2000);
+        });
+    </script>
+</body>
+
+</html>
