@@ -796,7 +796,30 @@ export const DisplayScreen = () => {
         }
       })()}
 
-
+      {/* 
+        ANTI-SCREENSAVER: Full-screen video layer.
+        LG WebOS official documentation states: "Screensaver will NOT appear when a video 
+        is playing full screen (100% viewport, position 0,0)."
+        This is the ONLY guaranteed method. All content renders on top via z-index.
+      */}
+      <video
+        src="/black.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          opacity: 0.01,
+          zIndex: -1,
+          pointerEvents: 'none'
+        }}
+      />
     </div>
   );
 };
