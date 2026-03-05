@@ -861,32 +861,9 @@ export const Screens = () => {
                   </a>
                 </div>
                 <p className="text-sm text-red-700 mt-3 text-center font-medium">
-                  👆 Scrie acest link pe TV - ACUM E SIMPLU! (Fără tinyurl)
+                  👆 Scrie acest link pe TV
                 </p>
               </div>
-
-              {/* Original URL - Secondary */}
-              <details className="glass-card p-4">
-                <summary className="cursor-pointer text-sm font-semibold text-slate-700 flex items-center gap-2">
-                  <span>🔗 Link Complet (alternativ)</span>
-                </summary>
-                <div className="mt-4 space-y-2">
-                  <Input
-                    value={getScreenUrl(selectedScreenForLink.slug)}
-                    readOnly
-                    onClick={(e) => e.target.select()}
-                    className="glass-input font-mono text-xs cursor-pointer"
-                    data-testid="screen-url-input"
-                  />
-                  <Button
-                    onClick={() => copyToClipboard(getScreenUrl(selectedScreenForLink.slug))}
-                    className="w-full btn-secondary text-sm"
-                  >
-                    <LinkIcon className="w-4 h-4 mr-2" />
-                    Copiază Link Complet
-                  </Button>
-                </div>
-              </details>
 
               <div className="bg-white/40 rounded-2xl p-6 text-center">
                 <Label className="text-base font-semibold mb-4 block">📱 QR Code</Label>

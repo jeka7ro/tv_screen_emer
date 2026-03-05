@@ -98,7 +98,8 @@ select:focus {
 
 /* Fullscreen display mode */
 .display-fullscreen {
-  @apply w-screen h-screen overflow-hidden bg-slate-900;
+  @apply w-screen h-screen overflow-hidden;
+  background: #000 !important;
 }
 
 /* Page transition for menu rotation */
