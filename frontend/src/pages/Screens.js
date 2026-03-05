@@ -822,7 +822,7 @@ export const Screens = () => {
 
       {/* Link Dialog */}
       <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Link pentru TV - {selectedScreenForLink?.name}</DialogTitle>
           </DialogHeader>
