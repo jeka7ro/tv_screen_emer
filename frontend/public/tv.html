@@ -242,15 +242,88 @@
                 nextSlide();
             }
 
-            // Anti-standby: AGGRESSIVE multi-layer approach for LG WebOS
-            // Layer 1: Title flicker every 10s
+            // Anti-standby: MAXIMUM AGGRESSION for LG CX WebOS OLED
+            // Layer 1: Simulate REAL hardware input events every 8s
             setInterval(function () {
+                // Title flicker
                 var t = document.title;
                 document.title = t + ' ';
                 setTimeout(function () { document.title = t; }, 100);
+
+                // Simulate mouse movement across the screen (OS-level detection)
+                try {
+                    var mx = Math.random() * window.innerWidth;
+                    var my = Math.random() * window.innerHeight;
+                    var mouseEvt = new MouseEvent('mousemove', {
+                        bubbles: true, cancelable: true, clientX: mx, clientY: my, screenX: mx, screenY: my
+                    });
+                    document.dispatchEvent(mouseEvt);
+                    document.elementFromPoint(mx, my) && document.elementFromPoint(mx, my).dispatchEvent(mouseEvt);
+                } catch (e) { }
+
+                // Simulate keyboard activity
+                try {
+                    var keyEvt = new KeyboardEvent('keydown', { bubbles: true, key: 'F15', keyCode: 126 });
+                    document.dispatchEvent(keyEvt);
+                    var keyUp = new KeyboardEvent('keyup', { bubbles: true, key: 'F15', keyCode: 126 });
+                    document.dispatchEvent(keyUp);
+                } catch (e) { }
+
+                // Simulate touch events
+                try {
+                    var touch = new Touch({ identifier: Date.now(), target: document.body, clientX: mx, clientY: my });
+                    var touchEvt = new TouchEvent('touchstart', { bubbles: true, touches: [touch], targetTouches: [touch] });
+                    document.body.dispatchEvent(touchEvt);
+                } catch (e) { }
+
+                // Simulate pointer events
+                try {
+                    var ptrEvt = new PointerEvent('pointermove', { bubbles: true, clientX: mx, clientY: my, pointerType: 'mouse' });
+                    document.dispatchEvent(ptrEvt);
+                } catch (e) { }
+
+                // Window scroll 
+                try { window.scrollTo(0, 1); window.scrollTo(0, 0); } catch (e) { }
                 try { window.dispatchEvent(new Event('scroll')); } catch (e) { }
-                try { window.dispatchEvent(new Event('mousemove')); } catch (e) { }
-            }, 10000);
+
+                // Focus/blur cycle — may trigger OS activity
+                try { window.blur(); setTimeout(function () { window.focus(); }, 50); } catch (e) { }
+
+                // History state push — URL change may count as activity
+                try {
+                    var ts = Date.now();
+                    history.replaceState({ ts: ts }, '', window.location.pathname + '?_=' + (ts % 10000));
+                } catch (e) { }
+
+            }, 8000);
+
+            // Layer 1b: WebOS specific API calls
+            setInterval(function () {
+                // Try LG WebOS Luna service bus
+                try {
+                    if (window.webOS && window.webOS.service) {
+                        window.webOS.service.request('luna://com.webos.settingsservice', {
+                            method: 'getSystemSettings',
+                            parameters: { keys: ['screenSaverTimeout'] },
+                            onSuccess: function () { },
+                            onFailure: function () { }
+                        });
+                    }
+                } catch (e) { }
+                // Try PalmSystem keepAlive
+                try {
+                    if (window.PalmSystem) {
+                        window.PalmSystem.keepAlive(true);
+                        window.PalmSystem.stageReady();
+                    }
+                } catch (e) { }
+                // Try webOS notification to reset timer
+                try {
+                    if (window.webOS && window.webOS.notification) {
+                        window.webOS.notification.createToast({ message: ' ', noaction: true });
+                    }
+                } catch (e) { }
+            }, 30000);
 
             // Layer 2: WakeLock API
             function reqWakeLock() {
