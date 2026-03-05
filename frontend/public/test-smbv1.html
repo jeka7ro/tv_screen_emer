@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Test SMBV1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        img {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            display: block;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        #debug {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            color: lime;
+            font-family: monospace;
+            font-size: 14px;
+            z-index: 999;
+        }
+    </style>
+</head>
+
+<body>
+    <img class="slide active" id="s1" src="/supabase-media/images/5ce1f03d-7c1f-434b-9c7f-995ba23518f2.png"
+        alt="slide1">
+    <img class="slide" id="s2" src="/supabase-media/images/d75d484e-76fc-4f80-8ae6-610dd587135d.png" alt="slide2">
+    <div id="debug">Loading...</div>
+    <script>
+        var current = 0;
+        var slides = document.querySelectorAll('.slide');
+        var debug = document.getElementById('debug');
+
+        debug.textContent = 'Slides: ' + slides.length + ' | Waiting for images...';
+
+        // Simple slideshow - switch every 10s
+        setInterval(function () {
+            slides[current].className = 'slide';
+            current = (current + 1) % slides.length;
+            slides[current].className = 'slide active';
+            debug.textContent = 'Slide ' + (current + 1) + '/' + slides.length + ' | ' + new Date().toLocaleTimeString();
+        }, 10000);
+
+        // Update debug when images load
+        for (var i = 0; i < slides.length; i++) {
+            (function (idx) {
+                slides[idx].onload = function () {
+                    debug.textContent = 'Image ' + (idx + 1) + ' loaded OK | ' + new Date().toLocaleTimeString();
+                };
+                slides[idx].onerror = function () {
+                    debug.textContent = 'ERROR loading image ' + (idx + 1) + '!';
+                };
+            })(i);
+        }
+    </script>
+</body>
+
+</html>
