@@ -84,20 +84,13 @@ export const DisplayScreen = () => {
       if (!noSleep.isEnabled) { try { noSleep.enable(); } catch (e) { } }
     }, 10000);
 
-    // 2. <meta http-equiv="refresh"> — pure HTML, works on every browser, cannot crash
-    const metaRefresh = document.createElement('meta');
-    metaRefresh.httpEquiv = 'refresh';
-    metaRefresh.content = '180'; // 3 minutes
-    document.head.appendChild(metaRefresh);
-
-    // 3. WakeLock (safe standard API, silently fails if unsupported)
+    // WakeLock (safe standard API, silently fails if unsupported)
     try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').catch(() => { }); } } catch (e) { }
 
     return () => {
       document.removeEventListener('click', enableNoSleep, false);
       document.removeEventListener('touchstart', enableNoSleep, false);
       clearInterval(aggressiveInterval);
-      if (metaRefresh.parentNode) metaRefresh.parentNode.removeChild(metaRefresh);
       noSleep.disable();
     };
   }, []);
@@ -796,30 +789,7 @@ export const DisplayScreen = () => {
         }
       })()}
 
-      {/* 
-        ANTI-SCREENSAVER: Full-screen video layer.
-        LG WebOS official documentation states: "Screensaver will NOT appear when a video 
-        is playing full screen (100% viewport, position 0,0)."
-        This is the ONLY guaranteed method. All content renders on top via z-index.
-      */}
-      <video
-        src="/black.mp4"
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          opacity: 0.01,
-          zIndex: -1,
-          pointerEvents: 'none'
-        }}
-      />
+
     </div>
   );
 };
