@@ -66,6 +66,42 @@ export const DisplayScreen = () => {
   const [timerSeconds, setTimerSeconds] = useState(null);
   const isDebug = searchParams.get('debug') === 'true';
 
+  // ===== ANTI-STANDBY =====
+  useEffect(() => {
+    // 1. Simulate activity every 15s — title flicker tricks TV browsers
+    const keepAlive = setInterval(() => {
+      window.dispatchEvent(new Event('scroll'));
+      const orig = document.title;
+      document.title = orig + ' ';
+      setTimeout(() => { document.title = orig; }, 100);
+    }, 15000);
+
+    // 2. WakeLock API (standard, silently fails if unsupported)
+    let wakeLock = null;
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (e) { /* unsupported */ }
+    };
+    requestWakeLock();
+
+    // 3. Re-request wake lock when page becomes visible again
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(keepAlive);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (wakeLock) { try { wakeLock.release(); } catch (e) { } }
+    };
+  }, []);
+
   const loadDisplayData = async () => {
     try {
       const code = securityCode || searchParams.get('code');
