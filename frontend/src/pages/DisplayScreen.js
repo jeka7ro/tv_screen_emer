@@ -68,32 +68,8 @@ export const DisplayScreen = () => {
   const [timerSeconds, setTimerSeconds] = useState(null);
   const isDebug = searchParams.get('debug') === 'true';
 
-  // ===== ANTI-STANDBY (SAFE — no experimental APIs that crash TV browsers) =====
-  useEffect(() => {
-    // 1. NoSleep.js — proven library
-    const NoSleep = require('nosleep.js');
-    const noSleep = new NoSleep();
-    const enableNoSleep = () => {
-      noSleep.enable();
-      document.removeEventListener('click', enableNoSleep, false);
-      document.removeEventListener('touchstart', enableNoSleep, false);
-    };
-    document.addEventListener('click', enableNoSleep, false);
-    document.addEventListener('touchstart', enableNoSleep, false);
-    const aggressiveInterval = setInterval(() => {
-      if (!noSleep.isEnabled) { try { noSleep.enable(); } catch (e) { } }
-    }, 10000);
-
-    // WakeLock (safe standard API, silently fails if unsupported)
-    try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').catch(() => { }); } } catch (e) { }
-
-    return () => {
-      document.removeEventListener('click', enableNoSleep, false);
-      document.removeEventListener('touchstart', enableNoSleep, false);
-      clearInterval(aggressiveInterval);
-      noSleep.disable();
-    };
-  }, []);
+  // Anti-standby temporarily disabled for LG TV debugging
+  // Will be re-added once we confirm the page loads on LG
 
 
 
