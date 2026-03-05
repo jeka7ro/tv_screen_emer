@@ -68,145 +68,41 @@ export const DisplayScreen = () => {
   const [timerSeconds, setTimerSeconds] = useState(null);
   const isDebug = searchParams.get('debug') === 'true';
 
-  // Anti-standby: using NoSleep.js (industry standard for WebOS/Tizen)
+  // ===== ANTI-STANDBY (SAFE — no experimental APIs that crash TV browsers) =====
   useEffect(() => {
+    // 1. NoSleep.js — proven library
     const NoSleep = require('nosleep.js');
     const noSleep = new NoSleep();
-
-    // NoSleep: enable on any user interaction
     const enableNoSleep = () => {
       noSleep.enable();
-      console.log('[AntiStandby] NoSleep.js enabled');
       document.removeEventListener('click', enableNoSleep, false);
       document.removeEventListener('touchstart', enableNoSleep, false);
     };
     document.addEventListener('click', enableNoSleep, false);
     document.addEventListener('touchstart', enableNoSleep, false);
-
-    // Aggressive NoSleep retry
     const aggressiveInterval = setInterval(() => {
-      if (!noSleep.isEnabled) {
-        try { noSleep.enable(); } catch (e) { }
-      }
+      if (!noSleep.isEnabled) { try { noSleep.enable(); } catch (e) { } }
     }, 10000);
 
-    // ===== ANTI-STANDBY: RUNS ON ALL DEVICES UNCONDITIONALLY =====
-    console.log('[AntiStandby] UserAgent:', navigator.userAgent);
-
-    // 1. WakeLock API 
-    try {
-      if ('wakeLock' in navigator) {
-        navigator.wakeLock.request('screen').catch(() => { });
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible' && 'wakeLock' in navigator) {
-            navigator.wakeLock.request('screen').catch(() => { });
-          }
-        });
-      }
-    } catch (err) { }
-
-    // 2. <meta http-equiv="refresh"> every 3 MINUTES (180 seconds).
-    // This is handled by the HTML engine, NOT JavaScript — cannot be suspended.
+    // 2. <meta http-equiv="refresh"> — pure HTML, works on every browser, cannot crash
     const metaRefresh = document.createElement('meta');
     metaRefresh.httpEquiv = 'refresh';
     metaRefresh.content = '180'; // 3 minutes
     document.head.appendChild(metaRefresh);
-    console.log('[AntiStandby] Injected <meta refresh> — browser-level reload every 3 min.');
 
-    // 3. LG webOS Luna API — BLOCK SCREENSAVER DIRECTLY AT OS LEVEL.
-    // This is the undocumented but proven method used by LG digital signage apps.
-    // We register to receive screensaver activation requests, then respond with ack:false
-    // to tell the TV OS "do NOT activate screensaver".
-    try {
-      if (window.webOS && window.webOS.service && window.webOS.service.request) {
-        console.log('[AntiStandby] webOS Luna API detected! Registering screensaver blocker.');
-
-        window.webOS.service.request('luna://com.webos.service.tvpower/power/registerScreenSaverRequest', {
-          parameters: { subscribe: true, clientName: 'screenMedia' },
-          onSuccess: function (res) {
-            console.log('[AntiStandby] Luna screensaver request received:', JSON.stringify(res));
-            if (res.timestamp) {
-              // Respond with ack:false to BLOCK the screensaver
-              window.webOS.service.request('luna://com.webos.service.tvpower/power/responseScreenSaverRequest', {
-                parameters: { clientName: 'screenMedia', ack: false, timestamp: res.timestamp },
-                onSuccess: function () { console.log('[AntiStandby] Screensaver BLOCKED via Luna API!'); },
-                onFailure: function (err) { console.warn('[AntiStandby] Luna response failed:', JSON.stringify(err)); }
-              });
-            }
-          },
-          onFailure: function (err) {
-            console.warn('[AntiStandby] Luna register failed:', JSON.stringify(err));
-          }
-        });
-      } else {
-        console.log('[AntiStandby] No webOS Luna API available (not an LG TV or browser lacks access).');
-      }
-    } catch (e) {
-      console.warn('[AntiStandby] Luna API error:', e);
-    }
-
-    // 4. Generate a REAL video blob from canvas and play it continuously.
-    try {
-      const canvas = document.createElement('canvas');
-      canvas.width = 2;
-      canvas.height = 2;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, 2, 2);
-
-      const stream = canvas.captureStream(1);
-      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-      const chunks = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        const blobUrl = URL.createObjectURL(blob);
-        const vid = document.createElement('video');
-        vid.src = blobUrl;
-        vid.autoplay = true;
-        vid.loop = true;
-        vid.muted = true;
-        vid.playsInline = true;
-        vid.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0.01;pointer-events:none;z-index:-9999';
-        document.body.appendChild(vid);
-        vid.play().catch(() => { });
-        console.log('[AntiStandby] Real blob video playing.');
-      };
-
-      recorder.start();
-      setTimeout(() => recorder.stop(), 2000);
-    } catch (e) {
-      console.warn('[AntiStandby] MediaRecorder fallback failed:', e);
-    }
-
-    // 5. Simulated interaction every 2 minutes (backup)
-    const simulateInteractionInterval = setInterval(() => {
-      try {
-        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true, view: window, clientX: Math.random() * 100, clientY: Math.random() * 100 }));
-        document.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Shift', code: 'ShiftLeft', bubbles: true }));
-        const origTitle = document.title;
-        document.title = origTitle + '\u200B';
-        setTimeout(() => { document.title = origTitle; }, 50);
-      } catch (e) { }
-    }, 2 * 60 * 1000); // every 2 mins
-
-    window.__standbySimInt = simulateInteractionInterval;
+    // 3. WakeLock (safe standard API, silently fails if unsupported)
+    try { if ('wakeLock' in navigator) { navigator.wakeLock.request('screen').catch(() => { }); } } catch (e) { }
 
     return () => {
       document.removeEventListener('click', enableNoSleep, false);
       document.removeEventListener('touchstart', enableNoSleep, false);
       clearInterval(aggressiveInterval);
-      if (window.__standbySimInt) clearInterval(window.__standbySimInt);
-      // Remove meta refresh on cleanup
       if (metaRefresh.parentNode) metaRefresh.parentNode.removeChild(metaRefresh);
       noSleep.disable();
     };
   }, []);
+
+
 
   const loadDisplayData = async () => {
     try {
@@ -900,28 +796,7 @@ export const DisplayScreen = () => {
         }
       })()}
 
-      {/* 
-        ULTIMATE STANDBY BYPASS:
-        A 1x1 invisible looping video. Hardware TVs (LG WebOS, Tizen) will not enter sleep mode 
-        or drop to Live TV if they detect active media playback, even if it's muted and 1x1.
-      */}
-      <video
-        src="data:video/webm;base64,GkXfo0AgQoaBAUL3gQFC8oEEQvOBCEKCQAR3ZWJtQoeBAkKFgQIwgQCGQ02BSgKgQERgTBBzQ0OEUaAABAAAARowtwAAEARziwEAAQAAH4EAAAB1iYEDm1sAmqAAiYEDm4YAmsCqgQOaoQKgQA=="
-        autoPlay
-        loop
-        muted
-        playsInline
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '1px',
-          height: '1px',
-          opacity: 0.01,
-          pointerEvents: 'none',
-          zIndex: -9999
-        }}
-      />
+
     </div>
   );
 };
