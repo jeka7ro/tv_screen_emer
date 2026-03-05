@@ -31,6 +31,12 @@
   [redirects.headers]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# Standalone TV display page (no React, works on any TV browser)
+[[redirects]]
+  from = "/tv/*"
+  to = "/tv.html"
+  status = 200
+
 # SPA: toate rutele -> index.html (NO CACHE — critical for LG TV browsers)
 [[redirects]]
   from = "/*"

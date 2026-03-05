@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+    <meta http-equiv="cache-control" content="no-cache,no-store,must-revalidate">
+    <meta http-equiv="pragma" content="no-cache">
+    <title>Screen Media</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out
+        }
+
+        .slide.active {
+            opacity: 1
+        }
+
+        .slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block
+        }
+
+        .slide video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block
+        }
+
+        #loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #333;
+            font: 16px Arial;
+            display: none
+        }
+
+        #err {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #f44;
+            font: 20px Arial;
+            display: none
+        }
+    </style>
+</head>
+
+<body>
+    <div id="slides"></div>
+    <div id="loader">⏳</div>
+    <div id="err"></div>
+    <script>
+        // Parse slug from URL: /tv/SLUG or /display/SLUG
+        var path = window.location.pathname;
+        var parts = path.split('/');
+        var slug = parts[parts.length - 1] || parts[parts.length - 2];
+
+        if (!slug || slug === 'tv' || slug === 'display') {
+            document.getElementById('err').style.display = 'block';
+            document.getElementById('err').textContent = 'No screen slug in URL';
+        } else {
+            loadScreen(slug);
+        }
+
+        function loadScreen(slug) {
+            document.getElementById('loader').style.display = 'block';
+
+            // API URL - use the same backend
+            var API = 'https://tv-screen-emer.onrender.com/api';
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', API + '/display/' + slug);
+            xhr.onload = function () {
+                document.getElementById('loader').style.display = 'none';
+                if (xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        renderScreen(data);
+                        // heartbeat
+                        if (data.screen && data.screen.id) {
+                            var hb = new XMLHttpRequest();
+                            hb.open('POST', API + '/screens/' + data.screen.id + '/heartbeat');
+                            hb.send();
+                        }
+                    } catch (e) {
+                        showError('Parse error');
+                    }
+                } else if (xhr.status === 403) {
+                    showError('Cod securitate necesar');
+                } else {
+                    showError('Ecran negăsit: ' + slug);
+                }
+            };
+            xhr.onerror = function () {
+                document.getElementById('loader').style.display = 'none';
+                showError('Network error - retrying...');
+                setTimeout(function () { loadScreen(slug); }, 5000);
+            };
+            xhr.send();
+        }
+
+        function showError(msg) {
+            document.getElementById('err').style.display = 'block';
+            document.getElementById('err').textContent = msg;
+        }
+
+        // Supabase URL prefix → Netlify CDN proxy
+        var SUPA_PREFIX = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/content/';
+        function proxyUrl(url) {
+            if (!url) return '';
+            if (url.indexOf(SUPA_PREFIX) === 0) {
+                return '/supabase-media/' + url.substring(SUPA_PREFIX.length);
+            }
+            return url;
+        }
+
+        var currentSlide = 0;
+        var slideTimer = null;
+        var allSlides = [];
+
+        function renderScreen(data) {
+            var container = document.getElementById('slides');
+            var zones = data.zones_config || data.zones || [];
+            var items = [];
+
+            // Collect all content items from all zones
+            for (var z = 0; z < zones.length; z++) {
+                var zone = zones[z];
+                // Playlist items
+                if (zone.playlist && zone.playlist.content_items) {
+                    var pItems = zone.playlist.content_items;
+                    for (var i = 0; i < pItems.length; i++) {
+                        items.push({
+                            type: pItems[i].type,
+                            url: proxyUrl(pItems[i].file_url),
+                            duration: pItems[i].duration || 10
+                        });
+                    }
+                }
+                // Single content
+                if (zone.content && zone.content.file_url) {
+                    items.push({
+                        type: zone.content.type,
+                        url: proxyUrl(zone.content.file_url),
+                        duration: zone.content.duration || 10
+                    });
+                }
+            }
+
+            if (items.length === 0) {
+                showError('Niciun conținut');
+                return;
+            }
+
+            allSlides = items;
+
+            // Create slide elements
+            for (var s = 0; s < items.length; s++) {
+                var div = document.createElement('div');
+                div.className = 'slide' + (s === 0 ? ' active' : '');
+                div.id = 'slide-' + s;
+
+                if (items[s].type === 'video') {
+                    var vid = document.createElement('video');
+                    vid.src = items[s].url;
+                    vid.muted = true;
+                    vid.loop = true;
+                    vid.autoplay = true;
+                    vid.setAttribute('playsinline', '');
+                    div.appendChild(vid);
+                } else {
+                    var img = document.createElement('img');
+                    img.src = items[s].url;
+                    img.alt = '';
+                    div.appendChild(img);
+                }
+                container.appendChild(div);
+            }
+
+            // Start slideshow if multiple items
+            if (items.length > 1) {
+                nextSlide();
+            }
+
+            // Anti-standby: title flicker every 15s
+            setInterval(function () {
+                var t = document.title;
+                document.title = t + ' ';
+                setTimeout(function () { document.title = t; }, 100);
+                // Also dispatch scroll event
+                try { window.dispatchEvent(new Event('scroll')); } catch (e) { }
+            }, 15000);
+
+            // WakeLock
+            try {
+                if ('wakeLock' in navigator) {
+                    navigator.wakeLock.request('screen').catch(function () { });
+                }
+            } catch (e) { }
+
+            // Re-fetch data every 5 minutes (in case content changed)
+            setInterval(function () {
+                loadScreen(slug);
+            }, 300000);
+        }
+
+        function nextSlide() {
+            var duration = (allSlides[currentSlide] && allSlides[currentSlide].duration) || 10;
+            slideTimer = setTimeout(function () {
+                var oldSlide = document.getElementById('slide-' + currentSlide);
+                if (oldSlide) oldSlide.className = 'slide';
+
+                currentSlide = (currentSlide + 1) % allSlides.length;
+
+                var newSlide = document.getElementById('slide-' + currentSlide);
+                if (newSlide) newSlide.className = 'slide active';
+
+                nextSlide();
+            }, duration * 1000);
+        }
+    </script>
+</body>
+
+</html>
