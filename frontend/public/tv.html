@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
     <meta http-equiv="cache-control" content="no-cache,no-store,must-revalidate">
     <meta http-equiv="pragma" content="no-cache">
-    <meta http-equiv="refresh" content="30">
+    <meta http-equiv="refresh" content="180">
 
     <title>Screen Media</title>
     <style>
@@ -24,58 +24,12 @@
             background: #000
         }
 
-        /* OLED anti-burn: change EVERY pixel continuously to fool hardware static detector */
-        @keyframes oled-brightness {
-            0% {
-                filter: brightness(1.0)
-            }
-
-            25% {
-                filter: brightness(0.97)
-            }
-
-            50% {
-                filter: brightness(1.0)
-            }
-
-            75% {
-                filter: brightness(1.03)
-            }
-
-            100% {
-                filter: brightness(1.0)
-            }
-        }
-
-        @keyframes oled-shift {
-            0% {
-                transform: translate(0, 0) scale(1.005)
-            }
-
-            25% {
-                transform: translate(3px, -2px) scale(1.005)
-            }
-
-            50% {
-                transform: translate(-2px, 3px) scale(1.005)
-            }
-
-            75% {
-                transform: translate(3px, 2px) scale(1.005)
-            }
-
-            100% {
-                transform: translate(0, 0) scale(1.005)
-            }
-        }
-
         #slides {
             position: absolute;
-            top: -5px;
-            left: -5px;
-            right: -5px;
-            bottom: -5px;
-            animation: oled-shift 30s linear infinite, oled-brightness 4s ease-in-out infinite;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
         .slide {
@@ -129,9 +83,10 @@
 </head>
 
 <body>
-    <!-- REAL H.264 MP4 through hardware decoder — hidden behind content -->
-    <video id="hw-video" loop playsinline webkit-playsinline src="/keepalive.mp4"
-        style="position:fixed;top:0;left:0;width:1px;height:1px;z-index:-2;opacity:0.01;pointer-events:none"></video>
+    <!-- ANTI-SCREENSAVER: Full-screen video layer (The ONLY known fix for LG WebOS OLEDs) -->
+    <!-- Official WebOS documentation: "Screensaver will NOT appear when a video is playing full screen (100% viewport, position 0,0)." -->
+    <video id="hw-video" src="/keepalive.mp4" autoplay loop muted playsinline webkit-playsinline
+        style="position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:0.01;pointer-events:none;background:#000;"></video>
 
     <div id="slides"></div>
     <div id="loader">⏳</div>
@@ -269,99 +224,9 @@
                 nextSlide();
             }
 
-            // Anti-standby: MAXIMUM AGGRESSION for LG CX WebOS OLED
-            // Layer 0: Hidden iframe that navigates every 30s (browser-level activity, no visible flash)
-            var keepFrame = document.createElement('iframe');
-            keepFrame.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-999;border:none';
-            document.body.appendChild(keepFrame);
-            setInterval(function () {
-                try { keepFrame.contentWindow.location.replace('about:blank#' + Date.now()); } catch (e) { }
-                try { keepFrame.src = 'about:blank?t=' + Date.now(); } catch (e) { }
-            }, 30000);
+            // Anti-standby: The "Safe" Combo (Meta Refresh + 100% Transparent Video + WakeLock)
 
-            // Layer 1: Simulate REAL hardware input events every 3s
-            setInterval(function () {
-                // Title flicker
-                var t = document.title;
-                document.title = t + ' ';
-                setTimeout(function () { document.title = t; }, 100);
-
-                // Simulate mouse movement across the screen (OS-level detection)
-                try {
-                    var mx = Math.random() * window.innerWidth;
-                    var my = Math.random() * window.innerHeight;
-                    var mouseEvt = new MouseEvent('mousemove', {
-                        bubbles: true, cancelable: true, clientX: mx, clientY: my, screenX: mx, screenY: my
-                    });
-                    document.dispatchEvent(mouseEvt);
-                    document.elementFromPoint(mx, my) && document.elementFromPoint(mx, my).dispatchEvent(mouseEvt);
-                } catch (e) { }
-
-                // Simulate keyboard activity
-                try {
-                    var keyEvt = new KeyboardEvent('keydown', { bubbles: true, key: 'F15', keyCode: 126 });
-                    document.dispatchEvent(keyEvt);
-                    var keyUp = new KeyboardEvent('keyup', { bubbles: true, key: 'F15', keyCode: 126 });
-                    document.dispatchEvent(keyUp);
-                } catch (e) { }
-
-                // Simulate touch events
-                try {
-                    var touch = new Touch({ identifier: Date.now(), target: document.body, clientX: mx, clientY: my });
-                    var touchEvt = new TouchEvent('touchstart', { bubbles: true, touches: [touch], targetTouches: [touch] });
-                    document.body.dispatchEvent(touchEvt);
-                } catch (e) { }
-
-                // Simulate pointer events
-                try {
-                    var ptrEvt = new PointerEvent('pointermove', { bubbles: true, clientX: mx, clientY: my, pointerType: 'mouse' });
-                    document.dispatchEvent(ptrEvt);
-                } catch (e) { }
-
-                // Window scroll 
-                try { window.scrollTo(0, 1); window.scrollTo(0, 0); } catch (e) { }
-                try { window.dispatchEvent(new Event('scroll')); } catch (e) { }
-
-                // Focus/blur cycle — may trigger OS activity
-                try { window.blur(); setTimeout(function () { window.focus(); }, 50); } catch (e) { }
-
-                // History state push — URL change may count as activity
-                try {
-                    var ts = Date.now();
-                    history.replaceState({ ts: ts }, '', window.location.pathname + '?_=' + (ts % 10000));
-                } catch (e) { }
-
-            }, 3000);
-
-            // Layer 1b: WebOS specific API calls
-            setInterval(function () {
-                // Try LG WebOS Luna service bus
-                try {
-                    if (window.webOS && window.webOS.service) {
-                        window.webOS.service.request('luna://com.webos.settingsservice', {
-                            method: 'getSystemSettings',
-                            parameters: { keys: ['screenSaverTimeout'] },
-                            onSuccess: function () { },
-                            onFailure: function () { }
-                        });
-                    }
-                } catch (e) { }
-                // Try PalmSystem keepAlive
-                try {
-                    if (window.PalmSystem) {
-                        window.PalmSystem.keepAlive(true);
-                        window.PalmSystem.stageReady();
-                    }
-                } catch (e) { }
-                // Try webOS notification to reset timer
-                try {
-                    if (window.webOS && window.webOS.notification) {
-                        window.webOS.notification.createToast({ message: ' ', noaction: true });
-                    }
-                } catch (e) { }
-            }, 30000);
-
-            // Layer 2: WakeLock API
+            // Layer 1: WakeLock API
             function reqWakeLock() {
                 try {
                     if ('wakeLock' in navigator) {
@@ -374,86 +239,28 @@
                 if (document.visibilityState === 'visible') reqWakeLock();
             });
 
-            // Layer 3: Play REAL MP4 through hardware decoder (loaded via HTTP, not base64)
+            // Layer 2: Ensure the full-screen transparent video is playing
             try {
                 var hwVideo = document.getElementById('hw-video');
-                hwVideo.volume = 0.001; // NOT muted — volume near-zero so OS detects audio playback
-                hwVideo.play().catch(function () { });
-                // Retry play every 3s 
+                var playPromise = hwVideo.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(function (error) {
+                        // Autoplay was prevented. Will be triggered by any remote click.
+                    });
+                }
+
+                // Retry play every 10s to ensure it stays active
                 setInterval(function () {
-                    if (hwVideo.paused) {
+                    if (hwVideo && hwVideo.paused) {
                         hwVideo.play().catch(function () { });
                     }
-                    hwVideo.volume = 0.001;
-                }, 3000);
+                }, 10000);
+
+                // Play on any user interaction with the remote
+                document.addEventListener('click', function () { hwVideo.play().catch(function () { }); });
+                document.addEventListener('keydown', function () { hwVideo.play().catch(function () { }); });
+                document.addEventListener('mousemove', function () { hwVideo.play().catch(function () { }); });
             } catch (e) { }
-
-            // Layer 3b: Simulate LG WebOS REMOTE CONTROL key presses
-            // These are the actual keyCodes the LG remote sends to WebOS
-            var lgRemoteKeys = [
-                { key: 'VolumeUp', code: 447 },
-                { key: 'VolumeDown', code: 448 },
-                { key: 'ArrowRight', code: 39 },
-                { key: 'ArrowLeft', code: 37 },
-                { key: 'Enter', code: 13 },
-                { key: 'MediaPlay', code: 415 },
-                { key: 'ChannelUp', code: 33 },
-                { key: 'ChannelDown', code: 34 }
-            ];
-            var lgKeyIdx = 0;
-            setInterval(function () {
-                try {
-                    var k = lgRemoteKeys[lgKeyIdx % lgRemoteKeys.length];
-                    lgKeyIdx++;
-                    // Volume up then immediately volume down (net zero change)
-                    var down = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: k.key, keyCode: k.code, which: k.code });
-                    var up = new KeyboardEvent('keyup', { bubbles: true, cancelable: true, key: k.key, keyCode: k.code, which: k.code });
-                    document.dispatchEvent(down);
-                    setTimeout(function () { document.dispatchEvent(up); }, 50);
-                } catch (e) { }
-            }, 5000);
-
-            // Media Session API — register as active media player with OS
-            try {
-                if ('mediaSession' in navigator) {
-                    navigator.mediaSession.metadata = new MediaMetadata({
-                        title: 'Screen Media Display',
-                        artist: 'Digital Signage',
-                        album: 'Live Content'
-                    });
-                    navigator.mediaSession.playbackState = 'playing';
-                    // Keep updating playback state
-                    setInterval(function () {
-                        try { navigator.mediaSession.playbackState = 'playing'; } catch (e) { }
-                    }, 5000);
-                }
-            } catch (e) { }
-
-            // AudioContext — generate real (silent) audio stream
-            try {
-                var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                var oscillator = audioCtx.createOscillator();
-                var gainNode = audioCtx.createGain();
-                gainNode.gain.value = 0.001; // nearly silent
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.frequency.value = 1; // 1Hz = inaudible
-                oscillator.start();
-                // Keep audio context alive
-                setInterval(function () {
-                    if (audioCtx.state === 'suspended') {
-                        audioCtx.resume().catch(function () { });
-                    }
-                }, 3000);
-            } catch (e) { }
-
-            // Layer 4: Periodic DOM mutation (some TVs detect DOM inactivity)
-            var mutDiv = document.createElement('div');
-            mutDiv.style.cssText = 'position:fixed;bottom:0;right:0;width:1px;height:1px;overflow:hidden;opacity:0.01';
-            document.body.appendChild(mutDiv);
-            setInterval(function () {
-                mutDiv.textContent = Date.now().toString(36);
-            }, 5000);
 
             // Re-fetch data every 5 minutes (in case content changed)
             setInterval(function () {
