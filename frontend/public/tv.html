@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
     <meta http-equiv="cache-control" content="no-cache,no-store,must-revalidate">
     <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="refresh" content="60">
 
     <title>Screen Media</title>
     <style>
@@ -131,8 +132,7 @@
     <!-- REAL H.264 MP4 through hardware decoder — hidden behind content -->
     <video id="hw-video" loop playsinline webkit-playsinline src="/keepalive.mp4"
         style="position:fixed;top:0;left:0;width:1px;height:1px;z-index:-2;opacity:0.01;pointer-events:none"></video>
-    <!-- Meta refresh at 90s — ONLY method proven to reset WebOS screensaver timer -->
-    <meta http-equiv="refresh" content="90">
+
     <div id="slides"></div>
     <div id="loader">⏳</div>
     <div id="err"></div>
