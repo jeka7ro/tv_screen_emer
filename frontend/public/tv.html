@@ -128,6 +128,11 @@
 </head>
 
 <body>
+    <!-- YouTube black screen video — uses hardware decoder, prevents OLED screensaver -->
+    <iframe id="yt-keep-alive"
+        src="https://www.youtube.com/embed/nazQjpCOvqI?autoplay=1&mute=1&loop=1&playlist=nazQjpCOvqI&controls=0&showinfo=0&modestbranding=1&rel=0&disablekb=1"
+        style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;opacity:0.01;pointer-events:none;border:none"
+        allow="autoplay;encrypted-media" allowfullscreen></iframe>
     <div id="slides"></div>
     <div id="loader">⏳</div>
     <div id="err"></div>
