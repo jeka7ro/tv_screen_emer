@@ -68,6 +68,8 @@ export const DisplayScreen = () => {
 
   // ===== ANTI-STANDBY =====
   useEffect(() => {
+    if (isPreview) return; // Do not run aggressive hardware keep-alives inside Admin dashboard thumbnails
+    
     // 1. Simulate activity every 15s — title flicker tricks TV browsers
     const keepAlive = setInterval(() => {
       window.dispatchEvent(new Event('scroll'));
@@ -125,7 +127,7 @@ export const DisplayScreen = () => {
       document.removeEventListener('visibilitychange', handleVisibility);
       if (wakeLock) { try { wakeLock.release(); } catch (e) { } }
     };
-  }, []);
+  }, [isPreview]);
 
   const loadDisplayData = async () => {
     try {
@@ -146,8 +148,8 @@ export const DisplayScreen = () => {
         axios.post(`${API}/screens/${data.screen.id}/heartbeat`).catch(() => { });
       }
 
-      // Pre-cache all media URLs via Service Worker to reduce Supabase egress
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      // Pre-cache all media URLs via Service Worker to reduce Supabase egress (Only for physical TVs, not Dashboard previews)
+      if (!isPreview && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
         const mediaUrls = [];
         const zonesList = data.zones_config || data.zones || [];
         for (const zone of zonesList) {
@@ -183,12 +185,13 @@ export const DisplayScreen = () => {
 
   // Register Service Worker for media caching (reduces Supabase egress)
   useEffect(() => {
+    if (isPreview) return; // Dashboard iframes do not need offline caching
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/media-cache-sw.js')
         .then(reg => console.log('[Display] Media cache SW registered:', reg.scope))
         .catch(err => console.warn('[Display] Media cache SW failed:', err));
     }
-  }, []);
+  }, [isPreview]);
 
   // Auto-reload safety net: if content doesn't load within 15s, refresh the page
   // Disabled in Preview mode (Dashboard) to prevent 25 iframes from DDOS-ing the local server on slow load
