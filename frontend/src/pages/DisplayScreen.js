@@ -191,7 +191,10 @@ export const DisplayScreen = () => {
   }, []);
 
   // Auto-reload safety net: if content doesn't load within 15s, refresh the page
+  // Disabled in Preview mode (Dashboard) to prevent 25 iframes from DDOS-ing the local server on slow load
   useEffect(() => {
+    if (isPreview) return;
+    
     const reloadTimer = setTimeout(() => {
       if (!displayData) {
         console.warn('[Display] Content not loaded after 15s, reloading...');
@@ -199,7 +202,7 @@ export const DisplayScreen = () => {
       }
     }, 15000);
     return () => clearTimeout(reloadTimer);
-  }, [displayData]);
+  }, [displayData, isPreview]);
 
   useEffect(() => {
     loadDisplayData();
