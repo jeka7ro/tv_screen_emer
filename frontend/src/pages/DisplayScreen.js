@@ -523,15 +523,41 @@ export const DisplayScreen = () => {
   // In preview mode (iframe), skip rotation — the container already has correct aspect ratio
   const rotation = parseInt(displayData?.screen?.orientation || '0', 10);
   const isRotated = rotation === 90 || rotation === 270;
-  const rotationStyle = (rotation !== 0 && !isPreview) ? {
-    transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-    transformOrigin: 'center center',
-    width: isRotated ? '100vh' : '100vw',
-    height: isRotated ? '100vw' : '100vh',
-    position: 'fixed',
-    top: '50%',
-    left: '50%'
-  } : {};
+  
+  let rotationStyle = {};
+  if (rotation !== 0 && !isPreview) {
+    if (rotation === 90) {
+      rotationStyle = {
+        transform: 'rotate(90deg)',
+        transformOrigin: 'top left',
+        width: '100vh',
+        height: '100vw',
+        position: 'fixed',
+        top: '0',
+        left: '100vw'
+      };
+    } else if (rotation === 270 || rotation === -90) {
+      rotationStyle = {
+        transform: 'rotate(270deg)',
+        transformOrigin: 'top left',
+        width: '100vh',
+        height: '100vw',
+        position: 'fixed',
+        top: '100vh',
+        left: '0'
+      };
+    } else if (rotation === 180) {
+      rotationStyle = {
+        transform: 'rotate(180deg)',
+        transformOrigin: 'center center',
+        width: '100vw',
+        height: '100vh',
+        position: 'fixed',
+        top: '0',
+        left: '0'
+      };
+    }
+  }
 
   return (
     <div className="display-fullscreen relative bg-black font-sans">
