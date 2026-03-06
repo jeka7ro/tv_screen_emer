@@ -1541,7 +1541,7 @@ export const Playlists = () => {
                                     <Film className="w-4 h-4 text-white/80" />
                                   )}
                                 </div>
-                                <span className="text-sm font-bold text-white line-clamp-1 flex-1 min-w-0 leading-tight drop-shadow-sm" title={playlist.name}>{playlist.name}</span>
+                                <span className="text-xs font-bold text-white line-clamp-1 flex-1 min-w-0 leading-tight drop-shadow-sm" title={playlist.name}>{playlist.name}</span>
                                 <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isActive ? 'bg-emerald-300 shadow-[0_0_6px_rgba(52,211,153,0.6)]' : 'bg-white/30'}`} title={isActive ? 'Activ' : 'Inactiv'}></div>
                               </div>
                               <div className="p-4 flex-1">
