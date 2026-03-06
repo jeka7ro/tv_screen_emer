@@ -524,15 +524,13 @@ export const DisplayScreen = () => {
   const rotation = parseInt(displayData?.screen?.orientation || '0', 10);
   const isRotated = rotation === 90 || rotation === 270;
   const rotationStyle = (rotation !== 0 && !isPreview) ? {
-    transform: `rotate(${rotation}deg)`,
+    transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
     transformOrigin: 'center center',
     width: isRotated ? '100vh' : '100vw',
     height: isRotated ? '100vw' : '100vh',
     position: 'fixed',
     top: '50%',
-    left: '50%',
-    marginTop: isRotated ? 'calc(-50vw)' : 'calc(-50vh)',
-    marginLeft: isRotated ? 'calc(-50vh)' : 'calc(-50vw)',
+    left: '50%'
   } : {};
 
   return (
