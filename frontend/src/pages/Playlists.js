@@ -1544,7 +1544,7 @@ export const Playlists = () => {
                                         <Film className="w-5 h-5" />
                                       )}
                                     </div>
-                                    <span className="text-xs font-semibold text-slate-800 truncate" title={playlist.name}>{playlist.name}</span>
+                                    <span className="text-sm font-bold text-slate-800 line-clamp-2 leading-tight" title={playlist.name}>{playlist.name}</span>
                                   </div>
 
                                   <div className="flex gap-1 shrink-0 ml-2">
