@@ -15,10 +15,12 @@ import { ViewToggle } from '../components/ViewToggle';
 import { BrandSelector } from '../components/BrandSelector';
 import { ScreenSimulation } from '../components/ScreenSimulation';
 
-// Lightweight thumbnail component — renders a pre-fetched image, no API calls
-const ScreenThumbnail = ({ screen, thumbUrl, thumbLoading }) => {
+// Lightweight thumbnail component — renders a pre-fetched image or video, no API calls
+const ScreenThumbnail = ({ screen, thumbData, thumbLoading }) => {
   const rot = parseInt(screen.orientation || '0', 10);
   const isVertical = rot === 90 || rot === 270;
+  const thumbUrl = thumbData?.url;
+  const thumbType = thumbData?.type || 'image';
 
   return (
     <div
@@ -30,6 +32,16 @@ const ScreenThumbnail = ({ screen, thumbUrl, thumbLoading }) => {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin"></div>
         </div>
+      ) : thumbUrl && thumbType === 'video' ? (
+        <video
+          src={thumbUrl}
+          muted
+          autoPlay
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover opacity-90 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
+          onError={(e) => { e.target.style.display = 'none'; }}
+        />
       ) : thumbUrl ? (
         <img
           src={thumbUrl}
@@ -782,7 +794,7 @@ export const Screens = () => {
                       </div>
 
                       {/* Preview thumbnail — lightweight, no iframe */}
-                      <ScreenThumbnail screen={screen} thumbUrl={thumbnails[screen.slug]} thumbLoading={thumbnailsLoading} />
+                      <ScreenThumbnail screen={screen} thumbData={thumbnails[screen.slug]} thumbLoading={thumbnailsLoading} />
 
                       {/* Info bar: status · location · slug · rotation · resolution */}
                       <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 mb-2 px-1">

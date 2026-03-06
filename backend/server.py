@@ -1068,7 +1068,7 @@ async def get_screens_thumbnails(current_user: User = Depends(get_current_user))
         slug = screen.get("slug")
         if not slug:
             continue
-        thumb_url = None
+        thumb_info = None
         try:
             zones = await screen_zones_list(screen["id"])
             for zc in zones:
@@ -1078,16 +1078,22 @@ async def get_screens_thumbnails(current_user: User = Depends(get_current_user))
                         first_item = playlist["items"][0]
                         content = await content_get(first_item["content_id"])
                         if content:
-                            thumb_url = content.get("thumbnail_url") or content.get("file_url")
+                            thumb_info = {
+                                "url": content.get("thumbnail_url") or content.get("file_url"),
+                                "type": content.get("type", "image")
+                            }
                             break
                 elif zc.get("content_type") == "single_content" and zc.get("content_id"):
                     content = await content_get(zc["content_id"])
                     if content:
-                        thumb_url = content.get("thumbnail_url") or content.get("file_url")
+                        thumb_info = {
+                            "url": content.get("thumbnail_url") or content.get("file_url"),
+                            "type": content.get("type", "image")
+                        }
                         break
         except Exception:
             pass
-        result[slug] = thumb_url
+        result[slug] = thumb_info
     return result
 
 @api_router.get("/screens/{screen_id}", response_model=Screen)
