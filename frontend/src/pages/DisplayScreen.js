@@ -95,8 +95,33 @@ export const DisplayScreen = () => {
     };
     document.addEventListener('visibilitychange', handleVisibility);
 
+    // 4. SmartTV OS Idle Timer Bypass (LG/Hisense WebOS/VIDAA/Tizen)
+    // Hardware auto-dimming and OS screensavers activate around 10-15 minutes if no real remote interaction occurs.
+    let tvRefreshInterval = null;
+    try {
+      if (
+        navigator.userAgent.indexOf('Web0S') >= 0 ||
+        navigator.userAgent.indexOf('WebOS') >= 0 ||
+        navigator.userAgent.indexOf('SmartTV') >= 0 ||
+        navigator.userAgent.indexOf('VIDAA') >= 0 ||
+        navigator.userAgent.indexOf('Hisense') >= 0 ||
+        navigator.userAgent.indexOf('Tizen') >= 0
+      ) {
+        console.log('[AntiStandby] SmartTV detected. Initiating 9-minute Hard-Navigation bypass.');
+        // 9 minutes (540,000 ms) beats both 10-min hardware Auto-Dimming and 15-min OS active Screensavers
+        tvRefreshInterval = setInterval(() => {
+          console.log('[AntiStandby] Forcing hard navigation to reset TV OS idle timers.');
+          const currentUrl = new URL(window.location.href);
+          // Timestamp bypasses the internal TV browser cache
+          currentUrl.searchParams.set('t', Date.now().toString());
+          window.location.replace(currentUrl.toString());
+        }, 9 * 60 * 1000); 
+      }
+    } catch (e) { }
+
     return () => {
       clearInterval(keepAlive);
+      if (tvRefreshInterval) clearInterval(tvRefreshInterval);
       document.removeEventListener('visibilitychange', handleVisibility);
       if (wakeLock) { try { wakeLock.release(); } catch (e) { } }
     };
