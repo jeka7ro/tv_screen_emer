@@ -2114,6 +2114,39 @@ async def update_sync_group(group_id: str, data: ScreenSyncUpdate, current_user:
                      await screen_zone_insert(new_z)
                 
     return {"message": "Group updated"}
+# ============ SCREEN THUMBNAILS (Batch, fast — for Admin Dashboard) ============
+
+@api_router.get("/screens/thumbnails")
+async def get_screens_thumbnails(current_user: User = Depends(get_current_user)):
+    """Return thumbnail URLs for ALL screens in a single lightweight request.
+    Used by the admin dashboard instead of 25 individual /display/{slug} calls."""
+    all_screens = await screens_list()
+    result = {}
+    for screen in all_screens:
+        slug = screen.get("slug")
+        if not slug:
+            continue
+        thumb_url = None
+        try:
+            zones = await screen_zones_list(screen["id"])
+            for zc in zones:
+                if zc.get("content_type") == "playlist" and zc.get("playlist_id"):
+                    playlist = await playlist_get(zc["playlist_id"])
+                    if playlist and playlist.get("items"):
+                        first_item = playlist["items"][0]
+                        content = await content_get(first_item["content_id"])
+                        if content:
+                            thumb_url = content.get("thumbnail_url") or content.get("file_url")
+                            break
+                elif zc.get("content_type") == "single_content" and zc.get("content_id"):
+                    content = await content_get(zc["content_id"])
+                    if content:
+                        thumb_url = content.get("thumbnail_url") or content.get("file_url")
+                        break
+        except Exception:
+            pass
+        result[slug] = thumb_url
+    return result
 
 # ============ PUBLIC DISPLAY ROUTES ============
 
