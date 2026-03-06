@@ -1523,32 +1523,31 @@ export const Playlists = () => {
                               }}
                               data-testid={`playlist-card-${playlist.id}`}
                             >
-                              {/* Thin Colored Line at Top */}
+                              {/* Colored Header Bar with Playlist Name */}
                               <div
-                                className="w-full h-2 rounded-t-xl relative overflow-hidden"
-                                style={{ background: `linear-gradient(90deg, ${playlist.color || '#EF4444'} 0%, ${playlist.color || '#EF4444'}dd 100%)` }}
-                              ></div>
+                                className="w-full px-3 py-2.5 rounded-t-xl flex items-center gap-2 min-w-0"
+                                style={{ background: `linear-gradient(135deg, ${playlist.color || '#EF4444'} 0%, ${playlist.color || '#EF4444'}cc 100%)` }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedPlaylists.includes(playlist.id)}
+                                  onChange={() => toggleSelectPlaylist(playlist.id)}
+                                  className="rounded text-white focus:ring-white/50 w-4 h-4 cursor-pointer shrink-0"
+                                />
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${brandLogo ? 'bg-white/90' : 'bg-white/20'}`}>
+                                  {brandLogo ? (
+                                    <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-0.5" />
+                                  ) : (
+                                    <Film className="w-4 h-4 text-white/80" />
+                                  )}
+                                </div>
+                                <span className="text-sm font-bold text-white line-clamp-1 flex-1 min-w-0 leading-tight drop-shadow-sm" title={playlist.name}>{playlist.name}</span>
+                                <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isActive ? 'bg-emerald-300 shadow-[0_0_6px_rgba(52,211,153,0.6)]' : 'bg-white/30'}`} title={isActive ? 'Activ' : 'Inactiv'}></div>
+                              </div>
                               <div className="p-4 flex-1">
                                 <div className="flex items-start justify-between mb-3">
-                                  <div className="flex items-center gap-3 overflow-hidden min-w-0">
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedPlaylists.includes(playlist.id)}
-                                      onChange={() => toggleSelectPlaylist(playlist.id)}
-                                      className="rounded text-red-600 focus:ring-red-500 w-4 h-4 cursor-pointer shrink-0"
-                                    />
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 overflow-hidden ${brandLogo ? 'bg-white' : (isActive ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400')}`}>
-                                      {brandLogo ? (
-                                        <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-1" />
-                                      ) : (
-                                        <Film className="w-5 h-5" />
-                                      )}
-                                    </div>
-                                    <span className="text-sm font-bold text-slate-800 line-clamp-2 leading-tight" title={playlist.name}>{playlist.name}</span>
-                                  </div>
 
-                                  <div className="flex gap-1 shrink-0 ml-2">
-                                    <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-300'} self-center`} title={isActive ? 'Activ' : 'Inactiv'}></div>
+                                  <div className="flex gap-1 shrink-0">
                                     <button
                                       onClick={() => setScreenAssignOpen(screenAssignOpen === playlist.id ? null : playlist.id)}
                                       className={`relative h-7 w-7 p-1.5 rounded-lg transition-all ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-red-500 hover:bg-red-100' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}
