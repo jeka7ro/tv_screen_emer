@@ -561,7 +561,7 @@ export const DisplayScreen = () => {
   
   const isRotated = rotation === 90 || rotation === 270;
   
-  // SmartTV Bulletproof Rotation
+  // SmartTV Bulletproof Rotation (No vw/vh/calc mathematics that fail on WebOS/Tizen)
   let rotationStyle = {};
   if (rotation !== 0 && !isPreview) {
     if (rotation === 90) {
@@ -595,17 +595,6 @@ export const DisplayScreen = () => {
         left: '0px'
       };
     }
-  } else if (isPreview && (rotation === 90 || rotation === 270 || rotation === -90)) {
-     // If it's a vertical screen inside a preview iframe, the iframe container
-     // in Screens.js is ALREADY vertical (aspect-ratio 9/16). 
-     // We just need the content inside to fill this vertical box without rotating again.
-     rotationStyle = {
-        width: '100%',
-        height: '100%',
-        position: 'absolute',
-        top: '0px',
-        left: '0px'
-     };
   }
 
   return (
