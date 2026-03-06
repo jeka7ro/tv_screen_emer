@@ -548,17 +548,42 @@ export const DisplayScreen = () => {
   // In preview mode (iframe), skip rotation — the container already has correct aspect ratio
   const rotation = parseInt(displayData?.screen?.orientation || '0', 10);
   const isRotated = rotation === 90 || rotation === 270;
-  const rotationStyle = (rotation !== 0 && !isPreview) ? {
-    transform: `rotate(${rotation}deg)`,
-    transformOrigin: 'center center',
-    width: isRotated ? '100vh' : '100vw',
-    height: isRotated ? '100vw' : '100vh',
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    marginTop: isRotated ? 'calc(-50vw)' : 'calc(-50vh)',
-    marginLeft: isRotated ? 'calc(-50vh)' : 'calc(-50vw)',
-  } : {};
+  
+  // SmartTV Bulletproof Rotation (No vw/vh/calc mathematics that fail on WebOS/Tizen)
+  let rotationStyle = {};
+  if (rotation !== 0 && !isPreview) {
+    if (rotation === 90) {
+      rotationStyle = {
+        transform: 'rotate(90deg)',
+        transformOrigin: 'top left',
+        width: '1080px',     // Explicit Full HD TV Height
+        height: '1920px',    // Explicit Full HD TV Width
+        position: 'fixed',
+        top: '0px',
+        left: '1920px'       // Shift matrix back into the landscape view
+      };
+    } else if (rotation === 270 || rotation === -90) {
+      rotationStyle = {
+        transform: 'rotate(270deg)',
+        transformOrigin: 'top left',
+        width: '1080px',
+        height: '1920px',
+        position: 'fixed',
+        top: '1080px',
+        left: '0px'
+      };
+    } else if (rotation === 180) {
+      rotationStyle = {
+        transform: 'rotate(180deg)',
+        transformOrigin: 'center center',
+        width: '1920px',
+        height: '1080px',
+        position: 'fixed',
+        top: '0px',
+        left: '0px'
+      };
+    }
+  }
 
   return (
     <div className="display-fullscreen relative bg-black font-sans">
