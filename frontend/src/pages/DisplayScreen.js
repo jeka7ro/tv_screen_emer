@@ -546,7 +546,19 @@ export const DisplayScreen = () => {
 
   // Calculate rotation style based on screen orientation
   // In preview mode (iframe), skip rotation — the container already has correct aspect ratio
-  const rotation = parseInt(displayData?.screen?.orientation || '0', 10);
+  
+  let rotation = 0;
+  const rawOrientation = displayData?.screen?.orientation;
+  
+  if (rawOrientation === 'portrait') {
+    rotation = 90;
+  } else if (rawOrientation === 'landscape') {
+    rotation = 0;
+  } else {
+    rotation = parseInt(rawOrientation || '0', 10);
+    if (isNaN(rotation)) rotation = 0;
+  }
+  
   const isRotated = rotation === 90 || rotation === 270;
   
   // SmartTV Bulletproof Rotation (No vw/vh/calc mathematics that fail on WebOS/Tizen)
