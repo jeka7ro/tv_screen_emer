@@ -749,32 +749,13 @@ export const Screens = () => {
                         const isVertical = rot === 90 || rot === 270;
                         return (
                           <div className={`relative bg-slate-900 rounded-xl overflow-hidden mb-2 group ${isVertical ? 'mx-auto' : ''}`}
-                            style={{ aspectRatio: isVertical ? '9/16' : '16/9', width: isVertical ? '56.25%' : '100%' }}
-                            ref={el => {
-                              if (!el) return;
-                              // Natively zoom out the 1080p iframe to fit the dashboard card width
-                              const observer = new ResizeObserver(entries => {
-                                for (let entry of entries) {
-                                  let cw = entry.contentRect.width;
-                                  let frame = el.querySelector('iframe');
-                                  if (frame) {
-                                    // If vertical, native width is 1080. If horizontal, 1920.
-                                    frame.style.zoom = cw / (isVertical ? 1080 : 1920);
-                                  }
-                                }
-                              });
-                              observer.observe(el);
-                            }}>
+                            style={{ aspectRatio: isVertical ? '9/16' : '16/9', width: isVertical ? '56.25%' : '100%' }}>
                             <iframe
                               src={`/display/${screen.slug}?preview=true`}
                               title={screen.name}
                               loading="lazy"
-                              className="absolute top-0 left-0 border-0 pointer-events-none opacity-90 transition-opacity duration-500 group-hover:opacity-100"
-                              style={{ 
-                                width: isVertical ? '1080px' : '1920px', 
-                                height: isVertical ? '1920px' : '1080px',
-                                zoom: 0.1 // initial 
-                              }}
+                              className="absolute inset-0 w-full h-full border-0 pointer-events-none opacity-90 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
+                              style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
                             />
                             <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
                           </div>
