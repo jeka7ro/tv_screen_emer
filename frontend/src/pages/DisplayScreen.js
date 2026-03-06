@@ -561,7 +561,7 @@ export const DisplayScreen = () => {
   
   const isRotated = rotation === 90 || rotation === 270;
   
-  // SmartTV Bulletproof Rotation (No vw/vh/calc mathematics that fail on WebOS/Tizen)
+  // SmartTV Bulletproof Rotation
   let rotationStyle = {};
   if (rotation !== 0 && !isPreview) {
     if (rotation === 90) {
@@ -595,6 +595,15 @@ export const DisplayScreen = () => {
         left: '0px'
       };
     }
+  } else if (isPreview && (rotation === 90 || rotation === 270 || rotation === -90 || rotation === 180)) {
+     // Natively fill the responsive 9/16 or 16/9 Admin Dashboard iframe box without rotation
+     rotationStyle = {
+        width: '100vw',
+        height: '100vh',
+        position: 'absolute',
+        top: '0px',
+        left: '0px'
+     };
   }
 
   return (
