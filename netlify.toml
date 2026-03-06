@@ -31,6 +31,21 @@
   [redirects.headers]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# Serve static media assets directly — MUST be before the catch-all SPA redirect!
+# Without these, keepalive.mp4 gets served as index.html and the LG anti-standby video fails silently.
+[[redirects]]
+  from = "/keepalive.mp4"
+  to = "/keepalive.mp4"
+  status = 200
+[[redirects]]
+  from = "/black.mp4"
+  to = "/black.mp4"
+  status = 200
+[[redirects]]
+  from = "/blank.mp4"
+  to = "/blank.mp4"
+  status = 200
+
 # Standalone TV display page (no React, works on any TV browser)
 [[redirects]]
   from = "/tv/*"
@@ -41,6 +56,28 @@
   from = "/display/*"
   to = "/tv.html"
   status = 200
+
+# No-cache headers for TV pages — LG TVs must always get the latest version
+[[headers]]
+  for = "/display/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
+[[headers]]
+  for = "/tv/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
+[[headers]]
+  for = "/tv.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
 
 # SPA: toate rutele -> index.html (NO CACHE — critical for LG TV browsers)
 [[redirects]]
