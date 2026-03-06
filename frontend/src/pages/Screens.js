@@ -747,15 +747,39 @@ export const Screens = () => {
                       {(() => {
                         const rot = parseInt(screen.orientation || '0', 10);
                         const isVertical = rot === 90 || rot === 270;
+                        const tvWidth = isVertical ? 1080 : 1920;
+                        const tvHeight = isVertical ? 1920 : 1080;
+                        
                         return (
-                          <div className={`relative bg-slate-900 rounded-xl overflow-hidden mb-2 group ${isVertical ? 'mx-auto' : ''}`}
-                            style={{ aspectRatio: isVertical ? '9/16' : '16/9', width: isVertical ? '56.25%' : '100%' }}>
+                          <div className={`relative bg-slate-900 rounded-xl overflow-hidden mb-2 group ${isVertical ? 'mx-auto' : ''} iframe-wrapper-${screen.id}`}
+                            style={{ aspectRatio: isVertical ? '9/16' : '16/9', width: isVertical ? '56.25%' : '100%' }}
+                            ref={el => {
+                                if (!el) return;
+                                // Automatically scale the fixed 1920px/1080px iframe to fit this responsive container
+                                const observer = new ResizeObserver(entries => {
+                                    for (let entry of entries) {
+                                        const containerWidth = entry.contentRect.width;
+                                        const scale = containerWidth / tvWidth;
+                                        const iframe = el.querySelector('iframe');
+                                        if (iframe) {
+                                            iframe.style.transform = `scale(${scale})`;
+                                        }
+                                    }
+                                });
+                                observer.observe(el);
+                            }}
+                          >
                             <iframe
                               src={`/display/${screen.slug}?preview=true`}
                               title={screen.name}
                               loading="lazy"
-                              className="absolute inset-0 w-full h-full border-0 pointer-events-none opacity-90 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
-                              style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
+                              className="absolute top-0 left-0 border-0 pointer-events-none opacity-90 transition-opacity duration-500 group-hover:opacity-100"
+                              style={{ 
+                                  width: `${tvWidth}px`, 
+                                  height: `${tvHeight}px`, 
+                                  transformOrigin: 'top left',
+                                  transform: 'scale(0.1)' // Initial tiny scale, ResizeObserver will fix it instantly
+                              }}
                             />
                             <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
                           </div>
