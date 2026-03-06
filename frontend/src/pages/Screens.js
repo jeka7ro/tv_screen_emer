@@ -14,6 +14,69 @@ import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
 import { BrandSelector } from '../components/BrandSelector';
 import { ScreenSimulation } from '../components/ScreenSimulation';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
+
+// Lightweight thumbnail component — replaces heavy iframes that crashed Chrome
+const ScreenThumbnail = ({ screen }) => {
+  const [thumbUrl, setThumbUrl] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const rot = parseInt(screen.orientation || '0', 10);
+  const isVertical = rot === 90 || rot === 270;
+
+  React.useEffect(() => {
+    let cancelled = false;
+    axios.get(`${BACKEND_URL}/api/display/${screen.slug}`)
+      .then(res => {
+        if (cancelled) return;
+        const data = res.data;
+        const zones = data?.zones_config || data?.zones || [];
+        // Find the first image URL in playlists or direct content
+        for (const z of zones) {
+          if (z.playlist?.content_items?.length > 0) {
+            const firstItem = z.playlist.content_items[0];
+            if (firstItem?.file_url || firstItem?.thumbnail_url) {
+              setThumbUrl(firstItem.thumbnail_url || firstItem.file_url);
+              break;
+            }
+          }
+          if (z.content?.file_url) {
+            setThumbUrl(z.content.file_url);
+            break;
+          }
+        }
+        setLoading(false);
+      })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [screen.slug]);
+
+  return (
+    <div
+      className={`relative bg-slate-900 rounded-xl overflow-hidden mb-2 group cursor-pointer ${isVertical ? 'mx-auto' : ''}`}
+      style={{ aspectRatio: isVertical ? '9/16' : '16/9', width: isVertical ? '56.25%' : '100%' }}
+      onClick={() => window.open(`/display/${screen.slug}`, '_blank')}
+    >
+      {loading ? (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin"></div>
+        </div>
+      ) : thumbUrl ? (
+        <img
+          src={thumbUrl}
+          alt={screen.name}
+          className="absolute inset-0 w-full h-full object-cover opacity-90 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
+          onError={(e) => { e.target.style.display = 'none'; }}
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center text-white/20 text-xs">
+          <Tv className="w-8 h-8" />
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const Screens = () => {
   const { isAdmin } = useAuth();
@@ -743,24 +806,8 @@ export const Screens = () => {
                         </div>
                       </div>
 
-                      {/* Preview iframe */}
-                      {(() => {
-                        const rot = parseInt(screen.orientation || '0', 10);
-                        const isVertical = rot === 90 || rot === 270;
-                        return (
-                          <div className={`relative bg-slate-900 rounded-xl overflow-hidden mb-2 group ${isVertical ? 'mx-auto' : ''}`}
-                            style={{ aspectRatio: isVertical ? '9/16' : '16/9', width: isVertical ? '56.25%' : '100%' }}>
-                            <iframe
-                              src={`/display/${screen.slug}?preview=true`}
-                              title={screen.name}
-                              loading="lazy"
-                              className="absolute inset-0 w-full h-full border-0 pointer-events-none opacity-90 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
-                              style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
-                            />
-                            <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
-                          </div>
-                        );
-                      })()}
+                      {/* Preview thumbnail — lightweight, no iframe */}
+                      <ScreenThumbnail screen={screen} />
 
                       {/* Info bar: status · location · slug · rotation · resolution */}
                       <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 mb-2 px-1">
