@@ -748,42 +748,17 @@ export const Screens = () => {
                         const rot = parseInt(screen.orientation || '0', 10);
                         const isVertical = rot === 90 || rot === 270;
                         return (
-                            <div className={`relative bg-slate-900 rounded-xl overflow-hidden mb-2 group ${isVertical ? 'mx-auto' : ''}`}
-                              style={{ 
-                                aspectRatio: isVertical ? '9/16' : '16/9', 
-                                width: isVertical ? '56.25%' : '100%',
-                                position: 'relative'
-                              }}
-                              ref={el => {
-                                  if (!el) return;
-                                  const observer = new ResizeObserver(entries => {
-                                    for (let entry of entries) {
-                                      const rect = entry.contentRect;
-                                      const scale = rect.width / (isVertical ? 1080 : 1920);
-                                      const wrapper = el.querySelector('.iframe-scale-wrapper');
-                                      if (wrapper) {
-                                        wrapper.style.transform = `scale(${scale})`;
-                                      }
-                                    }
-                                  });
-                                  observer.observe(el);
-                              }}
-                            >
-                              <div className="iframe-scale-wrapper absolute top-0 left-0" style={{
-                                  width: isVertical ? '1080px' : '1920px',
-                                  height: isVertical ? '1920px' : '1080px',
-                                  transformOrigin: 'top left',
-                                  transform: 'scale(0.1)' // Will be immediately overwritten by observer
-                              }}>
-                                <iframe
-                                  src={`/display/${screen.slug}?preview=true`}
-                                  title={screen.name}
-                                  loading="lazy"
-                                  className="w-full h-full border-0 pointer-events-none opacity-90 transition-opacity duration-500 group-hover:opacity-100"
-                                />
-                              </div>
-                              <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
-                            </div>
+                          <div className={`relative bg-slate-900 rounded-xl overflow-hidden mb-2 group ${isVertical ? 'mx-auto' : ''}`}
+                            style={{ aspectRatio: isVertical ? '9/16' : '16/9', width: isVertical ? '56.25%' : '100%' }}>
+                            <iframe
+                              src={`/display/${screen.slug}?preview=true`}
+                              title={screen.name}
+                              loading="lazy"
+                              className="absolute inset-0 w-full h-full border-0 pointer-events-none opacity-90 transition-all duration-500 group-hover:scale-105 group-hover:opacity-100"
+                              style={{ transform: 'scale(1)', transformOrigin: 'top left' }}
+                            />
+                            <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={() => window.open(`/display/${screen.slug}`, '_blank')}></div>
+                          </div>
                         );
                       })()}
 
