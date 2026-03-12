@@ -439,11 +439,14 @@ async def screen_get_by_slug(slug: str) -> Optional[Dict[str, Any]]:
 
 
 async def screens_list() -> List[Dict[str, Any]]:
-    # Auto-cleanup: mark screens as offline if no heartbeat for 2+ minutes
+    # Auto-cleanup: mark screens as offline if no heartbeat for 20+ minutes.
+    # tv.html reloads every 9 minutes + Render free-tier cold-start can add ~60s latency.
+    # DisplayScreen.js (React) polls every 30s → unaffected.
+    # Handle both 'online' (new) and 'active' (legacy from production Render)
     await _execute("""
         UPDATE screens SET status = 'offline'
-        WHERE status = 'active' 
-        AND (last_active IS NULL OR last_active < NOW() - INTERVAL '2 minutes')
+        WHERE status IN ('online', 'active')
+        AND (last_active IS NULL OR last_active < NOW() - INTERVAL '20 minutes')
     """)
     return await _fetch_all("""
         SELECT 

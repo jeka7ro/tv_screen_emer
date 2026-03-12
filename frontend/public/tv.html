@@ -152,9 +152,16 @@
                         renderScreen(data);
                         // heartbeat
                         if (data.screen && data.screen.id) {
-                            var hb = new XMLHttpRequest();
-                            hb.open('POST', API + '/screens/' + data.screen.id + '/heartbeat');
-                            hb.send();
+                            var screenId = data.screen.id;
+                            function sendHeartbeat() {
+                                var hb = new XMLHttpRequest();
+                                hb.open('POST', API + '/screens/' + screenId + '/heartbeat');
+                                hb.send();
+                            }
+                            // Send immediately
+                            sendHeartbeat();
+                            // Then every 60 seconds to stay 'online' (server timeout is 2 min)
+                            setInterval(sendHeartbeat, 60000);
                         }
                     } catch (e) {
                         showError('Parse error');

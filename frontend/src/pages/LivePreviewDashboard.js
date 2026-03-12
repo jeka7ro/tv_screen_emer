@@ -145,7 +145,11 @@ export const LivePreviewDashboard = () => {
     // Filter screens
     const filteredScreens = screens.filter(screen => {
         if (filterLocation !== 'all' && screen.location_id !== filterLocation) return false;
-        if (filterStatus !== 'all' && screen.status !== filterStatus) return false;
+        if (filterStatus !== 'all') {
+            const isLive = screen.status === 'online' || screen.status === 'active';
+            if (filterStatus === 'online' && !isLive) return false;
+            if (filterStatus === 'offline' && isLive) return false;
+        }
         if (filterSyncGroup !== 'all') {
             if (filterSyncGroup === 'none' && screen.sync_group) return false;
             if (filterSyncGroup !== 'none' && screen.sync_group !== filterSyncGroup) return false;
@@ -241,7 +245,7 @@ export const LivePreviewDashboard = () => {
                             <div>
                                 <p className="text-sm text-slate-500">Online</p>
                                 <p className="text-2xl font-bold text-slate-800">
-                                    {screens.filter(s => s.status === 'online').length}
+                                    {screens.filter(s => s.status === 'online' || s.status === 'active').length}
                                 </p>
                             </div>
                         </div>
@@ -255,7 +259,7 @@ export const LivePreviewDashboard = () => {
                             <div>
                                 <p className="text-sm text-slate-500">Offline</p>
                                 <p className="text-2xl font-bold text-slate-800">
-                                    {screens.filter(s => s.status === 'offline').length}
+                                    {screens.filter(s => s.status !== 'online' && s.status !== 'active').length}
                                 </p>
                             </div>
                         </div>
@@ -589,9 +593,9 @@ export const LivePreviewDashboard = () => {
                                         <Maximize2 className="w-4 h-4 text-white" />
                                     </div>
                                     <div className="absolute top-2 left-2 z-20">
-                                        <span className={screen.status === 'online' ? 'status-active' : 'status-offline'}>
+                                        <span className={(screen.status === 'online' || screen.status === 'active') ? 'status-active' : 'status-offline'}>
                                             <Circle className="w-2 h-2 fill-current" />
-                                            {screen.status}
+                                            {(screen.status === 'online' || screen.status === 'active') ? 'online' : 'offline'}
                                         </span>
                                     </div>
                                 </div>
@@ -681,8 +685,8 @@ export const LivePreviewDashboard = () => {
 
                                 <div className="glass-card p-4">
                                     <p className="text-sm text-slate-500 mb-1">Status</p>
-                                    <span className={selectedScreen.status === 'online' ? 'status-active' : 'status-offline'}>
-                                        {selectedScreen.status}
+                                    <span className={(selectedScreen.status === 'online' || selectedScreen.status === 'active') ? 'status-active' : 'status-offline'}>
+                                        {(selectedScreen.status === 'online' || selectedScreen.status === 'active') ? 'online' : 'offline'}
                                     </span>
                                 </div>
 

@@ -1,0 +1,18 @@
+Salut! Am analizat imaginile pe care mi le-ai trimis cu acea numărătoare de închidere.
+
+Acesta NU este un screensaver din browser-ul nostru web. Platforma noastră rulează deja cu absolut toate protecțiile "anti-sleep" la nivel web (trimitem inclusiv ping-uri invizibile la nivel web către TV în mod constant ca să-l ținem treaz).
+
+Ceea ce se întâmplă acolo este **protecția hardware/sistem din fabrică a televizoarelor (Eco Mode / Auto Power Down)**.
+Televizoarele moderne de piață vin din start cu o funcție de economisire energie care forțează oprirea TV-ului dacă nu mai apeși de mult timp pe telecomandă, chiar dacă pe ecran rulează încă ceva.
+
+Fiind setare hardware internă a televizorului, aplicația web (sau orice alt player) nu o poate opri automat (reglementări stricte pentru consum). **Trebuie oprită manual din setările fiecărui TV, folosind telecomanda**. Uite pașii exacți pentru modelele vizate:
+
+**1. Pentru LG (WebOS - 50UQ75003LF, 50UR78003LK):**
+Mergi în Meniu (Settings) -> General -> Eco / Energy Saving -> **Alege opțiunea "Off" (Oprit).**
+Mergi în Meniu (Settings) -> General -> System -> Time & Timer -> **Găsește "Auto Power Off" (Oprire Automată) și setează pe "Off" (Oprit).**
+
+**2. Pentru Hisense (VIDAA - 43A6BG, 50A6N):**
+Mergi în Meniu (Settings) -> System (Sistem) -> Advanced Settings (Setări avansate) -> **Timer Power Off / Auto Sleep și setează la "Off" (Oprit).**
+Mergi în Meniu (Settings) -> Picture/Energy -> **Opreșteorice funcție "Energy Saving" sau Eco.**
+
+După ce modifici aceste 2 comutatoare din telecomandă pe televizoarele respective, ecranele vor rula 24/7 fără să mai afișeze mesajul acela și fără să se mai oprească!

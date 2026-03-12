@@ -10,17 +10,21 @@ const API = `${BACKEND_URL}/api`;
 const SUPABASE_CONTENT_PREFIX = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/content/';
 const SUPABASE_AUDIO_PREFIX = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/audio/';
 
+// Running locally? Skip the Netlify CDN proxy — use Supabase URLs directly
+const IS_LOCAL = BACKEND_URL && BACKEND_URL.includes('localhost');
+
 const getFileUrl = (url) => {
   if (!url) return '';
 
-  // Proxy Supabase Storage through Netlify CDN to reduce egress
-  // Instead of: https://xxx.supabase.co/storage/v1/object/public/content/file.jpg
-  // Uses:       /supabase-media/file.jpg (served by Netlify CDN, cached)
-  if (url.startsWith(SUPABASE_CONTENT_PREFIX)) {
-    return '/supabase-media/' + url.substring(SUPABASE_CONTENT_PREFIX.length);
-  }
-  if (url.startsWith(SUPABASE_AUDIO_PREFIX)) {
-    return '/supabase-audio/' + url.substring(SUPABASE_AUDIO_PREFIX.length);
+  // On Netlify production: proxy Supabase through CDN to reduce egress
+  // Locally: use Supabase URLs directly (the Netlify proxy /supabase-media/ doesn't exist locally)
+  if (!IS_LOCAL) {
+    if (url.startsWith(SUPABASE_CONTENT_PREFIX)) {
+      return '/supabase-media/' + url.substring(SUPABASE_CONTENT_PREFIX.length);
+    }
+    if (url.startsWith(SUPABASE_AUDIO_PREFIX)) {
+      return '/supabase-audio/' + url.substring(SUPABASE_AUDIO_PREFIX.length);
+    }
   }
 
   if (url.startsWith('http')) return url;

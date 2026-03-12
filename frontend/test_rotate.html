@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.dashboard-card {
+  width: 200px;
+  background: #333;
+  padding: 10px;
+  margin: 50px auto;
+}
+.vertical-container {
+  /* Dashboard card is vertical */
+  position: relative;
+  background: black;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0 auto;
+  aspect-ratio: 9/16;
+  width: 56.25%; /* 112.5px wide, 200px tall */
+}
+.iframe-wrapper {
+  /* To simulate the physical hardware TV, the iframe MUST be 1920x1080 Landscape */
+  width: 1920px;
+  height: 1080px;
+  position: absolute;
+  top: 0; left: 0;
+  /* First we must rotate the hardware TV to stand vertically */
+  /* If rot === 90, the TV is rotated 90 degrees right. */
+  transform-origin: top left;
+  /* Then we scale it down to fit the 112.5px width */
+  /* Wait, if it's vertical now, it's 1080px wide physically. So Scale = 112.5 / 1080. */
+  transform: rotate(90deg) translateY(-100%) scale(0.104166);
+}
+.tv-screen-content {
+  /* This is DisplayScreen.js */
+  /* It is 1080x1920 rotated 90 degrees to fit inside 1920x1080 */
+  width: 1080px;
+  height: 1920px;
+  background: red;
+  transform: rotate(90deg);
+  transform-origin: top left;
+  position: fixed;
+  top: 0;
+  left: 1920px;
+  color: white;
+  font-size: 100px;
+}
+</style>
+</head>
+<body>
+  <div class="dashboard-card">
+    <div class="vertical-container">
+       <div class="iframe-wrapper">
+         <!-- Iframe internal body -->
+         <div class="tv-screen-content">TEXT ROTATED</div>
+       </div>
+    </div>
+  </div>
+</body>
+</html>

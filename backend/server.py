@@ -1123,7 +1123,7 @@ async def delete_screen(screen_id: str, current_user: User = Depends(require_adm
 
 @api_router.post("/screens/{screen_id}/heartbeat")
 async def screen_heartbeat(screen_id: str):
-    await screen_update_heartbeat(screen_id, "active", datetime.now(timezone.utc))
+    await screen_update_heartbeat(screen_id, "online", datetime.now(timezone.utc))
     return {"message": "Heartbeat received"}
 
 
