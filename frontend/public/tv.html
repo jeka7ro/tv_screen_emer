@@ -24,42 +24,12 @@
             background: #000
         }
 
-        @keyframes asbl-drift {
-            0% {
-                transform: scale(1.0) translate(0, 0);
-            }
-
-            25% {
-                transform: scale(1.02) translate(1%, 1%);
-            }
-
-            50% {
-                transform: scale(1.04) translate(-1%, 0%);
-            }
-
-            75% {
-                transform: scale(1.02) translate(0%, -1%);
-            }
-
-            100% {
-                transform: scale(1.0) translate(0, 0);
-            }
-        }
-
         #slides {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            animation: asbl-drift 120s linear infinite;
-        }
-
-        /* Nuclear ASBL Flash Class - Inverts all pixels to forcefully reset hardware OLED APL timers */
-        html.asbl-spike-active,
-        body.asbl-spike-active {
-            filter: invert(1) hue-rotate(180deg) contrast(200%) brightness(150%) !important;
-            background: #fff !important;
         }
 
         .slide {
@@ -116,7 +86,7 @@
     <!-- ANTI-SCREENSAVER: Full-screen video layer (The ONLY known fix for LG WebOS OLEDs) -->
     <!-- Official WebOS documentation: "Screensaver will NOT appear when a video is playing full screen (100% viewport, position 0,0)." -->
     <video id="hw-video" src="/keepalive.mp4" autoplay loop muted playsinline webkit-playsinline
-        style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:1;opacity:0.02;pointer-events:none;background:#000;"></video>
+        style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:-1;opacity:0.01;pointer-events:none;"></video>
 
     <div id="rotation-wrapper" style="position: absolute; width:100%; height:100%; top:0; left:0; overflow:hidden;">
         <div id="slides"></div>
@@ -378,17 +348,6 @@
                 document.addEventListener('keydown', function () { hwVideo.play().catch(function () { }); });
                 document.addEventListener('mousemove', function () { hwVideo.play().catch(function () { }); });
             } catch (e) { }
-
-            // Layer 3: The Nuclear ASBL APL Spike (100ms flash every 2.5 minutes)
-            // Forces a continuous hard pixel flip to reset OLED APL hardware timers before the TV turns off at 3-4 mins.
-            setInterval(function () {
-                try {
-                    document.body.classList.add('asbl-spike-active');
-                    setTimeout(function () {
-                        document.body.classList.remove('asbl-spike-active');
-                    }, 100);
-                } catch (e) { }
-            }, 150000);
 
             // Re-fetch data every 5 minutes (in case content changed)
             setInterval(function () {
