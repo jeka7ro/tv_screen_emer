@@ -263,8 +263,8 @@ export const Screens = () => {
 
   const handleShowLink = (screen) => {
     setSelectedScreenForLink(screen);
-    // Use internal short link: origin + /s/ + slug
-    setShortUrl(`${window.location.origin}/s/${screen.slug}`);
+    // Use the full display URL for the TV link
+    setShortUrl(getScreenUrl(screen.slug));
     setShowLinkDialog(true);
   };
 
