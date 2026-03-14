@@ -215,6 +215,13 @@ export const DisplayScreen = () => {
     loadDisplayData();
   }, [slug]);
 
+  // Reset playlist index to 0 when displayData changes (new config loaded)
+  // Prevents stale index pointing beyond the new playlist's bounds → black screen
+  useEffect(() => {
+    setCurrentPlaylistIndex(0);
+    setCurrentPage(0);
+  }, [displayData?.screen?.id]);
+
   useEffect(() => {
     if (!displayData) return;
     const zonesList = displayData.zones_config || displayData.zones || [];
@@ -238,11 +245,13 @@ export const DisplayScreen = () => {
     if (zoneWithPlaylist?.playlist?.content_items?.length > 1) {
       const playlist = zoneWithPlaylist.playlist;
       const currentItem = playlist.content_items[currentPlaylistIndex];
-      const duration = currentItem?.duration || 10; // Default 10 seconds if no duration
+      // Clamp to minimum 3s — prevents 0/NaN/undefined duration causing immediate black screen
+      const rawDuration = Number(currentItem?.duration);
+      const duration = (isFinite(rawDuration) && rawDuration >= 1) ? rawDuration : 10;
 
       const interval = setInterval(() => {
         setCurrentPlaylistIndex(prev => (prev + 1) % playlist.content_items.length);
-      }, duration * 1000);
+      }, Math.max(duration, 3) * 1000);
 
       return () => clearInterval(interval);
     }

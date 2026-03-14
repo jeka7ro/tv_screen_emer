@@ -305,9 +305,31 @@
                 container.appendChild(div);
             }
 
-            // Start slideshow if multiple items
-            if (items.length > 1) {
-                nextSlide();
+            // Pre-load all images before starting the slideshow
+            // This prevents a black frame while the NEXT image downloads on first switch
+            var imagesToLoad = items.filter(function(it) { return it.type === 'image'; });
+            var loaded = 0;
+            var total = imagesToLoad.length;
+
+            function startSlideshow() {
+                if (items.length > 1) {
+                    nextSlide();
+                }
+            }
+
+            if (total === 0) {
+                startSlideshow();
+            } else {
+                for (var pi = 0; pi < imagesToLoad.length; pi++) {
+                    (function(src) {
+                        var preImg = new Image();
+                        preImg.onload = preImg.onerror = function() {
+                            loaded++;
+                            if (loaded >= total) startSlideshow();
+                        };
+                        preImg.src = src;
+                    })(imagesToLoad[pi].url);
+                }
             }
 
             // Anti-standby: The "Safe" Combo (Meta Refresh + 100% Transparent Video + WakeLock)
@@ -375,7 +397,8 @@
         }
 
         function nextSlide() {
-            var duration = (allSlides[currentSlide] && allSlides[currentSlide].duration) || 10;
+            var rawDuration = allSlides[currentSlide] && allSlides[currentSlide].duration;
+            var duration = Math.max(5, Number(rawDuration) || 10); // Minimum 5s — prevents instant black flash
             slideTimer = setTimeout(function () {
                 var oldSlide = document.getElementById('slide-' + currentSlide);
                 if (oldSlide) oldSlide.className = 'slide';
