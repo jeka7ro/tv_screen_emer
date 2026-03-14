@@ -24,6 +24,22 @@
             background: #000
         }
 
+        /* ASBL Spike pixel - 2x2px hidden element used to reset OLED APL timers */
+        /* Replaces full-screen invert (which caused visible flicker on slow TV GPUs) */
+        #asbl-pixel {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 2px;
+            height: 2px;
+            background: #000;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        #asbl-pixel.spike {
+            background: #fff;
+        }
+
         #slides {
             position: absolute;
             top: 0;
@@ -87,6 +103,8 @@
     <!-- Official WebOS documentation: "Screensaver will NOT appear when a video is playing full screen (100% viewport, position 0,0)." -->
     <video id="hw-video" src="/keepalive.mp4" autoplay loop muted playsinline webkit-playsinline
         style="position:fixed;top:0;left:0;width:100vw;height:100vh;object-fit:cover;z-index:-1;opacity:0.01;pointer-events:none;"></video>
+    <!-- ASBL pixel spike element — 2x2px white flash every 2.5min resets OLED APL hardware dimming timer -->
+    <div id="asbl-pixel"></div>
 
     <div id="rotation-wrapper" style="position: absolute; width:100%; height:100%; top:0; left:0; overflow:hidden;">
         <div id="slides"></div>
@@ -348,6 +366,21 @@
                 document.addEventListener('keydown', function () { hwVideo.play().catch(function () { }); });
                 document.addEventListener('mousemove', function () { hwVideo.play().catch(function () { }); });
             } catch (e) { }
+
+            // Layer 3: ASBL APL Pixel Spike (every 2.5 minutes)
+            // Flips a 2x2px corner pixel white→black to reset OLED APL hardware dimming timers
+            // Uses a tiny hidden element instead of full-screen invert to avoid visible flicker
+            var asblPixel = document.getElementById('asbl-pixel');
+            setInterval(function () {
+                try {
+                    if (asblPixel) {
+                        asblPixel.classList.add('spike');
+                        setTimeout(function () {
+                            asblPixel.classList.remove('spike');
+                        }, 200);
+                    }
+                } catch (e) { }
+            }, 150000);
 
             // Re-fetch data every 5 minutes (in case content changed)
             setInterval(function () {
