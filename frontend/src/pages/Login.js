@@ -20,9 +20,21 @@ export const Login = () => {
   const [loginError, setLoginError] = useState('');
   const [inviteValid, setInviteValid] = useState(false);
   const [checkingInvite, setCheckingInvite] = useState(!!inviteCode);
-
+  const [rememberMe, setRememberMe] = useState(false);
+  
   const { login, register } = useAuth();
   const navigate = useNavigate();
+
+  // Load remembered credentials
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('remember_email');
+    const savedPassword = localStorage.getItem('remember_password');
+    if (savedEmail && savedPassword) {
+      setEmail(savedEmail);
+      setPassword(savedPassword);
+      setRememberMe(true);
+    }
+  }, []);
 
   // Check if open registration is available (first user)
   useEffect(() => {
@@ -64,6 +76,15 @@ export const Login = () => {
     try {
       if (isLogin) {
         await login(email, password);
+        
+        if (rememberMe) {
+          localStorage.setItem('remember_email', email);
+          localStorage.setItem('remember_password', password);
+        } else {
+          localStorage.removeItem('remember_email');
+          localStorage.removeItem('remember_password');
+        }
+        
         toast.success('Autentificare reușită!');
       } else {
         // For registration, check if invitation code is needed
@@ -99,21 +120,42 @@ export const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6" data-testid="login-page">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-900" data-testid="login-page">
       <div className="w-full max-w-md">
-        <div className="glass-card p-8">
-          <div className="flex justify-center mb-8">
-            <div className="bg-indigo-100 p-4 rounded-2xl">
-              <img src="/favicon.png" alt="Logo" className="w-12 h-12" data-testid="logo-icon" />
+        <div className="bg-slate-950 border border-slate-800 rounded-[2.5rem] p-8 shadow-2xl shadow-indigo-500/10">
+          <div className="flex justify-center pt-4 mb-10">
+            <div className="flex items-center rounded-full border-2 border-[#00ced1] bg-slate-950 p-[4px] shadow-2xl scale-125 transition-transform">
+              <div 
+                className="bg-[#00ced1] text-white font-black text-[21px] px-5 py-2.5 rounded-full uppercase tracking-tight leading-none"
+                style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
+              >
+                GET
+              </div>
+              <div className="flex items-center justify-center px-4 min-w-[70px]">
+                <span 
+                  className="text-white font-black text-[21px] leading-none"
+                  style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
+                >
+                  App
+                </span>
+              </div>
             </div>
           </div>
 
-          <h1 className="text-3xl font-bold text-center text-slate-800 mb-2">
-            Screen Media
-          </h1>
-          <p className="text-center text-slate-500 mb-8">
-            Sistem Management Meniuri Digitale
-          </p>
+          <div className="text-center space-y-1 mb-8">
+            <h1 
+              className="text-3xl font-black text-white tracking-widest"
+              style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
+            >
+              Smart Displays
+            </h1>
+            <p 
+              className="text-[#00ced1] font-black tracking-widest text-sm"
+              style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
+            >
+              www.getapp.ro
+            </p>
+          </div>
 
           {/* Show badge for first user registration */}
           {!isLogin && isOpenRegistration && (
@@ -155,7 +197,7 @@ export const Login = () => {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 <Mail className="w-4 h-4 inline mr-1" />
                 Email
               </label>
@@ -163,7 +205,7 @@ export const Login = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full glass-input px-4 py-3 border"
+                className="w-full bg-slate-900 border-slate-800 text-white rounded-xl px-4 py-3 border focus:border-[#20b2aa] focus:ring-1 focus:ring-[#20b2aa] outline-none transition-all"
                 placeholder="admin@sushimaster.ro"
                 required
                 data-testid="email-input"
@@ -171,7 +213,7 @@ export const Login = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 <Lock className="w-4 h-4 inline mr-1" />
                 Parolă
               </label>
@@ -180,7 +222,7 @@ export const Login = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full glass-input px-4 py-3 pr-12 border"
+                  className="w-full bg-slate-900 border-slate-800 text-white rounded-xl px-4 py-3 pr-12 border focus:border-[#20b2aa] focus:ring-1 focus:ring-[#20b2aa] outline-none transition-all"
                   placeholder="••••••••"
                   required
                   data-testid="password-input"
@@ -197,12 +239,33 @@ export const Login = () => {
               </div>
             </div>
 
-            {/* Forgot Password Link */}
+            {/* Remember Me & Forgot Password */}
             {isLogin && (
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <div className="relative flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div className={`w-5 h-5 rounded border-2 transition-all ${rememberMe ? 'bg-[#00ced1] border-[#00ced1]' : 'bg-white border-slate-300 group-hover:border-[#00ced1]'}`}>
+                      {rememberMe && (
+                        <svg className="w-full h-full text-white p-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-slate-400 group-hover:text-white transition-colors">
+                    Memorează parola
+                  </span>
+                </label>
+                
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="text-sm text-[#00ced1] hover:text-[#25c8cc] font-semibold"
                 >
                   Ai uitat parola?
                 </Link>
@@ -241,12 +304,12 @@ export const Login = () => {
             <button
               type="submit"
               disabled={loading || (!isLogin && !canRegister)}
-              className="w-full btn-primary mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#20b2aa] hover:bg-[#25c8cc] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#20b2aa]/20 transition-all flex items-center justify-center gap-2 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="submit-button"
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
-                  <div className="spinner w-5 h-5"></div>
+                  <div className="spinner w-5 h-5 border-white"></div>
                   Se procesează...
                 </div>
               ) : (
@@ -267,11 +330,11 @@ export const Login = () => {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
             {isLogin ? (
               <button
                 onClick={() => setIsLogin(false)}
-                className="text-indigo-600 hover:text-indigo-700 font-medium"
+                className="text-slate-400 hover:text-white font-medium transition-colors"
                 data-testid="toggle-auth-mode"
               >
                 {isOpenRegistration ? 'Creează primul cont (Super Admin)' : 'Ai un cod de invitație?'}
@@ -279,7 +342,7 @@ export const Login = () => {
             ) : (
               <button
                 onClick={() => setIsLogin(true)}
-                className="text-indigo-600 hover:text-indigo-700 font-medium"
+                className="text-slate-400 hover:text-white font-medium transition-colors"
                 data-testid="toggle-auth-mode"
               >
                 Ai deja cont? Autentifică-te

@@ -89,25 +89,54 @@ export const DashboardLayout = ({ children }) => {
     <div className="flex min-h-screen">
       {/* Sidebar */}
       <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-[17rem]'} h-screen fixed left-0 top-0 z-50 flex flex-col transition-all duration-300 ease-in-out border-r border-slate-200/80`} style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #eef2f7 50%, #e8edf5 100%)' }} data-testid="sidebar">
-        <div className={`px-5 py-2 border-b border-slate-200/80 relative flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
-          <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden">
-            <img
-              src="/favicon.png"
-              alt="Screen Media Logo"
-              className={`${isSidebarCollapsed ? 'w-8 h-8' : 'w-10 h-10'} object-contain shrink-0 transition-all duration-300`}
-            />
-            {!isSidebarCollapsed && (
-              <div className="animate-in fade-in duration-300">
-                <h1 className="text-lg font-bold text-slate-800 whitespace-nowrap">Screen Media</h1>
-                <p className="text-xs text-slate-400 whitespace-nowrap">Digital Signage System</p>
+        <div className={`px-2 border-b border-slate-200/80 bg-white relative flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} h-[72px] shrink-0`}>
+          <Link to="/dashboard" className="flex items-center overflow-hidden w-full">
+            {isSidebarCollapsed ? (
+              <img
+                src="/favicon.png"
+                alt="Smart Displays Logo"
+                className="w-10 h-10 object-contain shrink-0 mx-auto transition-all duration-300"
+              />
+            ) : (
+              <div className="animate-in fade-in duration-300 flex items-center w-full">
+                <div className="flex items-center gap-1.5">
+                  <div 
+                    className="flex items-center rounded-full border-2 border-[#00ced1] bg-white p-[2px] shadow-sm ml-0"
+                  >
+                    <div 
+                      className="bg-[#00ced1] text-white font-black text-[19px] px-3 py-1.5 rounded-full uppercase tracking-tight leading-none"
+                      style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
+                    >
+                      GET
+                    </div>
+                    <div className="flex items-center justify-center px-3 min-w-[60px]">
+                      <span 
+                        className="text-slate-800 font-black text-[19px] leading-none"
+                        style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
+                      >
+                        App
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="w-px h-8 bg-slate-200"></div>
+                  
+                  <div 
+                    className="flex flex-col items-center text-[#00ced1] font-black text-[15px] leading-[1.05] tracking-tight"
+                    style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
+                  >
+                    <span>Smart</span>
+                    <span>Displays</span>
+                  </div>
+                </div>
               </div>
             )}
           </Link>
           <button
-            onClick={toggleSidebar}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-300 rounded-full flex items-center justify-center shadow-md text-slate-500 hover:bg-red-600 hover:border-red-600 hover:text-white transition-colors z-[60]"
+             onClick={toggleSidebar}
+             className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-300 rounded-full flex items-center justify-center shadow-md text-slate-500 hover:bg-[#00ced1] hover:border-[#00ced1] hover:text-white transition-colors z-[60]"
           >
-            {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+             {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
@@ -200,8 +229,8 @@ export const DashboardLayout = ({ children }) => {
       {/* Main Content */}
       <div className={`${isSidebarCollapsed ? 'ml-20' : 'ml-[17rem]'} flex-1 min-h-screen transition-all duration-300 ease-in-out flex flex-col`}>
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-40 px-8 py-3 border-b border-slate-200/80" style={{ background: 'linear-gradient(90deg, #f8fafc 0%, #eef2f7 100%)' }}>
-          <div className="flex items-center justify-end gap-4">
+        <header className="sticky top-0 z-40 px-8 h-[72px] flex items-center border-b border-slate-200/80 shrink-0" style={{ background: 'linear-gradient(90deg, #f8fafc 0%, #eef2f7 100%)' }}>
+          <div className="flex items-center justify-end gap-4 w-full">
             {/* Date & Time */}
             <div className="flex items-center gap-3 text-right">
               <div>
