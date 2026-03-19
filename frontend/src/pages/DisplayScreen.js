@@ -354,6 +354,25 @@ export const DisplayScreen = () => {
     }
   }, [displayData?.screen?.id]);
 
+  // Dedicated heartbeat — runs every 60s regardless of polling/content status
+  // Keeps the TV marked as 'online' in the admin panel even when content polling fails
+  useEffect(() => {
+    if (isPreview) return; // Don't send heartbeats from Dashboard iframes
+    // Don't send until we know the screen ID
+    if (!displayData?.screen?.id) return;
+
+    const screenId = displayData.screen.id;
+
+    // Send immediately on mount, then every 60s
+    const sendHeartbeat = () => {
+      axios.post(`${API}/screens/${screenId}/heartbeat`).catch(() => { /* silent */ });
+    };
+
+    sendHeartbeat();
+    const hbInterval = setInterval(sendHeartbeat, 60000);
+    return () => clearInterval(hbInterval);
+  }, [displayData?.screen?.id, isPreview]);
+
   // Listen for config updates from ScreenDesigner (cross-tab refresh)
   useEffect(() => {
     const handleStorageChange = (e) => {

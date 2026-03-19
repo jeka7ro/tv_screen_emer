@@ -655,9 +655,9 @@ export const Screens = () => {
                           />
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${screen.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`} style={screen.status === 'active' ? { boxShadow: '0 0 8px 2px rgba(16, 185, 129, 0.4)' } : { boxShadow: '0 0 8px 2px rgba(239, 68, 68, 0.4)' }}>
-                            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                            {screen.status === 'active' ? 'ONLINE' : 'OFFLINE'}
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`} style={screen.status === 'online' ? { boxShadow: '0 0 8px 2px rgba(16, 185, 129, 0.4)' } : { boxShadow: '0 0 8px 2px rgba(239, 68, 68, 0.4)' }}>
+                            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                            {screen.status === 'online' ? 'ONLINE' : 'OFFLINE'}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -764,7 +764,7 @@ export const Screens = () => {
                 </div>
                 <div className={`grid gap-4 ${gridSize === 'sm' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : gridSize === 'md' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
                   {locationScreens.map((screen) => (
-                    <div key={screen.id} className={`glass-card p-3 flex flex-col h-full transition-all rounded-xl ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`} style={{ border: screen.status === 'active' ? '2px solid #10b981' : '2px solid #ef4444', boxShadow: screen.status === 'active' ? '0 0 8px 2px rgba(16, 185, 129, 0.25)' : '0 0 8px 2px rgba(239, 68, 68, 0.25)' }}>
+                    <div key={screen.id} className={`glass-card p-3 flex flex-col h-full transition-all rounded-xl ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`} style={{ border: screen.status === 'online' ? '2px solid #10b981' : '2px solid #ef4444', boxShadow: screen.status === 'online' ? '0 0 8px 2px rgba(16, 185, 129, 0.25)' : '0 0 8px 2px rgba(239, 68, 68, 0.25)' }}>
                       {/* Header: checkbox + brand + name + actions */}
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2 min-w-0">
@@ -798,9 +798,9 @@ export const Screens = () => {
 
                       {/* Info bar: status · location · slug · rotation · resolution */}
                       <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 mb-2 px-1">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-black uppercase tracking-wider ${screen.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`} style={screen.status === 'active' ? { boxShadow: '0 0 6px 1px rgba(16, 185, 129, 0.3)' } : { boxShadow: '0 0 6px 1px rgba(239, 68, 68, 0.3)' }}>
-                          <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                          {screen.status === 'active' ? 'ONLINE' : 'OFFLINE'}
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-black uppercase tracking-wider ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`} style={screen.status === 'online' ? { boxShadow: '0 0 6px 1px rgba(16, 185, 129, 0.3)' } : { boxShadow: '0 0 6px 1px rgba(239, 68, 68, 0.3)' }}>
+                          <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                          {screen.status === 'online' ? 'ONLINE' : 'OFFLINE'}
                         </span>
                         <span className="flex items-center gap-1 font-medium">
                           <MapPin className="w-3 h-3 text-red-400" />
