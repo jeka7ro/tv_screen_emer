@@ -957,21 +957,19 @@ async def screens_count(location_id: Optional[str] = None) -> int:
 
 
 async def screens_count_online(location_id: Optional[str] = None) -> int:
-    # Count screens that have active heartbeat (within last 2 minutes)
+    # Count screens that have active heartbeat (within last 20 minutes)
     if location_id:
         r = await _fetch_one("""
             SELECT count(*)::int AS c 
             FROM screens 
-            WHERE status = 'active' 
-            AND last_active >= NOW() - INTERVAL '2 minutes'
+            WHERE last_active >= NOW() - INTERVAL '20 minutes'
             AND location_id = $1
         """, location_id)
     else:
         r = await _fetch_one("""
             SELECT count(*)::int AS c 
             FROM screens 
-            WHERE status = 'active' 
-            AND last_active >= NOW() - INTERVAL '2 minutes'
+            WHERE last_active >= NOW() - INTERVAL '20 minutes'
         """)
     return r["c"] if r else 0
 
