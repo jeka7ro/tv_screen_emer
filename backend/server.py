@@ -2338,12 +2338,20 @@ async def get_display_data(slug: str, security_code: Optional[str] = None):
 async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
     location_id = current_user.location_id if current_user.role == "manager" else None
     
+    locations = await locations_count(location_id)
+    screens = await screens_count(location_id)
+    online_screens = await screens_count_online(location_id)
+    products = await products_count()
+    content = await content_count()
+    
+    print(f"DEBUG STATS: user={current_user.email}, role={current_user.role}, loc={location_id}, online={online_screens}")
+    
     return {
-        "locations": await locations_count(location_id),
-        "screens": await screens_count(location_id),
-        "online_screens": await screens_count_online(location_id),
-        "products": await products_count(),
-        "content": await content_count(),
+        "locations": locations,
+        "screens": screens,
+        "online_screens": online_screens,
+        "products": products,
+        "content": content,
     }
 
 # ============ AUDIO HELPERS ============
