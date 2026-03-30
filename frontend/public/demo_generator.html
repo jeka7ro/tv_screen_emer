@@ -20,6 +20,17 @@
       display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px;
       border-radius: 0.75rem; border: 2px solid transparent; transition: all 0.2s; cursor: pointer;
     }
+    .peer:checked + .effect-btn i, .peer:checked + .effect-btn svg { stroke: currentColor; color: inherit; }
+    input[id="effParallax"]:checked + .effect-btn { color: #818cf8; }
+    input[id="effParallax"]:checked + .effect-btn span { color: #a5b4fc; }
+    input[id="effSteam"]:checked + .effect-btn { color: #2dd4bf; }
+    input[id="effSteam"]:checked + .effect-btn span { color: #5eead4; }
+    input[id="effHearts"]:checked + .effect-btn { color: #f472b6; }
+    input[id="effHearts"]:checked + .effect-btn span { color: #f9a8d4; }
+    input[id="effSakura"]:checked + .effect-btn { color: #fb7185; }
+    input[id="effSakura"]:checked + .effect-btn span { color: #fda4af; }
+    input[id="effSnow"]:checked + .effect-btn { color: #38bdf8; }
+    input[id="effSnow"]:checked + .effect-btn span { color: #7dd3fc; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-900 relative">
@@ -341,13 +352,14 @@
       }
 
       // 2. Comprimăm doar Setările (fără poză!) în URL parametrul Magic
-      const base64Config = btoa(JSON.stringify(config));
+      // folosim encodeURIComponent pt a preveni crash-ul btoa la caractere Ofertă/Zăpadă
+      const base64Config = btoa(encodeURIComponent(JSON.stringify(config)));
       const baseUrl = window.location.href.split('/').slice(0, -1).join('/');
       const finalUrl = `${baseUrl}/demo_tv.html?d=${base64Config}`;
 
       document.getElementById('openBtn').href = finalUrl;
       document.getElementById('resultBox').classList.remove('hidden');
-      document.getElementById('generateBtn').innerHTML = '<i data-lucide="check-circle" class="w-6 h-6"></i> LINK GENERAT! APASĂ JOS';
+      document.getElementById('generateBtn').innerHTML = '<i data-lucide="check-circle" class="w-6 h-6"></i> LINK GENERAT! APASĂ AICI';
       lucide.createIcons();
     }
   </script>
