@@ -133,12 +133,12 @@ export const Login = () => {
       <div className="fixed inset-0 z-0 bg-black/50"></div>
 
       <div className="w-full max-w-md relative z-10 transition-transform hover:scale-[1.01] duration-500">
-        <div className="bg-slate-950/60 backdrop-blur-2xl border-2 border-white/20 rounded-[2.5rem] p-8 shadow-2xl shadow-black/70" style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.15), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
-          <div style={{ width:'100%', display:'flex', justifyContent:'center', alignItems:'center', paddingTop:'8px', marginBottom:'32px' }}>
+        <div className="bg-slate-950/60 backdrop-blur-3xl border border-slate-600/50 rounded-[2.5rem] p-8" style={{ boxShadow: '0 30px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.15), inset 0 2px 20px rgba(255,255,255,0.05)' }}>
+          <div className="flex justify-center items-center pt-2 mb-8 translate-x-3">
             <img 
               src="/getapp_smart_displays_white.png" 
               alt="Get App Smart Displays" 
-              style={{ height:'80px', width:'auto', objectFit:'contain', display:'block' }}
+              className="h-20 w-auto object-contain hover:scale-[1.02] transition-transform duration-300"
             />
           </div>
 
