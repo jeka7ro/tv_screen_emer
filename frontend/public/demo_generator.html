@@ -80,7 +80,7 @@
         <!-- Upload Poză Client -->
         <div class="bg-slate-800/50 p-5 rounded-2xl border border-slate-700">
           <h2 class="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
-            <i data-lucide="image" class="w-4 h-4 text-indigo-400"></i> Imaginea Ta (Template Ecran Full)
+            <i data-lucide="image" class="w-4 h-4 text-indigo-400"></i> <span class="i18n-imgSec">Imaginea Ta (Template Ecran Full)</span>
           </h2>
           <div class="relative w-full h-48 border-2 border-dashed border-slate-500 rounded-xl flex flex-col items-center justify-center hover:bg-slate-700/30 transition-all group overflow-hidden" id="previewBox">
             <input type="file" id="fileInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
@@ -98,8 +98,8 @@
           </div>
           <div class="mt-3 flex gap-2 justify-between items-center">
             <div class="flex gap-2">
-              <button onclick="setSampleImage('burger')" class="text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-1 flex items-center gap-1 rounded-lg text-slate-300"><i data-lucide="image" class="w-3 h-3"></i> Burger</button>
-              <button onclick="setSampleImage('fashion')" class="text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-1 flex items-center gap-1 rounded-lg text-slate-300"><i data-lucide="image" class="w-3 h-3"></i> Haine</button>
+              <button onclick="setSampleImage('burger')" class="text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-1 flex items-center gap-1 rounded-lg text-slate-300"><i data-lucide="image" class="w-3 h-3"></i> <span class="i18n-ex1">Burger</span></button>
+              <button onclick="setSampleImage('fashion')" class="text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-1 flex items-center gap-1 rounded-lg text-slate-300"><i data-lucide="image" class="w-3 h-3"></i> <span class="i18n-ex2">Haine</span></button>
             </div>
             <!-- Rotation controls -->
             <div class="flex bg-slate-800 rounded-lg p-1 border border-slate-700 items-center">
@@ -116,7 +116,7 @@
         <div class="bg-slate-800/50 p-5 rounded-2xl border border-slate-700">
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
-              <i data-lucide="type" class="w-4 h-4 text-blue-400"></i> Text Personalizat
+              <i data-lucide="type" class="w-4 h-4 text-blue-400"></i> <span class="i18n-txtSec">Text Personalizat</span>
             </h2>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" id="enableText" class="sr-only peer">
@@ -158,7 +158,7 @@
         
         <div class="bg-slate-800/50 p-5 rounded-2xl border border-slate-700 h-full flex flex-col">
           <h2 class="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
-            <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i> Efecte Vizuale
+            <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i> <span class="i18n-fxSec">Efecte Vizuale</span>
           </h2>
           
           <div class="grid grid-cols-3 gap-3">
@@ -228,7 +228,7 @@
           <div class="mt-auto pt-6 border-t border-slate-700">
             <div class="flex items-center justify-between mb-3">
               <h2 class="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                <i data-lucide="clock" class="w-4 h-4 text-purple-400"></i> Timer Happy Hour
+                <i data-lucide="clock" class="w-4 h-4 text-purple-400"></i> <span class="i18n-tSec">Timer Happy Hour</span>
               </h2>
               <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" id="enableTimer" class="sr-only peer">
@@ -298,21 +298,21 @@
         ex1: "<i data-lucide='image' class='w-3 h-3'></i> Burger",
         ex2: "<i data-lucide='image' class='w-3 h-3'></i> Haine",
         rotTop: "<i data-lucide='rotate-cw' class='w-3 h-3 text-slate-500 mx-1'></i>",
-        txtSec: "<i data-lucide='type' class='w-4 h-4 text-blue-400'></i> Text Personalizat",
+        txtSec: "Text Personalizat",
         ph: "ex: SUPER OFERTĂ -50%",
         col: "Culoare Text (Hex):",
         bg: "Fundal Negru:",
-        fxSec: "<i data-lucide='sparkles' class='w-4 h-4 text-amber-500'></i> Efecte Vizuale",
+        fxSec: "Efecte Vizuale",
         fx1: "Parallax", fx2: "Steam (Abur)", fx3: "Valentine Hearts", fx4: "Sakura", fx5: "Zăpadă",
         intSec: "Intensitate Zăpadă / Sakura / Inimi",
         int1: "Scăzută", int2: "Medie", int3: "Maximă",
-        tSec: "<i data-lucide='clock' class='w-4 h-4 text-purple-400'></i> Timer Happy Hour",
+        tSec: "Timer Happy Hour",
         tDur: "Durată (M:S)", tPos: "Poziție",
         dscTitle: "Notă Funcționalitate Demo",
         dscText: "Acest afișaj interactiv este generat exclusiv în scop demonstrativ. Linkul de previzualizare va fi activ o perioadă limitată de <strong>5 minute</strong> de la creare și va conține marca de apă (logo-ul) <strong>GetApp</strong>.<br>Pentru acces pe durată nelimitată, rulare continuă (24/7) pe monitoare / Smart TV-uri fizice, și conținut <strong>100% personalizat</strong> la nivel de locație, este necesară activarea abonamentului standard GetApp Smart Displays.",
-        btn: "<i data-lucide='monitor-play' class='w-6 h-6'></i> PREVIZUALIZARE PE TV (5 MINUTE)",
+        btn: "<i data-lucide='monitor-play' class='w-6 h-6'></i> <span class='i18n-btn-text'>PREVIZUALIZARE PE TV (5 MINUTE)</span>",
         succ: "Ecranul a fost pregătit și rulează invizibil!",
-        btnO: "<i data-lucide='external-link' class='w-5 h-5'></i> Deschide Live pe Tot Ecranul",
+        btnO: "<i data-lucide='external-link' class='w-5 h-5'></i> <span class='i18n-btno-text'>Deschide Live pe Tot Ecranul</span>",
         err1: "Te rugăm să încarci o imagine prima dată!",
         err2: "Eroare Memorie Browser: Poza este prea mare! Te rugăm să folosești o poză sub 3MB.",
         langBtn: "🇬🇧 English",
@@ -321,27 +321,27 @@
       en: {
         title: "Screen Design (Demo)",
         sub: "Configure the template and zones for your temporary display",
-        imgSec: "<i data-lucide='image' class='w-4 h-4 text-indigo-400'></i> Your Image (Full Screen Template)",
+        imgSec: "Your Image (Full Screen Template)",
         up1: "Click or Drag & Drop",
         up2: "Upload a menu or ad (JPG/PNG)",
-        ex1: "<i data-lucide='image' class='w-3 h-3'></i> Burger",
-        ex2: "<i data-lucide='image' class='w-3 h-3'></i> Suits",
+        ex1: "Burger",
+        ex2: "Suits",
         rotTop: "<i data-lucide='rotate-cw' class='w-3 h-3 text-slate-500 mx-1'></i>",
-        txtSec: "<i data-lucide='type' class='w-4 h-4 text-blue-400'></i> Custom Text",
+        txtSec: "Custom Text",
         ph: "ex: HOT DEAL -50%",
         col: "Text Color (Hex):",
         bg: "Dark Background:",
-        fxSec: "<i data-lucide='sparkles' class='w-4 h-4 text-amber-500'></i> Visual Effects",
+        fxSec: "Visual Effects",
         fx1: "Parallax", fx2: "Steam", fx3: "Valentine Hearts", fx4: "Sakura", fx5: "Snow",
         intSec: "Intensity Snow / Sakura / Hearts",
         int1: "Low", int2: "Medium", int3: "Maximum",
-        tSec: "<i data-lucide='clock' class='w-4 h-4 text-purple-400'></i> Happy Hour Timer",
+        tSec: "Happy Hour Timer",
         tDur: "Duration (M:S)", tPos: "Position",
         dscTitle: "Demo Functionality Notice",
         dscText: "This interactive display is generated exclusively for demonstration purposes. The preview link will be active for a limited time of <strong>5 minutes</strong> from creation and will contain the <strong>GetApp</strong> watermark.<br>For unlimited access, continuous playback (24/7) on physical monitors / Smart TVs, and <strong>100% customized</strong> content per location, activating the standard GetApp Smart Displays subscription is required.",
-        btn: "<i data-lucide='monitor-play' class='w-6 h-6'></i> PREVIEW ON TV (5 MINUTES)",
+        btn: "<i data-lucide='monitor-play' class='w-6 h-6'></i> <span class='i18n-btn-text'>PREVIEW ON TV (5 MINUTES)</span>",
         succ: "The screen has been prepared and is running invisibly!",
-        btnO: "<i data-lucide='external-link' class='w-5 h-5'></i> Open Live Fullscreen",
+        btnO: "<i data-lucide='external-link' class='w-5 h-5'></i> <span class='i18n-btno-text'>Open Live Fullscreen</span>",
         err1: "Please upload an image first!",
         err2: "Browser Memory Error: File is too large! Please use a picture under 3MB.",
         langBtn: "🇷🇴 Română",
@@ -376,18 +376,17 @@
       setText('h1', i18n[curLang].title);
       setText('h1 + p', i18n[curLang].sub); 
       
-      const h2s = document.querySelectorAll('h2');
-      if(h2s[0]) h2s[0].innerHTML = i18n[curLang].imgSec;
-      if(h2s[1]) h2s[1].innerHTML = i18n[curLang].txtSec;
-      if(h2s[2]) h2s[2].innerHTML = i18n[curLang].fxSec;
-      if(h2s[3]) h2s[3].innerHTML = i18n[curLang].tSec;
+      setText('.i18n-imgSec', i18n[curLang].imgSec);
+      setText('.i18n-txtSec', i18n[curLang].txtSec);
+      setText('.i18n-fxSec', i18n[curLang].fxSec);
+      setText('.i18n-tSec', i18n[curLang].tSec);
 
       const upP = document.querySelectorAll('#uploadUI p');
       if(upP[0]) upP[0].innerText = i18n[curLang].up1;
       if(upP[1]) upP[1].innerText = i18n[curLang].up2;
 
-      setHTML(`button[onclick="setSampleImage('burger')"]`, i18n[curLang].ex1);
-      setHTML(`button[onclick="setSampleImage('fashion')"]`, i18n[curLang].ex2);
+      setText('.i18n-ex1', i18n[curLang].ex1);
+      setText('.i18n-ex2', i18n[curLang].ex2);
       
       const txtContent = document.getElementById('textContent');
       if(txtContent) txtContent.placeholder = i18n[curLang].ph;
@@ -432,7 +431,7 @@
       setHTML('#openBtn', i18n[curLang].btnO);
 
       renderPosGrids();
-      lucide.createIcons();
+      // WE DO NOT CALL lucide.createIcons() HERE ANYMORE.
     }
 
     // Grids are mounted by renderPosGrids inside i18n
@@ -561,15 +560,17 @@
       timerPosContainer.appendChild(btn);
     });
 
-    document.querySelectorAll('.rot-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.rot-btn').forEach(b => {
-          b.classList.remove('bg-indigo-500', 'text-white');
-          b.classList.add('text-slate-400');
+    // Grid Pozitii Rotatie
+    let currentRotation = 0;
+    document.querySelectorAll('.rot-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.rot-btn').forEach(btn => {
+          btn.classList.remove('bg-indigo-500', 'text-white');
+          btn.classList.add('text-slate-400');
         });
-        e.target.classList.remove('text-slate-400');
-        e.target.classList.add('bg-indigo-500', 'text-white');
-        currentRotation = parseInt(e.target.getAttribute('data-rot'));
+        b.classList.remove('text-slate-400');
+        b.classList.add('bg-indigo-500', 'text-white');
+        currentRotation = parseInt(b.getAttribute('data-rot'));
         document.getElementById('previewImg').style.transform = `rotate(${currentRotation}deg)`;
       });
     });
