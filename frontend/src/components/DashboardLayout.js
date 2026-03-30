@@ -99,11 +99,11 @@ export const DashboardLayout = ({ children }) => {
               />
             ) : (
               <div className="animate-in fade-in duration-300 flex items-center w-full">
-                <div className="flex items-center justify-center w-full px-1">
+                <div className="flex items-center justify-center w-full px-1 translate-x-3">
                   <img 
                     src="/getapp_smart_displays_black.png" 
                     alt="GET App Smart Displays" 
-                    className="h-16 w-auto object-contain"
+                    className="h-[52px] w-auto object-contain transition-all hover:scale-105"
                   />
                 </div>
               </div>
