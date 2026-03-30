@@ -90,9 +90,19 @@
             <div id="previewSnow" class="absolute inset-0 z-10 pointer-events-none overflow-hidden hidden"></div>
             <div id="previewHearts" class="absolute inset-0 z-10 pointer-events-none overflow-hidden hidden"></div>
           </div>
-          <div class="mt-3 flex gap-2">
-            <button onclick="setSampleImage('burger')" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg text-slate-300">Exemplu: Burger</button>
-            <button onclick="setSampleImage('fashion')" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg text-slate-300">Exemplu: Haine</button>
+          <div class="mt-3 flex gap-2 justify-between items-center">
+            <div class="flex gap-2">
+              <button onclick="setSampleImage('burger')" class="text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-1 flex items-center gap-1 rounded-lg text-slate-300"><i data-lucide="image" class="w-3 h-3"></i> Burger</button>
+              <button onclick="setSampleImage('fashion')" class="text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-1 flex items-center gap-1 rounded-lg text-slate-300"><i data-lucide="image" class="w-3 h-3"></i> Haine</button>
+            </div>
+            <!-- Rotation controls -->
+            <div class="flex bg-slate-800 rounded-lg p-1 border border-slate-700 items-center">
+              <i data-lucide="rotate-cw" class="w-3 h-3 text-slate-500 mx-1"></i>
+              <button class="rot-btn bg-indigo-500 text-white rounded-md px-2 py-0.5 text-[10px] font-bold" data-rot="0">0°</button>
+              <button class="rot-btn text-slate-400 hover:text-white px-2 py-0.5 text-[10px] font-bold" data-rot="90">90°</button>
+              <button class="rot-btn text-slate-400 hover:text-white px-2 py-0.5 text-[10px] font-bold" data-rot="180">180°</button>
+              <button class="rot-btn text-slate-400 hover:text-white px-2 py-0.5 text-[10px] font-bold" data-rot="270">270°</button>
+            </div>
           </div>
         </div>
 
@@ -187,6 +197,26 @@
               </div>
             </label>
           </div>
+
+          <!-- Intensitate Efecte -->
+          <div class="mt-4 pt-4 border-t border-slate-700">
+            <span class="text-[10px] text-slate-400 uppercase font-bold mb-2 block">Intensitate Zăpadă / Sakura / Inimi</span>
+            <div class="flex gap-2">
+              <label class="flex-1 cursor-pointer">
+                <input type="radio" name="effInt" value="low" class="peer sr-only">
+                <div class="text-center py-1.5 text-xs font-bold rounded-lg border border-slate-600 bg-slate-800 text-slate-400 peer-checked:bg-indigo-600 peer-checked:border-indigo-500 peer-checked:text-white transition-all">Scăzută</div>
+              </label>
+              <label class="flex-1 cursor-pointer">
+                <input type="radio" name="effInt" value="medium" class="peer sr-only">
+                <div class="text-center py-1.5 text-xs font-bold rounded-lg border border-slate-600 bg-slate-800 text-slate-400 peer-checked:bg-indigo-600 peer-checked:border-indigo-500 peer-checked:text-white transition-all">Medie</div>
+              </label>
+              <label class="flex-1 cursor-pointer">
+                <input type="radio" name="effInt" value="high" class="peer sr-only" checked>
+                <div class="text-center py-1.5 text-xs font-bold rounded-lg border border-slate-600 bg-slate-800 text-slate-400 peer-checked:bg-indigo-600 peer-checked:border-indigo-500 peer-checked:text-white transition-all">Maximă</div>
+              </label>
+            </div>
+          </div>
+
 
           <!-- Timer Happy Hour (incorporat vizual in aceeasi sectiune) -->
           <div class="mt-auto pt-6 border-t border-slate-700">
@@ -336,11 +366,28 @@
       timerPosContainer.appendChild(btn);
     });
 
+    document.querySelectorAll('.rot-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.rot-btn').forEach(b => {
+          b.classList.remove('bg-indigo-500', 'text-white');
+          b.classList.add('text-slate-400');
+        });
+        e.target.classList.remove('text-slate-400');
+        e.target.classList.add('bg-indigo-500', 'text-white');
+        currentRotation = parseInt(e.target.getAttribute('data-rot'));
+        document.getElementById('previewImg').style.transform = `rotate(${currentRotation}deg)`;
+      });
+    });
+
     // Live Effect Preview Logic
+    function getIntensity() { return document.querySelector('input[name="effInt"]:checked').value; }
+
     function renderPreviewHearts() {
       const container = document.getElementById('previewHearts');
       container.innerHTML = '';
-      for(let i=0; i<30; i++) {
+      const int = getIntensity();
+      const count = int === 'low' ? 10 : int === 'medium' ? 20 : 35;
+      for(let i=0; i<count; i++) {
         const heart = document.createElement('div');
         heart.className = 'heart-fall';
         heart.innerText = '❤️';
@@ -358,7 +405,9 @@
     function renderPreviewSnow() {
       const container = document.getElementById('previewSnow');
       container.innerHTML = '';
-      for(let i=0; i<25; i++) {
+      const int = getIntensity();
+      const count = int === 'low' ? 10 : int === 'medium' ? 15 : 25;
+      for(let i=0; i<count; i++) {
         const flake = document.createElement('div');
         flake.className = 'snowflake';
         flake.style.left = `${Math.random() * 100}%`;
@@ -376,7 +425,9 @@
     function renderPreviewSakura() {
       const container = document.getElementById('previewSakura');
       container.innerHTML = '';
-      for(let i=0; i<15; i++) {
+      const int = getIntensity();
+      const count = int === 'low' ? 6 : int === 'medium' ? 10 : 15;
+      for(let i=0; i<count; i++) {
         const petal = document.createElement('div');
         petal.className = 'sakura-petal';
         petal.style.left = `${Math.random() * 100}%`;
@@ -433,6 +484,14 @@
       else img.classList.remove('parallax-layer');
     });
 
+    document.querySelectorAll('input[name="effInt"]').forEach(r => {
+      r.addEventListener('change', () => {
+        if(document.getElementById('effHearts').checked) renderPreviewHearts();
+        if(document.getElementById('effSnow').checked) renderPreviewSnow();
+        if(document.getElementById('effSakura').checked) renderPreviewSakura();
+      });
+    });
+
     function generateLiveDemo() {
       if(!currentImageBase64) {
         document.getElementById('errorBox').innerText = "Te rugăm să încarci o imagine prima dată!";
@@ -440,16 +499,29 @@
         return;
       }
       document.getElementById('errorBox').classList.add('hidden');
+      const imgId = Date.now().toString();
 
-      // Adună Setupul
-      const config = {
-        imgId: 'img_' + Date.now().toString(36), // Reference for LocalStorage
+      // 1. Salvăm Imaginea grea în LocalStorage-ul clientului (ocolind serverul total)
+      try {
+        localStorage.setItem(`demo_img_${imgId}`, currentImageBase64);
+      } catch(e) {
+        document.getElementById('errorBox').innerText = "Eroare Memorie Browser: Poza este prea mare! Te rugăm să folosești o poză sub 3MB.";
+        document.getElementById('errorBox').classList.remove('hidden');
+        return;
+      }
+
+      // 2. Comprimăm doar Setările (fără poză!) în URL parametrul Magic
+      const payload = {
+        imgId: imgId,
+        exp: Date.now() + (5 * 60 * 1000), // 5 MIN
+        rotation: currentRotation,
         eff: {
           parallax: document.getElementById('effParallax').checked,
           steam: document.getElementById('effSteam').checked,
           sakura: document.getElementById('effSakura').checked,
           snow: document.getElementById('effSnow').checked,
           hearts: document.getElementById('effHearts').checked,
+          intensity: getIntensity()
         },
         text: document.getElementById('enableText').checked ? {
           content: document.getElementById('textContent').value,

@@ -129,11 +129,12 @@
       'bottom-right': 'bottom-4 right-4',
     };
 
-    function renderHearts() {
+    function renderHearts(intensity) {
       const container = document.getElementById('effectHearts');
       container.classList.remove('hidden');
       container.innerHTML = '';
-      for(let i=0; i<40; i++) {
+      const count = intensity === 'low' ? 15 : intensity === 'medium' ? 30 : 50;
+      for(let i=0; i<count; i++) {
         const heart = document.createElement('div');
         heart.className = 'heart-fall';
         heart.innerText = '❤️';
@@ -148,11 +149,12 @@
       }
     }
 
-    function renderSnow() {
+    function renderSnow(intensity) {
       const container = document.getElementById('effectSnow');
       container.classList.remove('hidden');
       container.innerHTML = '';
-      for(let i=0; i<35; i++) {
+      const count = intensity === 'low' ? 15 : intensity === 'medium' ? 25 : 40;
+      for(let i=0; i<count; i++) {
         const flake = document.createElement('div');
         flake.className = 'snowflake';
         flake.style.left = `${Math.random() * 100}%`;
@@ -167,11 +169,12 @@
       }
     }
 
-    function renderSakura() {
+    function renderSakura(intensity) {
       const container = document.getElementById('effectSakura');
       container.classList.remove('hidden');
       container.innerHTML = '';
-      for(let i=0; i<25; i++) {
+      const count = intensity === 'low' ? 10 : intensity === 'medium' ? 18 : 30;
+      for(let i=0; i<count; i++) {
         const petal = document.createElement('div');
         petal.className = 'sakura-petal';
         petal.style.left = `${Math.random() * 100}%`;
@@ -240,10 +243,15 @@
         // --- APPLY VISUAL EFFECTS ---
         const eff = payload.eff;
         if (eff.parallax) document.getElementById('bgImage').classList.add('parallax-layer');
+        if (eff.sakura) renderSakura(eff.intensity || 'high');
+        if (eff.snow) renderSnow(eff.intensity || 'high');
+        if (eff.hearts) renderHearts(eff.intensity || 'high');
         if (eff.steam) document.getElementById('effectSteam').classList.remove('hidden');
-        if (eff.sakura) renderSakura();
-        if (eff.snow) renderSnow();
-        if (eff.hearts) renderHearts();
+
+        // --- APPLY ROTATION ---
+        if (payload.rotation) {
+          document.getElementById('bgImage').style.transform = `rotate(${payload.rotation}deg)`;
+        }
 
         // --- APPLY TEXT ---
         if (payload.text) {
