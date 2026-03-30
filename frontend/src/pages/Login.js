@@ -124,21 +124,12 @@ export const Login = () => {
       <div className="w-full max-w-md">
         <div className="bg-slate-950 border border-slate-800 rounded-[2.5rem] p-8 shadow-2xl shadow-indigo-500/10">
           <div className="flex justify-center pt-4 mb-10">
-            <div className="flex items-center rounded-full border-2 border-[#00ced1] bg-slate-950 p-[4px] shadow-2xl scale-125 transition-transform">
-              <div 
-                className="bg-[#00ced1] text-white font-black text-[21px] px-5 py-2.5 rounded-full uppercase tracking-tight leading-none"
-                style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
-              >
-                GET
-              </div>
-              <div className="flex items-center justify-center px-4 min-w-[70px]">
-                <span 
-                  className="text-white font-black text-[21px] leading-none"
-                  style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
-                >
-                  App
-                </span>
-              </div>
+            <div className="flex items-center justify-center p-[4px] scale-125 transition-transform">
+              <img 
+                src="/getapp_smart_displays_black.png" 
+                alt="Get App Smart Displays" 
+                className="h-16 w-auto object-contain"
+              />
             </div>
           </div>
 

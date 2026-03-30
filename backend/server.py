@@ -431,6 +431,15 @@ class Screen(BaseModel):
     logo_size: Optional[str] = "md"
     valentine_hearts_enabled: Optional[bool] = False
     valentine_hearts_intensity: Optional[str] = "medium"  # low, medium, high
+    snow_enabled: Optional[bool] = False
+    snow_intensity: Optional[str] = "medium"
+    custom_text_enabled: Optional[bool] = False
+    custom_text_content: Optional[str] = None
+    custom_text_position: Optional[str] = "bottom-center"
+    custom_text_size: Optional[str] = "md"
+    custom_text_color: Optional[str] = "#FFFFFF"
+    custom_text_has_background: Optional[bool] = False
+    custom_text_bg_color: Optional[str] = "#000000"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     # Extra fields from JOINs
@@ -461,6 +470,15 @@ class ScreenCreate(BaseModel):
     valentine_hearts_intensity: Optional[str] = "medium"
     sakura_enabled: Optional[bool] = False
     sakura_intensity: Optional[str] = "medium"
+    snow_enabled: Optional[bool] = False
+    snow_intensity: Optional[str] = "medium"
+    custom_text_enabled: Optional[bool] = False
+    custom_text_content: Optional[str] = None
+    custom_text_position: Optional[str] = "bottom-center"
+    custom_text_size: Optional[str] = "md"
+    custom_text_color: Optional[str] = "#FFFFFF"
+    custom_text_has_background: Optional[bool] = False
+    custom_text_bg_color: Optional[str] = "#000000"
 
 class ScreenTemplate(BaseModel):
     model_config = ConfigDict(extra="ignore")

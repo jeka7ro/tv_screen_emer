@@ -270,11 +270,84 @@
 
             allSlides = items;
 
+            // Logo Logic
+            var screenData = data.screen;
+            if (screenData && screenData.logo_enabled && screenData.logo_url) {
+                var logoDiv = document.createElement('div');
+                logoDiv.style.position = 'absolute';
+                logoDiv.style.zIndex = '40';
+                logoDiv.style.pointerEvents = 'none';
+                
+                var pos = screenData.logo_position || 'top-right';
+                var size = screenData.logo_size || 'md';
+                
+                if (pos === 'top-left') { logoDiv.style.top = '12px'; logoDiv.style.left = '12px'; }
+                else if (pos === 'top-center') { logoDiv.style.top = '12px'; logoDiv.style.left = '50%'; logoDiv.style.transform = 'translateX(-50%)'; }
+                else if (pos === 'top-right') { logoDiv.style.top = '12px'; logoDiv.style.right = '12px'; }
+                else if (pos === 'center-left') { logoDiv.style.top = '50%'; logoDiv.style.left = '12px'; logoDiv.style.transform = 'translateY(-50%)'; }
+                else if (pos === 'center') { logoDiv.style.top = '50%'; logoDiv.style.left = '50%'; logoDiv.style.transform = 'translate(-50%, -50%)'; }
+                else if (pos === 'center-right') { logoDiv.style.top = '50%'; logoDiv.style.right = '12px'; logoDiv.style.transform = 'translateY(-50%)'; }
+                else if (pos === 'bottom-left') { logoDiv.style.bottom = '12px'; logoDiv.style.left = '12px'; }
+                else if (pos === 'bottom-center') { logoDiv.style.bottom = '12px'; logoDiv.style.left = '50%'; logoDiv.style.transform = 'translateX(-50%)'; }
+                else if (pos === 'bottom-right') { logoDiv.style.bottom = '12px'; logoDiv.style.right = '12px'; }
+                
+                var dim = '3.5vw';
+                if (size === 'sm') dim = '2vw';
+                else if (size === 'lg') dim = '5vw';
+                else if (size === 'xl') dim = '7vw';
+                
+                logoDiv.style.width = dim;
+                logoDiv.style.height = dim;
+                
+                var logoImg = document.createElement('img');
+                logoImg.src = proxyUrl(screenData.logo_url);
+                logoImg.style.width = '100%';
+                logoImg.style.height = '100%';
+                logoImg.style.objectFit = 'contain';
+                logoImg.style.filter = 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))';
+                
+                logoDiv.appendChild(logoImg);
+                document.body.appendChild(logoDiv);
+            }
+
+            var syncInfo = data.sync_info;
+            var isMatrix = syncInfo && syncInfo.sync_type && syncInfo.sync_type.indexOf('matrix') === 0;
+
             // Create slide elements
             for (var s = 0; s < items.length; s++) {
                 var div = document.createElement('div');
                 div.className = 'slide' + (s === 0 ? ' active' : '');
                 div.id = 'slide-' + s;
+
+                // Inner container for Matrix Sync offset
+                var innerContainer = document.createElement('div');
+                if (isMatrix) {
+                    var cols = syncInfo.grid_cols || (syncInfo.total_screens === 3 ? 3 : syncInfo.total_screens === 4 ? 2 : 1);
+                    var rows = syncInfo.grid_rows || (syncInfo.total_screens === 4 ? 2 : 1);
+                    var myIndex = syncInfo.my_index || 0;
+                    var myRow = Math.floor(myIndex / cols);
+                    var myCol = myIndex % cols;
+
+                    innerContainer.style.width = (cols * 100) + '%';
+                    innerContainer.style.height = (rows * 100) + '%';
+                    innerContainer.style.transform = 'translate3d(-' + ((myCol * 100) / cols) + '%, -' + ((myRow * 100) / rows) + '%, 0)';
+                    innerContainer.style.position = 'absolute';
+                    innerContainer.style.left = '0';
+                    innerContainer.style.top = '0';
+                    innerContainer.style.transformOrigin = 'top left';
+                } else {
+                    innerContainer.style.width = '100%';
+                    innerContainer.style.height = '100%';
+                }
+
+                var fitMode = 'cover'; // default for Matrix
+                if (!isMatrix) {
+                    var zconfig = (data.zones_config && data.zones_config.length > 0) ? data.zones_config[0] : null;
+                    fitMode = (zconfig && zconfig.fit_mode) ? zconfig.fit_mode : 'cover';
+                    // map stretch to fill, fit to contain
+                    if (fitMode === 'stretch') fitMode = 'fill';
+                    if (fitMode === 'fit') fitMode = 'contain';
+                }
 
                 if (items[s].type === 'video') {
                     var vid = document.createElement('video');
@@ -283,18 +356,25 @@
                     vid.loop = true;
                     vid.autoplay = true;
                     vid.setAttribute('playsinline', '');
-                    div.appendChild(vid);
+                    vid.style.width = '100%';
+                    vid.style.height = '100%';
+                    vid.style.objectFit = fitMode;
+                    innerContainer.appendChild(vid);
                 } else {
                     var img = document.createElement('img');
                     img.src = items[s].url;
                     img.alt = '';
-                    div.appendChild(img);
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = fitMode;
+                    innerContainer.appendChild(img);
                 }
+                
+                div.appendChild(innerContainer);
                 container.appendChild(div);
             }
 
             // Pre-load all images before starting the slideshow
-            // This prevents a black frame while the NEXT image downloads on first switch
             var imagesToLoad = items.filter(function(it) { return it.type === 'image'; });
             var loaded = 0;
             var total = imagesToLoad.length;
@@ -302,6 +382,9 @@
             function startSlideshow() {
                 if (items.length > 1) {
                     nextSlide();
+                } else if (items.length === 1 && items[0].type === 'image') {
+                    // Force the single image to be active
+                    document.getElementById('slide-0').className = 'slide active';
                 }
             }
 

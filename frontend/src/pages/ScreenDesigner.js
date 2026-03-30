@@ -271,53 +271,66 @@ export const ScreenDesigner = () => {
       setSelectedBrandId(screenRes.data.logo_brand_id || null);
       setLogoPosition(screenRes.data.logo_position || 'top-right');
       setLogoSize(screenRes.data.logo_size || 'md');
-      setEnableValentineHearts(false);
-      setValentineHeartsIntensity('medium');
 
-      // Load Valentine hearts settings from localStorage
-      const savedHearts = localStorage.getItem(`valentine_hearts_${screenId}`);
-      if (savedHearts) {
-        try {
-          const heartsSettings = JSON.parse(savedHearts);
-          setEnableValentineHearts(!!heartsSettings.enabled);
-          setValentineHeartsIntensity(heartsSettings.intensity || 'medium');
-        } catch (e) {
-          console.error('Error loading hearts settings:', e);
+      // Load Valentine hearts from DB (primary) with localStorage fallback
+      const heartsFromDb = screenRes.data.valentine_hearts_enabled !== undefined;
+      if (heartsFromDb) {
+        setEnableValentineHearts(!!screenRes.data.valentine_hearts_enabled);
+        setValentineHeartsIntensity(screenRes.data.valentine_hearts_intensity || 'medium');
+      } else {
+        const savedHearts = localStorage.getItem(`valentine_hearts_${screenId}`);
+        if (savedHearts) {
+          try {
+            const h = JSON.parse(savedHearts);
+            setEnableValentineHearts(!!h.enabled);
+            setValentineHeartsIntensity(h.intensity || 'medium');
+          } catch (e) {}
+        }
+      }
+
+      // Load snow from DB (primary) with localStorage fallback
+      if (screenRes.data.snow_enabled !== undefined) {
+        setEnableSnow(!!screenRes.data.snow_enabled);
+        setSnowIntensity(screenRes.data.snow_intensity || 'medium');
+      } else {
+        const savedSnow = localStorage.getItem(`snow_effect_${screenId}`);
+        if (savedSnow) {
+          try {
+            const s = JSON.parse(savedSnow);
+            setEnableSnow(!!s.enabled);
+            setSnowIntensity(s.intensity || 'medium');
+          } catch (e) {}
+        }
+      }
+
+      // Load custom text from DB (primary) with localStorage fallback
+      if (screenRes.data.custom_text_content !== undefined) {
+        setEnableCustomText(!!screenRes.data.custom_text_enabled);
+        setCustomTextContent(screenRes.data.custom_text_content || '');
+        setCustomTextPosition(screenRes.data.custom_text_position || 'bottom-center');
+        setCustomTextSize(screenRes.data.custom_text_size || 'md');
+        setCustomTextColor(screenRes.data.custom_text_color || '#FFFFFF');
+        setCustomTextHasBackground(!!screenRes.data.custom_text_has_background);
+        setCustomTextBgColor(screenRes.data.custom_text_bg_color || '#000000');
+      } else {
+        const savedText = localStorage.getItem(`custom_text_${screenId}`);
+        if (savedText) {
+          try {
+            const t = JSON.parse(savedText);
+            setEnableCustomText(!!t.enabled);
+            setCustomTextContent(t.content || '');
+            setCustomTextPosition(t.position || 'bottom-center');
+            setCustomTextSize(t.size || 'md');
+            setCustomTextColor(t.color || '#FFFFFF');
+            setCustomTextHasBackground(!!t.hasBackground);
+            setCustomTextBgColor(t.bgColor || '#000000');
+          } catch (e) {}
         }
       }
 
       // Load sakura settings from backend
       setEnableSakura(!!screenRes.data.sakura_enabled);
       setSakuraIntensity(screenRes.data.sakura_intensity || 'medium');
-
-      // Load snow settings from localStorage
-      const savedSnow = localStorage.getItem(`snow_effect_${screenId}`);
-      if (savedSnow) {
-        try {
-          const snowSettings = JSON.parse(savedSnow);
-          setEnableSnow(!!snowSettings.enabled);
-          setSnowIntensity(snowSettings.intensity || 'medium');
-        } catch (e) {
-          console.error('Error loading snow settings:', e);
-        }
-      }
-
-      // Load custom text settings from localStorage
-      const savedText = localStorage.getItem(`custom_text_${screenId}`);
-      if (savedText) {
-        try {
-          const textSettings = JSON.parse(savedText);
-          setEnableCustomText(!!textSettings.enabled);
-          setCustomTextContent(textSettings.content || '');
-          setCustomTextPosition(textSettings.position || 'bottom-center');
-          setCustomTextSize(textSettings.size || 'md');
-          setCustomTextColor(textSettings.color || '#FFFFFF');
-          setCustomTextHasBackground(!!textSettings.hasBackground);
-          setCustomTextBgColor(textSettings.bgColor || '#000000');
-        } catch (e) {
-          console.error('Error loading text settings:', e);
-        }
-      }
 
       // Load happy hour timer settings from localStorage
       const savedTimer = localStorage.getItem(`happy_hour_timer_${screenId}`);
@@ -381,7 +394,7 @@ export const ScreenDesigner = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Update screen template + effects
+      // Update screen template + effects (all saved to DB now)
       await api.put(`/screens/${screenId}`, {
         ...screen,
         template_id: selectedTemplate.id,
@@ -392,22 +405,27 @@ export const ScreenDesigner = () => {
         logo_position: logoPosition,
         logo_size: logoSize,
         sakura_enabled: enableSakura,
-        sakura_intensity: sakuraIntensity
+        sakura_intensity: sakuraIntensity,
+        valentine_hearts_enabled: enableValentineHearts,
+        valentine_hearts_intensity: valentineHeartsIntensity,
+        snow_enabled: enableSnow,
+        snow_intensity: snowIntensity,
+        custom_text_enabled: enableCustomText,
+        custom_text_content: customTextContent,
+        custom_text_position: customTextPosition,
+        custom_text_size: customTextSize,
+        custom_text_color: customTextColor,
+        custom_text_has_background: customTextHasBackground,
+        custom_text_bg_color: customTextBgColor,
       });
 
-      // Save Valentine hearts settings to localStorage
+      // Keep localStorage as fallback for existing TVs for backwards compat, but DB is primary
       localStorage.setItem(`valentine_hearts_${screenId}`, JSON.stringify({
-        enabled: enableValentineHearts,
-        intensity: valentineHeartsIntensity
+        enabled: enableValentineHearts, intensity: valentineHeartsIntensity
       }));
-
-      // Save snow settings to localStorage
       localStorage.setItem(`snow_effect_${screenId}`, JSON.stringify({
-        enabled: enableSnow,
-        intensity: snowIntensity
+        enabled: enableSnow, intensity: snowIntensity
       }));
-
-      // Save custom text settings to localStorage
       localStorage.setItem(`custom_text_${screenId}`, JSON.stringify({
         enabled: enableCustomText,
         content: customTextContent,

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get App Smart Displays - Digital Signage Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1a1714;
+            --text-color: #fff8f0;
+            --accent-color: #f97316;
+            --accent-glow: rgba(249, 115, 22, 0.4);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Nav & Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            transform: translateY(-2px);
+        }
+
+        .brand-text .app-title {
+            color: #7834FF;
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 26px;
+            line-height: 1;
+            margin-bottom: 3px;
+            margin-left: 2px;
+        }
+
+        .brand-text .smart-displays {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+            line-height: 1;
+        }
+
+        .lang-selector {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .lang-btn {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .lang-btn.active, .lang-btn:hover {
+            color: white;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-glow);
+            background: rgba(249, 115, 22, 0.1);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 6rem 5% 2rem;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at 70% 30%, rgba(245, 158, 11, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 30% 70%, rgba(234, 88, 12, 0.15) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .hero-content {
+            flex: 1;
+            max-width: 600px;
+            animation: fadeUp 1s ease-out;
+            padding-right: 2rem;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #cbd5e1;
+            margin-bottom: 2rem;
+        }
+
+        .hero-image {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .hero-image img {
+            width: 100%;
+            max-width: 700px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 40px var(--accent-glow);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Features / Explanations */
+        .section {
+            padding: 6rem 5%;
+        }
+
+        .feature-block {
+            display: flex;
+            align-items: center;
+            gap: 4rem;
+            margin-bottom: 6rem;
+            background: var(--card-bg);
+            padding: 3rem;
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .feature-block.reverse {
+            flex-direction: row-reverse;
+        }
+
+        .feature-text {
+            flex: 1;
+        }
+
+        .feature-text h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .feature-text p {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            margin-bottom: 1rem;
+        }
+
+        .feature-img {
+            flex: 1;
+        }
+
+        .feature-img img {
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            border: 1px solid var(--glass-border);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-img img:hover {
+            transform: scale(1.02);
+            box-shadow: 0 15px 40px rgba(249, 115, 22, 0.2);
+        }
+
+        /* Call To Action */
+        .cta {
+            text-align: center;
+            padding: 4rem 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .cta h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta p {
+            color: #94a3b8;
+            margin-bottom: 2rem;
+        }
+
+        .cta-btn {
+            background: linear-gradient(90deg, #f59e0b, #ea580c);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(234, 88, 12, 0.3);
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .hero, .feature-block {
+                flex-direction: column !important;
+                text-align: center;
+                gap: 2rem;
+            }
+            .hero-content {
+                margin: 0 auto;
+                padding-right: 0;
+            }
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            .feature-text h2 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <!-- App Smart Displays Logo SVG -->
+            <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Purple background with rounded corners -->
+                <rect width="100" height="100" rx="22" fill="#7834FF"/>
+                <!-- Screen Outline -->
+                <rect x="18" y="24" width="64" height="42" rx="4" stroke="white" stroke-width="5" fill="transparent"/>
+                <path d="M42 66 L34 82 L66 82 L58 66" fill="transparent" stroke="white" stroke-width="5" stroke-linejoin="round"/>
+                <line x1="30" y1="82" x2="70" y2="82" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                <!-- Play triangle inside white circle -->
+                <circle cx="50" cy="45" r="14" fill="white"/>
+                <path d="M46 38 L57 45 L46 52 Z" fill="#7834FF"/>
+            </svg>
+            <div class="brand-text">
+                <span class="app-title">App</span>
+                <span class="smart-displays">SMART DISPLAYS</span>
+            </div>
+        </div>
+        <div class="lang-selector">
+            <button class="lang-btn active" onclick="setLang('ro')">RO</button>
+            <button class="lang-btn" onclick="setLang('en')">EN</button>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1 data-i18n="hero_title">Transformă orice ecran într-un magnet pentru clienți</h1>
+            <p data-i18n="hero_sub">Soluția supremă de digital signage. Gestionează conținut dinamic, meniuri și reclame în timp real, pe orice Smart TV sau Kiosk.</p>
+        </div>
+        <div class="hero-image">
+            <img src="./images/restaurant_kiosk.png" alt="Digital Signage Hero">
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="feature-block reverse">
+            <div class="feature-text">
+                <h2 data-i18n="feat2_title">Afișare Premium & Stabilă</h2>
+                <p data-i18n="feat2_p1">Folosim o arhitectură special concepută pentru mediul comercial ce previne intrarea în repaus (standby) a televizoarelor Smart.</p>
+                <p data-i18n="feat2_p2">Oferim tranziții animate, suport pentru video și design impecabil 24/7 care captează atenția clienților.</p>
+            </div>
+            <div class="feature-img">
+                <!-- Using another generated/existing image to show difference or reuse hero_bg if no other -->
+                <img src="./images/mall_displays.png" alt="Mall Signage Displays">
+            </div>
+        </div>
+
+        <div class="feature-block">
+            <div class="feature-text">
+                <h2 data-i18n="feat1_title">Control Centralizat din Cloud</h2>
+                <p data-i18n="feat1_p1">Schimbă prețurile, imaginile și designul pe zeci de ecrane simultan dintr-un singur panou de control conectat la cloud.</p>
+                <p data-i18n="feat1_p2">Nu mai este nevoie de memorie USB. Tot conținutul media este sincronizat și redat instant pe unitățile de afișaj.</p>
+            </div>
+            <div class="feature-img">
+                <img src="./images/cms_dashboard.png" alt="Cloud Dashboard">
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <h2 data-i18n="cta_title">Pregătit să îți modernizezi afacerea?</h2>
+        <p data-i18n="cta_sub">Alătură-te partenerilor Get App Smart Displays chiar astăzi.</p>
+        <button class="cta-btn" data-i18n="cta_btn">Contactează-ne</button>
+    </section>
+
+    <script>
+        const translations = {
+            'ro': {
+                'hero_title': 'Transformă orice ecran într-un magnet pentru clienți',
+                'hero_sub': 'Soluția supremă de digital signage. Gestionează conținut dinamic, meniuri și reclame în timp real, pe orice Smart TV sau Kiosk.',
+                'feat1_title': 'Control Centralizat din Cloud',
+                'feat1_p1': 'Schimbă prețurile, imaginile și designul pe zeci de ecrane simultan dintr-un singur panou de control conectat la cloud.',
+                'feat1_p2': 'Nu mai este nevoie de memorie USB. Tot conținutul media este sincronizat și redat instant pe unitățile de afișaj.',
+                'feat2_title': 'Afișare Premium & Stabilă',
+                'feat2_p1': 'Folosim o arhitectură special concepută pentru mediul comercial ce previne intrarea în repaus (standby) a televizoarelor Smart.',
+                'feat2_p2': 'Oferim tranziții animate, suport pentru video și design impecabil 24/7 care captează atenția clienților.',
+                'cta_title': 'Pregătit să îți modernizezi afacerea?',
+                'cta_sub': 'Alătură-te partenerilor Get App Smart Displays chiar astăzi.',
+                'cta_btn': 'Contactează-ne'
+            },
+            'en': {
+                'hero_title': 'Turn Any Screen Into a Customer Magnet',
+                'hero_sub': 'The ultimate digital signage solution. Manage dynamic content, menus, and ads in real-time on any Smart TV or Kiosk.',
+                'feat1_title': 'Centralized Cloud Control',
+                'feat1_p1': 'Update prices, images, and designs across dozens of screens simultaneously from a single cutting-edge web dashboard.',
+                'feat1_p2': 'No more USB physical drives. All your media content is seamlessly synchronized and instantly played on display units.',
+                'feat2_title': 'Premium & Stable Display',
+                'feat2_p1': 'We utilize a specialized commercial architecture that reliably prevents Smart TVs from entering sleep or standby mode.',
+                'feat2_p2': 'We offer animated transitions, high-quality video support, and flawless 24/7 design that captures your clients attention.',
+                'cta_title': 'Ready to modernize your business?',
+                'cta_sub': 'Join Get App Smart Displays partners today.',
+                'cta_btn': 'Contact Us'
+            }
+        };
+
+        function setLang(lang) {
+            // Update active states
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                const isActive = btn.textContent.toLowerCase() === lang;
+                if(isActive) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Update translations
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) {
+                    el.style.opacity = 0;
+                    setTimeout(() => {
+                        el.textContent = translations[lang][key];
+                        el.style.opacity = 1;
+                    }, 200);
+                }
+            });
+            document.documentElement.lang = lang;
+        }
+
+        // Add CSS transition explicitly for JS fade out/in effect
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            el.style.transition = 'opacity 0.2s ease-in-out';
+        });
+    </script>
+</body>
+</html>

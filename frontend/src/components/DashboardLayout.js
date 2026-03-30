@@ -99,35 +99,12 @@ export const DashboardLayout = ({ children }) => {
               />
             ) : (
               <div className="animate-in fade-in duration-300 flex items-center w-full">
-                <div className="flex items-center gap-1.5">
-                  <div 
-                    className="flex items-center rounded-full border-2 border-[#00ced1] bg-white p-[2px] shadow-sm ml-0"
-                  >
-                    <div 
-                      className="bg-[#00ced1] text-white font-black text-[19px] px-3 py-1.5 rounded-full uppercase tracking-tight leading-none"
-                      style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
-                    >
-                      GET
-                    </div>
-                    <div className="flex items-center justify-center px-3 min-w-[60px]">
-                      <span 
-                        className="text-slate-800 font-black text-[19px] leading-none"
-                        style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
-                      >
-                        App
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="w-px h-8 bg-slate-200"></div>
-                  
-                  <div 
-                    className="flex flex-col items-center text-[#00ced1] font-black text-[15px] leading-[1.05] tracking-tight"
-                    style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
-                  >
-                    <span>Smart</span>
-                    <span>Displays</span>
-                  </div>
+                <div className="flex items-center justify-center w-full px-1">
+                  <img 
+                    src="/getapp_smart_displays_black.png" 
+                    alt="GET App Smart Displays" 
+                    className="h-10 w-auto object-contain"
+                  />
                 </div>
               </div>
             )}

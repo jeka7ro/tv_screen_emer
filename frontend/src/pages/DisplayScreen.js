@@ -712,78 +712,43 @@ export const DisplayScreen = () => {
         </div>
       )}
 
-      {/* Valentine Hearts Effect */}
+      {/* Valentine Hearts Effect — reads from API screen data, NOT localStorage */}
       <ValentineHearts
-        enabled={(() => {
-          const saved = localStorage.getItem(`valentine_hearts_${displayData?.screen?.id}`);
-          if (saved) {
-            try {
-              return JSON.parse(saved).enabled || false;
-            } catch (e) {
-              return false;
-            }
-          }
-          return false;
-        })()}
-        intensity={(() => {
-          const saved = localStorage.getItem(`valentine_hearts_${displayData?.screen?.id}`);
-          if (saved) {
-            try {
-              return JSON.parse(saved).intensity || 'medium';
-            } catch (e) {
-              return 'medium';
-            }
-          }
-          return 'medium';
-        })()}
+        enabled={!!displayData?.screen?.valentine_hearts_enabled}
+        intensity={displayData?.screen?.valentine_hearts_intensity || 'medium'}
       />
 
-      {/* Custom Text Overlay */}
-      {(() => {
-        const saved = localStorage.getItem(`custom_text_${displayData?.screen?.id}`);
-        if (!saved) return null;
-        try {
-          const config = JSON.parse(saved);
-          if (!config.enabled || !config.content) return null;
-
-          const posMap = {
-            'top-left': 'top-4 left-4',
-            'top-center': 'top-4 left-1/2 -translate-x-1/2',
-            'top-right': 'top-4 right-4',
-            'center-left': 'top-1/2 left-4 -translate-y-1/2',
-            'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-            'center-right': 'top-1/2 right-4 -translate-y-1/2',
-            'bottom-left': 'bottom-4 left-4',
-            'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
-            'bottom-right': 'bottom-4 right-4',
-          };
-          const sizeMap = {
-            sm: 'text-2xl',
-            md: 'text-4xl',
-            lg: 'text-6xl',
-            xl: 'text-8xl',
-          };
-
-          const posClass = posMap[config.position] || posMap['top-center'];
-          const sizeClass = sizeMap[config.size] || sizeMap['md'];
-
-          return (
-            <div className={`absolute z-50 pointer-events-none ${posClass}`}>
-              <div
-                className={`${sizeClass} font-bold ${config.hasBackground ? 'px-6 py-3 rounded-2xl' : ''}`}
-                style={{
-                  color: config.color || '#FFFFFF',
-                  backgroundColor: config.hasBackground ? (config.bgColor || '#000000') : 'transparent',
-                  textShadow: config.hasBackground ? 'none' : '0 2px 8px rgba(0,0,0,0.8)',
-                }}
-              >
-                {config.content}
-              </div>
+      {/* Custom Text Overlay — reads from API screen data */}
+      {displayData?.screen?.custom_text_enabled && displayData?.screen?.custom_text_content && (() => {
+        const screen = displayData.screen;
+        const posMap = {
+          'top-left': 'top-4 left-4',
+          'top-center': 'top-4 left-1/2 -translate-x-1/2',
+          'top-right': 'top-4 right-4',
+          'center-left': 'top-1/2 left-4 -translate-y-1/2',
+          'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+          'center-right': 'top-1/2 right-4 -translate-y-1/2',
+          'bottom-left': 'bottom-4 left-4',
+          'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
+          'bottom-right': 'bottom-4 right-4',
+        };
+        const sizeMap = { sm: 'text-2xl', md: 'text-4xl', lg: 'text-6xl', xl: 'text-8xl' };
+        const posClass = posMap[screen.custom_text_position] || posMap['bottom-center'];
+        const sizeClass = sizeMap[screen.custom_text_size] || sizeMap['md'];
+        return (
+          <div className={`absolute z-50 pointer-events-none ${posClass}`}>
+            <div
+              className={`${sizeClass} font-bold ${screen.custom_text_has_background ? 'px-6 py-3 rounded-2xl' : ''}`}
+              style={{
+                color: screen.custom_text_color || '#FFFFFF',
+                backgroundColor: screen.custom_text_has_background ? (screen.custom_text_bg_color || '#000000') : 'transparent',
+                textShadow: screen.custom_text_has_background ? 'none' : '0 2px 8px rgba(0,0,0,0.8)',
+              }}
+            >
+              {screen.custom_text_content}
             </div>
-          );
-        } catch (e) {
-          return null;
-        }
+          </div>
+        );
       })()}
 
       {/* Happy Hour Timer */}
@@ -839,24 +804,14 @@ export const DisplayScreen = () => {
         </div>
       )}
 
-      {/* Snow Effect */}
-      {(() => {
-        const savedSnow = localStorage.getItem(`snow_effect_${displayData?.screen?.id}`);
-        if (!savedSnow) return null;
-        try {
-          const snowConfig = JSON.parse(savedSnow);
-          if (!snowConfig.enabled) return null;
-          return (
-            <div className={`absolute inset-0 z-30 pointer-events-none snow-container intensity-${snowConfig.intensity || 'medium'}`}>
-              {[...Array(35)].map((_, i) => (
-                <div key={i} className="snowflake"></div>
-              ))}
-            </div>
-          );
-        } catch (e) {
-          return null;
-        }
-      })()}
+      {/* Snow Effect — reads from API screen data */}
+      {displayData?.screen?.snow_enabled && (
+        <div className={`absolute inset-0 z-30 pointer-events-none snow-container intensity-${displayData.screen.snow_intensity || 'medium'}`}>
+          {[...Array(35)].map((_, i) => (
+            <div key={i} className="snowflake"></div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
