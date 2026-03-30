@@ -126,7 +126,7 @@ export const Login = () => {
           <div className="flex justify-center pt-4 mb-10">
             <div className="flex items-center justify-center p-[4px] scale-125 transition-transform">
               <img 
-                src="/getapp_smart_displays_black.png" 
+                src="/getapp_smart_displays_white.png" 
                 alt="Get App Smart Displays" 
                 className="h-16 w-auto object-contain"
               />
