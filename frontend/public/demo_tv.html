@@ -199,16 +199,45 @@
     function initDisplay() {
       const urlParams = new URLSearchParams(window.location.search);
       const dataParam = urlParams.get('d');
+      const tvI18n = {
+        ro: {
+          err1: "Eroare: Link Invalid", err1p: "Lipsete parametrul \"d\".",
+          err2: "Poza nu a fost găsită", err2p: "Dacă vrei să urci propria imagine din calculator, Demo-ul rulează corect doar pe acest aparat!<br>Dacă trimiți link-ul unui coleg pe alt browser, acesta nu îi vede imaginea locală.",
+          err3: "Eroare Decriptare", err3p: "Link-ul este corupt.",
+          exp1: "Timpul Demo a Expirat", exp1p: "Sistemul real rulează nelimitat 24/7 pe Smart TV-urile locației tale, fără pauze.<br><br>Te-ai convins cât de bine arată reclamele noastre? Activează-ți contul!",
+          expBtn: "Contactează-ne acum",
+          demoExp: "Demo Expiră în",
+          hh: "Happy Hour se termină în"
+        },
+        en: {
+          err1: "Error: Invalid Link", err1p: "Parameter \"d\" is missing.",
+          err2: "Image Not Found", err2p: "If you uploaded your own image from your computer, the Demo only runs correctly on this specific device!<br>If you send the link to a colleague on another browser, they won't see your local image.",
+          err3: "Decryption Error", err3p: "The link is corrupted.",
+          exp1: "Demo Time Expired", exp1p: "The real system runs unlimited 24/7 on your location's Smart TVs, with no breaks.<br><br>Convinced by how great our displays look? Activate your account!",
+          expBtn: "Contact us now",
+          demoExp: "Demo Expires in",
+          hh: "Happy Hour ends in"
+        }
+      };
       const tvContainer = document.getElementById('tvContainer');
       const expiredContainer = document.getElementById('expiredContainer');
 
       if (!dataParam) {
-        expiredContainer.innerHTML = '<h1 class="text-white text-3xl font-bold">Eroare: Link Invalid</h1><p class="text-slate-400">Lipsete parametrul "d".</p>';
+        expiredContainer.innerHTML = `<h1 class="text-white text-3xl font-bold">Eroare: Link Invalid</h1><p class="text-slate-400">Lipsete parametrul 'd'.</p>`;
         expiredContainer.classList.remove('hidden'); return;
       }
 
       try {
         const payload = JSON.parse(decodeURIComponent(atob(dataParam)));
+        const lang = payload.lang || 'ro';
+        const t = tvI18n[lang];
+        
+        document.querySelector('#expiredContainer h1').innerText = t.exp1;
+        document.querySelector('#expiredContainer p').innerHTML = t.exp1p;
+        document.querySelector('#expiredContainer a').innerText = t.expBtn;
+        document.querySelector('.text-rose-400.tracking-widest').innerText = t.demoExp;
+        document.querySelector('.uppercase.tracking-wider.mb-1.text-center').innerText = t.hh;
+
         
         // --- EXPIRATION (5m Hard Limit) ---
         const demoExpires = payload.exp;
@@ -235,7 +264,7 @@
           document.getElementById('bgImage').src = localImg;
         } else {
           // Fallback Daca din greseala clientul a sters cookies/cache in cele 5 minute sau a copiat linkul pe alt browser
-          expiredContainer.innerHTML = '<h1 class="text-white text-3xl font-bold">Poza nu a fost găsită</h1><p class="text-slate-400 mt-2">Dacă vrei să urci propria imagine din calculator, Demo-ul rulează corect doar pe acest aparat!<br>Dacă trimiți link-ul unui coleg pe alt telefon, acesta nu îi vede imaginea locală.</p>';
+          expiredContainer.innerHTML = `<h1 class="text-white text-3xl font-bold">${t.err2}</h1><p class="text-slate-400 mt-2">${t.err2p}</p>`;
           expiredContainer.classList.remove('hidden'); expiredContainer.classList.add('flex');
           return;
         }
@@ -295,7 +324,7 @@
         tvContainer.classList.remove('hidden');
 
       } catch(e) {
-        expiredContainer.innerHTML = '<h1 class="text-white text-3xl font-bold">Eroare Decriptare</h1><p class="text-slate-400">Link-ul este corupt.</p>';
+        expiredContainer.innerHTML = `<h1 class="text-white text-3xl font-bold">Eroare</h1><p class="text-slate-400">Corupt.</p>`;
         expiredContainer.classList.remove('hidden'); expiredContainer.classList.add('flex');
       }
     }
