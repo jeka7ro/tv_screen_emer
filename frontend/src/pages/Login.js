@@ -136,11 +136,11 @@ export const Login = () => {
       <div className="w-full max-w-md relative z-10 transition-transform hover:scale-[1.01] duration-500">
         <div className="bg-slate-950/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl shadow-black/50">
           <div className="flex justify-center pt-2 mb-8">
-            <div className="flex items-center justify-center transition-transform hover:scale-105 duration-300">
+            <div className="flex items-center justify-center transition-transform hover:scale-[1.07] duration-300 translate-x-3">
               <img 
                 src="/getapp_smart_displays_white.png" 
                 alt="Get App Smart Displays" 
-                className="h-[80px] w-auto object-contain"
+                className="h-[85px] w-auto object-contain"
               />
             </div>
           </div>
