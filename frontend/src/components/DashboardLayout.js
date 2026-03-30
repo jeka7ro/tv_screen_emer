@@ -103,7 +103,7 @@ export const DashboardLayout = ({ children }) => {
                   <img 
                     src="/getapp_smart_displays_black.png" 
                     alt="GET App Smart Displays" 
-                    className="h-11 w-auto object-contain translate-x-2"
+                    className="h-16 w-auto object-contain"
                   />
                 </div>
               </div>

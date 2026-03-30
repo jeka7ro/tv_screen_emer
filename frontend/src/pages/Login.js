@@ -124,25 +124,22 @@ export const Login = () => {
       className="min-h-screen w-full flex items-center justify-center p-6 relative overflow-hidden" 
       data-testid="login-page"
     >
-      {/* Background Gradient Layer */}
+      {/* Background Image Layer */}
       <div 
-        className="fixed inset-0 z-0"
-        style={{ background: 'linear-gradient(135deg, #0b0f19 0%, #111827 40%, #0f172a 70%, #1a0533 100%)' }}
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url("/images/restaurant_kiosk.png")' }}
       >
-        {/* Animated orbs for depth */}
-        <div style={{ position:'absolute', top:'15%', left:'20%', width:'400px', height:'400px', borderRadius:'50%', background:'radial-gradient(circle, rgba(99,56,255,0.15) 0%, transparent 70%)', filter:'blur(40px)' }}></div>
-        <div style={{ position:'absolute', bottom:'20%', right:'15%', width:'350px', height:'350px', borderRadius:'50%', background:'radial-gradient(circle, rgba(0,206,209,0.1) 0%, transparent 70%)', filter:'blur(40px)' }}></div>
-        <div className="absolute inset-0 bg-slate-900/20"></div>
+        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]"></div>
       </div>
 
       <div className="w-full max-w-md relative z-10 transition-transform hover:scale-[1.01] duration-500">
         <div className="bg-slate-950/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl shadow-black/50">
           <div className="flex justify-center pt-2 mb-8">
-            <div className="flex items-center justify-center transition-transform hover:scale-[1.07] duration-300">
+            <div style={{ textAlign: 'center', width: '100%' }}>
               <img 
                 src="/getapp_smart_displays_white.png" 
                 alt="Get App Smart Displays" 
-                className="h-[85px] w-auto object-contain"
+                style={{ height: '85px', width: 'auto', display: 'inline-block', objectFit: 'contain' }}
               />
             </div>
           </div>
