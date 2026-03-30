@@ -121,19 +121,20 @@ export const Login = () => {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center p-6 relative" 
+      className="min-h-screen w-full flex items-center justify-center p-6 relative overflow-hidden" 
       data-testid="login-page"
     >
       {/* Background Image Layer */}
       <div 
-        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: 'url("/images/restaurant_kiosk.png")' }}
       >
-        <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"></div>
+        {/* Soft overlay so it's readable, but the image remains beautifully visible */}
+        <div className="absolute inset-0 bg-slate-900/40"></div>
       </div>
 
       <div className="w-full max-w-md relative z-10 transition-transform hover:scale-[1.01] duration-500">
-        <div className="bg-slate-900/60 backdrop-blur-2xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl shadow-black/50">
+        <div className="bg-slate-950/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl shadow-black/50">
           <div className="flex justify-center pt-2 mb-8">
             <div className="flex items-center justify-center transition-transform hover:scale-105 duration-300">
               <img 
