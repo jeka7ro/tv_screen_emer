@@ -63,7 +63,10 @@
         <h1 class="text-3xl font-bold text-white mb-1">Design Ecran (Demo)</h1>
         <p class="text-slate-400">Configurează template-ul și zonele pentru afișajul tău temporar</p>
       </div>
-      <img src="./getapp_smart_displays_white.png" alt="Get App" class="h-12 w-auto object-contain">
+      <div class="flex items-center gap-4">
+        <button onclick="toggleLang()" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 px-4 py-2 rounded-full text-xs font-bold text-white transition-all shadow-lg" id="langToggleBtn">🇬🇧 English</button>
+        <img src="./getapp_smart_displays_white.png" alt="Get App" class="h-12 w-auto object-contain hidden sm:block">
+      </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
