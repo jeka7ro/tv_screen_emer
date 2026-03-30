@@ -347,62 +347,77 @@
     };
 
     let curLang = 'ro';
-    
+
     function toggleLang() {
       curLang = curLang === 'ro' ? 'en' : 'ro';
       document.getElementById('langToggleBtn').innerText = i18n[curLang].langBtn;
       
-      // Update DOM Text Elements
-      document.querySelector('h1').innerText = i18n[curLang].title;
-      document.querySelector('header p').innerText = i18n[curLang].sub;
-      document.querySelectorAll('h2')[0].innerHTML = i18n[curLang].imgSec;
-      document.querySelectorAll('#uploadUI p')[0].innerText = i18n[curLang].up1;
-      document.querySelectorAll('#uploadUI p')[1].innerText = i18n[curLang].up2;
-      document.querySelectorAll('button[onclick="setSampleImage(\'burger\')"]')[0].innerHTML = i18n[curLang].ex1;
-      document.querySelectorAll('button[onclick="setSampleImage(\'fashion\')"]')[0].innerHTML = i18n[curLang].ex2;
+      const setHTML = (sel, val) => { const el = document.querySelector(sel); if(el) el.innerHTML = val; };
+      const setText = (sel, val) => { const el = document.querySelector(sel); if(el) el.innerText = val; };
       
-      document.querySelectorAll('h2')[1].innerHTML = i18n[curLang].txtSec;
-      document.getElementById('textContent').placeholder = i18n[curLang].ph;
+      setText('h1', i18n[curLang].title);
+      setText('h1 + p', i18n[curLang].sub); 
       
-      const txtLabels = document.getElementById('textSettings').querySelectorAll('span.text-slate-400');
-      txtLabels[0].innerText = i18n[curLang].tPos;
-      txtLabels[1].innerText = i18n[curLang].col;
-      txtLabels[2].innerText = i18n[curLang].bg;
+      const h2s = document.querySelectorAll('h2');
+      if(h2s[0]) h2s[0].innerHTML = i18n[curLang].imgSec;
+      if(h2s[1]) h2s[1].innerHTML = i18n[curLang].txtSec;
+      if(h2s[2]) h2s[2].innerHTML = i18n[curLang].fxSec;
+      if(h2s[3]) h2s[3].innerHTML = i18n[curLang].tSec;
 
-      document.querySelectorAll('h2')[2].innerHTML = i18n[curLang].fxSec;
+      const upP = document.querySelectorAll('#uploadUI p');
+      if(upP[0]) upP[0].innerText = i18n[curLang].up1;
+      if(upP[1]) upP[1].innerText = i18n[curLang].up2;
+
+      setHTML(`button[onclick="setSampleImage('burger')"]`, i18n[curLang].ex1);
+      setHTML(`button[onclick="setSampleImage('fashion')"]`, i18n[curLang].ex2);
+      
+      const txtContent = document.getElementById('textContent');
+      if(txtContent) txtContent.placeholder = i18n[curLang].ph;
+      
+      const txtLabels = document.getElementById('textSettings')?.querySelectorAll('span.text-slate-400');
+      if(txtLabels && txtLabels.length >= 2) {
+        txtLabels[0].innerText = i18n[curLang].col;
+        txtLabels[1].innerText = i18n[curLang].bg;
+      }
+
       const fxLabels = document.querySelectorAll('.effect-btn span');
-      fxLabels[0].innerText = i18n[curLang].fx1;
-      fxLabels[1].innerText = i18n[curLang].fx2;
-      fxLabels[2].innerText = i18n[curLang].fx3;
-      fxLabels[3].innerText = i18n[curLang].fx4;
-      fxLabels[4].innerText = i18n[curLang].fx5;
+      if(fxLabels.length >= 5) {
+        fxLabels[0].innerText = i18n[curLang].fx1;
+        fxLabels[1].innerText = i18n[curLang].fx2;
+        fxLabels[2].innerText = i18n[curLang].fx3;
+        fxLabels[3].innerText = i18n[curLang].fx4;
+        fxLabels[4].innerText = i18n[curLang].fx5;
+      }
 
-      const intTitle = document.querySelector('input[name="effInt"]').closest('.mt-4').querySelector('span');
-      intTitle.innerText = i18n[curLang].intSec;
+      const intTitle = document.querySelector('input[name="effInt"]')?.closest('.mt-4')?.querySelector('span');
+      if(intTitle) intTitle.innerText = i18n[curLang].intSec;
       
       const intLabels = document.querySelectorAll('input[name="effInt"] + div');
-      intLabels[0].innerText = i18n[curLang].int1;
-      intLabels[1].innerText = i18n[curLang].int2;
-      intLabels[2].innerText = i18n[curLang].int3;
+      if(intLabels[0]) intLabels[0].innerText = i18n[curLang].int1;
+      if(intLabels[1]) intLabels[1].innerText = i18n[curLang].int2;
+      if(intLabels[2]) intLabels[2].innerText = i18n[curLang].int3;
 
-      document.querySelectorAll('h2')[3].innerHTML = i18n[curLang].tSec;
-      const tLabels = document.getElementById('timerSettings').querySelectorAll('span.text-slate-400');
-      tLabels[0].innerText = i18n[curLang].tDur;
-      tLabels[1].innerText = i18n[curLang].tPos;
+      const tLabels = document.getElementById('timerSettings')?.querySelectorAll('span.text-slate-400');
+      if(tLabels && tLabels.length >= 2) {
+        tLabels[0].innerText = i18n[curLang].tDur;
+        tLabels[1].innerText = i18n[curLang].tPos;
+      }
 
-      document.querySelector('h4.text-amber-500').innerText = i18n[curLang].dscTitle;
-      document.querySelector('h4.text-amber-500').nextElementSibling.innerHTML = i18n[curLang].dscText;
+      const dscTitle = document.querySelector('h4.text-amber-500');
+      if(dscTitle) {
+        dscTitle.innerText = i18n[curLang].dscTitle;
+        if(dscTitle.nextElementSibling) dscTitle.nextElementSibling.innerHTML = i18n[curLang].dscText;
+      }
 
-      document.getElementById('generateBtn').innerHTML = i18n[curLang].btn;
-      document.querySelector('#resultBox p').innerText = i18n[curLang].succ;
-      document.getElementById('openBtn').innerHTML = i18n[curLang].btnO;
+      setHTML('#generateBtn', i18n[curLang].btn);
+      setText('#resultBox p', i18n[curLang].succ);
+      setHTML('#openBtn', i18n[curLang].btnO);
 
-      // Update active grid names if they were already rendered
       renderPosGrids();
       lucide.createIcons();
     }
 
-    // Wrap renderPosGrids to use translations
+    // Grids are mounted by renderPosGrids inside i18n
     function renderPosGrids() {
       const posMapMap = [
         { id: 'top-left', l: i18n[curLang].posGrid[0] }, { id: 'top-center', l: i18n[curLang].posGrid[1] }, { id: 'top-right', l: i18n[curLang].posGrid[2] },
@@ -410,28 +425,23 @@
         { id: 'bottom-left', l: i18n[curLang].posGrid[6] }, { id: 'bottom-center', l: i18n[curLang].posGrid[7] }, { id: 'bottom-right', l: i18n[curLang].posGrid[8] }
       ];
       
-      const textPosContainer = document.getElementById('textPosContainer');
       const timerPosContainer = document.getElementById('timerPosContainer');
-      
-      textPosContainer.innerHTML = '';
-      timerPosContainer.innerHTML = '';
-
-      posMapMap.forEach(pos => {
-        const createBtn = (container, isTimer) => {
-          const btn = document.createElement('button');
-          const isSelected = isTimer ? selectedTimerPos === pos.id : selectedTextPos === pos.id;
-          btn.className = `text-[10px] font-bold py-1.5 px-1 rounded-md transition-all border ${isSelected ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-800 border-slate-600 text-slate-400 hover:bg-slate-700'}`;
-          btn.innerText = pos.l;
-          btn.onclick = () => {
-            if(isTimer) { selectedTimerPos = pos.id; } else { selectedTextPos = pos.id; }
-            renderPosGrids(); // Re-render for selection update
-          };
-          container.appendChild(btn);
-        };
-        createBtn(textPosContainer, false);
-        createBtn(timerPosContainer, true);
-      });
+      if(timerPosContainer) {
+          timerPosContainer.innerHTML = '';
+          posMapMap.forEach(pos => {
+            const btn = document.createElement('button');
+            const isSelected = selectedTimerPos === pos.id;
+            btn.className = `text-[10px] font-bold py-1.5 px-1 rounded-md transition-all border ${isSelected ? 'bg-purple-600 border-purple-500 text-white shadow-lg' : 'bg-slate-800 border-slate-600 text-slate-400 hover:bg-slate-700'}`;
+            btn.innerText = pos.l;
+            btn.onclick = () => {
+              selectedTimerPos = pos.id;
+              renderPosGrids();
+            };
+            timerPosContainer.appendChild(btn);
+          });
+      }
     }
+    renderPosGrids();
 
 
     lucide.createIcons();
