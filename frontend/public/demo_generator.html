@@ -31,6 +31,26 @@
     input[id="effSakura"]:checked + .effect-btn span { color: #fda4af; }
     input[id="effSnow"]:checked + .effect-btn { color: #38bdf8; }
     input[id="effSnow"]:checked + .effect-btn span { color: #7dd3fc; }
+
+    /* REAL-TIME PREVIEW EFFECTS */
+    .parallax-layer { animation: parallax 20s ease-in-out infinite; }
+    @keyframes parallax { 0%, 100% { transform: translateY(0) scale(1.02); } 50% { transform: translateY(-10px) scale(1.08); } }
+
+    .steam-particle { position: absolute; bottom: 0%; background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%); border-radius: 50%; filter: blur(10px); animation: steam-rise 6s ease-out infinite; opacity: 0; }
+    @keyframes steam-rise { 0% { bottom: -5%; opacity: 0; transform: scale(0.3) translateX(0); } 15% { opacity: 0.6; } 50% { opacity: 0.3; transform: scale(1.4) translateX(15px); } 100% { bottom: 110%; opacity: 0; transform: scale(3) translateX(-30px); } }
+
+    .sakura-petal { position: absolute; top: -10%; background: linear-gradient(145deg, #ffc0cb 0%, #ffb6c1 25%, #ffa0b5 50%, #ff91a4 75%, #ffb6c1 100%); border-radius: 50% 0 50% 50%; opacity: 0.8; filter: drop-shadow(0 1px 3px rgba(255, 105, 180, 0.25)); animation: sakura-fall 10s linear infinite, sakura-sway 4s ease-in-out infinite, sakura-spin 8s linear infinite; }
+    @keyframes sakura-fall { 0% { top: -10%; opacity: 0; } 10% { opacity: 0.85; } 90% { opacity: 0.6; } 100% { top: 110%; opacity: 0; } }
+    @keyframes sakura-sway { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(10px); } 75% { transform: translateX(-8px); } }
+    @keyframes sakura-spin { 0% { transform: rotate(0deg) rotateY(0deg); } 25% { transform: rotate(90deg) rotateY(45deg); } 50% { transform: rotate(180deg) rotateY(0deg); } 75% { transform: rotate(270deg) rotateY(-45deg); } 100% { transform: rotate(360deg) rotateY(0deg); } }
+
+    .heart-fall { animation: heart-fall linear infinite; position: absolute; }
+    @keyframes heart-fall { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(200px) rotate(360deg); opacity: 0; } }
+
+    .snowflake { position: absolute; top: -5%; background: radial-gradient(circle at 30% 30%, #ffffff 0%, rgba(255, 255, 255, 0.95) 30%, rgba(255, 255, 255, 0.6) 60%, rgba(255, 255, 255, 0) 100%); border-radius: 50%; opacity: 0; filter: blur(0.3px); box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.3), inset 0 0 2px rgba(255, 255, 255, 0.5); animation: snow-fall 10s linear infinite, snow-drift 4s ease-in-out infinite, snow-spin 8s linear infinite; }
+    @keyframes snow-fall { 0% { top: -5%; opacity: 0; } 5% { opacity: 0.8; } 50% { opacity: 0.9; } 85% { opacity: 0.6; } 100% { top: 105%; opacity: 0; } }
+    @keyframes snow-drift { 0%, 100% { transform: translateX(0) scaleY(1); } 25% { transform: translateX(12px) scaleY(0.97); } 75% { transform: translateX(-10px) scaleY(1); } }
+    @keyframes snow-spin { 0% { rotate: 0deg; } 100% { rotate: 360deg; } }
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-900 relative">
@@ -56,14 +76,19 @@
           <h2 class="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
             <i data-lucide="image" class="w-4 h-4 text-indigo-400"></i> Imaginea Ta (Template Ecran Full)
           </h2>
-          <div class="relative w-full h-48 border-2 border-dashed border-slate-500 rounded-xl flex flex-col items-center justify-center hover:bg-slate-700/30 transition-all group overflow-hidden">
+          <div class="relative w-full h-48 border-2 border-dashed border-slate-500 rounded-xl flex flex-col items-center justify-center hover:bg-slate-700/30 transition-all group overflow-hidden" id="previewBox">
             <input type="file" id="fileInput" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
             <div id="uploadUI" class="text-center z-10">
               <i data-lucide="upload-cloud" class="w-8 h-8 mx-auto text-indigo-400 mb-2 group-hover:scale-110 transition-transform"></i>
               <p class="text-sm font-bold text-slate-300">Click sau Drag & Drop</p>
               <p class="text-xs text-slate-500 mt-1">Urcă un meniu sau o reclamă (JPG/PNG)</p>
             </div>
-            <img id="previewImg" class="absolute inset-0 w-full h-full object-cover hidden z-10" alt="Preview">
+            <img id="previewImg" class="absolute inset-0 w-full h-full object-cover hidden z-0" alt="Preview">
+            <!-- Layers for live effect preview -->
+            <div id="previewSteam" class="absolute inset-0 z-10 pointer-events-none overflow-hidden hidden"></div>
+            <div id="previewSakura" class="absolute inset-0 z-10 pointer-events-none overflow-hidden hidden"></div>
+            <div id="previewSnow" class="absolute inset-0 z-10 pointer-events-none overflow-hidden hidden"></div>
+            <div id="previewHearts" class="absolute inset-0 z-10 pointer-events-none overflow-hidden hidden"></div>
           </div>
           <div class="mt-3 flex gap-2">
             <button onclick="setSampleImage('burger')" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded-lg text-slate-300">Exemplu: Burger</button>
@@ -309,6 +334,103 @@
         selectedTimerPos = pos;
       };
       timerPosContainer.appendChild(btn);
+    });
+
+    // Live Effect Preview Logic
+    function renderPreviewHearts() {
+      const container = document.getElementById('previewHearts');
+      container.innerHTML = '';
+      for(let i=0; i<30; i++) {
+        const heart = document.createElement('div');
+        heart.className = 'heart-fall';
+        heart.innerText = '❤️';
+        heart.style.left = `${Math.random() * 100}%`;
+        heart.style.top = '-20px';
+        heart.style.fontSize = `${10 + Math.random() * 15}px`;
+        heart.style.animationDuration = `${3 + Math.random() * 3}s`;
+        heart.style.animationDelay = `${Math.random() * 2}s`;
+        heart.style.opacity = 0.4 + Math.random() * 0.4;
+        heart.style.transform = `rotate(${Math.random() * 360}deg)`;
+        container.appendChild(heart);
+      }
+    }
+
+    function renderPreviewSnow() {
+      const container = document.getElementById('previewSnow');
+      container.innerHTML = '';
+      for(let i=0; i<25; i++) {
+        const flake = document.createElement('div');
+        flake.className = 'snowflake';
+        flake.style.left = `${Math.random() * 100}%`;
+        const size = 2 + Math.random() * 6;
+        flake.style.width = `${size}px`;
+        flake.style.height = `${size}px`;
+        flake.style.filter = `blur(${Math.random()}px)`;
+        flake.style.opacity = 0.4 + Math.random() * 0.5;
+        flake.style.animationDuration = `${4 + Math.random() * 4}s, ${2 + Math.random() * 2}s, ${3 + Math.random() * 3}s`;
+        flake.style.animationDelay = `${Math.random() * 3}s, ${Math.random()}s, ${Math.random() * 2}s`;
+        container.appendChild(flake);
+      }
+    }
+
+    function renderPreviewSakura() {
+      const container = document.getElementById('previewSakura');
+      container.innerHTML = '';
+      for(let i=0; i<15; i++) {
+        const petal = document.createElement('div');
+        petal.className = 'sakura-petal';
+        petal.style.left = `${Math.random() * 100}%`;
+        petal.style.transform = `scale(${0.3 + Math.random() * 0.4})`;
+        petal.style.animationDuration = `${4 + Math.random() * 3}s, ${1.5 + Math.random() * 2}s, ${3 + Math.random() * 3}s`;
+        petal.style.animationDelay = `${Math.random() * 3}s, ${Math.random()}s, ${Math.random()}s`;
+        container.appendChild(petal);
+      }
+    }
+
+    function renderPreviewSteam() {
+      const container = document.getElementById('previewSteam');
+      container.innerHTML = '';
+      for(let i=0; i<4; i++) {
+        const steam = document.createElement('div');
+        steam.className = 'steam-particle';
+        steam.style.left = `${30 + Math.random() * 40}%`;
+        steam.style.width = '60px';
+        steam.style.height = '60px';
+        steam.style.animationDuration = `${3 + Math.random() * 2}s`;
+        steam.style.animationDelay = `${Math.random() * 2}s`;
+        container.appendChild(steam);
+      }
+    }
+
+    // Effect Checkbox Listeners
+    document.getElementById('effHearts').addEventListener('change', (e) => {
+      const c = document.getElementById('previewHearts');
+      if (e.target.checked) { c.classList.remove('hidden'); renderPreviewHearts(); }
+      else { c.classList.add('hidden'); c.innerHTML = ''; }
+    });
+
+    document.getElementById('effSnow').addEventListener('change', (e) => {
+      const c = document.getElementById('previewSnow');
+      if (e.target.checked) { c.classList.remove('hidden'); renderPreviewSnow(); }
+      else { c.classList.add('hidden'); c.innerHTML = ''; }
+    });
+
+    document.getElementById('effSakura').addEventListener('change', (e) => {
+      const c = document.getElementById('previewSakura');
+      if (e.target.checked) { c.classList.remove('hidden'); renderPreviewSakura(); }
+      else { c.classList.add('hidden'); c.innerHTML = ''; }
+    });
+
+    document.getElementById('effSteam').addEventListener('change', (e) => {
+      const c = document.getElementById('previewSteam');
+      if (e.target.checked) { c.classList.remove('hidden'); renderPreviewSteam(); }
+      else { c.classList.add('hidden'); c.innerHTML = ''; }
+    });
+
+    document.getElementById('effParallax').addEventListener('change', (e) => {
+      const img = document.getElementById('previewImg');
+      if (e.target.checked) img.classList.add('parallax-layer');
+      else img.classList.remove('parallax-layer');
     });
 
     function generateLiveDemo() {
