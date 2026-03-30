@@ -120,32 +120,28 @@ export const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-900" data-testid="login-page">
-      <div className="w-full max-w-md">
-        <div className="bg-slate-950 border border-slate-800 rounded-[2.5rem] p-8 shadow-2xl shadow-indigo-500/10">
-          <div className="flex justify-center pt-4 mb-10">
-            <div className="flex items-center justify-center p-[4px] scale-125 transition-transform">
+    <div 
+      className="min-h-screen flex items-center justify-center p-6 relative" 
+      data-testid="login-page"
+    >
+      {/* Background Image Layer */}
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url("/images/restaurant_kiosk.png")' }}
+      >
+        <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"></div>
+      </div>
+
+      <div className="w-full max-w-md relative z-10 transition-transform hover:scale-[1.01] duration-500">
+        <div className="bg-slate-900/60 backdrop-blur-2xl border border-slate-700/50 rounded-[2.5rem] p-8 shadow-2xl shadow-black/50">
+          <div className="flex justify-center pt-2 mb-8">
+            <div className="flex items-center justify-center transition-transform hover:scale-105 duration-300">
               <img 
                 src="/getapp_smart_displays_white.png" 
                 alt="Get App Smart Displays" 
-                className="h-16 w-auto object-contain"
+                className="h-[80px] w-auto object-contain"
               />
             </div>
-          </div>
-
-          <div className="text-center space-y-1 mb-8">
-            <h1 
-              className="text-3xl font-black text-white tracking-widest"
-              style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
-            >
-              Smart Displays
-            </h1>
-            <p 
-              className="text-[#00ced1] font-black tracking-widest text-sm"
-              style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 900 }}
-            >
-              www.getapp.ro
-            </p>
           </div>
 
           {/* Show badge for first user registration */}
