@@ -124,12 +124,14 @@ export const Login = () => {
       className="min-h-screen w-full flex items-center justify-center p-6 relative overflow-hidden" 
       data-testid="login-page"
     >
-      {/* Background Image Layer */}
+      {/* Background: Dark Navy Gradient */}
       <div 
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url("/images/restaurant_kiosk.png")' }}
+        className="fixed inset-0 z-0"
+        style={{ background: 'linear-gradient(135deg, #0b0f19 0%, #111827 40%, #0f172a 70%, #1a0533 100%)' }}
       >
-        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]"></div>
+        <div style={{ position:'absolute', top:'15%', left:'20%', width:'500px', height:'500px', borderRadius:'50%', background:'radial-gradient(circle, rgba(99,56,255,0.18) 0%, transparent 70%)', filter:'blur(60px)', pointerEvents:'none' }}></div>
+        <div style={{ position:'absolute', bottom:'20%', right:'15%', width:'450px', height:'450px', borderRadius:'50%', background:'radial-gradient(circle, rgba(0,206,209,0.12) 0%, transparent 70%)', filter:'blur(60px)', pointerEvents:'none' }}></div>
+        <div style={{ position:'absolute', top:'50%', left:'55%', width:'300px', height:'300px', borderRadius:'50%', background:'radial-gradient(circle, rgba(99,56,255,0.08) 0%, transparent 70%)', filter:'blur(40px)', pointerEvents:'none' }}></div>
       </div>
 
       <div className="w-full max-w-md relative z-10 transition-transform hover:scale-[1.01] duration-500">
