@@ -127,13 +127,13 @@ export const Login = () => {
       {/* Background Image Layer */}
       <div 
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url("/images/restaurant_kiosk.png")' }}
+        style={{ backgroundImage: 'url("/images/restaurant_kiosk.png")', filter: 'blur(4px)', transform: 'scale(1.05)' }}
       >
-        <div className="absolute inset-0 bg-black/55"></div>
       </div>
+      <div className="fixed inset-0 z-0 bg-black/50"></div>
 
       <div className="w-full max-w-md relative z-10 transition-transform hover:scale-[1.01] duration-500">
-        <div className="bg-slate-950/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl shadow-black/50">
+        <div className="bg-slate-950/60 backdrop-blur-2xl border-2 border-white/20 rounded-[2.5rem] p-8 shadow-2xl shadow-black/70" style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.15), inset 0 1px 0 rgba(255,255,255,0.1)' }}>
           <div style={{ width:'100%', display:'flex', justifyContent:'center', alignItems:'center', paddingTop:'8px', marginBottom:'32px' }}>
             <img 
               src="/getapp_smart_displays_white.png" 
