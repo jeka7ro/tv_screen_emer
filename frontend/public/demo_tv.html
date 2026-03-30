@@ -7,148 +7,108 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Outfit', sans-serif;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #000;
-    }
-    .display-fullscreen {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #000;
-    }
-    .content-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    body { font-family: 'Outfit', sans-serif; margin: 0; padding: 0; overflow: hidden; background: #000; }
+    .display-fullscreen { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; }
+    .content-img { width: 100%; height: 100%; object-fit: cover; }
+    
+    /* Parallax Effect Optional */
+    .parallax-layer { animation: parallax 20s ease-in-out infinite; }
+    @keyframes parallax { 0%, 100% { transform: translateY(0) scale(1.02); } 50% { transform: translateY(-30px) scale(1.08); } }
 
-    /* STEAM EFFECT CLONED FROM APP */
-    .steam {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: 20;
-    }
-    .steam-particle {
-      position: absolute;
-      bottom: 0%;
-      width: 180px;
-      height: 180px;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
-      border-radius: 50%;
-      filter: blur(20px);
-      animation: steam-rise 6s ease-out infinite;
-      opacity: 0;
-    }
+    /* STEAM */
+    .steam { position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 20; }
+    .steam-particle { position: absolute; bottom: 0%; width: 180px; height: 180px; background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%); border-radius: 50%; filter: blur(20px); animation: steam-rise 6s ease-out infinite; opacity: 0; }
     .steam-particle:nth-child(1) { left: 48%; animation-delay: 0s; animation-duration: 7s; }
     .steam-particle:nth-child(2) { left: 50%; animation-delay: 0.5s; animation-duration: 5.5s; }
     .steam-particle:nth-child(3) { left: 52%; animation-delay: 1.2s; animation-duration: 8s; }
     .steam-particle:nth-child(4) { left: 49%; animation-delay: 1.8s; animation-duration: 6.5s; }
     .steam-particle:nth-child(5) { left: 51%; animation-delay: 2.5s; animation-duration: 7.5s; }
     .steam-particle:nth-child(6) { left: 47%; animation-delay: 0.3s; animation-duration: 6s; }
-    .steam-particle:nth-child(7) { left: 53%; animation-delay: 1s; animation-duration: 5s; }
-    .steam-particle:nth-child(8) { left: 48.5%; animation-delay: 2s; animation-duration: 9s; }
-    .steam-particle:nth-child(9) { left: 51.5%; animation-delay: 2.8s; animation-duration: 7s; }
-    .steam-particle:nth-child(10) { left: 50%; animation-delay: 3.5s; animation-duration: 6.5s; }
-    .steam-particle:nth-child(11) { left: 49.5%; animation-delay: 0.7s; animation-duration: 5.8s; }
-    .steam-particle:nth-child(12) { left: 50.5%; animation-delay: 1.5s; animation-duration: 7.2s; }
-    @keyframes steam-rise {
-      0% { bottom: -5%; opacity: 0; transform: scale(0.3) translateX(0); }
-      15% { opacity: 0.6; }
-      50% { opacity: 0.3; transform: scale(1.4) translateX(15px); }
-      100% { bottom: 110%; opacity: 0; transform: scale(3) translateX(-30px); }
-    }
+    @keyframes steam-rise { 0% { bottom: -5%; opacity: 0; transform: scale(0.3) translateX(0); } 15% { opacity: 0.6; } 50% { opacity: 0.3; transform: scale(1.4) translateX(15px); } 100% { bottom: 110%; opacity: 0; transform: scale(3) translateX(-30px); } }
 
-    /* SAKURA EFFECT CLONED FROM APP */
-    .sakura-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: 30;
-    }
-    .sakura-petal {
-      position: absolute;
-      top: -10%;
-      width: 18px;
-      height: 22px;
-      background: linear-gradient(145deg, #ffc0cb 0%, #ffb6c1 25%, #ffa0b5 50%, #ff91a4 75%, #ffb6c1 100%);
-      border-radius: 50% 0 50% 50%;
-      opacity: 0.8;
-      filter: drop-shadow(0 1px 3px rgba(255, 105, 180, 0.25));
-      animation: sakura-fall 10s linear infinite, sakura-sway 4s ease-in-out infinite, sakura-spin 8s linear infinite;
-    }
+    /* SAKURA */
+    .sakura-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 30; }
+    .sakura-petal { position: absolute; top: -10%; width: 18px; height: 22px; background: linear-gradient(145deg, #ffc0cb 0%, #ffb6c1 25%, #ffa0b5 50%, #ff91a4 75%, #ffb6c1 100%); border-radius: 50% 0 50% 50%; opacity: 0.8; filter: drop-shadow(0 1px 3px rgba(255, 105, 180, 0.25)); animation: sakura-fall 10s linear infinite, sakura-sway 4s ease-in-out infinite, sakura-spin 8s linear infinite; }
     .sakura-petal:nth-child(n) { left: 10%; animation-delay: 0s, 0s, 0s; animation-duration: 9s, 3s, 7s; }
     .sakura-petal:nth-child(2n) { left: 25%; animation-delay: 1s, 0.5s, 0.3s; animation-duration: 10s, 3.5s, 8s; }
     .sakura-petal:nth-child(3n) { left: 45%; animation-delay: 2s, 1s, 0.7s; animation-duration: 8.5s, 2.8s, 9s; }
     .sakura-petal:nth-child(4n) { left: 65%; animation-delay: 0.5s, 1.5s, 1s; animation-duration: 11s, 3.2s, 7.5s; }
     .sakura-petal:nth-child(5n) { left: 85%; animation-delay: 1.5s, 0.3s, 1.5s; animation-duration: 9.5s, 2.9s, 8.5s; }
-    .sakura-petal:nth-child(6n) { left: 5%; animation-delay: 2.5s, 0.8s, 0.2s; animation-duration: 10.5s, 3.3s, 6.5s; }
-    .sakura-petal:nth-child(7n) { left: 35%; animation-delay: 0.8s, 1.2s, 1.8s; animation-duration: 8.8s, 3.1s, 9.5s; }
-    .sakura-petal:nth-child(8n) { left: 55%; animation-delay: 1.8s, 0.6s, 0.5s; animation-duration: 11.5s, 2.7s, 7.2s; }
-    .sakura-petal:nth-child(9n) { left: 75%; animation-delay: 2.8s, 1.4s, 1.2s; animation-duration: 9.2s, 3.4s, 8.2s; }
-    .sakura-petal:nth-child(10n) { left: 95%; animation-delay: 0.3s, 0.2s, 0.8s; animation-duration: 10.2s, 3s, 6.8s; }
-    
     @keyframes sakura-fall { 0% { top: -10%; opacity: 0; } 10% { opacity: 0.85; } 90% { opacity: 0.6; } 100% { top: 110%; opacity: 0; } }
     @keyframes sakura-sway { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(20px); } 75% { transform: translateX(-15px); } }
     @keyframes sakura-spin { 0% { transform: rotate(0deg) rotateY(0deg); } 25% { transform: rotate(90deg) rotateY(45deg); } 50% { transform: rotate(180deg) rotateY(0deg); } 75% { transform: rotate(270deg) rotateY(-45deg); } 100% { transform: rotate(360deg) rotateY(0deg); } }
 
-    /* HEARTS EFFECT CLONED FROM APP */
+    /* HEARTS */
     .heart-fall { animation: fall linear infinite; position: absolute; }
     @keyframes fall { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
 
-  </script>
+    /* SNOW */
+    .snow-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; z-index: 30; }
+    .snowflake { position: absolute; top: -5%; width: 8px; height: 8px; background: radial-gradient(circle at 30% 30%, #ffffff 0%, rgba(255, 255, 255, 0.95) 30%, rgba(255, 255, 255, 0.6) 60%, rgba(255, 255, 255, 0) 100%); border-radius: 50%; opacity: 0; filter: blur(0.3px); box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.3), inset 0 0 2px rgba(255, 255, 255, 0.5); animation: snow-fall 10s linear infinite, snow-drift 4s ease-in-out infinite, snow-spin 8s linear infinite; }
+    .snowflake:nth-child(n) { left: 10%; animation-duration: 12s, 5s, 10s; }
+    .snowflake:nth-child(2n) { left: 30%; width: 12px; height: 12px; filter: blur(0.5px); opacity: 0.8; animation-duration: 8s, 3.5s, 6s; }
+    .snowflake:nth-child(3n) { left: 50%; width: 15px; height: 15px; filter: blur(1px); animation-duration: 7s, 4.5s, 12s; }
+    .snowflake:nth-child(4n) { left: 70%; width: 5px; height: 5px; animation-duration: 15s, 6s, 14s; }
+    .snowflake:nth-child(5n) { left: 90%; width: 10px; height: 10px; animation-duration: 9s, 4s, 8s; }
+    @keyframes snow-fall { 0% { top: -5%; opacity: 0; } 5% { opacity: 0.8; } 50% { opacity: 0.9; } 85% { opacity: 0.6; } 100% { top: 105%; opacity: 0; } }
+    @keyframes snow-drift { 0%, 100% { transform: translateX(0) scaleY(1); } 25% { transform: translateX(12px) scaleY(0.97); } 75% { transform: translateX(-10px) scaleY(1); } }
+    @keyframes snow-spin { 0% { rotate: 0deg; } 100% { rotate: 360deg; } }
+  </style>
 </head>
 <body>
 
-  <!-- LAYER 1: The Screen Display (Valid Session) -->
-  <div id="tvContainer" class="display-fullscreen hidden">
-    <!-- Image Content -->
-    <img id="bgImage" class="content-img" src="" alt="Demo Background">
+  <!-- TV DISPLAY -->
+  <div id="tvContainer" class="display-fullscreen hidden overflow-hidden relative">
     
-    <!-- Timer UI Overlay for the demo -->
-    <div class="absolute bottom-4 left-4 z-50 p-4 bg-black/80 backdrop-blur-md rounded-2xl border border-rose-500/50 shadow-2xl flex flex-col items-center">
-      <div class="text-[10px] uppercase font-bold text-rose-400 tracking-widest mb-1">Demo Expiră în</div>
-      <div id="countdownTimer" class="text-3xl font-black text-white tabular-nums tracking-widest">05:00</div>
+    <!-- Image Base (Potentially Parallaxed) -->
+    <img id="bgImage" class="content-img" src="" alt="Demo Background">
+
+    <!-- Screen Custom Text -->
+    <div id="customTextContainer" class="hidden absolute z-50 pointer-events-none">
+      <div id="customTextBody" class="font-bold"></div>
     </div>
 
+    <!-- Screen Timer Happy Hour -->
+    <div id="customTimerContainer" class="hidden absolute z-50 pointer-events-none">
+      <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-2xl shadow-2xl">
+        <div class="text-xs font-semibold uppercase tracking-wider mb-1 text-center">Happy Hour se termină în</div>
+        <div id="activeTimerClock" class="text-3xl font-bold text-center tabular-nums">00:00:00</div>
+      </div>
+    </div>
+
+    <!-- System Watermark / Logo -->
     <div class="absolute top-6 right-6 z-50 pointer-events-none">
       <img src="./getapp_smart_displays_white.png" class="h-12 drop-shadow-lg opacity-80" alt="Get App">
     </div>
 
-    <!-- Effect Layers -->
+    <!-- Effects -->
     <div id="effectSteam" class="steam hidden">
       <div class="steam-particle"></div><div class="steam-particle"></div><div class="steam-particle"></div>
       <div class="steam-particle"></div><div class="steam-particle"></div><div class="steam-particle"></div>
-      <div class="steam-particle"></div><div class="steam-particle"></div><div class="steam-particle"></div>
-      <div class="steam-particle"></div><div class="steam-particle"></div><div class="steam-particle"></div>
+    </div>
+    
+    <div id="effectSakura" class="sakura-container hidden">
+      <div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div>
+      <div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div>
     </div>
 
-    <div id="effectSakura" class="sakura-container hidden">
-      <!-- 25 petals simulating intensity-high -->
-      <div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div>
-      <div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div>
-      <div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div><div class="sakura-petal"></div>
+    <div id="effectSnow" class="snow-container hidden">
+      <div class="snowflake"></div><div class="snowflake"></div><div class="snowflake"></div><div class="snowflake"></div><div class="snowflake"></div>
+      <div class="snowflake"></div><div class="snowflake"></div><div class="snowflake"></div><div class="snowflake"></div><div class="snowflake"></div>
+      <div class="snowflake"></div><div class="snowflake"></div><div class="snowflake"></div><div class="snowflake"></div><div class="snowflake"></div>
     </div>
 
     <div id="effectHearts" class="fixed inset-0 pointer-events-none z-40 overflow-hidden hidden"></div>
+
+    <!-- Marketing 5m Kill-Switch Timer (Persistent) -->
+    <div class="absolute bottom-4 left-4 z-[999] p-4 bg-black/80 backdrop-blur-md rounded-2xl border border-rose-500/50 shadow-2xl flex flex-col items-center">
+      <div class="text-[10px] uppercase font-bold text-rose-400 tracking-widest mb-1">Demo Expiră în</div>
+      <div id="demoCountdown" class="text-3xl font-black text-white tabular-nums tracking-widest">05:00</div>
+    </div>
   </div>
 
-  <!-- LAYER 2: Expired State (Refuses to render) -->
-  <div id="expiredContainer" class="display-fullscreen hidden flex-col items-center justify-center p-6 bg-slate-950 text-center">
+  <!-- EXPIRED DEMO BLOCKER -->
+  <div id="expiredContainer" class="display-fullscreen hidden flex-col items-center justify-center p-6 bg-slate-950 text-center z-[1000]">
     <div class="max-w-xl mx-auto backdrop-blur-3xl bg-slate-900/80 border border-slate-700 p-12 rounded-[3rem] shadow-2xl relative">
       <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-rose-500 text-white rounded-full p-4 shadow-xl shadow-rose-500/30">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -158,15 +118,28 @@
       <h1 class="text-4xl font-black text-white mt-4 mb-4">Timpul Demo a Expirat</h1>
       <p class="text-slate-400 text-lg mb-8 leading-relaxed">
         Sistemul real rulează nelimitat 24/7 pe Smart TV-urile locației tale, fără pauze.<br><br>
-        Te-ai convins cât de bine arată? Activează-ți contul complet pentru platformă!
+        Te-ai convins cât de bine arată reclamele noastre? Activează-ți contul!
       </p>
-      <a href="./prezentare.html" class="inline-block bg-[#00ced1] hover:bg-[#20b2aa] text-slate-900 font-black text-xl px-8 py-4 rounded-xl shadow-[0_0_20px_rgba(0,206,209,0.3)] hover:shadow-[0_0_40px_rgba(0,206,209,0.5)] transition-all">
+      <a href="https://getapp.ro" class="inline-block bg-[#00ced1] hover:bg-[#20b2aa] text-slate-900 font-black text-xl px-8 py-4 rounded-xl shadow-[0_0_20px_rgba(0,206,209,0.3)] hover:shadow-[0_0_40px_rgba(0,206,209,0.5)] transition-all">
         Contactează-ne acum
       </a>
     </div>
   </div>
 
   <script>
+    // Positional CSS Mapper
+    const posMap = {
+      'top-left': 'top-4 left-4',
+      'top-center': 'top-4 left-1/2 -translate-x-1/2',
+      'top-right': 'top-4 right-4',
+      'center-left': 'top-1/2 left-4 -translate-y-1/2',
+      'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+      'center-right': 'top-1/2 right-4 -translate-y-1/2',
+      'bottom-left': 'bottom-4 left-4',
+      'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
+      'bottom-right': 'bottom-4 right-4',
+    };
+
     function renderHearts() {
       const container = document.getElementById('effectHearts');
       container.classList.remove('hidden');
@@ -193,59 +166,94 @@
 
       if (!dataParam) {
         expiredContainer.innerHTML = '<h1 class="text-white text-3xl font-bold">Eroare: Link Invalid</h1><p class="text-slate-400">Lipsete parametrul "d".</p>';
-        expiredContainer.classList.remove('hidden');
-        return;
+        expiredContainer.classList.remove('hidden'); return;
       }
 
       try {
         const payload = JSON.parse(atob(dataParam));
-        const expiresAt = payload.exp;
         
-        // Timer Logic
-        setInterval(() => {
-          const now = Date.now();
-          const remaining = Math.floor((expiresAt - now) / 1000);
-          
-          if (remaining <= 0) {
-            // EXPIRED STATE
-            tvContainer.classList.add('hidden');
-            expiredContainer.classList.remove('hidden');
-            expiredContainer.classList.add('flex');
-          } else {
-            // RUNNING STATE
-            const m = Math.floor(remaining / 60);
-            const s = remaining % 60;
-            document.getElementById('countdownTimer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-          }
-        }, 1000);
-
-        // Immediate first check
-        if (Date.now() > expiresAt) {
+        // --- EXPIRATION (5m Hard Limit) ---
+        const demoExpires = payload.exp;
+        if (Date.now() > demoExpires) {
           tvContainer.classList.add('hidden');
-          expiredContainer.classList.remove('hidden');
-          expiredContainer.classList.add('flex');
+          expiredContainer.classList.remove('hidden'); expiredContainer.classList.add('flex');
           return;
         }
 
-        // Apply Image
-        document.getElementById('bgImage').src = payload.img;
+        setInterval(() => {
+          const remaining = Math.floor((demoExpires - Date.now()) / 1000);
+          if (remaining <= 0) {
+            tvContainer.classList.add('hidden');
+            expiredContainer.classList.remove('hidden'); expiredContainer.classList.add('flex');
+          } else {
+            document.getElementById('demoCountdown').innerText = `${String(Math.floor(remaining / 60)).padStart(2,'0')}:${String(remaining % 60).padStart(2,'0')}`;
+          }
+        }, 1000);
 
-        // Apply Effects
-        if (payload.eff === 'steam') {
-          document.getElementById('effectSteam').classList.remove('hidden');
-        } else if (payload.eff === 'sakura') {
-          document.getElementById('effectSakura').classList.remove('hidden');
-        } else if (payload.eff === 'hearts') {
-          renderHearts();
+        // --- FETCH IMAGE FROM LOCAL STORAGE ---
+        // Preluam poza secreta stocata local in memoria clientului (asa ocolim Backend-ul). 
+        const localImg = localStorage.getItem(`demo_img_${payload.imgId}`);
+        if(localImg) {
+          document.getElementById('bgImage').src = localImg;
+        } else {
+          // Fallback Daca din greseala clientul a sters cookies/cache in cele 5 minute sau a copiat linkul pe alt browser
+          expiredContainer.innerHTML = '<h1 class="text-white text-3xl font-bold">Poza nu a fost găsită</h1><p class="text-slate-400 mt-2">Dacă vrei să urci propria imagine din calculator, Demo-ul rulează corect doar pe acest aparat!<br>Dacă trimiți link-ul unui coleg pe alt telefon, acesta nu îi vede imaginea locală.</p>';
+          expiredContainer.classList.remove('hidden'); expiredContainer.classList.add('flex');
+          return;
         }
 
-        // Show TV Container
+        // --- APPLY VISUAL EFFECTS ---
+        const eff = payload.eff;
+        if (eff.parallax) document.getElementById('bgImage').classList.add('parallax-layer');
+        if (eff.steam) document.getElementById('effectSteam').classList.remove('hidden');
+        if (eff.sakura) document.getElementById('effectSakura').classList.remove('hidden');
+        if (eff.snow) document.getElementById('effectSnow').classList.remove('hidden');
+        if (eff.hearts) renderHearts();
+
+        // --- APPLY TEXT ---
+        if (payload.text) {
+          const txtWrap = document.getElementById('customTextContainer');
+          const txtBody = document.getElementById('customTextBody');
+          
+          txtWrap.className = `hidden absolute z-50 pointer-events-none ${posMap[payload.text.pos] || posMap['center']}`;
+          
+          txtBody.innerText = payload.text.content;
+          txtBody.style.color = payload.text.color;
+          txtBody.className = `text-5xl lg:text-7xl font-bold transition-all ${payload.text.bg ? 'px-8 py-4 rounded-3xl backdrop-blur-md bg-black/60 shadow-2xl' : 'drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]'}`;
+          
+          txtWrap.classList.remove('hidden');
+        }
+
+        // --- APPLY HAPPY HOUR TIMER ---
+        if (payload.timer) {
+          const timeWrap = document.getElementById('customTimerContainer');
+          timeWrap.className = `hidden absolute z-50 pointer-events-none ${posMap[payload.timer.pos] || posMap['top-center']}`;
+          
+          let durationString = payload.timer.val; // e.g. "05:00" or "01:30:00"
+          let parts = durationString.split(':');
+          let secondsCount = 0;
+          if(parts.length === 3) secondsCount = parseInt(parts[0])*3600 + parseInt(parts[1])*60 + parseInt(parts[2]);
+          else if(parts.length === 2) secondsCount = parseInt(parts[0])*60 + parseInt(parts[1]);
+          else secondsCount = parseInt(parts[0]);
+
+          setInterval(() => {
+            if(secondsCount <= 0) return;
+            secondsCount--;
+            const h = Math.floor(secondsCount/3600);
+            const m = Math.floor((secondsCount%3600)/60);
+            const s = secondsCount%60;
+            document.getElementById('activeTimerClock').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+          }, 1000);
+          
+          timeWrap.classList.remove('hidden');
+        }
+
+        // START
         tvContainer.classList.remove('hidden');
 
       } catch(e) {
-        expiredContainer.innerHTML = '<h1 class="text-white text-3xl font-bold">Eroare Decriptare</h1><p class="text-slate-400">Link-ul este corupt sau modificat greșit.</p>';
-        expiredContainer.classList.remove('hidden');
-        expiredContainer.classList.add('flex');
+        expiredContainer.innerHTML = '<h1 class="text-white text-3xl font-bold">Eroare Decriptare</h1><p class="text-slate-400">Link-ul este corupt.</p>';
+        expiredContainer.classList.remove('hidden'); expiredContainer.classList.add('flex');
       }
     }
 
