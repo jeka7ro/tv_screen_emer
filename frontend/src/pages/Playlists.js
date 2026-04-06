@@ -15,6 +15,80 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInte
 import { ro } from 'date-fns/locale';
 import { EventsCalendar } from '../components/EventsCalendar';
 import { PlaylistSimulation } from '../components/PlaylistSimulation';
+import { HoverCard, HoverCardTrigger, HoverCardContent } from '../components/ui/hover-card';
+
+const MediaHoverPreview = ({ item, className }) => {
+  const [open, setOpen] = useState(false);
+
+  if (!item) return null;
+  return (
+    <>
+      <HoverCard>
+        <HoverCardTrigger asChild>
+          <div 
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(true); }}
+            className={`rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center relative shadow-sm cursor-pointer group/vid ${className || 'w-10 h-10'}`}
+          >
+            {item.type === 'video' ? (
+              <>
+                <video 
+                  src={item.file_url} 
+                  className="w-full h-full object-cover"
+                  autoPlay 
+                  muted 
+                  loop 
+                  playsInline
+                />
+                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/vid:opacity-100 transition-opacity">
+                  <Eye className="w-4 h-4 text-white" />
+                </div>
+              </>
+            ) : (
+              <img src={item.thumbnail_url || item.file_url} alt="" className="w-full h-full object-cover group-hover/vid:scale-110 transition-transform" />
+            )}
+          </div>
+        </HoverCardTrigger>
+        <HoverCardContent side="right" sideOffset={10} className="w-64 p-2 bg-slate-900 border-slate-800 shadow-2xl z-[100] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
+          {item.type === 'video' ? (
+            <div className="rounded-lg overflow-hidden bg-black aspect-video flex items-center justify-center">
+              <video 
+                src={item.file_url} 
+                className="w-full h-full object-contain"
+                autoPlay 
+                muted 
+                loop 
+                playsInline
+              />
+            </div>
+          ) : (
+            <div className="rounded-lg overflow-hidden bg-black flex items-center justify-center">
+              <img src={item.file_url} alt="" className="w-full h-auto max-h-[250px] object-contain" />
+            </div>
+          )}
+        </HoverCardContent>
+      </HoverCard>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-4xl p-0 bg-black border-slate-800 shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+          <DialogTitle className="sr-only">Vizualizare Media</DialogTitle>
+          <div className="relative w-full h-[80vh] min-h-[300px] flex items-center justify-center bg-black">
+            {item.type === 'video' ? (
+              <video 
+                src={item.file_url} 
+                className="w-full h-full object-contain"
+                autoPlay 
+                controls 
+                playsInline
+              />
+            ) : (
+              <img src={item.file_url} alt="" className="w-full h-full object-contain" />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
 
 export const Playlists = () => {
   const [playlists, setPlaylists] = useState([]);
@@ -908,19 +982,7 @@ export const Playlists = () => {
                                           className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-lg hover:border-red-200 hover:shadow-sm transition-all group"
                                         >
                                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <div className="w-10 h-10 rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center shadow-sm relative group/thumb">
-                                              {item.type === 'video' ? (
-                                                item.thumbnail_url ? (
-                                                  <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                                                ) : (
-                                                  <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                                                    <Film className="w-4 h-4 text-slate-400" />
-                                                  </div>
-                                                )
-                                              ) : (
-                                                <img src={item.thumbnail_url || item.file_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                                              )}
-                                            </div>
+                                            <MediaHoverPreview item={item} className="w-10 h-10" />
                                             <div>
                                               <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.title}</p>
                                               <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{item.type}</p>
@@ -958,19 +1020,7 @@ export const Playlists = () => {
                                           className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-lg hover:border-red-200 hover:shadow-sm transition-all group"
                                         >
                                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <div className="w-10 h-10 rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center shadow-sm relative group/thumb">
-                                              {item.type === 'video' ? (
-                                                item.thumbnail_url ? (
-                                                  <img src={item.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                                                ) : (
-                                                  <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                                                    <Film className="w-4 h-4 text-slate-400" />
-                                                  </div>
-                                                )
-                                              ) : (
-                                                <img src={item.thumbnail_url || item.file_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                                              )}
-                                            </div>
+                                            <MediaHoverPreview item={item} className="w-10 h-10" />
                                             <div>
                                               <p className="text-sm font-bold text-slate-800 line-clamp-1">{item.title}</p>
                                               <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{item.type}</p>
@@ -1032,19 +1082,7 @@ export const Playlists = () => {
                                       </div>
 
                                       {/* Thumbnail */}
-                                      <div className="w-12 h-8 rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center relative">
-                                        {contentItem?.type === 'video' ? (
-                                          contentItem?.thumbnail_url ? (
-                                            <img src={contentItem.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                                          ) : (
-                                            <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                                              <Film className="w-4 h-4 text-slate-400" />
-                                            </div>
-                                          )
-                                        ) : (
-                                          <img src={contentItem?.thumbnail_url || contentItem?.file_url} alt="" className="w-full h-full object-cover" />
-                                        )}
-                                      </div>
+                                      <MediaHoverPreview item={contentItem} className="w-12 h-8" />
 
                                       {/* Info */}
                                       <div className="flex-1 min-w-0">
