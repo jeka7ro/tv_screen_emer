@@ -761,3 +761,9 @@
     rotate: 360deg;
   }
 }
+
+/* Invert pixels and spike brightness for 100ms for OLED ASBL hardware reset */
+body.asbl-spike-active {
+    filter: invert(1) hue-rotate(180deg) contrast(200%) brightness(150%) !important;
+    background: #fff !important;
+}

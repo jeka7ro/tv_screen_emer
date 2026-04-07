@@ -125,9 +125,16 @@ export const DisplayScreen = () => {
       }
     } catch (e) { }
 
+    // 5. Nuclear ASBL Spike (OLED hardware timer reset)
+    const asblSpikeInterval = setInterval(() => {
+      document.body.classList.add('asbl-spike-active');
+      setTimeout(() => document.body.classList.remove('asbl-spike-active'), 100);
+    }, 150000);
+
     return () => {
       clearInterval(keepAlive);
       if (tvRefreshInterval) clearInterval(tvRefreshInterval);
+      clearInterval(asblSpikeInterval);
       document.removeEventListener('visibilitychange', handleVisibility);
       if (wakeLock) { try { wakeLock.release(); } catch (e) { } }
     };
@@ -637,6 +644,18 @@ export const DisplayScreen = () => {
 
   return (
     <div className="display-fullscreen relative bg-black font-sans">
+      {/* ANTI-SCREENSAVER: Full-screen video layer (The ONLY known fix for LG WebOS OLEDs) */}
+      {!isPreview && (
+        <video 
+          src="/keepalive.mp4" 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          style={{ position:'fixed', top:0, left:0, width:'100vw', height:'100vh', objectFit:'cover', zIndex: -1, opacity: 0.01, pointerEvents:'none' }}
+        />
+      )}
+
       {/* Content zones wrapper — only this rotates */}
       <div className="absolute inset-0" style={rotationStyle}>
         {(displayData?.template?.zones || []).map(zone => {
