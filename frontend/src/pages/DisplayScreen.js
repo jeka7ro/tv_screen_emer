@@ -13,6 +13,8 @@ const SUPABASE_AUDIO_PREFIX = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/
 // Running locally? Skip the Netlify CDN proxy — use Supabase URLs directly
 const IS_LOCAL = BACKEND_URL && BACKEND_URL.includes('localhost');
 
+const isConsumerSmartTV = typeof navigator !== 'undefined' && /Web0S|WebOS|SmartTV|VIDAA|Hisense|Tizen/i.test(navigator.userAgent);
+
 const getFileUrl = (url) => {
   if (!url) return '';
 
@@ -104,16 +106,10 @@ export const DisplayScreen = () => {
     // 4. SmartTV OS Idle Timer Bypass (LG/Hisense WebOS/VIDAA/Tizen)
     // Hardware auto-dimming and OS screensavers activate around 10-15 minutes if no real remote interaction occurs.
     let tvRefreshInterval = null;
+    let asblSpikeInterval = null;
     try {
-      if (
-        navigator.userAgent.indexOf('Web0S') >= 0 ||
-        navigator.userAgent.indexOf('WebOS') >= 0 ||
-        navigator.userAgent.indexOf('SmartTV') >= 0 ||
-        navigator.userAgent.indexOf('VIDAA') >= 0 ||
-        navigator.userAgent.indexOf('Hisense') >= 0 ||
-        navigator.userAgent.indexOf('Tizen') >= 0
-      ) {
-        console.log('[AntiStandby] SmartTV detected. Initiating 9-minute Hard-Navigation bypass.');
+      if (isConsumerSmartTV) {
+        console.log('[AntiStandby] SmartTV detected. Initiating 9-minute Hard-Navigation bypass & ASBL spike protection.');
         // 9 minutes (540,000 ms) beats both 10-min hardware Auto-Dimming and 15-min OS active Screensavers
         tvRefreshInterval = setInterval(() => {
           console.log('[AntiStandby] Forcing hard navigation to reset TV OS idle timers.');
@@ -122,19 +118,19 @@ export const DisplayScreen = () => {
           currentUrl.searchParams.set('t', Date.now().toString());
           window.location.replace(currentUrl.toString());
         }, 9 * 60 * 1000); 
+
+        // 5. Nuclear ASBL Spike (OLED hardware timer reset)
+        asblSpikeInterval = setInterval(() => {
+          document.body.classList.add('asbl-spike-active');
+          setTimeout(() => document.body.classList.remove('asbl-spike-active'), 100);
+        }, 150000);
       }
     } catch (e) { }
-
-    // 5. Nuclear ASBL Spike (OLED hardware timer reset)
-    const asblSpikeInterval = setInterval(() => {
-      document.body.classList.add('asbl-spike-active');
-      setTimeout(() => document.body.classList.remove('asbl-spike-active'), 100);
-    }, 150000);
 
     return () => {
       clearInterval(keepAlive);
       if (tvRefreshInterval) clearInterval(tvRefreshInterval);
-      clearInterval(asblSpikeInterval);
+      if (asblSpikeInterval) clearInterval(asblSpikeInterval);
       document.removeEventListener('visibilitychange', handleVisibility);
       if (wakeLock) { try { wakeLock.release(); } catch (e) { } }
     };
@@ -210,13 +206,27 @@ export const DisplayScreen = () => {
     if (isPreview) return;
     
     const reloadTimer = setTimeout(() => {
-      if (!displayData) {
+      if (!displayData && !error) {
         console.warn('[Display] Content not loaded after 15s, reloading...');
         window.location.reload();
       }
     }, 15000);
     return () => clearTimeout(reloadTimer);
-  }, [displayData, isPreview]);
+  }, [displayData, error, isPreview]);
+
+  // Auto-retry specifically for Error states (e.g. 502 Bad Gateway during server deployments)
+  // If the server drops briefly, the TV used to show a static error screen and go into standby.
+  useEffect(() => {
+    if (error && !isPreview) {
+      console.warn('[Display] In error state, auto-retrying in 15 seconds...');
+      const retryTimer = setTimeout(() => {
+        setError(null);
+        setLoading(true);
+        loadDisplayData();
+      }, 15000);
+      return () => clearTimeout(retryTimer);
+    }
+  }, [error, isPreview]);
 
   useEffect(() => {
     loadDisplayData();
@@ -645,7 +655,7 @@ export const DisplayScreen = () => {
   return (
     <div className="display-fullscreen relative bg-black font-sans">
       {/* ANTI-SCREENSAVER: Full-screen video layer (The ONLY known fix for LG WebOS OLEDs) */}
-      {!isPreview && (
+      {!isPreview && isConsumerSmartTV && (
         <video 
           src="/keepalive.mp4" 
           autoPlay 

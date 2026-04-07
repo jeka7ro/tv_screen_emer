@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ro">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -101,7 +102,8 @@
             font-weight: 600;
         }
 
-        .lang-btn.active, .lang-btn:hover {
+        .lang-btn.active,
+        .lang-btn:hover {
             color: white;
             border-color: var(--accent-color);
             box-shadow: 0 0 10px var(--accent-glow);
@@ -120,9 +122,12 @@
         .hero::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: radial-gradient(circle at 70% 30%, rgba(245, 158, 11, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 30% 70%, rgba(234, 88, 12, 0.15) 0%, transparent 50%);
+                radial-gradient(circle at 30% 70%, rgba(234, 88, 12, 0.15) 0%, transparent 50%);
             z-index: -1;
         }
 
@@ -157,7 +162,7 @@
             width: 100%;
             max-width: 700px;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 40px var(--accent-glow);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 40px var(--accent-glow);
             border: 1px solid var(--glass-border);
         }
 
@@ -175,7 +180,7 @@
             padding: 3rem;
             border-radius: 24px;
             border: 1px solid var(--glass-border);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(10px);
         }
 
@@ -206,7 +211,7 @@
         .feature-img img {
             width: 100%;
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             border: 1px solid var(--glass-border);
             transition: transform 0.3s ease;
         }
@@ -222,7 +227,7 @@
             padding: 4rem 2rem;
             margin-bottom: 2rem;
         }
-        
+
         .cta h2 {
             font-size: 2rem;
             margin-bottom: 1rem;
@@ -253,36 +258,57 @@
 
         /* Animations */
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-15px); }
-            100% { transform: translateY(0px); }
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
         }
 
         /* Responsive */
         @media (max-width: 992px) {
-            .hero, .feature-block {
+
+            .hero,
+            .feature-block {
                 flex-direction: column !important;
                 text-align: center;
                 gap: 2rem;
             }
+
             .hero-content {
                 margin: 0 auto;
                 padding-right: 0;
             }
+
             .hero h1 {
                 font-size: 2.5rem;
             }
+
             .feature-text h2 {
                 font-size: 2rem;
             }
         }
     </style>
 </head>
+
 <body>
 
     <header>
@@ -290,14 +316,15 @@
             <!-- App Smart Displays Logo SVG -->
             <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <!-- Purple background with rounded corners -->
-                <rect width="100" height="100" rx="22" fill="#7834FF"/>
+                <rect width="100" height="100" rx="22" fill="#7834FF" />
                 <!-- Screen Outline -->
-                <rect x="18" y="24" width="64" height="42" rx="4" stroke="white" stroke-width="5" fill="transparent"/>
-                <path d="M42 66 L34 82 L66 82 L58 66" fill="transparent" stroke="white" stroke-width="5" stroke-linejoin="round"/>
-                <line x1="30" y1="82" x2="70" y2="82" stroke="white" stroke-width="5" stroke-linecap="round"/>
+                <rect x="18" y="24" width="64" height="42" rx="4" stroke="white" stroke-width="5" fill="transparent" />
+                <path d="M42 66 L34 82 L66 82 L58 66" fill="transparent" stroke="white" stroke-width="5"
+                    stroke-linejoin="round" />
+                <line x1="30" y1="82" x2="70" y2="82" stroke="white" stroke-width="5" stroke-linecap="round" />
                 <!-- Play triangle inside white circle -->
-                <circle cx="50" cy="45" r="14" fill="white"/>
-                <path d="M46 38 L57 45 L46 52 Z" fill="#7834FF"/>
+                <circle cx="50" cy="45" r="14" fill="white" />
+                <path d="M46 38 L57 45 L46 52 Z" fill="#7834FF" />
             </svg>
             <div class="brand-text">
                 <span class="app-title">App</span>
@@ -313,7 +340,8 @@
     <section class="hero">
         <div class="hero-content">
             <h1 data-i18n="hero_title">Transformă orice ecran într-un magnet pentru clienți</h1>
-            <p data-i18n="hero_sub">Soluția supremă de digital signage. Gestionează conținut dinamic, meniuri și reclame în timp real, pe orice Smart TV sau Kiosk.</p>
+            <p data-i18n="hero_sub">Soluția supremă de digital signage. Gestionează conținut dinamic, meniuri și reclame
+                în timp real, pe orice Smart TV sau Kiosk.</p>
         </div>
         <div class="hero-image">
             <img src="./images/restaurant_kiosk.png" alt="Digital Signage Hero">
@@ -324,8 +352,10 @@
         <div class="feature-block reverse">
             <div class="feature-text">
                 <h2 data-i18n="feat2_title">Afișare Premium & Stabilă</h2>
-                <p data-i18n="feat2_p1">Folosim o arhitectură special concepută pentru mediul comercial ce previne intrarea în repaus (standby) a televizoarelor Smart.</p>
-                <p data-i18n="feat2_p2">Oferim tranziții animate, suport pentru video și design impecabil 24/7 care captează atenția clienților.</p>
+                <p data-i18n="feat2_p1">Folosim o arhitectură special concepută pentru mediul comercial ce previne
+                    intrarea în repaus (standby) a televizoarelor Smart.</p>
+                <p data-i18n="feat2_p2">Oferim tranziții animate, suport pentru video și design impecabil 24/7 care
+                    captează atenția clienților.</p>
             </div>
             <div class="feature-img">
                 <!-- Using another generated/existing image to show difference or reuse hero_bg if no other -->
@@ -336,8 +366,10 @@
         <div class="feature-block">
             <div class="feature-text">
                 <h2 data-i18n="feat1_title">Control Centralizat din Cloud</h2>
-                <p data-i18n="feat1_p1">Schimbă prețurile, imaginile și designul pe zeci de ecrane simultan dintr-un singur panou de control conectat la cloud.</p>
-                <p data-i18n="feat1_p2">Nu mai este nevoie de memorie USB. Tot conținutul media este sincronizat și redat instant pe unitățile de afișaj.</p>
+                <p data-i18n="feat1_p1">Schimbă prețurile, imaginile și designul pe zeci de ecrane simultan dintr-un
+                    singur panou de control conectat la cloud.</p>
+                <p data-i18n="feat1_p2">Nu mai este nevoie de memorie USB. Tot conținutul media este sincronizat și
+                    redat instant pe unitățile de afișaj.</p>
             </div>
             <div class="feature-img">
                 <img src="./images/cms_dashboard.png" alt="Cloud Dashboard">
@@ -385,7 +417,7 @@
             // Update active states
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 const isActive = btn.textContent.toLowerCase() === lang;
-                if(isActive) {
+                if (isActive) {
                     btn.classList.add('active');
                 } else {
                     btn.classList.remove('active');
@@ -412,4 +444,5 @@
         });
     </script>
 </body>
+
 </html>
