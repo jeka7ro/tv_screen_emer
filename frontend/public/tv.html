@@ -354,8 +354,9 @@
                     vid.src = items[s].url;
                     vid.muted = true;
                     vid.loop = true;
-                    vid.autoplay = true;
                     vid.setAttribute('playsinline', '');
+                    vid.preload = 'auto';
+                    if (s === 0) vid.autoplay = true;
                     vid.style.width = '100%';
                     vid.style.height = '100%';
                     vid.style.objectFit = fitMode;
@@ -475,13 +476,29 @@
             var rawDuration = allSlides[currentSlide] && allSlides[currentSlide].duration;
             var duration = Math.max(5, Number(rawDuration) || 10); // Minimum 5s — prevents instant black flash
             slideTimer = setTimeout(function () {
-                var oldSlide = document.getElementById('slide-' + currentSlide);
+                var oldSlideIndex = currentSlide;
+                var oldSlide = document.getElementById('slide-' + oldSlideIndex);
                 if (oldSlide) oldSlide.className = 'slide';
 
                 currentSlide = (currentSlide + 1) % allSlides.length;
 
                 var newSlide = document.getElementById('slide-' + currentSlide);
-                if (newSlide) newSlide.className = 'slide active';
+                if (newSlide) {
+                    newSlide.className = 'slide active';
+                    var newVid = newSlide.querySelector('video');
+                    if (newVid) {
+                        newVid.currentTime = 0;
+                        var p = newVid.play();
+                        if (p !== undefined) p.catch(function(){});
+                    }
+                }
+
+                setTimeout(function() {
+                    if (oldSlide) {
+                        var oldVid = oldSlide.querySelector('video');
+                        if (oldVid) oldVid.pause();
+                    }
+                }, 1500);
 
                 nextSlide();
             }, duration * 1000);

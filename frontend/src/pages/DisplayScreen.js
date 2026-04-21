@@ -57,6 +57,56 @@ const getYouTubeEmbedUrl = (url) => {
   return url;
 };
 
+const PlaylistMediaItem = ({ item, isActive, fitMode, syncType }) => {
+  const videoRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (item.type === 'video' && videoRef.current) {
+      if (isActive) {
+        videoRef.current.currentTime = 0;
+        const p = videoRef.current.play();
+        if (p !== undefined) p.catch(() => {});
+      } else {
+        const t = setTimeout(() => {
+          if (videoRef.current) videoRef.current.pause();
+        }, 1500);
+        return () => clearTimeout(t);
+      }
+    }
+  }, [isActive, item.type]);
+
+  if (!item) return null;
+  const isMatrix = syncType?.startsWith('matrix');
+  let objectFit = fitMode || (isMatrix ? 'cover' : 'contain');
+  const style = {
+    objectFit: objectFit === 'stretch' ? 'fill' : objectFit,
+    width: '100%',
+    height: '100%'
+  };
+
+  if (item.type === 'image') {
+    return <img src={getFileUrl(item.file_url)} alt="" className="shadow-2xl" style={style} />;
+  } else if (item.type === 'video') {
+    return (
+      <video
+        ref={videoRef}
+        src={getFileUrl(item.file_url)}
+        loop
+        muted
+        playsInline
+        preload="auto"
+        className="shadow-2xl"
+        style={style}
+      />
+    );
+  } else if (item.type === 'youtube') {
+    return <iframe src={getYouTubeEmbedUrl(item.file_url)} className="w-full h-full border-0" allow="autoplay; encrypted-media" allowFullScreen title={item.title || ''} />;
+  } else if (item.type === 'web') {
+    return <iframe src={item.file_url} className="w-full h-full border-0 bg-white" title={item.title || ''} />;
+  }
+  return null;
+};
+
 export const DisplayScreen = () => {
   const { slug } = useParams();
   const [searchParams] = useSearchParams();
@@ -491,29 +541,6 @@ export const DisplayScreen = () => {
     );
   };
 
-  const renderContentItem = (item, fitMode, syncType) => {
-    if (!item) return isDebug ? <div className="text-red-500">NO ITEM</div> : null;
-    const isMatrix = syncType?.startsWith('matrix');
-    // Map our fit modes: contain=original, cover=fill, fit=contain(same), stretch=fill(100%)
-    let objectFit = fitMode || (isMatrix ? 'cover' : 'contain');
-    const style = {
-      objectFit: objectFit === 'stretch' ? 'fill' : objectFit,
-      width: '100%',
-      height: '100%'
-    };
-
-    if (item.type === 'image') {
-      return <img src={getFileUrl(item.file_url)} alt="" className="shadow-2xl" style={style} />;
-    } else if (item.type === 'video') {
-      return <video src={getFileUrl(item.file_url)} autoPlay loop muted playsInline className="shadow-2xl" style={style} />;
-    } else if (item.type === 'youtube') {
-      return <iframe src={getYouTubeEmbedUrl(item.file_url)} className="w-full h-full border-0" allow="autoplay; encrypted-media" allowFullScreen title={item.title || ''} />;
-    } else if (item.type === 'web') {
-      return <iframe src={item.file_url} className="w-full h-full border-0 bg-white" title={item.title || ''} />;
-    }
-    return isDebug ? <div className="text-red-500">UNKNOWN TYPE: {item.type}</div> : null;
-  };
-
   const renderZone = (zone, zoneConfig) => {
     if (!zoneConfig) {
       return (
@@ -527,17 +554,15 @@ export const DisplayScreen = () => {
     const syncInfo = displayData?.sync_info;
     const isMatrix = syncInfo && (syncInfo.sync_type?.startsWith('matrix'));
 
-    let contentItem = null;
-    if (zoneConfig.content_type === 'single_content') {
-      contentItem = zoneConfig.content;
-    } else if (zoneConfig.content_type === 'playlist') {
-      const playlistItems = zoneConfig.playlist?.content_items || [];
-      contentItem = playlistItems[currentPlaylistIndex] || playlistItems[0];
-    } else if (zoneConfig.content_type === 'digital_menu') {
+    if (zoneConfig.content_type === 'digital_menu') {
       return renderDigitalMenu(zoneConfig);
     }
 
-    if (!contentItem) {
+    const isPlaylist = zoneConfig.content_type === 'playlist';
+    const playlistItems = isPlaylist ? (zoneConfig.playlist?.content_items || []) : [];
+    const itemsToRender = isPlaylist ? playlistItems : (zoneConfig.content ? [zoneConfig.content] : []);
+
+    if (itemsToRender.length === 0) {
       return (
         <div className="w-full h-full flex flex-col items-center justify-center bg-slate-950 text-white font-mono text-[10px]">
           <div className="opacity-30 uppercase">{zone.name}</div>
@@ -576,12 +601,21 @@ export const DisplayScreen = () => {
     return (
       <div className="relative w-full h-full bg-black overflow-hidden group">
         <div className={`w-full h-full relative ${parallaxEnabled ? 'parallax-container' : ''}`}>
-          {/* Main Content Layer — no blur background (too heavy for TV GPUs) */}
-          <div className="absolute inset-0 z-10 flex items-center justify-center">
-            <div style={isMatrix ? matrixTransformStyle : { width: '100%', height: '100%' }}>
-              {renderContentItem(contentItem, zoneConfig.fit_mode || syncInfo?.fit_mode, syncInfo?.sync_type)}
-            </div>
-          </div>
+          {/* Main Content Layers */}
+          {itemsToRender.map((item, idx) => {
+            const isActive = isPlaylist ? (idx === currentPlaylistIndex) : true;
+            return (
+              <div 
+                key={item.id || idx}
+                className="absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-1000 ease-in-out"
+                style={{ opacity: isActive ? 1 : 0 }}
+              >
+                <div style={isMatrix ? matrixTransformStyle : { width: '100%', height: '100%' }}>
+                  <PlaylistMediaItem item={item} isActive={isActive} fitMode={zoneConfig.fit_mode || syncInfo?.fit_mode} syncType={syncInfo?.sync_type} />
+                </div>
+              </div>
+            );
+          })}
 
           {steamEnabled && (
             <div className="steam z-20 pointer-events-none">
@@ -591,7 +625,7 @@ export const DisplayScreen = () => {
 
           {isDebug && (
             <div className="absolute top-2 left-2 z-30 bg-black/60 p-1 text-[8px] text-white font-mono rounded pointer-events-none">
-              {zoneConfig.content_type}: {contentItem.type}
+              {zoneConfig.content_type}: {itemsToRender[isPlaylist ? currentPlaylistIndex : 0]?.type}
             </div>
           )}
         </div>
