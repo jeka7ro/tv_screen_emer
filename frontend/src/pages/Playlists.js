@@ -1557,7 +1557,7 @@ export const Playlists = () => {
                                 setDraggedPlaylistId(null);
                                 setDroppingOnScreenId(null);
                               }}
-                              className={`bg-white rounded-full border border-slate-200 transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''} ${selectedPlaylists.includes(playlist.id) ? 'ring-2 ring-red-500 shadow-xl scale-[1.02]' : ''}`}
+                              className={`bg-white rounded-3xl border border-slate-200 transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''} ${selectedPlaylists.includes(playlist.id) ? 'ring-2 ring-red-500 shadow-xl scale-[1.02]' : ''}`}
                               style={{
                                 boxShadow: selectedPlaylists.includes(playlist.id) ? `0 15px 40px -10px ${(playlist.color || '#EF4444')}80` : 'none',
                                 '--playlist-color': playlist.color || '#EF4444'
