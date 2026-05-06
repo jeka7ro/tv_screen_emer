@@ -483,7 +483,7 @@ const AudioStreaming = () => {
                                                 className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-red-500 text-sm shadow-sm"
                                             />
                                         ) : (
-                                            <div className="border-2 border-dashed border-slate-300 rounded-full p-8 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer bg-slate-50">
+                                            <div className="border-2 border-dashed border-slate-300 rounded-3xl p-8 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer bg-slate-50">
                                                 <input
                                                     type="file"
                                                     accept="audio/*"

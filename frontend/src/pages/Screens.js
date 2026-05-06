@@ -767,7 +767,7 @@ export const Screens = () => {
                 </div>
                 <div className={`grid gap-4 ${gridSize === 'sm' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : gridSize === 'md' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
                   {locationScreens.map((screen) => (
-                    <div key={screen.id} className={`glass-card p-3 flex flex-col h-full transition-all rounded-full ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`} style={{ border: screen.status === 'online' ? '2px solid #10b981' : '2px solid #ef4444', boxShadow: screen.status === 'online' ? '0 0 8px 2px rgba(16, 185, 129, 0.25)' : '0 0 8px 2px rgba(239, 68, 68, 0.25)' }}>
+                    <div key={screen.id} className={`glass-card p-3 flex flex-col h-full transition-all rounded-3xl ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`} style={{ border: screen.status === 'online' ? '2px solid #10b981' : '2px solid #ef4444', boxShadow: screen.status === 'online' ? '0 0 8px 2px rgba(16, 185, 129, 0.25)' : '0 0 8px 2px rgba(239, 68, 68, 0.25)' }}>
                       {/* Header: checkbox + brand + name + actions */}
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2 min-w-0">

@@ -536,14 +536,14 @@ export const Users = () => {
                       setSelectedUser(u);
                       setShowPasswordDialog(true);
                     }}
-                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-500 hover:text-indigo-600"
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 rounded-2xl transition-colors text-slate-500 hover:text-indigo-600"
                   >
                     <Key className="w-4 h-4" />
                     <span className="text-[10px] font-medium">Parolă</span>
                   </button>
                   <button
                     onClick={() => handleEditClick(u)}
-                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-500 hover:text-indigo-600"
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 rounded-2xl transition-colors text-slate-500 hover:text-indigo-600"
                   >
                     <Edit className="w-4 h-4" />
                     <span className="text-[10px] font-medium">Editează</span>
@@ -560,7 +560,7 @@ export const Users = () => {
                   </button>
                   <button
                     onClick={() => handleDeleteUser(u.id)}
-                    className="flex flex-col items-center gap-1 p-2 hover:bg-red-50 rounded-full transition-colors text-slate-500 hover:text-red-600"
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-red-50 rounded-2xl transition-colors text-slate-500 hover:text-red-600"
                     disabled={u.is_super_admin && users.filter(usr => usr.is_super_admin).length === 1}
                   >
                     <Trash2 className="w-4 h-4" />
