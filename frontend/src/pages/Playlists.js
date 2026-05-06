@@ -1398,7 +1398,7 @@ export const Playlists = () => {
                               <div className="flex items-center gap-3">
                                 {playlist.brand && getBrandLogo(playlist.brand) && (
                                   <div className="w-9 h-9 rounded-full border-2 border-slate-100 flex items-center justify-center bg-white overflow-hidden shrink-0 shadow-sm">
-                                    <img src={getBrandLogo(playlist.brand)} alt="" className="w-full h-full object-contain p-0.5" />
+                                    <img src={getBrandLogo(playlist.brand)} alt="" className="w-full h-full object-cover rounded-full" />
                                   </div>
                                 )}
                                 <div className="flex flex-col">
@@ -1577,7 +1577,7 @@ export const Playlists = () => {
                                 />
                                 <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-white shadow-sm ${brandLogo ? 'bg-white' : 'bg-white/20'}`}>
                                   {brandLogo ? (
-                                    <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-0.5" />
+                                    <img src={brandLogo} alt={brandName} className="w-full h-full object-cover rounded-full" />
                                   ) : (
                                     <Film className="w-4 h-4 text-white/80" />
                                   )}
