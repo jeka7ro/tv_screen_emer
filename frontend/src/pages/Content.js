@@ -13,8 +13,10 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select'; import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { SlideshowConfigDialog } from '../components/SlideshowConfigDialog';
 import { Switch } from '../components/ui/switch';
+import { useConfirm } from '../hooks/useConfirm';
 
 export const Content = () => {
+    const { confirm, ConfirmDialog } = useConfirm();
   const { isAdmin } = useAuth();
   const [content, setContent] = useState([]);
   const [folders, setFolders] = useState([]);
@@ -165,7 +167,7 @@ export const Content = () => {
   };
 
   const handleDeleteFolder = async (folderId) => {
-    if (!window.confirm('Sigur dorești să ștergi acest folder? Conținutul va fi mutat în "Toate fișierele".')) return;
+    if (!(await confirm({ message: 'Sigur dorești să ștergi acest folder? Conținutul va fi mutat în "Toate fișierele".', isDanger: true }))) return;
     try {
       await api.delete(`/content/folders/${folderId}`);
       toast.success('Folder șters!');
@@ -565,7 +567,8 @@ export const Content = () => {
         <div className="flex items-center justify-center h-96">
           <div className="spinner"></div>
         </div>
-      </DashboardLayout>
+          <ConfirmDialog />
+        </DashboardLayout>
     );
   }
 
@@ -588,7 +591,7 @@ export const Content = () => {
   };
 
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Sigur dorești să ștergi ${selectedItems.size} elemente?`)) return;
+    if (!(await confirm({ message: `Sigur dorești să ștergi ${selectedItems.size} elemente?`, isDanger: true }))) return;
 
     try {
       // Execute deletions (Promise.all for now)
@@ -709,7 +712,7 @@ export const Content = () => {
                     </td>
                     <td className="p-4 w-24">
                       <div
-                        className="w-16 h-10 rounded-lg overflow-hidden bg-slate-100 cursor-pointer flex items-center justify-center border border-slate-200 shadow-sm transition-transform hover:scale-105"
+                        className="w-16 h-10 rounded-2xl overflow-hidden bg-slate-100 cursor-pointer flex items-center justify-center border border-slate-200 shadow-sm transition-transform hover:scale-105"
                         onClick={() => handlePreview(item)}
                       >
                         {item.type === 'youtube' ? (
@@ -968,7 +971,7 @@ export const Content = () => {
             {/* Metadata Section */}
             <div className="flex-1 space-y-3 mb-5">
               <div className="flex items-center gap-3">
-                <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                <div className="bg-slate-50 p-2 rounded-2xl border border-slate-100">
                   {item.type === 'video' || item.type === 'youtube' ? <Film className="w-4 h-4 text-slate-400" /> : <FileImage className="w-4 h-4 text-slate-400" />}
                 </div>
                 <div>
@@ -977,7 +980,7 @@ export const Content = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+              <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
                 <div className="flex flex-col">
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Categorie</span>
                   <span className="text-xs font-bold text-red-600 capitalize">{item.category}</span>
@@ -992,7 +995,7 @@ export const Content = () => {
             <div className="flex gap-2 mt-auto">
               <button
                 onClick={(e) => { e.stopPropagation(); handlePreview(item); }}
-                className="flex-1 flex items-center justify-center gap-2 text-sm bg-red-600 text-white hover:bg-red-700 px-4 py-3 rounded-xl transition-all shadow-md hover:shadow-lg font-bold"
+                className="flex-1 flex items-center justify-center gap-2 text-sm bg-red-600 text-white hover:bg-red-700 px-4 py-3 rounded-full transition-all shadow-md hover:shadow-lg font-bold"
               >
                 <Eye className="w-4 h-4" />
                 Preview
@@ -1008,7 +1011,7 @@ export const Content = () => {
                       setEditBrands(Array.isArray(item.brand) ? item.brand : []);
                       setShowRenameDialog(true);
                     }}
-                    className="p-3 hover:bg-red-50 rounded-xl transition-all text-slate-400 hover:text-red-600 border border-transparent hover:border-red-100"
+                    className="p-3 hover:bg-red-50 rounded-full transition-all text-slate-400 hover:text-red-600 border border-transparent hover:border-red-100"
                     title="Editează"
                   >
                     <Edit2 className="w-5 h-5" />
@@ -1018,7 +1021,7 @@ export const Content = () => {
                       e.stopPropagation();
                       handleDelete(item);
                     }}
-                    className="p-3 hover:bg-rose-50 rounded-xl transition-all text-slate-400 hover:text-rose-600 border border-transparent hover:border-rose-100 group/del"
+                    className="p-3 hover:bg-rose-50 rounded-full transition-all text-slate-400 hover:text-rose-600 border border-transparent hover:border-rose-100 group/del"
                     title="Șterge"
                   >
                     <Trash2 className="w-5 h-5 group-hover/del:scale-110 transition-transform" />
@@ -1042,7 +1045,7 @@ export const Content = () => {
           </div>
 
           {isAdmin() && selectedItems.size > 0 && (
-            <div className="mb-6 bg-gradient-to-r from-red-600 to-rose-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
+            <div className="mb-6 bg-gradient-to-r from-red-600 to-rose-600 text-white px-6 py-4 rounded-2xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
               <span className="font-semibold text-lg">{selectedItems.size} selectate</span>
               <div className="h-6 w-px bg-white/30"></div>
 
@@ -1066,7 +1069,7 @@ export const Content = () => {
 
               <button
                 onClick={handleBulkDelete}
-                className="ml-auto bg-white text-rose-600 hover:bg-slate-100 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm"
+                className="ml-auto bg-white text-rose-600 hover:bg-slate-100 px-4 py-2 rounded-full font-semibold flex items-center gap-2 transition-colors shadow-sm"
               >
                 <Trash2 className="w-4 h-4" />
                 Șterge
@@ -1101,14 +1104,14 @@ export const Content = () => {
         }} className="space-y-6">
           {/* Header Row: Tabs (Left) + Actions (Right) */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm mb-6">
-            <TabsList className="bg-slate-100 p-1 rounded-xl w-full sm:w-auto grid grid-cols-3 sm:flex">
-              <TabsTrigger value="all" className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
+            <TabsList className="bg-slate-100 p-1 rounded-2xl w-full sm:w-auto grid grid-cols-3 sm:flex">
+              <TabsTrigger value="all" className="rounded-2xl px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
                 Toate ({brandFilteredContent.length})
               </TabsTrigger>
-              <TabsTrigger value="images" className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
+              <TabsTrigger value="images" className="rounded-2xl px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
                 Imagini ({images.length})
               </TabsTrigger>
-              <TabsTrigger value="videos" className="rounded-lg px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
+              <TabsTrigger value="videos" className="rounded-2xl px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
                 Video ({videos.length})
               </TabsTrigger>
             </TabsList>
@@ -1149,7 +1152,7 @@ export const Content = () => {
               {selectedBrands.length > 0 && (
                 <button
                   onClick={() => setSelectedBrands([])}
-                  className="ml-2 px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors uppercase tracking-wider"
+                  className="ml-2 px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors uppercase tracking-wider"
                 >
                   Resetează
                 </button>
@@ -1168,17 +1171,17 @@ export const Content = () => {
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
               {/* View Mode Switcher */}
-              <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200">
+              <div className="bg-slate-100 p-1 rounded-2xl flex border border-slate-200">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                   title="Grid View"
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                   title="List View"
                 >
                   <ListIcon className="w-4 h-4" />
@@ -1192,7 +1195,7 @@ export const Content = () => {
                   if (!open) resetForm();
                 }}>
                   <DialogTrigger asChild>
-                    <Button className="btn-red px-6 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]">
+                    <Button className="btn-red px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]">
                       <Plus className="w-4 h-4 mr-2" />
                       Adăugă conținut
                     </Button>
@@ -1233,14 +1236,14 @@ export const Content = () => {
 
                       <div className="space-y-2">
                         <Label className="text-sm font-semibold">Branduri (Clienți)</Label>
-                        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl max-h-40 overflow-y-auto">
+                        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl max-h-40 overflow-y-auto">
                           {brands.length === 0 ? (
                             <p className="text-xs text-slate-400 italic">Niciun brand creat încă.</p>
                           ) : (
                             brands.map(brand => (
                               <label
                                 key={brand.id}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all ${formData.brand?.includes(brand.name)
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border cursor-pointer transition-all ${formData.brand?.includes(brand.name)
                                   ? 'bg-red-50 border-red-200 text-red-700 shadow-sm'
                                   : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                                   }`}
@@ -1282,7 +1285,7 @@ export const Content = () => {
                         <TabsContent value="file" className="space-y-4 mt-4">
                           <div>
                             <Label className="text-base font-semibold">Selectează fișier(e)</Label>
-                            <div className="mt-3 border-2 border-dashed border-red-300 rounded-xl p-6 bg-gradient-to-br from-red-50/50 to-red-50/30 hover:from-red-50 hover:to-red-50 transition-all">
+                            <div className="mt-3 border-2 border-dashed border-red-300 rounded-2xl p-6 bg-gradient-to-br from-red-50/50 to-red-50/30 hover:from-red-50 hover:to-red-50 transition-all">
                               <div className="flex flex-col items-center mb-4">
                                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-3">
                                   <Upload className="w-8 h-8 text-red-600" />
@@ -1292,7 +1295,7 @@ export const Content = () => {
                               </div>
                               <Label
                                 htmlFor="file-upload-input"
-                                className="inline-block px-6 py-3 bg-red-600 text-white font-bold rounded-lg cursor-pointer hover:bg-red-700 transition-colors shadow-md hover:shadow-lg mb-4"
+                                className="inline-block px-6 py-3 bg-red-600 text-white font-bold rounded-full cursor-pointer hover:bg-red-700 transition-colors shadow-md hover:shadow-lg mb-4"
                               >
                                 Alege fișierele
                               </Label>
@@ -1313,7 +1316,7 @@ export const Content = () => {
                                 className="hidden"
                               />
                               {selectedFiles.length > 0 && (
-                                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-2xl">
                                   <p className="text-sm text-green-700 font-semibold flex items-center gap-2">
                                     <span className="text-green-600">✓</span> {selectedFiles.length} fișier(e) selectat(e)
                                   </p>
@@ -1395,7 +1398,7 @@ export const Content = () => {
                 {/* Header */}
                 <div className="px-4 py-3 flex items-center justify-between border-b border-slate-100/80 shrink-0">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg flex items-center justify-center shadow-sm">
+                    <div className="w-7 h-7 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl flex items-center justify-center shadow-sm">
                       <FileImage className="w-3.5 h-3.5 text-white" />
                     </div>
                     <h3 className="font-bold text-sm text-slate-800 tracking-tight">Bibliotecă Conținut</h3>
@@ -1420,7 +1423,7 @@ export const Content = () => {
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-400 font-medium">Afișează:</span>
                       <select
-                        className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-all cursor-pointer font-medium text-slate-600 shadow-sm"
+                        className="text-xs border border-slate-200 rounded-2xl px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-all cursor-pointer font-medium text-slate-600 shadow-sm"
                         value={itemsPerPage}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1439,7 +1442,7 @@ export const Content = () => {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs text-slate-400 font-medium">Pagina</span>
-                      <span className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-sm min-w-[2.5rem] text-center">
+                      <span className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-2xl px-2.5 py-1 shadow-sm min-w-[2.5rem] text-center">
                         {currentPage}
                       </span>
                       <span className="text-xs text-slate-400 font-medium">din {totalPages}</span>
@@ -1452,7 +1455,7 @@ export const Content = () => {
                       size="sm"
                       disabled={currentPage === 1}
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      className="h-8 px-3 text-xs font-semibold rounded-lg border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-40"
+                      className="h-8 px-3 text-xs font-semibold rounded-full border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-40"
                     >
                       ← Anterior
                     </Button>
@@ -1461,7 +1464,7 @@ export const Content = () => {
                       size="sm"
                       disabled={currentPage === totalPages}
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      className="h-8 px-3 text-xs font-semibold rounded-lg border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-40"
+                      className="h-8 px-3 text-xs font-semibold rounded-full border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-40"
                     >
                       Următor →
                     </Button>
@@ -1515,7 +1518,7 @@ export const Content = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 p-4 bg-white/40 rounded-xl">
+                <div className="grid grid-cols-2 gap-4 p-4 bg-white/40 rounded-2xl">
                   <div>
                     <p className="text-xs text-slate-500 mb-1">Tip</p>
                     <p className="text-sm font-medium text-slate-800 capitalize">{previewItem.type}</p>
@@ -1534,7 +1537,6 @@ export const Content = () => {
                     <p className="text-xs text-slate-500 mb-1">URL fișier</p>
                     <a
                       href={getFileUrl(previewItem.file_url)}
-                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-red-600 hover:text-red-700 truncate block"
                     >
@@ -1566,14 +1568,14 @@ export const Content = () => {
 
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">Branduri (Clienți)</Label>
-                <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl max-h-48 overflow-y-auto">
+                <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl max-h-48 overflow-y-auto">
                   {brands.length === 0 ? (
                     <p className="text-xs text-slate-400 italic">Niciun brand creat încă.</p>
                   ) : (
                     brands.map(brand => (
                       <label
                         key={brand.id}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-all ${editBrands.includes(brand.name)
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border cursor-pointer transition-all ${editBrands.includes(brand.name)
                           ? 'bg-red-50 border-red-200 text-red-700 shadow-sm'
                           : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                           }`}
@@ -1643,7 +1645,7 @@ export const Content = () => {
                 </div>
               ) : (
                 (usageInfo.screens.length > 0 || usageInfo.playlists.length > 0) && (
-                  <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 space-y-3">
+                  <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 space-y-3">
                     <div className="flex items-start gap-2 text-rose-800 font-medium text-sm">
                       <span className="mt-0.5">⚠️</span>
                       Acest fișier este folosit în următoarele locuri:

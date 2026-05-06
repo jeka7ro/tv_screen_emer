@@ -136,12 +136,12 @@ export const EventsCalendar = ({
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
                                 {calendarView === 'week' ? 'Program Săptămânal' : calendarView === 'month' ? 'Prezentare Lunară' : 'Program Zilnic'}
                             </span>
-                            <div className="flex bg-slate-100 rounded-xl p-1 shadow-inner">
+                            <div className="flex bg-slate-100 rounded-2xl p-1 shadow-inner">
                                 {['week', 'month', 'day'].map(view => (
                                     <button
                                         key={view}
                                         onClick={() => setCalendarView(view)}
-                                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all ${calendarView === view ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-2xl transition-all ${calendarView === view ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                                     >
                                         {view === 'week' ? 'Săpt' : view === 'month' ? 'Lună' : 'Zi'}
                                     </button>
@@ -160,7 +160,7 @@ export const EventsCalendar = ({
                             prev.setDate(prev.getDate() - 1);
                             return prev;
                         })}
-                        className="p-2 hover:bg-white rounded-xl transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                        className="p-2 hover:bg-white rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                     >
                         <ChevronLeft className="w-5 h-5" />
                     </button>
@@ -178,7 +178,7 @@ export const EventsCalendar = ({
                             next.setDate(next.getDate() + 1);
                             return next;
                         })}
-                        className="p-2 hover:bg-white rounded-xl transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                        className="p-2 hover:bg-white rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                     >
                         <ChevronRight className="w-5 h-5" />
                     </button>
@@ -196,7 +196,7 @@ export const EventsCalendar = ({
 
                         return (
                             <div key={idx} className={`bg-white min-h-[160px] p-2 flex flex-col gap-2 transition-colors ${isDayToday ? 'bg-red-50/20' : ''}`} onClick={() => { setCurrentDate(day); setCalendarView('day'); }}>
-                                <div className={`text-center mb-1 p-2 rounded-xl border ${isDayToday ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'}`}>
+                                <div className={`text-center mb-1 p-2 rounded-2xl border ${isDayToday ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'}`}>
                                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{format(day, 'EEE', { locale: ro })}</div>
                                     <div className={`text-lg font-black ${isDayToday ? 'text-red-600' : 'text-slate-800'}`}>{format(day, 'd')}</div>
                                 </div>
@@ -204,7 +204,7 @@ export const EventsCalendar = ({
                                 <div className="space-y-1.5 flex-1 overflow-y-auto max-h-[220px] scrollbar-hide pr-1">
                                     {dayEvents.map(event => (
                                         <div key={event.id}
-                                            className="rounded-xl p-2 transition-all cursor-pointer group border shadow-sm hover:shadow-md"
+                                            className="rounded-2xl p-2 transition-all cursor-pointer group border shadow-sm hover:shadow-md"
                                             style={{
                                                 backgroundColor: `${event.color}10`,
                                                 borderColor: `${event.color}30`,
@@ -251,7 +251,7 @@ export const EventsCalendar = ({
                                 onClick={() => { setCurrentDate(day); setCalendarView('day'); }}
                             >
                                 <div className="flex justify-between items-start mb-1">
-                                    <span className={`text-xs font-black rounded-lg w-7 h-7 flex items-center justify-center transition-all ${isDayToday ? 'bg-red-600 text-white shadow-lg shadow-red-200 border border-red-500' : 'text-slate-700 bg-slate-50 border border-slate-100'}`}>
+                                    <span className={`text-xs font-black rounded-2xl w-7 h-7 flex items-center justify-center transition-all ${isDayToday ? 'bg-red-600 text-white shadow-lg shadow-red-200 border border-red-500' : 'text-slate-700 bg-slate-50 border border-slate-100'}`}>
                                         {format(day, 'd')}
                                     </span>
                                     {dayEvents.length > 0 && (
@@ -322,7 +322,7 @@ export const EventsCalendar = ({
                                 <div
                                     key={event.id}
                                     onClick={() => onEventClick(event)}
-                                    className="bg-white border rounded-xl shadow-sm hover:shadow-xl hover:scale-[1.02] hover:z-10 transition-all cursor-pointer overflow-hidden group flex items-center px-3 gap-3 h-10 border-l-4"
+                                    className="bg-white border rounded-2xl shadow-sm hover:shadow-xl hover:scale-[1.02] hover:z-10 transition-all cursor-pointer overflow-hidden group flex items-center px-3 gap-3 h-10 border-l-4"
                                     style={{
                                         marginLeft: `${leftPercent}%`,
                                         width: `${widthPercent}%`,
@@ -332,7 +332,7 @@ export const EventsCalendar = ({
                                     }}
                                     title={`${event.startTime} - ${event.endTime}: ${event.name}`}
                                 >
-                                    <div className={`p-1 rounded-lg`} style={{ backgroundColor: `${event.color}15` }}>
+                                    <div className={`p-1 rounded-2xl`} style={{ backgroundColor: `${event.color}15` }}>
                                         <PlaySquare className="w-4 h-4" style={{ color: event.color }} />
                                     </div>
                                     <div className="flex flex-col min-w-0">

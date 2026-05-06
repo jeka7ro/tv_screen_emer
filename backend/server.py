@@ -385,6 +385,7 @@ class Location(BaseModel):
     status: str = "active"  # active, inactive
     timezone: str = "Europe/Bucharest"
     security_code: Optional[str] = None
+    iiko_organization_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class LocationCreate(BaseModel):
@@ -394,6 +395,7 @@ class LocationCreate(BaseModel):
     status: Optional[str] = "active"
     timezone: Optional[str] = "Europe/Bucharest"
     security_code: Optional[str] = None
+    iiko_organization_id: Optional[str] = None
 
 class Brand(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -603,6 +605,8 @@ class Product(BaseModel):
     available: bool = True
     featured: bool = False
     order_index: int = 0
+    location_id: str
+    iiko_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ProductCreate(BaseModel):
@@ -615,6 +619,8 @@ class ProductCreate(BaseModel):
     available: Optional[bool] = True
     featured: Optional[bool] = False
     order_index: Optional[int] = 0
+    location_id: str
+    iiko_id: Optional[str] = None
 
 class MenuTemplate(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -1027,6 +1033,51 @@ async def create_location(location_data: LocationCreate, current_user: User = De
     await location_insert(location.model_dump())
     await log_activity(current_user.id, current_user.full_name, "create", "location", location.id, "INFO", {"name": location.name})
     return location
+
+@api_router.post("/locations/sync-iiko")
+async def sync_locations_with_iiko(current_user: User = Depends(require_admin)):
+    import httpx
+    
+    async def fetch_orgs(api_key):
+        async with httpx.AsyncClient() as client:
+            token_resp = await client.post("https://api-eu.syrve.live/api/1/access_token", json={"apiLogin": api_key})
+            if token_resp.status_code != 200: return []
+            token = token_resp.json().get("token")
+            orgs_resp = await client.post(
+                "https://api-eu.syrve.live/api/1/organizations",
+                headers={"Authorization": f"Bearer {token}"},
+                json={"returnAdditionalInfo": True}
+            )
+            return orgs_resp.json().get("organizations", []) if orgs_resp.status_code == 200 else []
+
+    orgs1 = await fetch_orgs("a1fe30cdeb934aa0af01b6a35244b7f0") # Sushi / Asian
+    orgs2 = await fetch_orgs("124d0880f4b44717b69ee21d45fc2656") # Smash
+    
+    all_orgs = orgs1 + orgs2
+    existing_locations = await locations_list()
+    existing_org_ids = {loc.get("iiko_organization_id") for loc in existing_locations if loc.get("iiko_organization_id")}
+    
+    added = 0
+    for org in all_orgs:
+        org_id = org.get("id")
+        if org_id not in existing_org_ids:
+            import uuid
+            new_loc = {
+                "id": str(uuid.uuid4()),
+                "name": org.get("name"),
+                "address": org.get("restaurantAddress", ""),
+                "city": "Unknown",
+                "status": "active",
+                "security_code": "",
+                "iiko_organization_id": org_id,
+                "timezone": "Europe/Bucharest",
+                "created_at": datetime.now(timezone.utc)
+            }
+            await location_insert(new_loc)
+            existing_org_ids.add(org_id)
+            added += 1
+            
+    return {"message": f"{added} locații noi adăugate!", "added": added}
 
 @api_router.get("/locations/{location_id}", response_model=Location)
 async def get_location(location_id: str, current_user: User = Depends(get_current_user)):
@@ -1783,11 +1834,16 @@ async def delete_playlist(playlist_id: str, current_user: User = Depends(require
     
     return {"message": "Playlist deleted"}
 
+
+
 # ============ PRODUCTS ROUTES ============
 
 @api_router.get("/products", response_model=List[Product])
-async def get_products(current_user: User = Depends(get_current_user)):
-    return await products_list()
+async def get_products(location_id: Optional[str] = None, current_user: User = Depends(get_current_user)):
+    all_products = await products_list()
+    if location_id:
+        return [p for p in all_products if p.get("location_id") == location_id]
+    return all_products
 
 @api_router.post("/products", response_model=Product)
 async def create_product(product_data: ProductCreate, current_user: User = Depends(require_admin)):
@@ -1821,6 +1877,31 @@ async def import_products_batch(
         await product_upsert_by_name(p.model_dump())
         imported.append(p)
     return imported
+
+@api_router.post("/products/sync-iiko/{location_id}")
+async def sync_products_with_iiko(location_id: str, current_user: User = Depends(require_admin)):
+    from iiko_sync import sync_iiko_for_location
+    
+    loc = await location_get(location_id)
+    if not loc:
+        raise HTTPException(status_code=404, detail="Location not found")
+        
+    org_id = loc.get("iiko_organization_id")
+    if not org_id:
+        raise HTTPException(status_code=400, detail="Location missing IIKO Organization ID")
+        
+    try:
+        count = await sync_iiko_for_location(
+            location_id=location_id,
+            location_name=loc.get("name", ""),
+            org_id=org_id, 
+            db_products_list_func=products_list,
+            db_product_insert_func=product_insert,
+            db_product_update_func=product_update
+        )
+        return {"message": "Sincronizare cu succes", "synced_count": count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.delete("/products/{product_id}")
 async def delete_product(product_id: str, current_user: User = Depends(require_admin)):

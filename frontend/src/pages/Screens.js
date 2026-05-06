@@ -14,6 +14,7 @@ import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
 import { BrandSelector } from '../components/BrandSelector';
 import { ScreenSimulation } from '../components/ScreenSimulation';
+import { useConfirm } from '../hooks/useConfirm';
 
 // Lightweight thumbnail component — renders a pre-fetched image or video, no API calls
 const ScreenThumbnail = ({ screen, thumbData, thumbLoading }) => {
@@ -59,6 +60,7 @@ const ScreenThumbnail = ({ screen, thumbData, thumbLoading }) => {
 };
 
 export const Screens = () => {
+    const { confirm, ConfirmDialog } = useConfirm();
   const { isAdmin } = useAuth();
   const [screens, setScreens] = useState([]);
   const [locations, setLocations] = useState([]);
@@ -168,7 +170,7 @@ export const Screens = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Sigur dorești să ștergi acest ecran?')) return;
+    if (!(await confirm({ message: 'Sigur dorești să ștergi acest ecran?', isDanger: true }))) return;
     try {
       await api.delete(`/screens/${id}`);
       toast.success('Ecran șters!');
@@ -324,7 +326,8 @@ export const Screens = () => {
         <div className="flex items-center justify-center h-96">
           <div className="spinner"></div>
         </div>
-      </DashboardLayout>
+          <ConfirmDialog />
+        </DashboardLayout>
     );
   }
 
@@ -346,7 +349,7 @@ export const Screens = () => {
                 if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
-                  <Button className="btn-red px-6 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[44px]">
+                  <Button className="btn-red px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[44px]">
                     <Plus className="w-5 h-5 mr-2" />
                     Adaugă ecran
                   </Button>
@@ -521,7 +524,7 @@ export const Screens = () => {
               {brandFilter !== 'all' && (
                 <button
                   onClick={() => setBrandFilter('all')}
-                  className="px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors uppercase tracking-wider"
+                  className="px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors uppercase tracking-wider"
                 >
                   ✕
                 </button>
@@ -531,7 +534,7 @@ export const Screens = () => {
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-2">Oraș:</span>
               <Select value={cityFilter} onValueChange={(val) => { setCityFilter(val); setLocationFilter('all'); }}>
-                <SelectTrigger className="w-[160px] h-9 text-sm bg-slate-50 border-slate-100 rounded-xl">
+                <SelectTrigger className="w-[160px] h-9 text-sm bg-slate-50 border-slate-100 rounded-full">
                   <SelectValue placeholder="Toate orașele" />
                 </SelectTrigger>
                 <SelectContent>
@@ -546,7 +549,7 @@ export const Screens = () => {
             <div className="flex items-center gap-2 border-l border-slate-100 pl-4">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Locație:</span>
               <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-[180px] h-9 text-sm bg-slate-50 border-slate-100 rounded-xl">
+                <SelectTrigger className="w-[180px] h-9 text-sm bg-slate-50 border-slate-100 rounded-full">
                   <SelectValue placeholder="Toate locațiile" />
                 </SelectTrigger>
                 <SelectContent>
@@ -564,7 +567,7 @@ export const Screens = () => {
                 Rotație:
               </span>
               <Select value={rotationFilter} onValueChange={setRotationFilter}>
-                <SelectTrigger className="w-[130px] h-9 text-sm bg-slate-50 border-slate-100 rounded-xl">
+                <SelectTrigger className="w-[130px] h-9 text-sm bg-slate-50 border-slate-100 rounded-full">
                   <SelectValue placeholder="Toate" />
                 </SelectTrigger>
                 <SelectContent>
@@ -579,27 +582,27 @@ export const Screens = () => {
 
             <div className="flex-1"></div>
 
-            <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200">
+            <div className="bg-slate-100 p-1 rounded-2xl flex border border-slate-200">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 <ListIcon className="w-4 h-4" />
               </button>
             </div>
             {viewMode === 'grid' && (
-              <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200 gap-0.5">
+              <div className="bg-slate-100 p-1 rounded-2xl flex border border-slate-200 gap-0.5">
                 {[['sm', 'S'], ['md', 'M'], ['lg', 'L']].map(([size, label]) => (
                   <button
                     key={size}
                     onClick={() => { setGridSize(size); localStorage.setItem('screens_grid_size', size); }}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${gridSize === size ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`px-2 py-1 rounded-2xl text-[10px] font-bold transition-all ${gridSize === size ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                   >
                     {label}
                   </button>
@@ -655,7 +658,7 @@ export const Screens = () => {
                           />
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`} style={screen.status === 'online' ? { boxShadow: '0 0 8px 2px rgba(16, 185, 129, 0.4)' } : { boxShadow: '0 0 8px 2px rgba(239, 68, 68, 0.4)' }}>
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-2xl text-[10px] font-bold uppercase tracking-wider ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`} style={screen.status === 'online' ? { boxShadow: '0 0 8px 2px rgba(16, 185, 129, 0.4)' } : { boxShadow: '0 0 8px 2px rgba(239, 68, 68, 0.4)' }}>
                             <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
                             {screen.status === 'online' ? 'ONLINE' : 'OFFLINE'}
                           </span>
@@ -703,14 +706,14 @@ export const Screens = () => {
                                 }
                                 setShowSimulation(true);
                               }}
-                              className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-blue-600 shadow-sm hover:shadow"
+                              className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-blue-600 shadow-sm hover:shadow"
                               title="Simulare"
                             >
                               <Monitor className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleShowLink(screen)}
-                              className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                              className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                               title="Link TV"
                             >
                               <LinkIcon className="w-4 h-4" />
@@ -719,21 +722,21 @@ export const Screens = () => {
                               <>
                                 <Link
                                   to={`/screens/${screen.id}/design`}
-                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                                   title="Design / Conținut"
                                 >
                                   <Settings className="w-4 h-4" />
                                 </Link>
                                 <button
                                   onClick={() => handleEdit(screen)}
-                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                                   title="Editează"
                                 >
                                   <Edit className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleDelete(screen.id)}
-                                  className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all text-slate-400 hover:text-rose-600"
+                                  className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-full transition-all text-slate-400 hover:text-rose-600"
                                   title="Șterge"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -755,7 +758,7 @@ export const Screens = () => {
               <div key={locationId}>
                 {/* Location Header */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+                  <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm">
                     <MapPin className="w-4 h-4 text-red-500" />
                     <span className="text-sm font-bold text-slate-700">{getLocationName(locationId)}</span>
                     <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">{locationScreens.length}</span>
@@ -764,7 +767,7 @@ export const Screens = () => {
                 </div>
                 <div className={`grid gap-4 ${gridSize === 'sm' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : gridSize === 'md' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
                   {locationScreens.map((screen) => (
-                    <div key={screen.id} className={`glass-card p-3 flex flex-col h-full transition-all rounded-xl ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`} style={{ border: screen.status === 'online' ? '2px solid #10b981' : '2px solid #ef4444', boxShadow: screen.status === 'online' ? '0 0 8px 2px rgba(16, 185, 129, 0.25)' : '0 0 8px 2px rgba(239, 68, 68, 0.25)' }}>
+                    <div key={screen.id} className={`glass-card p-3 flex flex-col h-full transition-all rounded-full ${selectedScreens.includes(screen.id) ? 'ring-2 ring-blue-500 bg-blue-50/30' : ''}`} data-testid={`screen-card-${screen.id}`} style={{ border: screen.status === 'online' ? '2px solid #10b981' : '2px solid #ef4444', boxShadow: screen.status === 'online' ? '0 0 8px 2px rgba(16, 185, 129, 0.25)' : '0 0 8px 2px rgba(239, 68, 68, 0.25)' }}>
                       {/* Header: checkbox + brand + name + actions */}
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2 min-w-0">
@@ -782,10 +785,10 @@ export const Screens = () => {
                         <div className="flex gap-1 shrink-0">
                           {isAdmin() && (
                             <>
-                              <Link to={`/screens/${screen.id}/design`} className="p-1.5 hover:bg-white/80 rounded-lg text-slate-400 hover:text-red-600" title="Configurează">
+                              <Link to={`/screens/${screen.id}/design`} className="p-1.5 hover:bg-white/80 rounded-full text-slate-400 hover:text-red-600" title="Configurează">
                                 <Settings className="w-3.5 h-3.5" />
                               </Link>
-                              <button onClick={() => handleEdit(screen)} className="p-1.5 hover:bg-white/80 rounded-lg text-slate-400 hover:text-red-600" title="Editează">
+                              <button onClick={() => handleEdit(screen)} className="p-1.5 hover:bg-white/80 rounded-full text-slate-400 hover:text-red-600" title="Editează">
                                 <Edit className="w-3.5 h-3.5" />
                               </button>
                             </>
@@ -823,14 +826,14 @@ export const Screens = () => {
                             if (selectedScreens.length === 0) setSelectedScreens([screen.id]);
                             setShowSimulation(true);
                           }}
-                          className="p-2 hover:bg-blue-50 rounded-lg text-blue-500 border border-blue-200"
+                          className="p-2 hover:bg-blue-50 rounded-full text-blue-500 border border-blue-200"
                           title="Simulare"
                         >
                           <Monitor className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleShowLink(screen)}
-                          className="flex-1 flex items-center justify-center gap-1.5 text-xs bg-red-600 text-white hover:bg-red-700 px-3 py-2 rounded-lg font-bold shadow-sm"
+                          className="flex-1 flex items-center justify-center gap-1.5 text-xs bg-red-600 text-white hover:bg-red-700 px-3 py-2 rounded-full font-bold shadow-sm"
                         >
                           <LinkIcon className="w-3.5 h-3.5" />
                           Link TV
@@ -838,7 +841,7 @@ export const Screens = () => {
                         {isAdmin() && (
                           <button
                             onClick={() => handleDelete(screen.id)}
-                            className="p-2 hover:bg-rose-50 rounded-lg text-slate-300 hover:text-rose-600"
+                            className="p-2 hover:bg-rose-50 rounded-full text-slate-300 hover:text-rose-600"
                             title="Șterge"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -872,14 +875,14 @@ export const Screens = () => {
                     value={shortUrl}
                     readOnly
                     onClick={(e) => e.target.select()}
-                    className="text-2xl font-bold text-center bg-white border-2 border-red-200 rounded-xl py-4 cursor-pointer"
+                    className="text-2xl font-bold text-center bg-white border-2 border-red-200 rounded-2xl py-4 cursor-pointer"
                     data-testid="short-url-input"
                   />
                 </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={() => copyToClipboard(shortUrl)}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl py-3"
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-full py-3"
                     data-testid="copy-short-url-button"
                   >
                     <LinkIcon className="w-5 h-5 mr-2" />
@@ -887,7 +890,6 @@ export const Screens = () => {
                   </Button>
                   <a
                     href={shortUrl}
-                    target="_blank"
                     rel="noopener noreferrer"
                     className="btn-secondary px-6"
                   >
@@ -901,7 +903,7 @@ export const Screens = () => {
 
               <div className="bg-white/40 rounded-2xl p-6 text-center">
                 <Label className="text-base font-semibold mb-4 block">📱 QR Code</Label>
-                <div className="bg-white p-4 rounded-xl inline-block">
+                <div className="bg-white p-4 rounded-2xl inline-block">
                   <img
                     src={generateQRCode(shortUrl || selectedScreenForLink.slug)}
                     alt="QR Code"
@@ -938,7 +940,6 @@ export const Screens = () => {
               <div className="flex gap-3">
                 <a
                   href={getScreenUrl(selectedScreenForLink.slug)}
-                  target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 btn-primary text-center"
                 >

@@ -10,8 +10,10 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
+import { useConfirm } from '../hooks/useConfirm';
 
 export const DigitalMenus = () => {
+    const { confirm, ConfirmDialog } = useConfirm();
   const [menus, setMenus] = useState([]);
   const [products, setProducts] = useState([]);
   const [content, setContent] = useState([]);
@@ -89,7 +91,7 @@ export const DigitalMenus = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Sigur dorești să ștergi acest meniu?')) return;
+    if (!(await confirm({ message: 'Sigur dorești să ștergi acest meniu?', isDanger: true }))) return;
     try {
       await api.delete(`/digital-menus/${id}`);
       toast.success('Meniu șters!');
@@ -126,7 +128,8 @@ export const DigitalMenus = () => {
         <div className="flex items-center justify-center h-96">
           <div className="spinner"></div>
         </div>
-      </DashboardLayout>
+          <ConfirmDialog />
+        </DashboardLayout>
     );
   }
 
@@ -231,11 +234,11 @@ export const DigitalMenus = () => {
                   </div>
                   <div>
                     <Label>Selectează produse ({selectedProducts.length} selectate)</Label>
-                    <div className="mt-2 max-h-64 overflow-y-auto space-y-2 border border-white/60 rounded-xl p-4 bg-white/20">
+                    <div className="mt-2 max-h-64 overflow-y-auto space-y-2 border border-white/60 rounded-2xl p-4 bg-white/20">
                       {products.map(product => (
                         <label
                           key={product.id}
-                          className="flex items-center gap-3 p-3 bg-white/40 rounded-lg hover:bg-white/60 cursor-pointer transition-colors"
+                          className="flex items-center gap-3 p-3 bg-white/40 rounded-full hover:bg-white/60 cursor-pointer transition-colors"
                         >
                           <input
                             type="checkbox"
@@ -299,7 +302,7 @@ export const DigitalMenus = () => {
                     <tr key={menu.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4 font-medium text-slate-800">
                         <div className="flex items-center gap-3">
-                          <div className="bg-purple-100 p-2 rounded-lg">
+                          <div className="bg-purple-100 p-2 rounded-2xl">
                             <Menu className="w-4 h-4 text-purple-600" />
                           </div>
                           {menu.name}
@@ -336,13 +339,13 @@ export const DigitalMenus = () => {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleEdit(menu)}
-                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(menu.id)}
-                            className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all text-slate-500 hover:text-rose-600"
+                            className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-full transition-all text-slate-500 hover:text-rose-600"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -365,14 +368,14 @@ export const DigitalMenus = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(menu)}
-                      className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+                      className="p-2 hover:bg-white/50 rounded-full transition-colors"
                       data-testid={`edit-menu-${menu.id}`}
                     >
                       <Edit className="w-4 h-4 text-slate-600" />
                     </button>
                     <button
                       onClick={() => handleDelete(menu.id)}
-                      className="p-2 hover:bg-rose-100/50 rounded-lg transition-colors"
+                      className="p-2 hover:bg-rose-100/50 rounded-full transition-colors"
                       data-testid={`delete-menu-${menu.id}`}
                     >
                       <Trash2 className="w-4 h-4 text-rose-600" />

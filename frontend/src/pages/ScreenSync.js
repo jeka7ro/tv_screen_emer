@@ -493,7 +493,7 @@ export const ScreenSync = () => {
                     if (locationScreens.length === 0) return null;
 
                     return (
-                      <div key={location.id} className="bg-slate-50/50 rounded-xl p-4 border border-slate-100">
+                      <div key={location.id} className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100">
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
                             {location.name}
@@ -521,7 +521,7 @@ export const ScreenSync = () => {
                               <div
                                 key={screen.id}
                                 onClick={() => toggleScreen(screen.id)}
-                                className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${isSelected
+                                className={`flex items-center justify-between p-3 rounded-full border cursor-pointer transition-all ${isSelected
                                   ? 'border-indigo-500 bg-indigo-50/50 shadow-sm ring-1 ring-indigo-500/20'
                                   : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
                                   }`}
@@ -601,7 +601,7 @@ export const ScreenSync = () => {
 
               <div className="space-y-4">
                 {syncType === 'matrix' && (
-                  <div className="grid grid-cols-2 gap-4 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100">
                     <div>
                       <Label className="text-xs uppercase text-indigo-900 font-bold mb-1 block">Coloane</Label>
                       <input
@@ -630,7 +630,7 @@ export const ScreenSync = () => {
                   </div>
                 )}
 
-                <div className="bg-slate-900 rounded-xl p-4 flex items-center justify-center">
+                <div className="bg-slate-900 rounded-2xl p-4 flex items-center justify-center">
                   <div className="w-full max-w-[400px]">
                     {syncType === 'matrix' ? (
                       (() => {
@@ -713,7 +713,7 @@ export const ScreenSync = () => {
             {/* SECTION 5: Content Selection */}
             <div className="pt-2">
               <Label className="text-base font-semibold text-slate-800 mb-2 block border-b pb-2">5. Selectează Conținutul</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 border border-slate-200 rounded-xl p-3 bg-slate-50/30">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 border border-slate-200 rounded-2xl p-3 bg-slate-50/30">
                 {contents.map(content => {
                   const isSelected = selectedContentId === content.id;
                   const imageUrl = content.thumbnail_url || content.file_url;
@@ -723,7 +723,7 @@ export const ScreenSync = () => {
                     <div
                       key={content.id}
                       onClick={() => setSelectedContentId(content.id === selectedContentId ? '' : content.id)}
-                      className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500' : 'border-slate-200 bg-white'}`}
+                      className={`flex items-center gap-3 p-2 rounded-full border cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500' : 'border-slate-200 bg-white'}`}
                     >
                       <div className="w-14 h-9 flex-shrink-0 bg-slate-900 rounded overflow-hidden relative shadow-inner">
                         {content.type === 'video' && (
@@ -828,7 +828,7 @@ export const ScreenSync = () => {
                   <Label className="text-[10px] uppercase text-slate-400 font-bold block mb-1">Configurare Extra & Info</Label>
 
                   {editSyncType === 'matrix' && (
-                    <div className="grid grid-cols-2 gap-3 p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
+                    <div className="grid grid-cols-2 gap-3 p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
                       <div className="space-y-1.5">
                         <Label className="text-[10px] uppercase text-indigo-600 font-bold block">Coloane</Label>
                         <Input
@@ -852,7 +852,7 @@ export const ScreenSync = () => {
                     </div>
                   )}
 
-                  <div className="p-3 bg-white rounded-xl border border-slate-200 shadow-sm">
+                  <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span className="text-slate-500 uppercase font-bold text-[10px]">Ecrane selectate:</span>
                       <span className={`font-bold ${editSelectedScreens.length === (editSyncType === 'matrix' ? editGridCols * editGridRows : editSelectedScreens.length) ? 'text-emerald-600' : 'text-amber-500'}`}>
@@ -936,7 +936,7 @@ export const ScreenSync = () => {
                   </Button>
                 </div>
 
-                <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 border border-slate-200 rounded-xl p-3 bg-slate-50/30">
+                <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 border border-slate-200 rounded-2xl p-3 bg-slate-50/30">
                   {locations.map(location => {
                     const locScreens = screens.filter(s => s.location_id === location.id);
                     if (locScreens.length === 0) return null;
@@ -965,7 +965,7 @@ export const ScreenSync = () => {
                               <div
                                 key={screen.id}
                                 onClick={() => toggleEditScreen(screen.id)}
-                                className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all select-none ${isSelected ? 'bg-indigo-50 border-indigo-400 shadow-sm ring-1 ring-indigo-400/20' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                                className={`flex items-center justify-between p-2 rounded-full border cursor-pointer transition-all select-none ${isSelected ? 'bg-indigo-50 border-indigo-400 shadow-sm ring-1 ring-indigo-400/20' : 'bg-white border-slate-200 hover:border-slate-300'}`}
                               >
                                 <div className="flex items-center gap-2">
                                   <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] transition-colors ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
@@ -1009,7 +1009,7 @@ export const ScreenSync = () => {
               {/* 5. Content Selection */}
               <div className="pt-2">
                 <Label className="text-sm font-semibold text-slate-700 mb-2 block">5. Schimbă Conținutul (Opțional)</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 border border-slate-200 rounded-xl p-3 bg-slate-50/30">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 border border-slate-200 rounded-2xl p-3 bg-slate-50/30">
                   {contents.map(content => {
                     const isSelected = editContentId === content.id;
                     const imageUrl = content.thumbnail_url || content.file_url;
@@ -1019,7 +1019,7 @@ export const ScreenSync = () => {
                       <div
                         key={content.id}
                         onClick={() => setEditContentId(content.id === editContentId ? '' : content.id)}
-                        className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 bg-white'}`}
+                        className={`flex items-center gap-3 p-2 rounded-full border cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 bg-white'}`}
                       >
                         <div className="w-14 h-9 flex-shrink-0 bg-slate-900 rounded overflow-hidden relative shadow-inner">
                           {content.type === 'video' ? (

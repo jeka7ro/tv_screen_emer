@@ -56,7 +56,7 @@ export const FolderDialog = ({
                         <Label className="text-sm font-semibold text-slate-700">Iconiță Folder (Imagine / Link)</Label>
 
                         <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 relative group">
+                            <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 relative group">
                                 {folderFormData.icon && folderFormData.icon !== 'folder' ? (
                                     <>
                                         <img src={folderFormData.icon} alt="Icon" className="w-full h-full object-cover" />

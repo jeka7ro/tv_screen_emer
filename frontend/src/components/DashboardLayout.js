@@ -193,7 +193,7 @@ export const DashboardLayout = ({ children }) => {
           )}
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors duration-200 ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-2 px-4 py-3'}`}
+            className={`w-full flex items-center rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors duration-200 ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-2 px-4 py-3'}`}
             data-testid="logout-button"
             title={isSidebarCollapsed ? "Deconectare" : ""}
           >

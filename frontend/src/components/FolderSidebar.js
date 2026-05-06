@@ -51,7 +51,7 @@ export const FolderSidebar = ({
             <div className="bg-white rounded-2xl border border-indigo-100/80 shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
                 <div className="px-4 py-3 flex items-center justify-between border-b border-indigo-100/60 shrink-0 bg-gradient-to-r from-indigo-50/80 via-purple-50/60 to-indigo-50/40">
                     <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shadow-sm">
+                        <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-sm">
                             <FolderOpen className="w-3.5 h-3.5 text-white" />
                         </div>
                         <h3 className="font-bold text-sm text-indigo-900 tracking-tight">Foldere</h3>
@@ -59,7 +59,7 @@ export const FolderSidebar = ({
                     {isAdmin && (
                         <button
                             onClick={() => openFolderDialog()}
-                            className="p-1.5 hover:bg-indigo-100/60 rounded-lg transition-all hover:scale-105 active:scale-95"
+                            className="p-1.5 hover:bg-indigo-100/60 rounded-full transition-all hover:scale-105 active:scale-95"
                             title="Folder nou"
                         >
                             <FolderPlus className="w-4 h-4 text-indigo-600" />
@@ -71,7 +71,7 @@ export const FolderSidebar = ({
                     {/* All Content */}
                     <button
                         onClick={() => setSelectedFolder(null)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all mb-1.5 ${!selectedFolder
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-full transition-all mb-1.5 ${!selectedFolder
                             ? 'bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 shadow-sm border border-indigo-100/60'
                             : 'hover:bg-slate-50 text-slate-600'
                             }`}
@@ -108,7 +108,7 @@ export const FolderSidebar = ({
                             return (
                                 <div
                                     key={folder.id}
-                                    className={`relative flex items-center px-3 py-2 rounded-xl transition-all group/f ${isSelected
+                                    className={`relative flex items-center px-3 py-2 rounded-full transition-all group/f ${isSelected
                                         ? 'bg-gradient-to-r from-indigo-50 to-purple-50 shadow-sm border border-indigo-100/60'
                                         : 'hover:bg-slate-50'
                                         }`}
@@ -142,7 +142,7 @@ export const FolderSidebar = ({
                                         <span className="flex-1 text-sm font-medium text-slate-700 break-words leading-tight">{folder.name}</span>
                                     </button>
 
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-inherit rounded-lg">
+                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-inherit rounded-2xl">
                                         {isAdmin && (
                                             <div className="flex gap-0.5 opacity-0 group-hover/f:opacity-100 transition-all bg-inherit px-0.5">
                                                 <button
@@ -176,7 +176,7 @@ export const FolderSidebar = ({
                             );
                         })}
                         {folders.length === 0 && (
-                            <p className="text-[10px] text-slate-400 text-center py-4 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                            <p className="text-[10px] text-slate-400 text-center py-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
                                 Niciun folder
                             </p>
                         )}
@@ -188,7 +188,7 @@ export const FolderSidebar = ({
             <div className="bg-white rounded-2xl border border-emerald-100/80 shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
                 <div className="px-4 py-3 flex items-center justify-between border-b border-emerald-100/60 shrink-0 bg-gradient-to-r from-emerald-50/80 via-teal-50/60 to-emerald-50/40">
                     <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-sm">
+                        <div className="w-7 h-7 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-sm">
                             <Monitor className="w-3.5 h-3.5 text-white" />
                         </div>
                         <h3 className="font-bold text-sm text-emerald-900 tracking-tight">Ecrane</h3>
@@ -196,7 +196,7 @@ export const FolderSidebar = ({
                     <div className="flex items-center gap-2">
                         <button
                             onClick={onRefresh}
-                            className="p-1.5 hover:bg-emerald-100/60 rounded-lg transition-all text-emerald-500 hover:text-emerald-700 group/refresh hover:scale-105 active:scale-95"
+                            className="p-1.5 hover:bg-emerald-100/60 rounded-full transition-all text-emerald-500 hover:text-emerald-700 group/refresh hover:scale-105 active:scale-95"
                             title="Refresh"
                         >
                             <RefreshCw className="w-3.5 h-3.5 group-hover/refresh:rotate-180 transition-transform duration-500" />
@@ -205,7 +205,7 @@ export const FolderSidebar = ({
                             <select
                                 value={selectedLocation}
                                 onChange={(e) => setSelectedLocation(e.target.value)}
-                                className="text-[10px] border border-emerald-200/80 rounded-lg px-2 py-1 bg-white/80 text-slate-600 focus:outline-none focus:border-emerald-300 focus:ring-1 focus:ring-emerald-100 cursor-pointer max-w-[80px] transition-all"
+                                className="text-[10px] border border-emerald-200/80 rounded-2xl px-2 py-1 bg-white/80 text-slate-600 focus:outline-none focus:border-emerald-300 focus:ring-1 focus:ring-emerald-100 cursor-pointer max-w-[80px] transition-all"
                             >
                                 <option value="all">Toate</option>
                                 {locations.map(city => (
@@ -223,7 +223,7 @@ export const FolderSidebar = ({
                     {filteredScreens.map(screen => (
                         <div
                             key={screen.id}
-                            className={`rounded-xl p-2.5 transition-all cursor-default group/s flex flex-col border ${screen.status === 'online'
+                            className={`rounded-2xl p-2.5 transition-all cursor-default group/s flex flex-col border ${screen.status === 'online'
                                 ? 'bg-gradient-to-br from-white to-emerald-50/30 border-emerald-100/60 hover:border-emerald-300 hover:shadow-sm'
                                 : 'bg-white border-slate-100 hover:border-slate-200'
                                 }`}
@@ -245,7 +245,7 @@ export const FolderSidebar = ({
                             }}
                         >
                             <div className="flex items-start gap-2 flex-1">
-                                <div className={`p-1.5 rounded-lg shrink-0 ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                                <div className={`p-1.5 rounded-2xl shrink-0 ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
                                     <Monitor className="w-3.5 h-3.5" />
                                 </div>
                                 <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
@@ -268,7 +268,7 @@ export const FolderSidebar = ({
                         </div>
                     ))}
                     {filteredScreens.length === 0 && (
-                        <p className="text-[10px] text-slate-400 text-center py-4 bg-slate-50/50 rounded-xl border border-dashed border-slate-200 col-span-2">
+                        <p className="text-[10px] text-slate-400 text-center py-4 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 col-span-2">
                             Niciun ecran găsit
                         </p>
                     )}

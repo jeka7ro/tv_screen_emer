@@ -188,8 +188,11 @@
         var allSlides = [];
 
         function renderScreen(data) {
+            if (slideTimer) clearTimeout(slideTimer);
             var wrapper = document.getElementById('rotation-wrapper');
             var container = document.getElementById('slides');
+            container.innerHTML = '';
+            currentSlide = 0;
             
             // TV Rotation Logic - Bulletproof Pixel Matrix
             var rawOrientation = data.screen && data.screen.orientation;

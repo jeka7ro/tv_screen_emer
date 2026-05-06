@@ -26,8 +26,10 @@ import { toast } from 'sonner';
 import api from '../utils/api';
 import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
+import { useConfirm } from '../hooks/useConfirm';
 
 export const Users = () => {
+    const { confirm, ConfirmDialog } = useConfirm();
   const { isSuperAdmin } = useAuth();
   const [users, setUsers] = useState([]);
   const [viewMode, setViewMode] = useViewMode('view_mode_users', 'list');
@@ -76,7 +78,7 @@ export const Users = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Ești sigur că vrei să ștergi acest utilizator? Această acțiune este ireversibilă.')) return;
+    if (!(await confirm({ message: 'Ești sigur că vrei să ștergi acest utilizator? Această acțiune este ireversibilă.', isDanger: true }))) return;
     try {
       await api.delete(`/users/${userId}`);
       toast.success('Utilizator șters cu succes');
@@ -247,7 +249,8 @@ export const Users = () => {
           <h2 className="text-2xl font-bold text-slate-800 mb-2">Acces restricționat</h2>
           <p className="text-slate-500">Doar Super Admin-ul poate vedea utilizatorii.</p>
         </div>
-      </DashboardLayout>
+          <ConfirmDialog />
+        </DashboardLayout>
     );
   }
 
@@ -268,7 +271,8 @@ export const Users = () => {
         <div className="flex items-center justify-center h-96">
           <div className="spinner"></div>
         </div>
-      </DashboardLayout>
+          <ConfirmDialog />
+        </DashboardLayout>
     );
   }
 
@@ -303,7 +307,7 @@ export const Users = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div className="glass-card p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-100 rounded-xl">
+              <div className="p-2 bg-indigo-100 rounded-2xl">
                 <UsersIcon className="w-5 h-5 text-indigo-600" />
               </div>
               <div>
@@ -314,7 +318,7 @@ export const Users = () => {
           </div>
           <div className="glass-card p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-xl">
+              <div className="p-2 bg-amber-100 rounded-2xl">
                 <Shield className="w-5 h-5 text-amber-600" />
               </div>
               <div>
@@ -431,21 +435,21 @@ export const Users = () => {
                               setSelectedUser(u);
                               setShowPasswordDialog(true);
                             }}
-                            className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-500 hover:text-indigo-600"
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500 hover:text-indigo-600"
                             title="Resetare parolă"
                           >
                             <Key className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleEditClick(u)}
-                            className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-500 hover:text-indigo-600"
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500 hover:text-indigo-600"
                             title="Editează utilizator"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleUpdateStatus(u.id, u.status)}
-                            className={`p-2 rounded-lg transition-colors ${u.status === 'active'
+                            className={`p-2 rounded-2xl transition-colors ${u.status === 'active'
                               ? 'hover:bg-amber-50 text-slate-500 hover:text-amber-600'
                               : 'hover:bg-emerald-50 text-slate-500 hover:text-emerald-600'
                               }`}
@@ -455,7 +459,7 @@ export const Users = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteUser(u.id)}
-                            className="p-2 hover:bg-red-50 rounded-lg transition-colors text-slate-500 hover:text-red-600"
+                            className="p-2 hover:bg-red-50 rounded-full transition-colors text-slate-500 hover:text-red-600"
                             title="Șterge utilizator"
                             disabled={u.is_super_admin && users.filter(usr => usr.is_super_admin).length === 1}
                           >
@@ -532,21 +536,21 @@ export const Users = () => {
                       setSelectedUser(u);
                       setShowPasswordDialog(true);
                     }}
-                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-500 hover:text-indigo-600"
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-500 hover:text-indigo-600"
                   >
                     <Key className="w-4 h-4" />
                     <span className="text-[10px] font-medium">Parolă</span>
                   </button>
                   <button
                     onClick={() => handleEditClick(u)}
-                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 rounded-xl transition-colors text-slate-500 hover:text-indigo-600"
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-500 hover:text-indigo-600"
                   >
                     <Edit className="w-4 h-4" />
                     <span className="text-[10px] font-medium">Editează</span>
                   </button>
                   <button
                     onClick={() => handleUpdateStatus(u.id, u.status)}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${u.status === 'active'
+                    className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-colors ${u.status === 'active'
                       ? 'hover:bg-amber-50 text-slate-500 hover:text-amber-600'
                       : 'hover:bg-emerald-50 text-slate-500 hover:text-emerald-600'
                       }`}
@@ -556,7 +560,7 @@ export const Users = () => {
                   </button>
                   <button
                     onClick={() => handleDeleteUser(u.id)}
-                    className="flex flex-col items-center gap-1 p-2 hover:bg-red-50 rounded-xl transition-colors text-slate-500 hover:text-red-600"
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-red-50 rounded-full transition-colors text-slate-500 hover:text-red-600"
                     disabled={u.is_super_admin && users.filter(usr => usr.is_super_admin).length === 1}
                   >
                     <Trash2 className="w-4 h-4" />

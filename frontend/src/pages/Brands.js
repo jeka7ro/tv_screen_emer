@@ -10,8 +10,10 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
+import { useConfirm } from '../hooks/useConfirm';
 
 export const Brands = () => {
+    const { confirm, ConfirmDialog } = useConfirm();
     const { isAdmin } = useAuth();
     const [brands, setBrands] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -69,7 +71,7 @@ export const Brands = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Sigur dorești să ștergi acest brand?')) return;
+        if (!(await confirm({ message: 'Sigur dorești să ștergi acest brand?', isDanger: true }))) return;
         try {
             await api.delete(`/brands/${id}`);
             toast.success('Brand șters!');
@@ -120,7 +122,8 @@ export const Brands = () => {
                 <div className="flex items-center justify-center h-96">
                     <div className="spinner"></div>
                 </div>
-            </DashboardLayout>
+                <ConfirmDialog />
+        </DashboardLayout>
         );
     }
 
@@ -142,7 +145,7 @@ export const Brands = () => {
                                 if (!open) resetForm();
                             }}>
                                 <DialogTrigger asChild>
-                                    <Button className="btn-red px-6 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]" data-testid="add-brand-button">
+                                    <Button className="btn-red px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]" data-testid="add-brand-button">
                                         <Plus className="w-4 h-4 mr-2" />
                                         Adăugă brand
                                     </Button>
@@ -178,14 +181,14 @@ export const Brands = () => {
                                                 <Label>Logo</Label>
                                                 {/* Preview */}
                                                 {formData.logo_url && (
-                                                    <div className="mb-2 flex items-center gap-3 p-2 border border-slate-200 rounded-lg bg-slate-50">
+                                                    <div className="mb-2 flex items-center gap-3 p-2 border border-slate-200 rounded-2xl bg-slate-50">
                                                         <img src={formData.logo_url} alt="Logo preview" className="w-12 h-12 object-contain rounded" />
                                                         <span className="text-xs text-slate-500 truncate flex-1">{formData.logo_url.split('/').pop()}</span>
                                                     </div>
                                                 )}
                                                 {/* Upload button */}
                                                 <div className="flex gap-2">
-                                                    <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-red-400 hover:bg-red-50/30 transition-all">
+                                                    <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-300 rounded-full cursor-pointer hover:border-red-400 hover:bg-red-50/30 transition-all">
                                                         <Upload className="w-4 h-4 text-slate-400" />
                                                         <span className="text-sm text-slate-500">{uploadingLogo ? 'Se încarcă...' : 'Încarcă logo (PNG, JPG, SVG)'}</span>
                                                         <input
@@ -255,7 +258,7 @@ export const Brands = () => {
                                         <tr key={brand.id} className="hover:bg-slate-50/50 transition-colors">
                                             <td className="px-6 py-4 font-medium text-slate-800">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-lg border border-slate-100 flex items-center justify-center bg-white overflow-hidden shadow-sm">
+                                                    <div className="w-10 h-10 rounded-2xl border border-slate-100 flex items-center justify-center bg-white overflow-hidden shadow-sm">
                                                         {brand.logo_url ? (
                                                             <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain" />
                                                         ) : (
@@ -312,14 +315,14 @@ export const Brands = () => {
                                         <div className="flex gap-1">
                                             <button
                                                 onClick={() => handleEdit(brand)}
-                                                className="p-2 bg-red-500 text-white rounded-lg shadow-sm hover:bg-red-600 transition-colors"
+                                                className="p-2 bg-red-500 text-white rounded-full shadow-sm hover:bg-red-600 transition-colors"
                                                 data-testid={`edit-brand-${brand.id}`}
                                             >
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(brand.id)}
-                                                className="p-2 bg-rose-500 text-white rounded-lg shadow-sm hover:bg-rose-600 transition-colors"
+                                                className="p-2 bg-rose-500 text-white rounded-full shadow-sm hover:bg-rose-600 transition-colors"
                                                 data-testid={`delete-brand-${brand.id}`}
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -343,6 +346,7 @@ export const Brands = () => {
                     </div>
                 )}
             </div>
+            <ConfirmDialog />
         </DashboardLayout>
     );
 };

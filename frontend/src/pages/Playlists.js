@@ -16,6 +16,7 @@ import { ro } from 'date-fns/locale';
 import { EventsCalendar } from '../components/EventsCalendar';
 import { PlaylistSimulation } from '../components/PlaylistSimulation';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '../components/ui/hover-card';
+import { useConfirm } from '../hooks/useConfirm';
 
 const MediaHoverPreview = ({ item, className }) => {
   const [open, setOpen] = useState(false);
@@ -48,7 +49,7 @@ const MediaHoverPreview = ({ item, className }) => {
             )}
           </div>
         </HoverCardTrigger>
-        <HoverCardContent side="right" sideOffset={10} className="w-64 p-2 bg-slate-900 border-slate-800 shadow-2xl z-[100] rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
+        <HoverCardContent side="right" sideOffset={10} className="w-64 p-2 bg-slate-900 border-slate-800 shadow-2xl z-[100] rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
           {item.type === 'video' ? (
             <div className="rounded-lg overflow-hidden bg-black aspect-video flex items-center justify-center">
               <video 
@@ -91,6 +92,7 @@ const MediaHoverPreview = ({ item, className }) => {
 };
 
 export const Playlists = () => {
+    const { confirm, ConfirmDialog } = useConfirm();
   const [playlists, setPlaylists] = useState([]);
   const [happyHours, setHappyHours] = useState([]);
   const [content, setContent] = useState([]);
@@ -312,7 +314,7 @@ export const Playlists = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Sigur dorești să ștergi acest playlist?')) return;
+    if (!(await confirm({ message: 'Sigur dorești să ștergi acest playlist?', isDanger: true }))) return;
     try {
       await api.delete(`/playlists/${id}`);
       toast.success('Playlist șters!');
@@ -609,7 +611,8 @@ export const Playlists = () => {
         <div className="flex items-center justify-center h-96">
           <div className="spinner"></div>
         </div>
-      </DashboardLayout>
+          <ConfirmDialog />
+        </DashboardLayout>
     );
   }
 
@@ -631,7 +634,7 @@ export const Playlists = () => {
                   if (!open) resetForm();
                 }}>
                   <DialogTrigger asChild>
-                    <Button className="btn-red px-6 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[44px]" data-testid="add-playlist-button">
+                    <Button className="btn-red px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[44px]" data-testid="add-playlist-button">
                       <Plus className="w-5 h-5 mr-2" />
                       Creează playlist
                     </Button>
@@ -687,7 +690,7 @@ export const Playlists = () => {
 
                             <div className="space-y-1.5 flex-1 max-w-[60px]">
                               <Label htmlFor="color" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Culoare</Label>
-                              <div className="relative w-10 h-10 rounded-lg border border-slate-200 shadow-sm overflow-hidden shrink-0 cursor-pointer hover:scale-105 transition-transform" style={{ backgroundColor: formData.color }}>
+                              <div className="relative w-10 h-10 rounded-2xl border border-slate-200 shadow-sm overflow-hidden shrink-0 cursor-pointer hover:scale-105 transition-transform" style={{ backgroundColor: formData.color }}>
                                 <input
                                   type="color"
                                   id="color"
@@ -701,7 +704,7 @@ export const Playlists = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <div className="flex items-center gap-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                           <label className="flex items-center gap-2">
                             <input
                               type="checkbox"
@@ -750,7 +753,7 @@ export const Playlists = () => {
                         </div>
 
                         {formData.is_scheduled && (
-                          <div className="grid grid-cols-2 gap-4 p-4 bg-red-50/50 rounded-xl border border-red-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="grid grid-cols-2 gap-4 p-4 bg-red-50/50 rounded-2xl border border-red-100 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div className="space-y-2">
                               <Label htmlFor="start_at" className="text-xs font-bold text-red-700 uppercase tracking-wider">Începe la</Label>
                               <Input
@@ -758,7 +761,7 @@ export const Playlists = () => {
                                 type="datetime-local"
                                 value={formData.start_at ? formData.start_at.substring(0, 16) : ''}
                                 onChange={(e) => setFormData({ ...formData, start_at: e.target.value })}
-                                className="bg-white border-red-200 focus:border-red-500 rounded-lg shadow-sm h-10"
+                                className="bg-white border-red-200 focus:border-red-500 rounded-2xl shadow-sm h-10"
                                 required={formData.is_scheduled}
                               />
                             </div>
@@ -769,7 +772,7 @@ export const Playlists = () => {
                                 type="datetime-local"
                                 value={formData.end_at ? formData.end_at.substring(0, 16) : ''}
                                 onChange={(e) => setFormData({ ...formData, end_at: e.target.value })}
-                                className="bg-white border-red-200 focus:border-red-500 rounded-lg shadow-sm h-10"
+                                className="bg-white border-red-200 focus:border-red-500 rounded-2xl shadow-sm h-10"
                               />
                               <p className="text-[10px] text-slate-500">Lasă gol pentru a rula până la oprire manuală</p>
                             </div>
@@ -777,7 +780,7 @@ export const Playlists = () => {
                         )}
 
                         {/* Screen selection - always visible */}
-                        <div className="space-y-2 mt-2 p-4 bg-slate-50/50 rounded-xl border border-slate-200">
+                        <div className="space-y-2 mt-2 p-4 bg-slate-50/50 rounded-2xl border border-slate-200">
                           <div className="flex items-center justify-between mb-2">
                             <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                               Selectează Ecrane {formData.screen_ids?.length > 0 && <span className="ml-1 text-red-500 font-normal">({formData.screen_ids.length} selectate)</span>}
@@ -796,7 +799,7 @@ export const Playlists = () => {
                           </div>
 
                           {/* Split layout: Locations (left) + Screens (right) */}
-                          <div className="grid grid-cols-2 gap-0 bg-white rounded-xl border border-slate-200 overflow-hidden" style={{ minHeight: '180px' }}>
+                          <div className="grid grid-cols-2 gap-0 bg-white rounded-2xl border border-slate-200 overflow-hidden" style={{ minHeight: '180px' }}>
                             {/* Left: Locations */}
                             <div className="border-r border-slate-100">
                               <div className="p-2 border-b border-slate-100 bg-slate-50">
@@ -805,7 +808,7 @@ export const Playlists = () => {
                                   placeholder="🔍 Caută locație..."
                                   value={locationSearch}
                                   onChange={(e) => setLocationSearch(e.target.value)}
-                                  className="w-full text-xs p-1.5 border border-slate-200 rounded-lg focus:ring-1 focus:ring-red-500 outline-none bg-white"
+                                  className="w-full text-xs p-1.5 border border-slate-200 rounded-2xl focus:ring-1 focus:ring-red-500 outline-none bg-white"
                                 />
                               </div>
                               <div className="max-h-40 overflow-y-auto">
@@ -904,7 +907,7 @@ export const Playlists = () => {
                                         return (
                                           <label
                                             key={screen.id}
-                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs cursor-pointer transition-all border ${isChecked
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-2xl text-xs cursor-pointer transition-all border ${isChecked
                                               ? 'bg-red-100 border-red-300 text-red-700 font-bold shadow-sm'
                                               : 'bg-white border-slate-200 text-slate-600 hover:bg-red-50 hover:border-red-200'
                                               }`}
@@ -964,7 +967,7 @@ export const Playlists = () => {
 
                                 return (
                                   <details key={folder.id} className="group/folder">
-                                    <summary className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded-lg cursor-pointer hover:bg-slate-50 transition-all mb-2">
+                                    <summary className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded-full cursor-pointer hover:bg-slate-50 transition-all mb-2">
                                       {isIconUrl ? (
                                         <div className="w-4 h-4 rounded overflow-hidden shrink-0 border border-slate-200/60 bg-white">
                                           <img src={folder.icon} alt={folder.name} className="w-full h-full object-cover" />
@@ -979,7 +982,7 @@ export const Playlists = () => {
                                       {folderItems.map(item => (
                                         <div
                                           key={item.id}
-                                          className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-lg hover:border-red-200 hover:shadow-sm transition-all group"
+                                          className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-2xl hover:border-red-200 hover:shadow-sm transition-all group"
                                         >
                                           <div className="flex items-center gap-3 flex-1 min-w-0">
                                             <MediaHoverPreview item={item} className="w-10 h-10" />
@@ -991,7 +994,7 @@ export const Playlists = () => {
                                           <Button
                                             type="button"
                                             onClick={() => addContentToPlaylist(item.id)}
-                                            className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-lg border-none shadow-none"
+                                            className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-full border-none shadow-none"
                                           >
                                             Adaugă
                                           </Button>
@@ -1008,7 +1011,7 @@ export const Playlists = () => {
                                 if (rootItems.length === 0) return null;
                                 return (
                                   <details className="group/folder">
-                                    <summary className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded-lg cursor-pointer hover:bg-slate-50 transition-all mb-2">
+                                    <summary className="flex items-center gap-2 p-2 bg-white border border-slate-100 rounded-full cursor-pointer hover:bg-slate-50 transition-all mb-2">
                                       <FolderOpen className="w-4 h-4 text-slate-400 group-open/folder:text-indigo-600" />
                                       <span className="text-sm font-bold text-slate-700 flex-1">Fără folder</span>
                                       <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{rootItems.length}</span>
@@ -1017,7 +1020,7 @@ export const Playlists = () => {
                                       {rootItems.map(item => (
                                         <div
                                           key={item.id}
-                                          className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-lg hover:border-red-200 hover:shadow-sm transition-all group"
+                                          className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-2xl hover:border-red-200 hover:shadow-sm transition-all group"
                                         >
                                           <div className="flex items-center gap-3 flex-1 min-w-0">
                                             <MediaHoverPreview item={item} className="w-10 h-10" />
@@ -1029,7 +1032,7 @@ export const Playlists = () => {
                                           <Button
                                             type="button"
                                             onClick={() => addContentToPlaylist(item.id)}
-                                            className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-lg border-none shadow-none"
+                                            className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-full border-none shadow-none"
                                           >
                                             Adaugă
                                           </Button>
@@ -1059,7 +1062,7 @@ export const Playlists = () => {
                                   return (
                                     <div
                                       key={index}
-                                      className="bg-white border border-slate-100 rounded-lg p-2 shadow-sm hover:shadow-md transition-all relative group flex items-center gap-3"
+                                      className="bg-white border border-slate-100 rounded-2xl p-2 shadow-sm hover:shadow-md transition-all relative group flex items-center gap-3"
                                     >
                                       {/* Order controls */}
                                       <div className="flex flex-col gap-0.5">
@@ -1121,13 +1124,13 @@ export const Playlists = () => {
                         </div>
 
                         <div className="flex gap-3 pt-4">
-                          <Button type="submit" className="btn-primary flex-1 h-11 rounded-xl shadow-md hover:shadow-lg transition-all" data-testid="save-playlist-button">
+                          <Button type="submit" className="btn-primary flex-1 h-11 rounded-full shadow-md hover:shadow-lg transition-all" data-testid="save-playlist-button">
                             {editingPlaylist ? 'Actualizează' : 'Creează'}
                           </Button>
                           <Button
                             type="button"
                             onClick={() => setShowDialog(false)}
-                            className="btn-secondary h-11 rounded-xl"
+                            className="btn-secondary h-11 rounded-full"
                           >
                             Anulează
                           </Button>
@@ -1177,7 +1180,7 @@ export const Playlists = () => {
                 {selectedBrands.length > 0 && (
                   <button
                     onClick={() => setSelectedBrands([])}
-                    className="ml-2 px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors uppercase tracking-wider"
+                    className="ml-2 px-2 py-1 text-[10px] font-bold text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors uppercase tracking-wider"
                   >
                     Resetează
                   </button>
@@ -1186,16 +1189,16 @@ export const Playlists = () => {
 
               <div className="flex-1"></div>
 
-              <div className="bg-slate-100 p-1 rounded-xl flex border border-slate-200 shrink-0">
+              <div className="bg-slate-100 p-1 rounded-2xl flex border border-slate-200 shrink-0">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-1.5 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-1.5 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                   <ListIcon className="w-4 h-4" />
                 </button>
@@ -1235,7 +1238,7 @@ export const Playlists = () => {
                   <select
                     value={screenLocationFilter}
                     onChange={(e) => setScreenLocationFilter(e.target.value)}
-                    className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-slate-50 text-slate-600 font-medium mb-2"
+                    className="w-full text-xs border border-slate-200 rounded-2xl px-2 py-1.5 bg-slate-50 text-slate-600 font-medium mb-2"
                   >
                     <option value="all">Toate locațiile</option>
                     {locations
@@ -1285,7 +1288,7 @@ export const Playlists = () => {
                                     e.preventDefault();
                                     handleDropOnScreen(screen.id);
                                   }}
-                                  className={`p-2.5 rounded-xl border-2 transition-all ${droppingOnScreenId === screen.id
+                                  className={`p-2.5 rounded-2xl border-2 transition-all ${droppingOnScreenId === screen.id
                                     ? 'border-red-400 bg-red-50 scale-[1.02] shadow-lg'
                                     : draggedPlaylistId
                                       ? 'border-dashed border-slate-300 bg-slate-50 hover:border-red-300 hover:bg-red-50/50'
@@ -1384,7 +1387,7 @@ export const Playlists = () => {
                                 const isAssignedToScreens = screens.some(s => isPlaylistOnScreen(playlist.id, s.id));
                                 const isActive = hasItems && isAssignedToScreens && playlist.status === 'active';
                                 return (
-                                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}>
+                                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-2xl text-[10px] font-bold uppercase tracking-wider ${isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}>
                                     <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-500'}`}></div>
                                     {isActive ? 'Activ' : 'Inactiv'}
                                   </span>
@@ -1394,7 +1397,7 @@ export const Playlists = () => {
                             <td className="px-6 py-4 font-semibold text-slate-800">
                               <div className="flex items-center gap-3">
                                 {playlist.brand && getBrandLogo(playlist.brand) && (
-                                  <div className="w-8 h-8 rounded-lg border border-slate-100 flex items-center justify-center bg-white overflow-hidden shrink-0 shadow-sm">
+                                  <div className="w-8 h-8 rounded-2xl border border-slate-100 flex items-center justify-center bg-white overflow-hidden shrink-0 shadow-sm">
                                     <img src={getBrandLogo(playlist.brand)} alt="" className="w-full h-full object-contain" />
                                   </div>
                                 )}
@@ -1448,7 +1451,7 @@ export const Playlists = () => {
                                 <div className="relative">
                                   <button
                                     onClick={() => setScreenAssignOpen(screenAssignOpen === playlist.id ? null : playlist.id)}
-                                    className={`p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all shadow-sm hover:shadow ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-red-500' : 'text-slate-500 hover:text-red-600'}`}
+                                    className={`p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all shadow-sm hover:shadow ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-red-500' : 'text-slate-500 hover:text-red-600'}`}
                                     title="Setare pe ecran"
                                   >
                                     <Airplay className="w-4 h-4" />
@@ -1461,28 +1464,28 @@ export const Playlists = () => {
                                 </div>
                                 <button
                                   onClick={() => handleToggleStatus(playlist)}
-                                  className={`p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all shadow-sm hover:shadow ${playlist.status === 'active' ? 'text-rose-500 hover:text-rose-600' : 'text-emerald-500 hover:text-emerald-600'}`}
+                                  className={`p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all shadow-sm hover:shadow ${playlist.status === 'active' ? 'text-rose-500 hover:text-rose-600' : 'text-emerald-500 hover:text-emerald-600'}`}
                                   title={playlist.status === 'active' ? 'Oprește' : 'Activează'}
                                 >
                                   <div className={`w-3 h-3 ${playlist.status === 'active' ? 'bg-rose-500' : 'bg-emerald-500'} rounded-sm`}></div>
                                 </button>
                                 <button
                                   onClick={() => handleDuplicate(playlist)}
-                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                                   title="Duplică"
                                 >
                                   <Copy className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleEdit(playlist)}
-                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
                                   title="Editează"
                                 >
                                   <Edit className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleDelete(playlist.id)}
-                                  className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-lg transition-all text-slate-400 hover:text-rose-600"
+                                  className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-full transition-all text-slate-400 hover:text-rose-600"
                                   title="Șterge"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -1501,7 +1504,7 @@ export const Playlists = () => {
                     <div key={locationKey}>
                       {/* Location Header */}
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm">
                           <MapPin className="w-4 h-4 text-red-500" />
                           <span className="text-sm font-bold text-slate-700">{getLocationName(locationKey === '__none__' ? null : locationKey)}</span>
                           <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">{groupPlaylists.length}</span>
@@ -1554,7 +1557,7 @@ export const Playlists = () => {
                                 setDraggedPlaylistId(null);
                                 setDroppingOnScreenId(null);
                               }}
-                              className={`bg-white rounded-xl border border-slate-200 transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''} ${selectedPlaylists.includes(playlist.id) ? 'ring-2 ring-red-500 shadow-xl scale-[1.02]' : ''}`}
+                              className={`bg-white rounded-full border border-slate-200 transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''} ${selectedPlaylists.includes(playlist.id) ? 'ring-2 ring-red-500 shadow-xl scale-[1.02]' : ''}`}
                               style={{
                                 boxShadow: selectedPlaylists.includes(playlist.id) ? `0 15px 40px -10px ${(playlist.color || '#EF4444')}80` : 'none',
                                 '--playlist-color': playlist.color || '#EF4444'
@@ -1572,7 +1575,7 @@ export const Playlists = () => {
                                   onChange={() => toggleSelectPlaylist(playlist.id)}
                                   className="rounded text-white focus:ring-white/50 w-4 h-4 cursor-pointer shrink-0"
                                 />
-                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 overflow-hidden ${brandLogo ? 'bg-white/90' : 'bg-white/20'}`}>
+                                <div className={`w-8 h-8 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden ${brandLogo ? 'bg-white/90' : 'bg-white/20'}`}>
                                   {brandLogo ? (
                                     <img src={brandLogo} alt={brandName} className="w-full h-full object-contain p-0.5" />
                                   ) : (
@@ -1588,7 +1591,7 @@ export const Playlists = () => {
                                   <div className="flex gap-1 shrink-0">
                                     <button
                                       onClick={() => setScreenAssignOpen(screenAssignOpen === playlist.id ? null : playlist.id)}
-                                      className={`relative h-7 w-7 p-1.5 rounded-lg transition-all ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-red-500 hover:bg-red-100' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}
+                                      className={`relative h-7 w-7 p-1.5 rounded-full transition-all ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-red-500 hover:bg-red-100' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}
                                       title="Atribuie ecrane"
                                     >
                                       <Airplay className="w-4 h-4" />
@@ -1680,14 +1683,14 @@ export const Playlists = () => {
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-2 mb-3">
-                                  <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                                  <div className="bg-slate-50 rounded-2xl p-2 border border-slate-100">
                                     <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Conținut</p>
                                     <div className="flex items-center gap-1.5 text-slate-700">
                                       <ListIcon className="w-3.5 h-3.5" />
                                       <span className="text-xs font-semibold">{playlist.items?.length || 0} elemente</span>
                                     </div>
                                   </div>
-                                  <div className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                                  <div className="bg-slate-50 rounded-2xl p-2 border border-slate-100">
                                     <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Durată</p>
                                     <div className="flex items-center gap-1.5 text-slate-700">
                                       <Clock className="w-3.5 h-3.5" />
@@ -1697,7 +1700,7 @@ export const Playlists = () => {
                                 </div>
 
                                 {playlist.is_scheduled && (
-                                  <div className="flex flex-col gap-1.5 text-xs p-2.5 rounded-lg border transition-all"
+                                  <div className="flex flex-col gap-1.5 text-xs p-2.5 rounded-2xl border transition-all"
                                     style={{
                                       backgroundColor: `${playlist.color || '#EF4444'}15`,
                                       borderColor: `${playlist.color || '#EF4444'}30`,
@@ -1751,7 +1754,8 @@ export const Playlists = () => {
             </div>
           </div>
         </div>
-      </DashboardLayout>
+          <ConfirmDialog />
+        </DashboardLayout>
 
       {/* Screen Assignment Dialog */}
       < Dialog open={!!screenAssignOpen
@@ -1785,7 +1789,7 @@ export const Playlists = () => {
                       return (
                         <label
                           key={screen.id}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all border-2 ${assigned
+                          className={`flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer transition-all border-2 ${assigned
                             ? 'bg-red-50 border-red-200 shadow-sm'
                             : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50'
                             }`}

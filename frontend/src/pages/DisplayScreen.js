@@ -604,6 +604,17 @@ export const DisplayScreen = () => {
           {/* Main Content Layers */}
           {itemsToRender.map((item, idx) => {
             const isActive = isPlaylist ? (idx === currentPlaylistIndex) : true;
+            
+            // TV RAM Optimization: Only render current, previous, and next in the DOM. 
+            // 50 <video> tags in the DOM will crash any Smart TV.
+            const len = itemsToRender.length;
+            const isPrev = isPlaylist && len > 1 ? (idx === (currentPlaylistIndex - 1 + len) % len) : false;
+            const isNext = isPlaylist && len > 1 ? (idx === (currentPlaylistIndex + 1) % len) : false;
+            
+            if (isPlaylist && len > 3 && !isActive && !isPrev && !isNext) {
+               return null;
+            }
+
             return (
               <div 
                 key={item.id || idx}
@@ -761,7 +772,7 @@ export const DisplayScreen = () => {
       })()}
 
       {isDebug && (
-        <div className="absolute bottom-4 left-4 z-50 p-3 bg-black/90 text-emerald-400 font-mono text-[9px] rounded-lg border border-emerald-500/30 max-w-sm pointer-events-none shadow-2xl backdrop-blur-sm">
+        <div className="absolute bottom-4 left-4 z-50 p-3 bg-black/90 text-emerald-400 font-mono text-[9px] rounded-2xl border border-emerald-500/30 max-w-sm pointer-events-none shadow-2xl backdrop-blur-sm">
           <div className="flex items-center gap-2 mb-1 border-b border-emerald-500/20 pb-1">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="font-bold">DEBUG INFO</span>

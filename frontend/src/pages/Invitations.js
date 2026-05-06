@@ -185,7 +185,7 @@ export const Invitations = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="glass-card p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-xl">
+              <div className="p-2 bg-red-100 rounded-2xl">
                 <Link2 className="w-5 h-5 text-red-600" />
               </div>
               <div>
@@ -196,7 +196,7 @@ export const Invitations = () => {
           </div>
           <div className="glass-card p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-xl">
+              <div className="p-2 bg-green-100 rounded-2xl">
                 <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
               <div>
@@ -209,7 +209,7 @@ export const Invitations = () => {
           </div>
           <div className="glass-card p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-xl">
+              <div className="p-2 bg-purple-100 rounded-2xl">
                 <Users className="w-5 h-5 text-purple-600" />
               </div>
               <div>
@@ -322,7 +322,7 @@ export const Invitations = () => {
                       {invitation.is_active && (
                         <button
                           onClick={() => handleDeleteInvitation(invitation.id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
                           title="Dezactivează"
                           data-testid={`delete-invitation-${invitation.code}`}
                         >
@@ -412,7 +412,7 @@ export const Invitations = () => {
                     </select>
                   </div>
                 )}
-                <div className="p-4 bg-slate-50 rounded-xl">
+                <div className="p-4 bg-slate-50 rounded-2xl">
                   <p className="text-sm text-slate-600">
                     Link-ul generat va fi valid timp de <strong>{newInvitation.expires_in_days} zile</strong> și
                     poate fi folosit de <strong>{newInvitation.max_uses} {newInvitation.max_uses === 1 ? 'persoană' : 'persoane'}</strong>.

@@ -147,7 +147,7 @@ const ActivityLogs = () => {
                     <div className="flex flex-wrap gap-2 w-full md:w-auto">
                         {/* User Filter */}
                         <select
-                            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none min-w-[150px]"
+                            className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none min-w-[150px]"
                             value={filters.user_id}
                             onChange={(e) => setFilters(prev => ({ ...prev, user_id: e.target.value, offset: 0 }))}
                         >
@@ -159,7 +159,7 @@ const ActivityLogs = () => {
 
                         {/* Location Filter */}
                         <select
-                            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none min-w-[150px]"
+                            className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none min-w-[150px]"
                             value={filters.location_id}
                             onChange={(e) => setFilters(prev => ({ ...prev, location_id: e.target.value, offset: 0 }))}
                         >
@@ -171,7 +171,7 @@ const ActivityLogs = () => {
 
                         {/* Entity Type Filter */}
                         <select
-                            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none"
+                            className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none"
                             value={filters.entity_type}
                             onChange={(e) => setFilters(prev => ({ ...prev, entity_type: e.target.value, offset: 0 }))}
                         >
@@ -187,7 +187,7 @@ const ActivityLogs = () => {
 
                         {/* Level Filter */}
                         <select
-                            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none"
+                            className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none"
                             value={filters.level}
                             onChange={(e) => setFilters(prev => ({ ...prev, level: e.target.value, offset: 0 }))}
                         >
@@ -199,7 +199,7 @@ const ActivityLogs = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 border-b border-slate-200">

@@ -824,21 +824,21 @@ async def products_by_category(categories: List[str]) -> List[Dict[str, Any]]:
 async def product_insert(row: Dict[str, Any]) -> None:
     await _execute(
         """INSERT INTO products (id, name, description, price, currency, category, image_url,
-           available, featured, order_index, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)""",
+           available, featured, order_index, created_at, location_id, iiko_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)""",
         row["id"], row["name"], row.get("description"), row["price"], row.get("currency", "RON"),
         row["category"], row.get("image_url"), row.get("available", True), row.get("featured", False),
-        row.get("order_index", 0), row["created_at"],
+        row.get("order_index", 0), row.get("created_at"), row.get("location_id"), row.get("iiko_id")
     )
 
 
 async def product_update(id: str, data: Dict[str, Any]) -> None:
     await _execute(
         """UPDATE products SET name = $1, description = $2, price = $3, currency = $4, category = $5,
-           image_url = $6, available = $7, featured = $8, order_index = $9 WHERE id = $10""",
+           image_url = $6, available = $7, featured = $8, order_index = $9, location_id = $10, iiko_id = $11 WHERE id = $12""",
         data["name"], data.get("description"), data["price"], data.get("currency", "RON"),
         data["category"], data.get("image_url"), data.get("available", True), data.get("featured", False),
-        data.get("order_index", 0), id,
+        data.get("order_index", 0), data.get("location_id"), data.get("iiko_id"), id,
     )
 
 

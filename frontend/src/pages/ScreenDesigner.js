@@ -528,7 +528,7 @@ export const ScreenDesigner = () => {
             )}
 
             {/* Rotation Control */}
-            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-2xl border border-slate-200 shadow-sm">
               <RotateCw className="w-4 h-4 text-indigo-500" />
               <Select
                 value={screen?.orientation || '0'}
@@ -594,7 +594,7 @@ export const ScreenDesigner = () => {
                     key={template.id}
                     onClick={() => isAdmin() && handleTemplateChange(template.id)}
                     disabled={!isAdmin()}
-                    className={`relative p-2 rounded-xl border-2 transition-all text-left group ${isSelected
+                    className={`relative p-2 rounded-full border-2 transition-all text-left group ${isSelected
                       ? 'border-indigo-400 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-md shadow-indigo-100/50 ring-2 ring-indigo-200/50'
                       : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30 hover:shadow-sm'
                       }`}
@@ -626,35 +626,35 @@ export const ScreenDesigner = () => {
               Efecte Vizuale
             </h2>
             <div className="grid grid-cols-4 gap-1.5">
-              <button onClick={() => setEnableParallax(!enableParallax)} title="Parallax" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableParallax ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30'}`}>
+              <button onClick={() => setEnableParallax(!enableParallax)} title="Parallax" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableParallax ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30'}`}>
                 <Layers className={`w-4 h-4 ${enableParallax ? 'text-indigo-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableParallax ? 'text-indigo-600' : 'text-slate-400'}`}>Parallax</span>
               </button>
-              <button onClick={() => setEnableSteam(!enableSteam)} title="Steam" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableSteam ? 'border-teal-400 bg-teal-50 shadow-sm' : 'border-slate-200 bg-white hover:border-teal-200 hover:bg-teal-50/30'}`}>
+              <button onClick={() => setEnableSteam(!enableSteam)} title="Steam" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableSteam ? 'border-teal-400 bg-teal-50 shadow-sm' : 'border-slate-200 bg-white hover:border-teal-200 hover:bg-teal-50/30'}`}>
                 <Wind className={`w-4 h-4 ${enableSteam ? 'text-teal-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableSteam ? 'text-teal-600' : 'text-slate-400'}`}>Steam</span>
               </button>
-              <button onClick={() => { if (!enableLogo) { setEnableLogo(true); setActiveEffectConfig('logo'); } else if (activeEffectConfig === 'logo') { setEnableLogo(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('logo'); } }} title="Logo Overlay" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableLogo ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/30'}`}>
+              <button onClick={() => { if (!enableLogo) { setEnableLogo(true); setActiveEffectConfig('logo'); } else if (activeEffectConfig === 'logo') { setEnableLogo(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('logo'); } }} title="Logo Overlay" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableLogo ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/30'}`}>
                 <Image className={`w-4 h-4 ${enableLogo ? 'text-amber-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableLogo ? 'text-amber-600' : 'text-slate-400'}`}>Logo</span>
               </button>
-              <button onClick={() => { if (!enableValentineHearts) { setEnableValentineHearts(true); setActiveEffectConfig('hearts'); } else if (activeEffectConfig === 'hearts') { setEnableValentineHearts(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('hearts'); } }} title="Valentine Hearts" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableValentineHearts ? 'border-pink-400 bg-pink-50 shadow-sm' : 'border-slate-200 bg-white hover:border-pink-200 hover:bg-pink-50/30'}`}>
+              <button onClick={() => { if (!enableValentineHearts) { setEnableValentineHearts(true); setActiveEffectConfig('hearts'); } else if (activeEffectConfig === 'hearts') { setEnableValentineHearts(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('hearts'); } }} title="Valentine Hearts" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableValentineHearts ? 'border-pink-400 bg-pink-50 shadow-sm' : 'border-slate-200 bg-white hover:border-pink-200 hover:bg-pink-50/30'}`}>
                 <Heart className={`w-4 h-4 ${enableValentineHearts ? 'text-pink-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableValentineHearts ? 'text-pink-600' : 'text-slate-400'}`}>Hearts</span>
               </button>
-              <button onClick={() => { if (!enableCustomText) { setEnableCustomText(true); setActiveEffectConfig('text'); } else if (activeEffectConfig === 'text') { setEnableCustomText(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('text'); } }} title="Custom Text" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableCustomText ? 'border-blue-400 bg-blue-50 shadow-sm' : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/30'}`}>
+              <button onClick={() => { if (!enableCustomText) { setEnableCustomText(true); setActiveEffectConfig('text'); } else if (activeEffectConfig === 'text') { setEnableCustomText(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('text'); } }} title="Custom Text" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableCustomText ? 'border-blue-400 bg-blue-50 shadow-sm' : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/30'}`}>
                 <Type className={`w-4 h-4 ${enableCustomText ? 'text-blue-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableCustomText ? 'text-blue-600' : 'text-slate-400'}`}>Text</span>
               </button>
-              <button onClick={() => { if (!enableHappyHourTimer) { setEnableHappyHourTimer(true); setActiveEffectConfig('timer'); } else if (activeEffectConfig === 'timer') { setEnableHappyHourTimer(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('timer'); } }} title="Happy Hour Timer" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableHappyHourTimer ? 'border-purple-400 bg-purple-50 shadow-sm' : 'border-slate-200 bg-white hover:border-purple-200 hover:bg-purple-50/30'}`}>
+              <button onClick={() => { if (!enableHappyHourTimer) { setEnableHappyHourTimer(true); setActiveEffectConfig('timer'); } else if (activeEffectConfig === 'timer') { setEnableHappyHourTimer(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('timer'); } }} title="Happy Hour Timer" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableHappyHourTimer ? 'border-purple-400 bg-purple-50 shadow-sm' : 'border-slate-200 bg-white hover:border-purple-200 hover:bg-purple-50/30'}`}>
                 <Clock className={`w-4 h-4 ${enableHappyHourTimer ? 'text-purple-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableHappyHourTimer ? 'text-purple-600' : 'text-slate-400'}`}>Timer</span>
               </button>
-              <button onClick={() => { if (!enableSakura) { setEnableSakura(true); setActiveEffectConfig('sakura'); } else if (activeEffectConfig === 'sakura') { setEnableSakura(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('sakura'); } }} title="Sakura Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableSakura ? 'border-rose-400 bg-rose-50 shadow-sm' : 'border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50/30'}`}>
+              <button onClick={() => { if (!enableSakura) { setEnableSakura(true); setActiveEffectConfig('sakura'); } else if (activeEffectConfig === 'sakura') { setEnableSakura(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('sakura'); } }} title="Sakura Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableSakura ? 'border-rose-400 bg-rose-50 shadow-sm' : 'border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50/30'}`}>
                 <Flower2 className={`w-4 h-4 ${enableSakura ? 'text-rose-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableSakura ? 'text-rose-600' : 'text-slate-400'}`}>Sakura</span>
               </button>
-              <button onClick={() => { if (!enableSnow) { setEnableSnow(true); setActiveEffectConfig('snow'); } else if (activeEffectConfig === 'snow') { setEnableSnow(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('snow'); } }} title="Snow Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-xl border-2 transition-all ${enableSnow ? 'border-sky-400 bg-sky-50 shadow-sm' : 'border-slate-200 bg-white hover:border-sky-200 hover:bg-sky-50/30'}`}>
+              <button onClick={() => { if (!enableSnow) { setEnableSnow(true); setActiveEffectConfig('snow'); } else if (activeEffectConfig === 'snow') { setEnableSnow(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('snow'); } }} title="Snow Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableSnow ? 'border-sky-400 bg-sky-50 shadow-sm' : 'border-slate-200 bg-white hover:border-sky-200 hover:bg-sky-50/30'}`}>
                 <Snowflake className={`w-4 h-4 ${enableSnow ? 'text-sky-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableSnow ? 'text-sky-600' : 'text-slate-400'}`}>Zăpadă</span>
               </button>
@@ -663,7 +663,7 @@ export const ScreenDesigner = () => {
               <div className="space-y-2 border-t border-slate-100 pt-2">
                 <div className="flex gap-1.5 overflow-x-auto">
                   {brandsWithLogo.map(brand => (
-                    <button key={brand.id} onClick={() => setSelectedBrandId(brand.id)} className={`flex-shrink-0 w-8 h-8 rounded-lg border-2 overflow-hidden p-0.5 transition-all ${selectedBrandId === brand.id ? 'border-amber-400 shadow-sm ring-1 ring-amber-200' : 'border-slate-200 hover:border-amber-300'}`} title={brand.name}>
+                    <button key={brand.id} onClick={() => setSelectedBrandId(brand.id)} className={`flex-shrink-0 w-8 h-8 rounded-full border-2 overflow-hidden p-0.5 transition-all ${selectedBrandId === brand.id ? 'border-amber-400 shadow-sm ring-1 ring-amber-200' : 'border-slate-200 hover:border-amber-300'}`} title={brand.name}>
                       <img src={getFileUrl(brand.logo_url)} className="w-full h-full object-contain" alt={brand.name} />
                     </button>
                   ))}
@@ -945,7 +945,7 @@ export const ScreenDesigner = () => {
                   return (
                     <div className="absolute z-40 pointer-events-none" style={posStyles[customTextPosition]}>
                       <div
-                        className={`${textSizeMap[customTextSize]} font-bold px-4 py-2 rounded-lg shadow-lg ${customTextHasBackground ? 'backdrop-blur-sm' : ''}`}
+                        className={`${textSizeMap[customTextSize]} font-bold px-4 py-2 rounded-2xl shadow-lg ${customTextHasBackground ? 'backdrop-blur-sm' : ''}`}
                         style={{
                           color: customTextColor,
                           backgroundColor: customTextHasBackground ? customTextBgColor : 'transparent',
@@ -1020,7 +1020,7 @@ export const ScreenDesigner = () => {
               {selectedTemplate?.zones.map((zone, index) => {
                 const config = zoneConfigs.find(c => c.zone_id === zone.id) || {};
                 return (
-                  <div key={zone.id} className="p-3 bg-white/40 rounded-xl space-y-2">
+                  <div key={zone.id} className="p-3 bg-white/40 rounded-2xl space-y-2">
                     <h3 className="font-medium text-slate-800">{zone.name}</h3>
                     <div>
                       <Label>Tip conținut</Label>
@@ -1064,7 +1064,7 @@ export const ScreenDesigner = () => {
                           const menu = digitalMenus.find(m => m.id === config.digital_menu_id);
                           if (!menu) return null;
                           return (
-                            <div className="mt-2 p-3 bg-indigo-50/50 rounded-lg text-xs space-y-1 border border-indigo-100">
+                            <div className="mt-2 p-3 bg-indigo-50/50 rounded-2xl text-xs space-y-1 border border-indigo-100">
                               <div className="flex justify-between font-medium text-slate-700">
                                 <span>Produse: {menu.selected_products?.length || 0}</span>
                                 <span>Categorii: {menu.selected_categories?.length || 0}</span>
@@ -1102,7 +1102,7 @@ export const ScreenDesigner = () => {
                           const playlist = playlists.find(p => p.id === config.playlist_id);
                           if (!playlist) return null;
                           return (
-                            <div className="mt-2 p-3 bg-indigo-50/50 rounded-lg text-xs space-y-2 border border-indigo-100">
+                            <div className="mt-2 p-3 bg-indigo-50/50 rounded-2xl text-xs space-y-2 border border-indigo-100">
                               <div className="font-medium text-slate-700">{playlist.items?.length || 0} elemente</div>
                               <div className="flex gap-1 overflow-hidden">
                                 {playlist.items?.slice(0, 4).map((item, idx) => {
@@ -1168,7 +1168,7 @@ export const ScreenDesigner = () => {
                           if (!item) return null;
                           return (
                             <div className="mt-2 text-xs">
-                              <div className="relative aspect-video rounded-lg overflow-hidden bg-slate-100 border-2 border-slate-200 group-hover:border-indigo-400 shadow-sm transition-all">
+                              <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-200 group-hover:border-indigo-400 shadow-sm transition-all">
                                 {item.type === 'image' ? (
                                   <img src={getFileUrl(item.file_url)} className="w-full h-full object-cover" alt={item.title} />
                                 ) : (
@@ -1234,7 +1234,7 @@ export const ScreenDesigner = () => {
                   return (
                     <div className="flex flex-col items-center">
                       <div
-                        className="relative bg-black rounded-lg overflow-hidden shadow-2xl border-4 border-slate-800"
+                        className="relative bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-slate-800"
                         style={{
                           width: '1000px',
                           maxWidth: '100%',
@@ -1300,12 +1300,12 @@ export const ScreenDesigner = () => {
                             {Array.from({ length: cols * rows }).map((_, idx) => {
                               const s = groupScreens[idx];
                               if (!s) {
-                                return <div key={idx} className="bg-slate-800/50 border border-slate-700/50 rounded-lg flex items-center justify-center text-slate-600 text-[10px] font-bold uppercase italic">Empty Slot</div>;
+                                return <div key={idx} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl flex items-center justify-center text-slate-600 text-[10px] font-bold uppercase italic">Empty Slot</div>;
                               }
                               return (
                                 <div
                                   key={s.id}
-                                  className={`border-4 rounded-lg flex items-center justify-center relative overflow-hidden transition-all shadow-lg ${s.id === screen.id ? 'border-yellow-400 z-10 scale-[1.05]' : 'border-white/20 hover:border-white/40'}`}
+                                  className={`border-4 rounded-2xl flex items-center justify-center relative overflow-hidden transition-all shadow-lg ${s.id === screen.id ? 'border-yellow-400 z-10 scale-[1.05]' : 'border-white/20 hover:border-white/40'}`}
                                   style={{
                                     backgroundImage: `url(${previewImage})`,
                                     backgroundSize: `${cols * 100}% ${rows * 100}%`,
@@ -1345,7 +1345,7 @@ export const ScreenDesigner = () => {
                 return (
                   <div className="flex flex-wrap gap-4 justify-center">
                     {groupScreens.map((s, idx) => (
-                      <div key={s.id} className={`w-64 aspect-video bg-slate-100 rounded-lg border-2 overflow-hidden relative ${s.id === screen.id ? 'border-yellow-400' : 'border-slate-200'}`}>
+                      <div key={s.id} className={`w-64 aspect-video bg-slate-100 rounded-2xl border-2 overflow-hidden relative ${s.id === screen.id ? 'border-yellow-400' : 'border-slate-200'}`}>
                         <img src={previewImage} className="w-full h-full object-cover opacity-80" alt="Preview" />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                           <div className="text-white text-center">
@@ -1375,7 +1375,7 @@ export const ScreenDesigner = () => {
 
             <div className="space-y-4">
               {/* Large Preview */}
-              <div className={`relative bg-black rounded-lg overflow-hidden border border-slate-700 shadow-2xl ${parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270 ? 'mx-auto' : ''}`}
+              <div className={`relative bg-black rounded-2xl overflow-hidden border border-slate-700 shadow-2xl ${parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270 ? 'mx-auto' : ''}`}
                 style={{ aspectRatio: (parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270) ? '9/16' : '16/9', width: (parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270) ? '56.25%' : '100%' }}>
                 <div className="w-full h-full">
                   {(() => {

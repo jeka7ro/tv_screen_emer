@@ -64,7 +64,7 @@ export const SlideshowConfigDialog = ({ open, onOpenChange, onConfirm, count, se
                                 {selectedContent.map((item) => (
                                     <div
                                         key={item.id}
-                                        className="relative group rounded-lg overflow-hidden border border-slate-200 bg-slate-50 hover:border-indigo-300 transition-all"
+                                        className="relative group rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 hover:border-indigo-300 transition-all"
                                     >
                                         {/* Preview Image/Video */}
                                         <div className="aspect-video bg-slate-100 relative overflow-hidden">

@@ -22,7 +22,7 @@ export const ScreenSimulation = ({ screenIds, screens, onClose }) => {
             {/* Close button */}
             <button
                 onClick={onClose}
-                className="absolute top-4 right-4 z-50 p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
                 title="Închide"
             >
                 <X className="w-5 h-5" />
@@ -34,7 +34,7 @@ export const ScreenSimulation = ({ screenIds, screens, onClose }) => {
                     Simulare Live - {selectedScreens.length} Ecran{selectedScreens.length !== 1 ? 'e' : ''}
                 </h2>
                 {selectedScreens.length > 0 && selectedScreens.length < 3 && (
-                    <div className="mt-3 inline-flex items-center gap-2 bg-amber-500/20 border border-amber-500/30 text-amber-200 px-4 py-2 rounded-lg text-xs">
+                    <div className="mt-3 inline-flex items-center gap-2 bg-amber-500/20 border border-amber-500/30 text-amber-200 px-4 py-2 rounded-2xl text-xs">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -103,7 +103,7 @@ export const ScreenSimulation = ({ screenIds, screens, onClose }) => {
                     </div>
 
                     {/* Legend overlay */}
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/60 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 z-20">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 z-20">
                         <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider">Simulare Live — Vedere Reală Locație</span>
                     </div>
                 </div>

@@ -201,23 +201,23 @@ export const Dashboard = () => {
               Funcționalități cheie
             </h2>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl">
+              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Management multi-locații</p>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl">
+              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Template-uri personalizabile</p>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl">
+              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Sincronizare ecrane</p>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl">
+              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Upload imagini și video-uri</p>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-xl">
+              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Proteție cu cod de securitate</p>
               </div>

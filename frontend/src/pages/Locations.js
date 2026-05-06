@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Edit2, Trash2, MapPin, Search, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, MapPin, Search, X, RefreshCw } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
@@ -10,11 +10,14 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
+import { useConfirm } from '../hooks/useConfirm';
 
 export const Locations = () => {
+    const { confirm, ConfirmDialog } = useConfirm();
   const { isAdmin } = useAuth();
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [editingLocation, setEditingLocation] = useState(null);
   const [viewMode, setViewMode] = useViewMode('view_mode_locations', 'grid');
@@ -23,6 +26,7 @@ export const Locations = () => {
     address: '',
     city: '',
     security_code: '',
+    iiko_organization_id: '',
     status: 'active'
   });
   const [selectedItems, setSelectedItems] = useState(new Set());
@@ -41,6 +45,19 @@ export const Locations = () => {
       toast.error('Eroare la încărcarea locațiilor');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSyncIiko = async () => {
+    setSyncing(true);
+    try {
+      const response = await api.post('/locations/sync-iiko');
+      toast.success(response.data.message || 'Locații sincronizate cu succes!');
+      loadLocations();
+    } catch (error) {
+      toast.error('Eroare la sincronizarea locațiilor din IIKO.');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -69,13 +86,14 @@ export const Locations = () => {
       address: location.address,
       city: location.city,
       security_code: location.security_code || '',
+      iiko_organization_id: location.iiko_organization_id || '',
       status: location.status
     });
     setShowDialog(true);
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Sigur dorești să ștergi această locație?')) return;
+    if (!(await confirm({ message: 'Sigur dorești să ștergi această locație?', isDanger: true }))) return;
     try {
       await api.delete(`/locations/${id}`);
       toast.success('Locație ștearsă!');
@@ -104,7 +122,7 @@ export const Locations = () => {
   };
 
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Sigur dorești să ștergi ${selectedItems.size} locații?`)) return;
+    if (!(await confirm({ message: `Sigur dorești să ștergi ${selectedItems.size} locații?`, isDanger: true }))) return;
 
     try {
       const deletePromises = Array.from(selectedItems).map(id => api.delete(`/locations/${id}`));
@@ -123,6 +141,7 @@ export const Locations = () => {
       address: '',
       city: '',
       security_code: '',
+      iiko_organization_id: '',
       status: 'active'
     });
     setEditingLocation(null);
@@ -153,7 +172,8 @@ export const Locations = () => {
         <div className="flex items-center justify-center h-96">
           <div className="spinner"></div>
         </div>
-      </DashboardLayout>
+          <ConfirmDialog />
+        </DashboardLayout>
     );
   }
 
@@ -170,12 +190,23 @@ export const Locations = () => {
             <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
 
             {isAdmin() && (
+              <Button 
+                onClick={handleSyncIiko} 
+                disabled={syncing}
+                className="btn-secondary px-4 py-2 rounded-full text-sm font-semibold shadow-sm hover:shadow-md transition-all h-[40px] flex items-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Se aduc...' : 'Sincronizare IIKO'}
+              </Button>
+            )}
+
+            {isAdmin() && (
               <Dialog open={showDialog} onOpenChange={(open) => {
                 setShowDialog(open);
                 if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
-                  <Button className="btn-red px-6 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]" data-testid="add-location-button">
+                  <Button className="btn-red px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]" data-testid="add-location-button">
                     <Plus className="w-4 h-4 mr-2" />
                     Adăugă locație
                   </Button>
@@ -230,6 +261,18 @@ export const Locations = () => {
                           Va fi cerut la accesarea ecranelor din această locație
                         </p>
                       </div>
+                      <div>
+                        <Label>Syrve / IIKO Org ID (opțional)</Label>
+                        <Input
+                          value={formData.iiko_organization_id}
+                          onChange={(e) => setFormData({ ...formData, iiko_organization_id: e.target.value })}
+                          placeholder="ex: adddb5a0-26e5..."
+                          className="glass-input"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">
+                          Necesar pentru sincronizarea meniului
+                        </p>
+                      </div>
                       <div className="flex gap-3 pt-4">
                         <Button type="submit" className="btn-primary flex-1" data-testid="save-location-button">
                           {editingLocation ? 'Actualizează' : 'Creează'}
@@ -261,7 +304,7 @@ export const Locations = () => {
                 placeholder="Caută după nume sau adresă..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
+                className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
               />
               {searchQuery && (
                 <button
@@ -278,7 +321,7 @@ export const Locations = () => {
               <select
                 value={selectedCity}
                 onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm bg-white"
+                className="w-full px-4 py-2 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm bg-white"
               >
                 <option value="all">Toate orașele</option>
                 {cities.map(city => (
@@ -295,12 +338,12 @@ export const Locations = () => {
         </div>
 
         {isAdmin() && selectedItems.size > 0 && (
-          <div className="mb-6 bg-gradient-to-r from-red-600 to-rose-600 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
+          <div className="mb-6 bg-gradient-to-r from-red-600 to-rose-600 text-white px-6 py-4 rounded-2xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
             <span className="font-semibold text-lg">{selectedItems.size} selectate</span>
             <div className="h-6 w-px bg-white/30"></div>
             <button
               onClick={handleBulkDelete}
-              className="ml-auto bg-white text-rose-600 hover:bg-slate-100 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm"
+              className="ml-auto bg-white text-rose-600 hover:bg-slate-100 px-4 py-2 rounded-full font-semibold flex items-center gap-2 transition-colors shadow-sm"
             >
               <Trash2 className="w-4 h-4" />
               Șterge
@@ -380,7 +423,7 @@ export const Locations = () => {
                       )}
                       <td className="px-6 py-4 font-medium text-slate-800">
                         <div className="flex items-center gap-3">
-                          <div className="bg-red-100 p-2 rounded-lg">
+                          <div className="bg-red-100 p-2 rounded-2xl">
                             <MapPin className="w-4 h-4 text-red-600" />
                           </div>
                           {location.name}
@@ -457,14 +500,14 @@ export const Locations = () => {
                     <div className="flex gap-1">
                       <button
                         onClick={() => handleEdit(location)}
-                        className="p-2 bg-red-500 text-white rounded-lg shadow-sm hover:bg-red-600 transition-colors"
+                        className="p-2 bg-red-500 text-white rounded-full shadow-sm hover:bg-red-600 transition-colors"
                         data-testid={`edit-location-${location.id}`}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(location.id)}
-                        className="p-2 bg-rose-500 text-white rounded-lg shadow-sm hover:bg-rose-600 transition-colors"
+                        className="p-2 bg-rose-500 text-white rounded-full shadow-sm hover:bg-rose-600 transition-colors"
                         data-testid={`delete-location-${location.id}`}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -492,6 +535,7 @@ export const Locations = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+        <ConfirmDialog />
+        </DashboardLayout>
   );
 };

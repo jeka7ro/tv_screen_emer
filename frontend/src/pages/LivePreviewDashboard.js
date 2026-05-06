@@ -227,7 +227,7 @@ export const LivePreviewDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                     <div className="glass-card p-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-indigo-100 rounded-xl">
+                            <div className="p-2 bg-indigo-100 rounded-2xl">
                                 <Monitor className="w-5 h-5 text-indigo-600" />
                             </div>
                             <div>
@@ -239,7 +239,7 @@ export const LivePreviewDashboard = () => {
 
                     <div className="glass-card p-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-green-100 rounded-xl">
+                            <div className="p-2 bg-green-100 rounded-2xl">
                                 <Circle className="w-5 h-5 text-green-600 fill-green-600" />
                             </div>
                             <div>
@@ -253,7 +253,7 @@ export const LivePreviewDashboard = () => {
 
                     <div className="glass-card p-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-slate-100 rounded-xl">
+                            <div className="p-2 bg-slate-100 rounded-2xl">
                                 <Circle className="w-5 h-5 text-slate-400 fill-slate-400" />
                             </div>
                             <div>
@@ -267,7 +267,7 @@ export const LivePreviewDashboard = () => {
 
                     <div className="glass-card p-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-purple-100 rounded-xl">
+                            <div className="p-2 bg-purple-100 rounded-2xl">
                                 <Monitor className="w-5 h-5 text-purple-600" />
                             </div>
                             <div>
@@ -347,7 +347,7 @@ export const LivePreviewDashboard = () => {
 
                 {/* View Mode Toggle */}
                 <div className="flex justify-end mb-4">
-                    <div className="bg-slate-100 p-1 rounded-lg flex items-center gap-1">
+                    <div className="bg-slate-100 p-1 rounded-2xl flex items-center gap-1">
                         <button
                             onClick={() => setLayoutMode('grid')}
                             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${layoutMode === 'grid'
@@ -388,7 +388,7 @@ export const LivePreviewDashboard = () => {
                     /* Simulare Live - Storefront with Video Wall overlay on TV area */
                     <div className="flex flex-col items-center gap-4">
                         {/* Screen selector */}
-                        <div className="w-full max-w-[1200px] flex flex-wrap items-center gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <div className="w-full max-w-[1200px] flex flex-wrap items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
                             <span className="text-sm font-semibold text-slate-600 mr-2">Ecrane afișate:</span>
                             {screens.map(s => {
                                 const isSelected = simulareScreenIds.includes(s.id);
@@ -403,7 +403,7 @@ export const LivePreviewDashboard = () => {
                                                 setSimulareScreenIds(prev => [...prev, s.id]);
                                             }
                                         }}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${isSelected
+                                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${isSelected
                                             ? 'bg-blue-600 text-white border-blue-700 shadow-md'
                                             : count >= 3
                                                 ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
@@ -483,7 +483,7 @@ export const LivePreviewDashboard = () => {
                             })()}
 
                             {/* Legend overlay */}
-                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/60 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 z-20">
+                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 z-20">
                                 <span className="text-[10px] font-bold text-white/80 uppercase tracking-wider">Simulare Live — Vedere Reală Locație</span>
                             </div>
                         </div>
@@ -526,7 +526,7 @@ export const LivePreviewDashboard = () => {
                                             </div>
 
                                             <div
-                                                className="grid gap-1 bg-black p-1 rounded-lg shadow-2xl border border-slate-800"
+                                                className="grid gap-1 bg-black p-1 rounded-2xl shadow-2xl border border-slate-800"
                                                 style={{
                                                     gridTemplateColumns: `repeat(${cols}, 1fr)`,
                                                     width: 'fit-content',
@@ -589,7 +589,7 @@ export const LivePreviewDashboard = () => {
                                         className="absolute inset-0 border-0 w-full h-full"
                                         style={{ pointerEvents: 'none' }}
                                     />
-                                    <div className="absolute top-2 right-2 bg-black/70 p-1.5 rounded-lg z-20">
+                                    <div className="absolute top-2 right-2 bg-black/70 p-1.5 rounded-2xl z-20">
                                         <Maximize2 className="w-4 h-4 text-white" />
                                     </div>
                                     <div className="absolute top-2 left-2 z-20">

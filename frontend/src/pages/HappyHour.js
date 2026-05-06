@@ -9,8 +9,10 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useViewMode } from '../hooks/useViewMode';
+import { useConfirm } from '../hooks/useConfirm';
 
 export const HappyHour = () => {
+    const { confirm, ConfirmDialog } = useConfirm();
     const [schedules, setSchedules] = useState([]);
     const [screens, setScreens] = useState([]);
     const [content, setContent] = useState([]);
@@ -80,7 +82,7 @@ export const HappyHour = () => {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Ștergi acest program?')) return;
+        if (!(await confirm({ message: 'Ștergi acest program?', isDanger: true }))) return;
         try {
             await api.delete(`/happy-hours/${id}`);
             toast.success('Program șters!');
@@ -162,7 +164,8 @@ export const HappyHour = () => {
 
     const dayNames = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
-    if (loading) return <DashboardLayout><div className="p-8">Se încarcă...</div></DashboardLayout>;
+    if (loading) return <DashboardLayout><div className="p-8">Se încarcă...</div>    <ConfirmDialog />
+        </DashboardLayout>;
 
     return (
         <DashboardLayout>
@@ -176,7 +179,7 @@ export const HappyHour = () => {
                         <p className="text-slate-600 mt-1">Programare conținut pe intervale orare</p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 mr-2">
+                        <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 mr-2">
                             <button
                                 onClick={() => setViewMode('grid')}
                                 className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-red-600' : 'text-slate-400 hover:text-slate-600'}`}
@@ -210,7 +213,7 @@ export const HappyHour = () => {
                         {schedules.map((schedule) => (
                             <div
                                 key={schedule.id}
-                                className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-all flex flex-col"
+                                className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-all flex flex-col"
                             >
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex-1">
@@ -262,21 +265,21 @@ export const HappyHour = () => {
                                             setEditingSchedule(schedule);
                                             setShowDialog(true);
                                         }}
-                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors text-sm font-medium"
+                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-full transition-colors text-sm font-medium"
                                     >
                                         <Edit2 className="w-4 h-4" />
                                         Editează
                                     </button>
                                     <button
                                         onClick={() => handleDuplicate(schedule)}
-                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors text-sm font-medium"
+                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-full transition-colors text-sm font-medium"
                                     >
                                         <Copy className="w-4 h-4" />
                                         Duplică
                                     </button>
                                     <button
                                         onClick={() => handleDelete(schedule.id)}
-                                        className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors"
+                                        className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-full transition-colors"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -285,7 +288,7 @@ export const HappyHour = () => {
                         ))}
                     </div>
                 ) : (
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-slate-50 border-b border-slate-200">
                                 <tr>
@@ -303,7 +306,7 @@ export const HappyHour = () => {
                                 {schedules.map(schedule => (
                                     <tr key={schedule.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="p-4">
-                                            <div className="w-16 h-10 rounded-lg border border-slate-200 bg-slate-100 overflow-hidden">
+                                            <div className="w-16 h-10 rounded-2xl border border-slate-200 bg-slate-100 overflow-hidden">
                                                 {schedule.content_type === 'single_content' ? (
                                                     (() => {
                                                         const item = content.find(c => c.id === schedule.content_id);
@@ -442,9 +445,9 @@ export const HappyHour = () => {
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="border border-slate-200 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1 bg-slate-50/50">
+                                        <div className="border border-slate-200 rounded-2xl p-3 max-h-32 overflow-y-auto space-y-1 bg-slate-50/50">
                                             {filteredLocations.map(loc => (
-                                                <label key={loc.id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded-lg transition-colors">
+                                                <label key={loc.id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded-full transition-colors">
                                                     <input
                                                         type="checkbox"
                                                         checked={(formData.location_ids || []).includes(loc.id)}
@@ -478,7 +481,7 @@ export const HappyHour = () => {
                                                 </button>
                                             )}
                                         </div>
-                                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                                             {formData.location_ids.length === 0 ? (
                                                 <p className="text-xs text-slate-400 italic text-center py-4">Selectează cel puțin o locație</p>
                                             ) : (
@@ -654,6 +657,7 @@ export const HappyHour = () => {
                     </DialogContent>
                 </Dialog>
             </div>
+            <ConfirmDialog />
         </DashboardLayout>
     );
 };

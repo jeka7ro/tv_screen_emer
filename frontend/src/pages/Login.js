@@ -144,7 +144,7 @@ export const Login = () => {
 
           {/* Show badge for first user registration */}
           {!isLogin && isOpenRegistration && (
-            <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
+            <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-2">
               <Shield className="w-5 h-5 text-amber-600" />
               <span className="text-sm text-amber-700">
                 Primul cont va fi <strong>Super Admin</strong>
@@ -154,7 +154,7 @@ export const Login = () => {
 
           {/* Show invite badge */}
           {!isLogin && inviteValid && (
-            <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-2">
+            <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-2">
               <KeyRound className="w-5 h-5 text-green-600" />
               <span className="text-sm text-green-700">
                 Invitație validă - puteți crea contul
@@ -190,7 +190,7 @@ export const Login = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-900 border-slate-800 text-white rounded-xl px-4 py-3 border focus:border-[#20b2aa] focus:ring-1 focus:ring-[#20b2aa] outline-none transition-all"
+                className="w-full bg-slate-900 border-slate-800 text-white rounded-2xl px-4 py-3 border focus:border-[#20b2aa] focus:ring-1 focus:ring-[#20b2aa] outline-none transition-all"
                 placeholder="admin@sushimaster.ro"
                 required
                 data-testid="email-input"
@@ -207,7 +207,7 @@ export const Login = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-slate-900 border-slate-800 text-white rounded-xl px-4 py-3 pr-12 border focus:border-[#20b2aa] focus:ring-1 focus:ring-[#20b2aa] outline-none transition-all"
+                  className="w-full bg-slate-900 border-slate-800 text-white rounded-2xl px-4 py-3 pr-12 border focus:border-[#20b2aa] focus:ring-1 focus:ring-[#20b2aa] outline-none transition-all"
                   placeholder="••••••••"
                   required
                   data-testid="password-input"
@@ -280,7 +280,7 @@ export const Login = () => {
             )}
 
             {loginError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-center gap-2">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700 flex items-center gap-2">
                 <Lock className="w-4 h-4 text-red-500 flex-shrink-0" />
                 {loginError}
               </div>
@@ -289,7 +289,7 @@ export const Login = () => {
             <button
               type="submit"
               disabled={loading || (!isLogin && !canRegister)}
-              className="w-full bg-[#20b2aa] hover:bg-[#25c8cc] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#20b2aa]/20 transition-all flex items-center justify-center gap-2 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#20b2aa] hover:bg-[#25c8cc] text-white font-bold py-4 rounded-full shadow-lg shadow-[#20b2aa]/20 transition-all flex items-center justify-center gap-2 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="submit-button"
             >
               {loading ? (
