@@ -594,7 +594,7 @@ export const ScreenDesigner = () => {
                     key={template.id}
                     onClick={() => isAdmin() && handleTemplateChange(template.id)}
                     disabled={!isAdmin()}
-                    className={`relative p-2 rounded-full border-2 transition-all text-left group ${isSelected
+                    className={`relative p-2 rounded-2xl border-2 transition-all text-left group ${isSelected
                       ? 'border-indigo-400 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-md shadow-indigo-100/50 ring-2 ring-indigo-200/50'
                       : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30 hover:shadow-sm'
                       }`}
@@ -626,35 +626,35 @@ export const ScreenDesigner = () => {
               Efecte Vizuale
             </h2>
             <div className="grid grid-cols-4 gap-1.5">
-              <button onClick={() => setEnableParallax(!enableParallax)} title="Parallax" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableParallax ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30'}`}>
+              <button onClick={() => setEnableParallax(!enableParallax)} title="Parallax" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableParallax ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30'}`}>
                 <Layers className={`w-4 h-4 ${enableParallax ? 'text-indigo-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableParallax ? 'text-indigo-600' : 'text-slate-400'}`}>Parallax</span>
               </button>
-              <button onClick={() => setEnableSteam(!enableSteam)} title="Steam" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableSteam ? 'border-teal-400 bg-teal-50 shadow-sm' : 'border-slate-200 bg-white hover:border-teal-200 hover:bg-teal-50/30'}`}>
+              <button onClick={() => setEnableSteam(!enableSteam)} title="Steam" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableSteam ? 'border-teal-400 bg-teal-50 shadow-sm' : 'border-slate-200 bg-white hover:border-teal-200 hover:bg-teal-50/30'}`}>
                 <Wind className={`w-4 h-4 ${enableSteam ? 'text-teal-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableSteam ? 'text-teal-600' : 'text-slate-400'}`}>Steam</span>
               </button>
-              <button onClick={() => { if (!enableLogo) { setEnableLogo(true); setActiveEffectConfig('logo'); } else if (activeEffectConfig === 'logo') { setEnableLogo(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('logo'); } }} title="Logo Overlay" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableLogo ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/30'}`}>
+              <button onClick={() => { if (!enableLogo) { setEnableLogo(true); setActiveEffectConfig('logo'); } else if (activeEffectConfig === 'logo') { setEnableLogo(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('logo'); } }} title="Logo Overlay" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableLogo ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/30'}`}>
                 <Image className={`w-4 h-4 ${enableLogo ? 'text-amber-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableLogo ? 'text-amber-600' : 'text-slate-400'}`}>Logo</span>
               </button>
-              <button onClick={() => { if (!enableValentineHearts) { setEnableValentineHearts(true); setActiveEffectConfig('hearts'); } else if (activeEffectConfig === 'hearts') { setEnableValentineHearts(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('hearts'); } }} title="Valentine Hearts" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableValentineHearts ? 'border-pink-400 bg-pink-50 shadow-sm' : 'border-slate-200 bg-white hover:border-pink-200 hover:bg-pink-50/30'}`}>
+              <button onClick={() => { if (!enableValentineHearts) { setEnableValentineHearts(true); setActiveEffectConfig('hearts'); } else if (activeEffectConfig === 'hearts') { setEnableValentineHearts(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('hearts'); } }} title="Valentine Hearts" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableValentineHearts ? 'border-pink-400 bg-pink-50 shadow-sm' : 'border-slate-200 bg-white hover:border-pink-200 hover:bg-pink-50/30'}`}>
                 <Heart className={`w-4 h-4 ${enableValentineHearts ? 'text-pink-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableValentineHearts ? 'text-pink-600' : 'text-slate-400'}`}>Hearts</span>
               </button>
-              <button onClick={() => { if (!enableCustomText) { setEnableCustomText(true); setActiveEffectConfig('text'); } else if (activeEffectConfig === 'text') { setEnableCustomText(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('text'); } }} title="Custom Text" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableCustomText ? 'border-blue-400 bg-blue-50 shadow-sm' : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/30'}`}>
+              <button onClick={() => { if (!enableCustomText) { setEnableCustomText(true); setActiveEffectConfig('text'); } else if (activeEffectConfig === 'text') { setEnableCustomText(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('text'); } }} title="Custom Text" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableCustomText ? 'border-blue-400 bg-blue-50 shadow-sm' : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/30'}`}>
                 <Type className={`w-4 h-4 ${enableCustomText ? 'text-blue-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableCustomText ? 'text-blue-600' : 'text-slate-400'}`}>Text</span>
               </button>
-              <button onClick={() => { if (!enableHappyHourTimer) { setEnableHappyHourTimer(true); setActiveEffectConfig('timer'); } else if (activeEffectConfig === 'timer') { setEnableHappyHourTimer(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('timer'); } }} title="Happy Hour Timer" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableHappyHourTimer ? 'border-purple-400 bg-purple-50 shadow-sm' : 'border-slate-200 bg-white hover:border-purple-200 hover:bg-purple-50/30'}`}>
+              <button onClick={() => { if (!enableHappyHourTimer) { setEnableHappyHourTimer(true); setActiveEffectConfig('timer'); } else if (activeEffectConfig === 'timer') { setEnableHappyHourTimer(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('timer'); } }} title="Happy Hour Timer" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableHappyHourTimer ? 'border-purple-400 bg-purple-50 shadow-sm' : 'border-slate-200 bg-white hover:border-purple-200 hover:bg-purple-50/30'}`}>
                 <Clock className={`w-4 h-4 ${enableHappyHourTimer ? 'text-purple-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableHappyHourTimer ? 'text-purple-600' : 'text-slate-400'}`}>Timer</span>
               </button>
-              <button onClick={() => { if (!enableSakura) { setEnableSakura(true); setActiveEffectConfig('sakura'); } else if (activeEffectConfig === 'sakura') { setEnableSakura(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('sakura'); } }} title="Sakura Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableSakura ? 'border-rose-400 bg-rose-50 shadow-sm' : 'border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50/30'}`}>
+              <button onClick={() => { if (!enableSakura) { setEnableSakura(true); setActiveEffectConfig('sakura'); } else if (activeEffectConfig === 'sakura') { setEnableSakura(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('sakura'); } }} title="Sakura Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableSakura ? 'border-rose-400 bg-rose-50 shadow-sm' : 'border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50/30'}`}>
                 <Flower2 className={`w-4 h-4 ${enableSakura ? 'text-rose-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableSakura ? 'text-rose-600' : 'text-slate-400'}`}>Sakura</span>
               </button>
-              <button onClick={() => { if (!enableSnow) { setEnableSnow(true); setActiveEffectConfig('snow'); } else if (activeEffectConfig === 'snow') { setEnableSnow(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('snow'); } }} title="Snow Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-full border-2 transition-all ${enableSnow ? 'border-sky-400 bg-sky-50 shadow-sm' : 'border-slate-200 bg-white hover:border-sky-200 hover:bg-sky-50/30'}`}>
+              <button onClick={() => { if (!enableSnow) { setEnableSnow(true); setActiveEffectConfig('snow'); } else if (activeEffectConfig === 'snow') { setEnableSnow(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('snow'); } }} title="Snow Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableSnow ? 'border-sky-400 bg-sky-50 shadow-sm' : 'border-slate-200 bg-white hover:border-sky-200 hover:bg-sky-50/30'}`}>
                 <Snowflake className={`w-4 h-4 ${enableSnow ? 'text-sky-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableSnow ? 'text-sky-600' : 'text-slate-400'}`}>Zăpadă</span>
               </button>
