@@ -2682,8 +2682,8 @@ class BillingConfigUpdate(BaseModel):
 
 @api_router.get("/billing/summary")
 async def get_billing_summary(
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None,
+    date_from: Optional[datetime] = None,
+    date_to: Optional[datetime] = None,
     current_user: User = Depends(get_super_admin)
 ):
     config = await billing_config_get()

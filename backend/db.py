@@ -1294,7 +1294,7 @@ async def billing_config_upsert(data: Dict[str, Any]) -> None:
     )
 
 
-async def billing_summary(date_from: Optional[str] = None, date_to: Optional[str] = None) -> List[Dict[str, Any]]:
+async def billing_summary(date_from: Optional[datetime] = None, date_to: Optional[datetime] = None) -> List[Dict[str, Any]]:
     """Get screen counts per location for billing purposes, optionally filtered by date range.
     A screen counts if it was created before date_to (existed during the period).
     """
