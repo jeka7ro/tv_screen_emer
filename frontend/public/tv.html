@@ -506,7 +506,7 @@
                 var nextNextSlide = document.getElementById('slide-' + nextNextIndex);
                 if (nextNextSlide) {
                     var nextNextVid = nextNextSlide.querySelector('video');
-                    if (nextNextVid && !nextNextVid.src) {
+                    if (nextNextVid && !nextNextVid.getAttribute('src')) {
                         nextNextVid.src = nextNextVid.dataset.src;
                         nextNextVid.load();
                     }
