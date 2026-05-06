@@ -58,8 +58,14 @@
             transition: opacity 1.5s ease-in-out
         }
 
+        .slide.prev {
+            opacity: 1;
+            z-index: 10;
+        }
+
         .slide.active {
-            opacity: 1
+            opacity: 1;
+            z-index: 20;
         }
 
         .slide img {
@@ -481,7 +487,15 @@
             slideTimer = setTimeout(function () {
                 var oldSlideIndex = currentSlide;
                 var oldSlide = document.getElementById('slide-' + oldSlideIndex);
-                if (oldSlide) oldSlide.className = 'slide';
+                if (oldSlide) oldSlide.className = 'slide prev'; // keep opacity 1, but lower z-index
+                
+                // Find any existing 'prev' slides and drop them to base 'slide' (opacity 0)
+                var allDivs = document.querySelectorAll('.slide');
+                for(var d=0; d<allDivs.length; d++) {
+                    if (allDivs[d].id !== 'slide-' + oldSlideIndex && allDivs[d].className.indexOf('active') === -1) {
+                        allDivs[d].className = 'slide';
+                    }
+                }
 
 
                 currentSlide = (currentSlide + 1) % allSlides.length;

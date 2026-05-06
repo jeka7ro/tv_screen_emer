@@ -615,11 +615,18 @@ export const DisplayScreen = () => {
                return null;
             }
 
+            // PERFECT CROSSFADE LOGIC:
+            // The active slide jumps to z-index 20 and fades in (opacity 0 -> 1).
+            // The previous slide drops to z-index 10 and STAYS opacity 1.
+            // This ensures the new slide fades IN ON TOP of the old slide, preventing any "dip to black".
+            const zIndex = isActive ? 20 : (isPrev ? 10 : 0);
+            const opacity = isActive ? 1 : (isPrev ? 1 : 0);
+
             return (
               <div 
                 key={item.id || idx}
-                className="absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-1000 ease-in-out"
-                style={{ opacity: isActive ? 1 : 0 }}
+                className="absolute inset-0 flex items-center justify-center transition-opacity duration-1000 ease-in-out"
+                style={{ opacity: opacity, zIndex: zIndex }}
               >
                 <div style={isMatrix ? matrixTransformStyle : { width: '100%', height: '100%' }}>
                   <PlaylistMediaItem item={item} isActive={isActive} fitMode={zoneConfig.fit_mode || syncInfo?.fit_mode} syncType={syncInfo?.sync_type} />
