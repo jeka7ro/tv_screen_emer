@@ -63,6 +63,46 @@ html.dark body::before {
     opacity: 0.9;
 }
 
+/* ── DARK PURPLE THEME ── */
+html.dark[data-theme="purple"] body::before {
+    background: linear-gradient(135deg, #0d0520 0%, #1a0a36 50%, #0d0520 100%);
+    opacity: 1;
+}
+
+html.dark[data-theme="purple"] aside {
+    background-color: #130428 !important;
+    border-color: rgba(124,58,237,0.2) !important;
+}
+
+html.dark[data-theme="purple"] aside nav a.sidebar-link-active {
+    background: rgba(124,58,237,0.25) !important;
+    color: #c4b5fd !important;
+}
+
+html.dark[data-theme="purple"] header {
+    background-color: rgba(18, 5, 40, 0.85) !important;
+    border-color: rgba(124,58,237,0.2) !important;
+}
+
+html.dark[data-theme="purple"] .dark\:bg-slate-900 {
+    background-color: #160535 !important;
+}
+
+html.dark[data-theme="purple"] .dark\:bg-slate-800\/50 {
+    background-color: rgba(28, 8, 64, 0.5) !important;
+}
+
+html.dark[data-theme="purple"] .dark\:bg-slate-950 {
+    background-color: #0a0220 !important;
+}
+
+html.dark[data-theme="purple"] .dark\:border-slate-700\/80,
+html.dark[data-theme="purple"] .dark\:border-slate-700,
+html.dark[data-theme="purple"] .dark\:border-slate-800 {
+    border-color: rgba(124,58,237,0.18) !important;
+}
+
+
 @layer base {
     :root {
         --background: 0 0% 100%;
