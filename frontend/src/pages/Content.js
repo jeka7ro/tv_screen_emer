@@ -970,7 +970,6 @@ export const Content = () => {
                       >
                         <img src={getBrandLogo(brandName)} className="w-full h-full object-cover rounded-full" alt="" />
                       </div>
-                      </div>
                     ) : (
                       <span key={idx} className="text-[10px] font-black text-brand-600 uppercase tracking-widest mr-2 underline decoration-2 decoration-brand-200 underline-offset-4">
                         {brandName}
