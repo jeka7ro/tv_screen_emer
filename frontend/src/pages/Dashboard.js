@@ -100,10 +100,10 @@ export const Dashboard = () => {
     <DashboardLayout>
       <div className="animate-in" data-testid="dashboard-page">
         <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-2">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 dark:text-slate-200 mb-2">
             Bine ai venit, {user?.full_name}
           </h1>
-          <p className="text-slate-500 text-lg">
+          <p className="text-slate-500 dark:text-slate-400 text-lg">
             Aici este prezentarea generală a sistemului Screen Media
           </p>
         </div>
@@ -123,10 +123,10 @@ export const Dashboard = () => {
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-slate-500 text-sm font-medium mb-1">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">
                       {stat.label}
                     </p>
-                    <p className="text-3xl font-bold text-slate-800">
+                    <p className="text-3xl font-bold text-slate-800 dark:text-slate-200">
                       {stat.value}
                     </p>
                   </div>
@@ -140,7 +140,7 @@ export const Dashboard = () => {
         </div>
 
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
             <TrendingUp className="w-6 h-6 text-brand-600" />
             Calendar Evenimente & Programe
           </h2>
@@ -153,7 +153,7 @@ export const Dashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="glass-card p-6">
-            <h2 className="text-xl font-semibold text-slate-800 mb-4">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-4">
               Ghid rapid de utilizare
             </h2>
             <div className="space-y-3">
@@ -162,8 +162,8 @@ export const Dashboard = () => {
                   1
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-700">Creează o locație</p>
-                  <p className="text-xs text-slate-500">Adaugă restaurantul sau punctul de vânzare</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Creează o locație</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Adaugă restaurantul sau punctul de vânzare</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -171,8 +171,8 @@ export const Dashboard = () => {
                   2
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-700">Adaugă produse</p>
-                  <p className="text-xs text-slate-500">Creează meniul cu produse și prețuri</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Adaugă produse</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Creează meniul cu produse și prețuri</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -180,8 +180,8 @@ export const Dashboard = () => {
                   3
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-700">Configurează ecranele</p>
-                  <p className="text-xs text-slate-500">Creează ecrane și asociază conținut</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Configurează ecranele</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Creează ecrane și asociază conținut</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -189,37 +189,37 @@ export const Dashboard = () => {
                   4
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-700">Deschide pe TV</p>
-                  <p className="text-xs text-slate-500">Accesează link-ul scurt pe ecranele TV</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Deschide pe TV</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Accesează link-ul scurt pe ecranele TV</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="glass-card p-6">
-            <h2 className="text-xl font-semibold text-slate-800 mb-4">
+            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-4">
               Funcționalități cheie
             </h2>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
+              <div className="flex items-center gap-3 p-3 bg-white/50 dark:bg-slate-900/50 rounded-2xl">
                 <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                <p className="text-sm text-slate-700">Management multi-locații</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300">Management multi-locații</p>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
+              <div className="flex items-center gap-3 p-3 bg-white/50 dark:bg-slate-900/50 rounded-2xl">
                 <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                <p className="text-sm text-slate-700">Template-uri personalizabile</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300">Template-uri personalizabile</p>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
+              <div className="flex items-center gap-3 p-3 bg-white/50 dark:bg-slate-900/50 rounded-2xl">
                 <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                <p className="text-sm text-slate-700">Sincronizare ecrane</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300">Sincronizare ecrane</p>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
+              <div className="flex items-center gap-3 p-3 bg-white/50 dark:bg-slate-900/50 rounded-2xl">
                 <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                <p className="text-sm text-slate-700">Upload imagini și video-uri</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300">Upload imagini și video-uri</p>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
+              <div className="flex items-center gap-3 p-3 bg-white/50 dark:bg-slate-900/50 rounded-2xl">
                 <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                <p className="text-sm text-slate-700">Proteție cu cod de securitate</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300">Proteție cu cod de securitate</p>
               </div>
             </div>
           </div>

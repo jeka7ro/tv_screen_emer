@@ -55,7 +55,7 @@ export const ResetPassword = () => {
                         <Lock className="w-6 h-6 text-brand-600" />
                     </div>
                     <h3 className="text-lg font-semibold text-brand-800 mb-2">Link Invalid</h3>
-                    <p className="text-slate-600 mb-6">
+                    <p className="text-slate-600 dark:text-slate-400 mb-6">
                         Link-ul de resetare lipsește sau este invalid. Vă rugăm să solicitați unul nou.
                     </p>
                     <Link to="/forgot-password" className="btn-primary w-full">
@@ -76,10 +76,10 @@ export const ResetPassword = () => {
                         </div>
                     </div>
 
-                    <h1 className="text-3xl font-bold text-center text-slate-800 mb-2">
+                    <h1 className="text-3xl font-bold text-center text-slate-800 dark:text-slate-200 mb-2">
                         Setare Parolă Nouă
                     </h1>
-                    <p className="text-center text-slate-500 mb-8">
+                    <p className="text-center text-slate-500 dark:text-slate-400 mb-8">
                         Introduceți noua parolă pentru contul dvs.
                     </p>
 
@@ -102,7 +102,7 @@ export const ResetPassword = () => {
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     <Lock className="w-4 h-4 inline mr-1" />
                                     Parolă Nouă
                                 </label>
@@ -118,7 +118,7 @@ export const ResetPassword = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     <Lock className="w-4 h-4 inline mr-1" />
                                     Confirmă Parola
                                 </label>

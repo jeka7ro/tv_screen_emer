@@ -138,8 +138,8 @@ export const DigitalMenus = () => {
       <div className="animate-in" data-testid="digital-menus-page">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">Meniuri Digitale</h1>
-            <p className="text-slate-500">Creează meniuri cu produse pentru afișare</p>
+            <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-200 mb-2">Meniuri Digitale</h1>
+            <p className="text-slate-500 dark:text-slate-400">Creează meniuri cu produse pentru afișare</p>
           </div>
           <div className="flex gap-3">
             <Dialog open={showDialog} onOpenChange={(open) => {
@@ -229,16 +229,16 @@ export const DigitalMenus = () => {
                         onChange={(e) => setFormData({ ...formData, auto_rotate: e.target.checked })}
                         className="rounded"
                       />
-                      <span className="text-sm text-slate-700">Rotație automată</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">Rotație automată</span>
                     </label>
                   </div>
                   <div>
                     <Label>Selectează produse ({selectedProducts.length} selectate)</Label>
-                    <div className="mt-2 max-h-64 overflow-y-auto space-y-2 border border-white/60 rounded-2xl p-4 bg-white/20">
+                    <div className="mt-2 max-h-64 overflow-y-auto space-y-2 border border-white/60 rounded-2xl p-4 bg-white/20 dark:bg-slate-900/20">
                       {products.map(product => (
                         <label
                           key={product.id}
-                          className="flex items-center gap-3 p-3 bg-white/40 rounded-full hover:bg-white/60 cursor-pointer transition-colors"
+                          className="flex items-center gap-3 p-3 bg-white/40 dark:bg-slate-900/40 rounded-full hover:bg-white/60 dark:bg-slate-900/60 cursor-pointer transition-colors"
                         >
                           <input
                             type="checkbox"
@@ -247,8 +247,8 @@ export const DigitalMenus = () => {
                             className="rounded"
                           />
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-slate-800">{product.name}</p>
-                            <p className="text-xs text-slate-500">{product.price} {product.currency}</p>
+                            <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{product.name}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{product.price} {product.currency}</p>
                           </div>
                         </label>
                       ))}
@@ -277,18 +277,18 @@ export const DigitalMenus = () => {
         {menus.length === 0 ? (
           <div className="glass-card p-12 text-center" data-testid="no-menus">
             <Menu className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">
+            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
               Niciun meniu
             </h3>
-            <p className="text-slate-500 mb-6">
+            <p className="text-slate-500 dark:text-slate-400 mb-6">
               Creează primul meniu digital
             </p>
           </div>
         ) : viewMode === 'list' ? (
           <div className="glass-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-semibold text-slate-500">
+              <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">
                   <tr>
                     <th className="px-6 py-4">Nume Meniu</th>
                     <th className="px-6 py-4">Configurație</th>
@@ -300,7 +300,7 @@ export const DigitalMenus = () => {
                 <tbody className="divide-y divide-slate-100">
                   {menus.map((menu) => (
                     <tr key={menu.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4 font-medium text-slate-800">
+                      <td className="px-6 py-4 font-medium text-slate-800 dark:text-slate-200">
                         <div className="flex items-center gap-3">
                           <div className="bg-purple-100 p-2 rounded-2xl">
                             <Menu className="w-4 h-4 text-purple-600" />
@@ -317,14 +317,14 @@ export const DigitalMenus = () => {
                             <span className="font-medium">{menu.page_duration}s</span> durată
                           </div>
                           {menu.auto_rotate && (
-                            <span className="text-xs text-slate-500 bg-slate-100/50 px-1.5 py-0.5 rounded-full inline-block mt-1">
+                            <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100/50 px-1.5 py-0.5 rounded-full inline-block mt-1">
                               Auto-rotație
                             </span>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-medium">
+                        <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded-md text-xs font-medium">
                           {menu.selected_products?.length || 0} selectate
                         </span>
                       </td>
@@ -339,13 +339,13 @@ export const DigitalMenus = () => {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleEdit(menu)}
-                            className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-indigo-600 shadow-sm hover:shadow"
+                            className="p-2 hover:bg-white dark:bg-slate-900 border border-transparent hover:border-slate-200 dark:border-slate-700 rounded-full transition-all text-slate-500 dark:text-slate-400 hover:text-indigo-600 shadow-sm hover:shadow"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(menu.id)}
-                            className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-full transition-all text-slate-500 hover:text-rose-600"
+                            className="p-2 hover:bg-rose-50 border border-transparent hover:border-rose-100 rounded-full transition-all text-slate-500 dark:text-slate-400 hover:text-rose-600"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -368,10 +368,10 @@ export const DigitalMenus = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(menu)}
-                      className="p-2 hover:bg-white/50 rounded-full transition-colors"
+                      className="p-2 hover:bg-white/50 dark:bg-slate-900/50 rounded-full transition-colors"
                       data-testid={`edit-menu-${menu.id}`}
                     >
-                      <Edit className="w-4 h-4 text-slate-600" />
+                      <Edit className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>
                     <button
                       onClick={() => handleDelete(menu.id)}
@@ -382,10 +382,10 @@ export const DigitalMenus = () => {
                     </button>
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">
                   {menu.name}
                 </h3>
-                <div className="space-y-2 text-sm text-slate-600">
+                <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
                   <p>{menu.selected_products?.length || 0} produse selectate</p>
                   <p>{menu.products_per_page} produse/pagină</p>
                   <p>{menu.page_duration}s durată/pagină</p>
@@ -395,7 +395,7 @@ export const DigitalMenus = () => {
                     {menu.status === 'active' ? 'Activ' : 'Draft'}
                   </span>
                   {menu.auto_rotate && (
-                    <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100/50 px-2 py-1 rounded-full">
                       Auto-rotație
                     </span>
                   )}

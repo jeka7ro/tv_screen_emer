@@ -132,8 +132,8 @@ export const Invitations = () => {
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center h-96 text-center">
           <XCircle className="w-16 h-16 text-brand-400 mb-4" />
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Acces restricționat</h2>
-          <p className="text-slate-500">Doar Super Admin-ul poate gestiona invitațiile.</p>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">Acces restricționat</h2>
+          <p className="text-slate-500 dark:text-slate-400">Doar Super Admin-ul poate gestiona invitațiile.</p>
         </div>
       </DashboardLayout>
     );
@@ -154,10 +154,10 @@ export const Invitations = () => {
       <div className="animate-in" data-testid="invitations-page">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">
+            <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-200 mb-2">
               Invitații
             </h1>
-            <p className="text-slate-500">
+            <p className="text-slate-500 dark:text-slate-400">
               Gestionează link-urile de invitație pentru utilizatori noi
             </p>
           </div>
@@ -189,8 +189,8 @@ export const Invitations = () => {
                 <Link2 className="w-5 h-5 text-brand-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">Total invitații</p>
-                <p className="text-2xl font-bold text-slate-800">{invitations.length}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Total invitații</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{invitations.length}</p>
               </div>
             </div>
           </div>
@@ -200,8 +200,8 @@ export const Invitations = () => {
                 <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">Active</p>
-                <p className="text-2xl font-bold text-slate-800">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Active</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                   {invitations.filter(i => i.is_active && !isExpired(i.expires_at)).length}
                 </p>
               </div>
@@ -213,8 +213,8 @@ export const Invitations = () => {
                 <Users className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">Utilizate</p>
-                <p className="text-2xl font-bold text-slate-800">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Utilizate</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                   {invitations.reduce((sum, i) => sum + (i.uses || 0), 0)}
                 </p>
               </div>
@@ -226,10 +226,10 @@ export const Invitations = () => {
         {invitations.length === 0 ? (
           <div className="glass-card p-12 text-center">
             <UserPlus className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-700 mb-2">
+            <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
               Nicio invitație
             </h3>
-            <p className="text-slate-500 mb-6">
+            <p className="text-slate-500 dark:text-slate-400 mb-6">
               Creează o invitație pentru a permite altor utilizatori să se înregistreze
             </p>
             <button
@@ -276,12 +276,12 @@ export const Invitations = () => {
                           </span>
                         )}
                         {status === 'inactive' && (
-                          <span className="px-2 py-1 bg-slate-100 text-slate-700 text-xs font-medium rounded-full">
+                          <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-full">
                             Dezactivat
                           </span>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                      <div className="flex flex-wrap gap-4 text-sm text-slate-500 dark:text-slate-400">
                         <div className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
                           <span>Expiră: {formatDate(invitation.expires_at)}</span>
@@ -346,7 +346,7 @@ export const Invitations = () => {
             <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
               <div className="space-y-4 py-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     Valabilitate (zile)
                   </label>
                   <select
@@ -363,7 +363,7 @@ export const Invitations = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     Număr maxim de utilizări
                   </label>
                   <select
@@ -381,7 +381,7 @@ export const Invitations = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     Rol Utilizator
                   </label>
                   <select
@@ -396,7 +396,7 @@ export const Invitations = () => {
 
                 {newInvitation.role === 'manager' && (
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       Locație Atribuită
                     </label>
                     <select
@@ -412,8 +412,8 @@ export const Invitations = () => {
                     </select>
                   </div>
                 )}
-                <div className="p-4 bg-slate-50 rounded-2xl">
-                  <p className="text-sm text-slate-600">
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
                     Link-ul generat va fi valid timp de <strong>{newInvitation.expires_in_days} zile</strong> și
                     poate fi folosit de <strong>{newInvitation.max_uses} {newInvitation.max_uses === 1 ? 'persoană' : 'persoane'}</strong>.
                   </p>

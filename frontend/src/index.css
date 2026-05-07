@@ -9,7 +9,7 @@ body {
     font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    @apply bg-slate-50;
+    @apply bg-slate-50 dark:bg-slate-950;
 }
 
 code {
@@ -18,29 +18,29 @@ code {
 
 /* Glass utility class */
 .glass {
-    @apply bg-white/40 backdrop-blur-xl border border-white/60 shadow-sm;
+    @apply bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/60 dark:border-slate-800 shadow-sm;
 }
 
 .glass-panel {
-    @apply rounded-2xl bg-white/60 backdrop-blur-xl border border-white/40;
+    @apply rounded-2xl bg-white/60 dark:bg-slate-900/80 backdrop-blur-xl border border-white/40 dark:border-slate-800;
     box-shadow: 0 8px 30px rgb(0, 0, 0, 0.04);
 }
 
 .modal-panel {
-    @apply rounded-2xl bg-white/90 backdrop-blur-xl border border-white/40 shadow-xl;
+    @apply rounded-2xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/40 dark:border-slate-800 shadow-xl;
 }
 
 .glass-card {
-    @apply rounded-3xl bg-white/40 backdrop-blur-xl border border-white/60 transition-all duration-300;
+    @apply rounded-3xl bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/60 dark:border-slate-800 transition-all duration-300;
     box-shadow: 0 8px 30px rgb(0, 0, 0, 0.04);
 }
 
 .glass-input {
-    @apply rounded-full bg-white/50 border-white/60 focus:bg-white/80 focus:ring-2 focus:ring-brand-200 transition-all placeholder:text-slate-400;
+    @apply rounded-full bg-white/50 dark:bg-slate-900/50 border-white/60 dark:border-slate-800 focus:bg-white/80 dark:focus:bg-slate-800 focus:ring-2 focus:ring-brand-200 dark:focus:ring-brand-800 transition-all placeholder:text-slate-400 dark:text-slate-200;
 }
 
 .glass-select {
-    @apply rounded-full bg-white/50 border-white/60 focus:bg-white/80 focus:ring-2 focus:ring-brand-200 transition-all;
+    @apply rounded-full bg-white/50 dark:bg-slate-900/50 border-white/60 dark:border-slate-800 focus:bg-white/80 dark:focus:bg-slate-800 focus:ring-2 focus:ring-brand-200 dark:focus:ring-brand-800 transition-all dark:text-slate-200;
 }
 
 
@@ -56,6 +56,11 @@ body::before {
     opacity: 0.5;
     z-index: -1;
     pointer-events: none;
+}
+
+html.dark body::before {
+    background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%);
+    opacity: 0.9;
 }
 
 @layer base {
@@ -128,6 +133,7 @@ body::before {
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
 }
+
 /* THEME SYSTEM (macOS Tahoe UI Rules) */
 :root {
     /* Default RED Theme */
@@ -167,61 +173,4 @@ body::before {
     --brand-700: #15803d;
     --brand-800: #166534;
     --brand-900: #14532d;
-}
-
-/* DARK MODE OVERRIDES */
-html.dark {
-    /* Invert background gradient */
-    --bg-gradient-from: #0f172a;
-    --bg-gradient-via: #1e293b;
-    --bg-gradient-to: #0f172a;
-}
-
-html.dark body::before {
-    background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-via) 50%, var(--bg-gradient-to) 100%);
-    opacity: 0.9;
-}
-
-html.dark body {
-    background-color: #0f172a;
-    color: #f8fafc;
-}
-
-/* Invert Slate Backgrounds */
-html.dark .bg-slate-50 { background-color: #1e293b !important; }
-html.dark .bg-slate-100 { background-color: #334155 !important; }
-html.dark .bg-slate-200 { background-color: #475569 !important; }
-
-/* Invert Slate Text */
-html.dark .text-slate-900 { color: #f8fafc !important; }
-html.dark .text-slate-800 { color: #f1f5f9 !important; }
-html.dark .text-slate-700 { color: #e2e8f0 !important; }
-html.dark .text-slate-600 { color: #cbd5e1 !important; }
-html.dark .text-slate-500 { color: #94a3b8 !important; }
-html.dark .text-slate-400 { color: #64748b !important; }
-
-/* Invert Slate Borders */
-html.dark .border-slate-100 { border-color: #334155 !important; }
-html.dark .border-slate-200 { border-color: #475569 !important; }
-html.dark .border-slate-300 { border-color: #64748b !important; }
-
-/* Invert White Cards but KEEP Buttons intact */
-html.dark .bg-white { background-color: #0f172a !important; border-color: #334155 !important; }
-/* EXCEPTIONS for elements that MUST be white or have explicit colors */
-html.dark .text-white { color: #ffffff !important; }
-html.dark .bg-white.text-brand-600 { background-color: #1e293b !important; color: var(--brand-400) !important; }
-
-/* Hover states */
-html.dark .hover\:bg-slate-50:hover { background-color: #334155 !important; }
-html.dark .hover\:bg-slate-100:hover { background-color: #475569 !important; }
-
-/* Glass panels in Dark Mode */
-html.dark .glass, html.dark .glass-card, html.dark .glass-panel, html.dark .modal-panel {
-    background-color: rgba(30, 41, 59, 0.7) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-}
-html.dark .glass-input, html.dark .glass-select {
-    background-color: rgba(15, 23, 42, 0.6) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-    color: #fff !important;
 }

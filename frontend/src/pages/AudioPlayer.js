@@ -174,7 +174,7 @@ const AudioPlayer = () => {
             </div>
 
             {/* Main Player Card */}
-            <div className="z-10 bg-white/10 backdrop-blur-xl p-8 rounded-3xl border border-white/10 w-full max-w-md text-center shadow-2xl relative overflow-hidden group">
+            <div className="z-10 bg-white/10 dark:bg-slate-900/10 backdrop-blur-xl p-8 rounded-3xl border border-white/10 w-full max-w-md text-center shadow-2xl relative overflow-hidden group">
                 {/* Glow behind */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-brand-600/20 to-indigo-600/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
@@ -209,14 +209,14 @@ const AudioPlayer = () => {
                     <div className="flex items-center justify-center gap-8 mb-8">
                         <button
                             onClick={togglePlay}
-                            className="w-20 h-20 bg-white rounded-full text-slate-900 flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-white/20"
+                            className="w-20 h-20 bg-white dark:bg-slate-900 rounded-full text-slate-900 flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-white/20"
                         >
                             {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
                         </button>
 
                         <button
                             onClick={handleNextTrack}
-                            className="p-4 rounded-full bg-white/5 hover:bg-white/10 transition-colors text-white hover:text-brand-400 border border-white/5 hover:border-white/20"
+                            className="p-4 rounded-full bg-white/5 dark:bg-slate-900/5 hover:bg-white/10 dark:bg-slate-900/10 transition-colors text-white hover:text-brand-400 border border-white/5 hover:border-white/20"
                             title="Următoarea piesă"
                         >
                             <SkipForward size={24} />
@@ -236,7 +236,7 @@ const AudioPlayer = () => {
                 </div>
             </div>
 
-            <div className="absolute bottom-6 text-slate-600 text-[10px] text-center tracking-widest uppercase">
+            <div className="absolute bottom-6 text-slate-600 dark:text-slate-400 text-[10px] text-center tracking-widest uppercase">
                 <p>SushiMaster Audio Stream • {playlist?.name}</p>
             </div>
 

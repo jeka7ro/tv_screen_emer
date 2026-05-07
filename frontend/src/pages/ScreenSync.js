@@ -350,8 +350,8 @@ export const ScreenSync = () => {
       <div className="animate-in" data-testid="screen-sync-page">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">Sincronizare Ecrane</h1>
-            <p className="text-slate-500">Selectează ecranele și creează un grup sincronizat</p>
+            <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-200 mb-2">Sincronizare Ecrane</h1>
+            <p className="text-slate-500 dark:text-slate-400">Selectează ecranele și creează un grup sincronizat</p>
           </div>
           <div>
             <Button
@@ -374,27 +374,27 @@ export const ScreenSync = () => {
           {/* Active Groups List - Full Width Table */}
           {activeGroups.length > 0 && (
             <div className="glass-card p-6">
-              <h2 className="text-xl font-semibold text-slate-800 mb-4">
+              <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-4">
                 Grupuri Active
               </h2>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="text-left py-3 px-4 font-medium text-slate-600">Nume Grup</th>
-                      <th className="text-left py-3 px-4 font-medium text-slate-600">Tip</th>
-                      <th className="text-left py-3 px-4 font-medium text-slate-600">Ecrane</th>
-                      <th className="text-left py-3 px-4 font-medium text-slate-600">Creat de</th>
-                      <th className="text-left py-3 px-4 font-medium text-slate-600">Data</th>
-                      <th className="text-right py-3 px-4 font-medium text-slate-600">Acțiuni</th>
+                    <tr className="border-b border-slate-200 dark:border-slate-700">
+                      <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Nume Grup</th>
+                      <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Tip</th>
+                      <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Ecrane</th>
+                      <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Creat de</th>
+                      <th className="text-left py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Data</th>
+                      <th className="text-right py-3 px-4 font-medium text-slate-600 dark:text-slate-400">Acțiuni</th>
                     </tr>
                   </thead>
                   <tbody>
                     {activeGroups.map(group => (
-                      <tr key={group.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                      <tr key={group.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/50">
                         <td className="py-3 px-4">
-                          <div className="font-medium text-slate-800">{group.name || '-'}</div>
-                          <div className="text-xs text-slate-500">{group.screen_count} ecrane</div>
+                          <div className="font-medium text-slate-800 dark:text-slate-200">{group.name || '-'}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{group.screen_count} ecrane</div>
                         </td>
                         <td className="py-3 px-4">
                           <span className="inline-block px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wide">
@@ -404,7 +404,7 @@ export const ScreenSync = () => {
                         <td className="py-3 px-4">
                           <div className="flex flex-wrap gap-1 max-w-md">
                             {group.screen_names.map((name, i) => (
-                              <span key={i} className="inline-flex items-center px-2 py-1 rounded bg-slate-100 text-slate-600 text-xs border border-slate-200">
+                              <span key={i} className="inline-flex items-center px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs border border-slate-200 dark:border-slate-700">
                                 <Tv className="w-3 h-3 mr-1 opacity-50" />
                                 {name}
                               </span>
@@ -412,12 +412,12 @@ export const ScreenSync = () => {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="text-sm text-slate-700 font-medium">{group.created_by || '-'}</span>
+                          <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">{group.created_by || '-'}</span>
                         </td>
                         <td className="py-3 px-4">
                           {group.created_at ? (
                             <div>
-                              <div className="text-sm text-slate-700">{new Date(group.created_at).toLocaleDateString('ro-RO')}</div>
+                              <div className="text-sm text-slate-700 dark:text-slate-300">{new Date(group.created_at).toLocaleDateString('ro-RO')}</div>
                               <div className="text-xs text-slate-400">{new Date(group.created_at).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}</div>
                             </div>
                           ) : <span className="text-slate-400">-</span>}
@@ -437,7 +437,7 @@ export const ScreenSync = () => {
                               variant="destructive"
                               size="sm"
                               onClick={() => setDeleteGroupId(group.id)}
-                              className="h-8 gap-1 bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 shadow-sm"
+                              className="h-8 gap-1 bg-white dark:bg-slate-900 text-rose-600 border border-rose-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 shadow-sm"
                             >
                               Oprește
                             </Button>
@@ -465,16 +465,16 @@ export const ScreenSync = () => {
             <div className="space-y-6 py-4">
               {/* SECTION 1: Select Screens (Ordered) */}
               <div>
-                <Label className="text-base font-semibold text-slate-800 mb-2 block border-b pb-2">1. Selectează Ecranele ({selectedScreens.length})</Label>
+                <Label className="text-base font-semibold text-slate-800 dark:text-slate-200 mb-2 block border-b pb-2">1. Selectează Ecranele ({selectedScreens.length})</Label>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-slate-500 italic">
+                  <span className="text-sm text-slate-500 dark:text-slate-400 italic">
                     Click pe ecran pentru a-l adăuga în ordine.
                   </span>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="xs"
-                      className="text-[10px] h-7 bg-white hover:bg-slate-100"
+                      className="text-[10px] h-7 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800"
                       onClick={() => selectAllScreens(false)}
                     >
                       Selectează absolut toate ecranele
@@ -493,11 +493,11 @@ export const ScreenSync = () => {
                     if (locationScreens.length === 0) return null;
 
                     return (
-                      <div key={location.id} className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100">
+                      <div key={location.id} className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
                         <div className="flex items-center justify-between mb-3">
-                          <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                          <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                             {location.name}
-                            <span className="text-xs font-medium text-slate-500 bg-white px-2 py-1 rounded-full border border-slate-200">
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700">
                               {locationScreens.length} ecrane
                             </span>
                           </h3>
@@ -523,15 +523,15 @@ export const ScreenSync = () => {
                                 onClick={() => toggleScreen(screen.id)}
                                 className={`flex items-center justify-between p-3 rounded-full border cursor-pointer transition-all ${isSelected
                                   ? 'border-indigo-500 bg-indigo-50/50 shadow-sm ring-1 ring-indigo-500/20'
-                                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:border-slate-600 hover:shadow-sm'
                                   }`}
                               >
                                 <div className="flex items-center gap-3">
-                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs transition-colors ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs transition-colors ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-500 dark:text-slate-400'}`}>
                                     {isSelected ? selectedIndex + 1 : <Tv className="w-3 h-3" />}
                                   </div>
                                   <div>
-                                    <p className={`font-medium text-sm ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>{screen.name}</p>
+                                    <p className={`font-medium text-sm ${isSelected ? 'text-indigo-900' : 'text-slate-700 dark:text-slate-300'}`}>{screen.name}</p>
                                     {isInActiveGroup && <span className="text-[10px] text-amber-600 font-medium">Deja sincronizat</span>}
                                   </div>
                                 </div>
@@ -549,22 +549,22 @@ export const ScreenSync = () => {
               </div>
 
               {/* SECTION 2: Name & Config */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
+              <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <div>
-                  <Label className="text-sm font-semibold text-slate-700 mb-1.5 block">2. Nume Grup (Opțional)</Label>
+                  <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 block">2. Nume Grup (Opțional)</Label>
                   <Input
                     placeholder="ex: Video Wall Recepție"
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
-                    className="bg-white"
+                    className="bg-white dark:bg-slate-900"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="text-sm font-semibold text-slate-700 block">3. Tip sincronizare</Label>
+                    <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block">3. Tip sincronizare</Label>
                     <Select value={syncType} onValueChange={setSyncType}>
-                      <SelectTrigger data-testid="sync-type-select" className="bg-white">
+                      <SelectTrigger data-testid="sync-type-select" className="bg-white dark:bg-slate-900">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -576,9 +576,9 @@ export const ScreenSync = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-sm font-semibold text-slate-700 block">4. Mod Potrivire</Label>
+                    <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block">4. Mod Potrivire</Label>
                     <Select value={fitMode} onValueChange={setFitMode}>
-                      <SelectTrigger className="bg-white">
+                      <SelectTrigger className="bg-white dark:bg-slate-900">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -590,7 +590,7 @@ export const ScreenSync = () => {
                   </div>
                 </div>
 
-                <p className="text-[11px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 italic">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-2 rounded border border-slate-100 dark:border-slate-800 italic">
                   {syncType === 'simple'
                     ? 'Aceeași imagine pe toate ecranele.'
                     : syncType === 'cascade'
@@ -677,7 +677,7 @@ export const ScreenSync = () => {
                                 if (!screenId) {
                                   return (
                                     <div key={`empty-${slotIdx}`} className="bg-slate-800/50 border border-slate-700/30 flex items-center justify-center">
-                                      <span className="text-[8px] text-slate-600">Emp</span>
+                                      <span className="text-[8px] text-slate-600 dark:text-slate-400">Emp</span>
                                     </div>
                                   );
                                 }
@@ -712,8 +712,8 @@ export const ScreenSync = () => {
 
             {/* SECTION 5: Content Selection */}
             <div className="pt-2">
-              <Label className="text-base font-semibold text-slate-800 mb-2 block border-b pb-2">5. Selectează Conținutul</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 border border-slate-200 rounded-2xl p-3 bg-slate-50/30">
+              <Label className="text-base font-semibold text-slate-800 dark:text-slate-200 mb-2 block border-b pb-2">5. Selectează Conținutul</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 bg-slate-50/30">
                 {contents.map(content => {
                   const isSelected = selectedContentId === content.id;
                   const imageUrl = content.thumbnail_url || content.file_url;
@@ -723,7 +723,7 @@ export const ScreenSync = () => {
                     <div
                       key={content.id}
                       onClick={() => setSelectedContentId(content.id === selectedContentId ? '' : content.id)}
-                      className={`flex items-center gap-3 p-2 rounded-full border cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500' : 'border-slate-200 bg-white'}`}
+                      className={`flex items-center gap-3 p-2 rounded-full border cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900'}`}
                     >
                       <div className="w-14 h-9 flex-shrink-0 bg-slate-900 rounded overflow-hidden relative shadow-inner">
                         {content.type === 'video' && (
@@ -732,11 +732,11 @@ export const ScreenSync = () => {
                         {fullUrl && <img src={fullUrl} className="w-full h-full object-cover opacity-80" alt="" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className={`text-[11px] font-bold truncate ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>{content.title || content.name}</h4>
+                        <h4 className={`text-[11px] font-bold truncate ${isSelected ? 'text-indigo-700' : 'text-slate-700 dark:text-slate-300'}`}>{content.title || content.name}</h4>
                         <p className="text-[9px] text-slate-400 uppercase font-medium">{content.type}</p>
                       </div>
-                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'}`}>
-                        {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 dark:border-slate-600'}`}>
+                        {isSelected && <div className="w-1.5 h-1.5 bg-white dark:bg-slate-900 rounded-full" />}
                       </div>
                     </div>
                   );
@@ -744,7 +744,7 @@ export const ScreenSync = () => {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 mt-4">
               <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
                 Anulează
               </Button>
@@ -782,21 +782,21 @@ export const ScreenSync = () => {
 
               {/* 1. Name */}
               <div className="pt-2">
-                <Label className="text-sm font-semibold text-slate-700 mb-1.5 block">1. Nume Grup</Label>
+                <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 block">1. Nume Grup</Label>
                 <Input
                   value={editGroupName}
                   onChange={(e) => setEditGroupName(e.target.value)}
-                  className="bg-white border-slate-300 focus:border-indigo-500 shadow-sm"
+                  className="bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:border-indigo-500 shadow-sm"
                   placeholder="ex: Video Wall Recepție"
                 />
               </div>
 
               {/* 2. Sync Configuration */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-semibold text-slate-700 block text-xs uppercase tracking-wider">2. Tip Sincronizare</Label>
+                  <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block text-xs uppercase tracking-wider">2. Tip Sincronizare</Label>
                   <Select value={editSyncType} onValueChange={setEditSyncType}>
-                    <SelectTrigger className="bg-white border-slate-200 shadow-sm">
+                    <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 shadow-sm">
                       <SelectValue placeholder="Selectează tipul..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -808,9 +808,9 @@ export const ScreenSync = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-sm font-semibold text-slate-700 block text-xs uppercase tracking-wider">3. Mod Potrivire (Fit)</Label>
+                  <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block text-xs uppercase tracking-wider">3. Mod Potrivire (Fit)</Label>
                   <Select value={editFitMode} onValueChange={setEditFitMode}>
-                    <SelectTrigger className="bg-white border-slate-200 shadow-sm">
+                    <SelectTrigger className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 shadow-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -823,12 +823,12 @@ export const ScreenSync = () => {
               </div>
 
               {/* 3. Matrix & Preview Preview Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <div className="space-y-4">
                   <Label className="text-[10px] uppercase text-slate-400 font-bold block mb-1">Configurare Extra & Info</Label>
 
                   {editSyncType === 'matrix' && (
-                    <div className="grid grid-cols-2 gap-3 p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="grid grid-cols-2 gap-3 p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                       <div className="space-y-1.5">
                         <Label className="text-[10px] uppercase text-indigo-600 font-bold block">Coloane</Label>
                         <Input
@@ -836,7 +836,7 @@ export const ScreenSync = () => {
                           min="1"
                           value={editGridCols}
                           onChange={(e) => setEditGridCols(parseInt(e.target.value) || 1)}
-                          className="h-9 bg-slate-50 border-slate-200 text-center font-bold"
+                          className="h-9 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-center font-bold"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -846,20 +846,20 @@ export const ScreenSync = () => {
                           min="1"
                           value={editGridRows}
                           onChange={(e) => setEditGridRows(parseInt(e.target.value) || 1)}
-                          className="h-9 bg-slate-50 border-slate-200 text-center font-bold"
+                          className="h-9 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-center font-bold"
                         />
                       </div>
                     </div>
                   )}
 
-                  <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-slate-500 uppercase font-bold text-[10px]">Ecrane selectate:</span>
+                      <span className="text-slate-500 dark:text-slate-400 uppercase font-bold text-[10px]">Ecrane selectate:</span>
                       <span className={`font-bold ${editSelectedScreens.length === (editSyncType === 'matrix' ? editGridCols * editGridRows : editSelectedScreens.length) ? 'text-emerald-600' : 'text-amber-500'}`}>
                         {editSelectedScreens.length} {editSyncType === 'matrix' && ` / ${editGridCols * editGridRows}`}
                       </span>
                     </div>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
                       <div
                         className={`h-full transition-all duration-500 ${editSelectedScreens.length === (editSyncType === 'matrix' ? editGridCols * editGridRows : editSelectedScreens.length) ? 'bg-emerald-500' : 'bg-amber-500'}`}
                         style={{ width: `${Math.min(100, (editSelectedScreens.length / (editSyncType === 'matrix' ? editGridCols * editGridRows : editSelectedScreens.length || 1)) * 100)}%` }}
@@ -913,7 +913,7 @@ export const ScreenSync = () => {
                           );
                         }) : (
                           <div className="w-32 aspect-video bg-slate-800 border border-slate-700 border-dashed rounded flex items-center justify-center">
-                            <span className="text-[10px] text-slate-500 italic">Previzualizare...</span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 italic">Previzualizare...</span>
                           </div>
                         )}
                       </div>
@@ -925,18 +925,18 @@ export const ScreenSync = () => {
               {/* 4. Screen Selection (Ordered) */}
               <div className="pt-2">
                 <div className="flex justify-between items-center mb-2">
-                  <Label className="text-sm font-semibold text-slate-700 block">4. Selectează Ecranele (În Ordine!)</Label>
+                  <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300 block">4. Selectează Ecranele (În Ordine!)</Label>
                   <Button
                     variant="outline"
                     size="xs"
-                    className="text-[10px] h-6 bg-white hover:bg-slate-50 text-indigo-600 border-indigo-100"
+                    className="text-[10px] h-6 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-800/50 text-indigo-600 border-indigo-100"
                     onClick={() => selectAllScreens(true)}
                   >
                     Selectează toate
                   </Button>
                 </div>
 
-                <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 border border-slate-200 rounded-2xl p-3 bg-slate-50/30">
+                <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 bg-slate-50/30">
                   {locations.map(location => {
                     const locScreens = screens.filter(s => s.location_id === location.id);
                     if (locScreens.length === 0) return null;
@@ -944,7 +944,7 @@ export const ScreenSync = () => {
                     return (
                       <div key={location.id} className="mb-4 last:mb-0">
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-white px-2 py-0.5 rounded border border-slate-100">
+                          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-100 dark:border-slate-800">
                             {location.name}
                           </h4>
                           <Button
@@ -965,26 +965,26 @@ export const ScreenSync = () => {
                               <div
                                 key={screen.id}
                                 onClick={() => toggleEditScreen(screen.id)}
-                                className={`flex items-center justify-between p-2 rounded-full border cursor-pointer transition-all select-none ${isSelected ? 'bg-indigo-50 border-indigo-400 shadow-sm ring-1 ring-indigo-400/20' : 'bg-white border-slate-200 hover:border-slate-300'}`}
+                                className={`flex items-center justify-between p-2 rounded-full border cursor-pointer transition-all select-none ${isSelected ? 'bg-indigo-50 border-indigo-400 shadow-sm ring-1 ring-indigo-400/20' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:border-slate-600'}`}
                               >
                                 <div className="flex items-center gap-2">
-                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] transition-colors ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] transition-colors ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
                                     {isSelected ? selectedIndex + 1 : <Tv className="w-3 h-3" />}
                                   </div>
-                                  <span className={`text-[13px] ${isSelected ? 'font-bold text-indigo-900' : 'text-slate-600'}`}>{screen.name}</span>
+                                  <span className={`text-[13px] ${isSelected ? 'font-bold text-indigo-900' : 'text-slate-600 dark:text-slate-400'}`}>{screen.name}</span>
                                 </div>
                                 {isSelected && (
                                   <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex flex-col">
                                       <button
-                                        className="p-0.5 hover:bg-white rounded transition-colors disabled:opacity-30"
+                                        className="p-0.5 hover:bg-white dark:bg-slate-900 rounded transition-colors disabled:opacity-30"
                                         onClick={() => moveEditScreen(selectedIndex, 'up')}
                                         disabled={selectedIndex === 0}
                                       >
                                         <ChevronUp className="w-3 h-3 text-indigo-600" />
                                       </button>
                                       <button
-                                        className="p-0.5 hover:bg-white rounded transition-colors disabled:opacity-30"
+                                        className="p-0.5 hover:bg-white dark:bg-slate-900 rounded transition-colors disabled:opacity-30"
                                         onClick={() => moveEditScreen(selectedIndex, 'down')}
                                         disabled={selectedIndex === editSelectedScreens.length - 1}
                                       >
@@ -1008,8 +1008,8 @@ export const ScreenSync = () => {
 
               {/* 5. Content Selection */}
               <div className="pt-2">
-                <Label className="text-sm font-semibold text-slate-700 mb-2 block">5. Schimbă Conținutul (Opțional)</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 border border-slate-200 rounded-2xl p-3 bg-slate-50/30">
+                <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 block">5. Schimbă Conținutul (Opțional)</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2 border border-slate-200 dark:border-slate-700 rounded-2xl p-3 bg-slate-50/30">
                   {contents.map(content => {
                     const isSelected = editContentId === content.id;
                     const imageUrl = content.thumbnail_url || content.file_url;
@@ -1019,7 +1019,7 @@ export const ScreenSync = () => {
                       <div
                         key={content.id}
                         onClick={() => setEditContentId(content.id === editContentId ? '' : content.id)}
-                        className={`flex items-center gap-3 p-2 rounded-full border cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 bg-white'}`}
+                        className={`flex items-center gap-3 p-2 rounded-full border cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900'}`}
                       >
                         <div className="w-14 h-9 flex-shrink-0 bg-slate-900 rounded overflow-hidden relative shadow-inner">
                           {content.type === 'video' ? (
@@ -1028,11 +1028,11 @@ export const ScreenSync = () => {
                           <img src={fullUrl} className="w-full h-full object-cover opacity-80" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className={`text-[11px] font-bold truncate ${isSelected ? 'text-primary' : 'text-slate-700'}`}>{content.title || content.name}</h4>
+                          <h4 className={`text-[11px] font-bold truncate ${isSelected ? 'text-primary' : 'text-slate-700 dark:text-slate-300'}`}>{content.title || content.name}</h4>
                           <p className="text-[9px] text-slate-400 uppercase font-medium">{content.type}</p>
                         </div>
-                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary' : 'border-slate-300'}`}>
-                          {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary' : 'border-slate-300 dark:border-slate-600'}`}>
+                          {isSelected && <div className="w-1.5 h-1.5 bg-white dark:bg-slate-900 rounded-full" />}
                         </div>
                       </div>
                     );
@@ -1041,11 +1041,11 @@ export const ScreenSync = () => {
               </div>
 
               {/* 6. Action Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-2">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 mt-2">
                 <Button
                   variant="outline"
                   onClick={() => setEditingGroup(null)}
-                  className="font-medium text-slate-600"
+                  className="font-medium text-slate-600 dark:text-slate-400"
                 >
                   Anulează
                 </Button>
@@ -1063,13 +1063,13 @@ export const ScreenSync = () => {
         <Dialog open={!!deleteGroupId} onOpenChange={() => setDeleteGroupId(null)}>
           <DialogContent className="sm:max-w-[420px]">
             <DialogHeader>
-              <DialogTitle className="text-lg font-bold text-slate-800">Confirmare Ștergere</DialogTitle>
+              <DialogTitle className="text-lg font-bold text-slate-800 dark:text-slate-200">Confirmare Ștergere</DialogTitle>
             </DialogHeader>
             <div className="py-4">
-              <p className="text-slate-600">Sigur dorești să oprești sincronizarea pentru acest grup?</p>
+              <p className="text-slate-600 dark:text-slate-400">Sigur dorești să oprești sincronizarea pentru acest grup?</p>
               <p className="text-sm text-slate-400 mt-2">Ecranele vor fi decuplate și vor funcționa independent.</p>
             </div>
-            <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
+            <div className="flex justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
               <Button variant="outline" onClick={() => setDeleteGroupId(null)}>Anulează</Button>
               <Button
                 onClick={() => handleUnsync(deleteGroupId)}

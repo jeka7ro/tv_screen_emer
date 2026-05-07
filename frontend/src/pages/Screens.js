@@ -337,11 +337,11 @@ export const Screens = () => {
         <div className="flex flex-col gap-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-slate-800 mb-2">
+              <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-200 mb-2">
                 Ecrane
                 <span className="ml-3 inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-full bg-brand-600 text-white text-lg font-bold align-middle">{screens.length}</span>
               </h1>
-              <p className="text-slate-500">Gestionează ecranele digitale și conținutul lor</p>
+              <p className="text-slate-500 dark:text-slate-400">Gestionează ecranele digitale și conținutul lor</p>
             </div>
             {isAdmin() && (
               <Dialog open={showDialog} onOpenChange={(open) => {
@@ -349,7 +349,7 @@ export const Screens = () => {
                 if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
-                  <Button className="btn-red px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[44px]">
+                  <Button className="btn-primary px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[44px]">
                     <Plus className="w-5 h-5 mr-2" />
                     Adaugă ecran
                   </Button>
@@ -432,7 +432,7 @@ export const Screens = () => {
                           required
                           data-testid="screen-slug-input"
                         />
-                        <p className="text-xs text-slate-500 mt-1">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                           ⚡ Recomandare: Folosește 2-3 caractere (ex: c1, tv1, s2) pentru link foarte scurt pe TV
                         </p>
                       </div>
@@ -478,7 +478,7 @@ export const Screens = () => {
                         <Button
                           type="button"
                           onClick={() => setShowDialog(false)}
-                          className="bg-white text-slate-700 border border-slate-300 rounded-full px-6 py-2.5 font-medium hover:bg-slate-50 transition-colors"
+                          className="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 rounded-full px-6 py-2.5 font-medium hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-800/50 transition-colors"
                         >
                           Anulează
                         </Button>
@@ -491,7 +491,7 @@ export const Screens = () => {
           </div>
 
           {/* Filters Row */}
-          <div className="flex flex-wrap items-center gap-4 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+          <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 ml-2">Brand:</span>
               <div className="flex gap-2">
@@ -505,7 +505,7 @@ export const Screens = () => {
                       className={`relative group transition-all duration-200 ${isActive ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                       title={`${brand.name} (${count})`}
                     >
-                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${isActive ? 'border-brand-500' : 'border-slate-100'}`}>
+                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white dark:bg-slate-900 shadow-sm border ${isActive ? 'border-brand-500' : 'border-slate-100 dark:border-slate-800'}`}>
                         {brand.logo_url ? (
                           <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
                         ) : (
@@ -532,9 +532,9 @@ export const Screens = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-2">Oraș:</span>
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-2">Oraș:</span>
               <Select value={cityFilter} onValueChange={(val) => { setCityFilter(val); setLocationFilter('all'); }}>
-                <SelectTrigger className="w-[160px] h-9 text-sm bg-slate-50 border-slate-100 rounded-full">
+                <SelectTrigger className="w-[160px] h-9 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 rounded-full">
                   <SelectValue placeholder="Toate orașele" />
                 </SelectTrigger>
                 <SelectContent>
@@ -546,10 +546,10 @@ export const Screens = () => {
               </Select>
             </div>
 
-            <div className="flex items-center gap-2 border-l border-slate-100 pl-4">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Locație:</span>
+            <div className="flex items-center gap-2 border-l border-slate-100 dark:border-slate-800 pl-4">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Locație:</span>
               <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-[180px] h-9 text-sm bg-slate-50 border-slate-100 rounded-full">
+                <SelectTrigger className="w-[180px] h-9 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 rounded-full">
                   <SelectValue placeholder="Toate locațiile" />
                 </SelectTrigger>
                 <SelectContent>
@@ -561,13 +561,13 @@ export const Screens = () => {
               </Select>
             </div>
 
-            <div className="flex items-center gap-2 border-l border-slate-100 pl-4">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="flex items-center gap-2 border-l border-slate-100 dark:border-slate-800 pl-4">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <RotateCw className="w-3.5 h-3.5 inline mr-1" />
                 Rotație:
               </span>
               <Select value={rotationFilter} onValueChange={setRotationFilter}>
-                <SelectTrigger className="w-[130px] h-9 text-sm bg-slate-50 border-slate-100 rounded-full">
+                <SelectTrigger className="w-[130px] h-9 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 rounded-full">
                   <SelectValue placeholder="Toate" />
                 </SelectTrigger>
                 <SelectContent>
@@ -582,27 +582,27 @@ export const Screens = () => {
 
             <div className="flex-1"></div>
 
-            <div className="bg-slate-100 p-1 rounded-2xl flex border border-slate-200">
+            <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl flex border border-slate-200 dark:border-slate-700">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-900 text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-900 text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
               >
                 <ListIcon className="w-4 h-4" />
               </button>
             </div>
             {viewMode === 'grid' && (
-              <div className="bg-slate-100 p-1 rounded-2xl flex border border-slate-200 gap-0.5">
+              <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl flex border border-slate-200 dark:border-slate-700 gap-0.5">
                 {[['sm', 'S'], ['md', 'M'], ['lg', 'L']].map(([size, label]) => (
                   <button
                     key={size}
                     onClick={() => { setGridSize(size); localStorage.setItem('screens_grid_size', size); }}
-                    className={`px-2 py-1 rounded-2xl text-[10px] font-bold transition-all ${gridSize === size ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`px-2 py-1 rounded-2xl text-[10px] font-bold transition-all ${gridSize === size ? 'bg-white dark:bg-slate-900 text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
                   >
                     {label}
                   </button>
@@ -615,25 +615,25 @@ export const Screens = () => {
         {filteredScreens.length === 0 ? (
           <div className="glass-card p-12 text-center" data-testid="no-screens">
             <Tv className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">
+            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
               Niciun ecran găsit
             </h3>
-            <p className="text-slate-500 mb-6">
+            <p className="text-slate-500 dark:text-slate-400 mb-6">
               Încearcă să schimbi filtrele sau adaugă un ecran nou
             </p>
           </div>
         ) : viewMode === 'list' ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-bold text-slate-500">
+              <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-xs uppercase font-bold text-slate-500 dark:text-slate-400">
                   <tr>
                     <th className="px-6 py-4 w-10">
                       <input
                         type="checkbox"
                         checked={filteredScreens.length > 0 && selectedScreens.length === filteredScreens.length}
                         onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500"
                       />
                     </th>
                     <th className="px-6 py-4">Status</th>
@@ -654,7 +654,7 @@ export const Screens = () => {
                             type="checkbox"
                             checked={selectedScreens.includes(screen.id)}
                             onChange={() => toggleSelectScreen(screen.id)}
-                            className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                            className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500"
                           />
                         </td>
                         <td className="px-6 py-4">
@@ -673,25 +673,25 @@ export const Screens = () => {
                                 <span className="text-[10px] font-bold text-brand-600 uppercase">{getBrand(screen.logo_brand_id).name}</span>
                               </div>
                             )}
-                            <span className="font-semibold text-slate-800">{screen.name}</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{screen.name}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col text-xs">
-                            <span className="text-slate-700 font-medium">{location?.city || 'Oraș necunoscut'}</span>
-                            <span className="text-slate-500">{location?.name || 'Locație necunoscută'}</span>
+                            <span className="text-slate-700 dark:text-slate-300 font-medium">{location?.city || 'Oraș necunoscut'}</span>
+                            <span className="text-slate-500 dark:text-slate-400">{location?.name || 'Locație necunoscută'}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col text-xs">
-                            <span className="text-slate-700 font-medium">{screen.created_by_name || 'System'}</span>
+                            <span className="text-slate-700 dark:text-slate-300 font-medium">{screen.created_by_name || 'System'}</span>
                             <span className="text-slate-400">
                               {screen.created_at ? new Date(screen.created_at).toLocaleDateString('ro-RO') : '-'}
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <code className="bg-slate-100 px-2 py-0.5 rounded text-slate-600 text-[11px] font-mono">
+                          <code className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 text-[11px] font-mono">
                             /{screen.slug}
                           </code>
                         </td>
@@ -706,14 +706,14 @@ export const Screens = () => {
                                 }
                                 setShowSimulation(true);
                               }}
-                              className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-blue-600 shadow-sm hover:shadow"
+                              className="p-2 hover:bg-white dark:bg-slate-900 border border-transparent hover:border-slate-200 dark:border-slate-700 rounded-full transition-all text-slate-500 dark:text-slate-400 hover:text-blue-600 shadow-sm hover:shadow"
                               title="Simulare"
                             >
                               <Monitor className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleShowLink(screen)}
-                              className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-brand-600 shadow-sm hover:shadow"
+                              className="p-2 hover:bg-white dark:bg-slate-900 border border-transparent hover:border-slate-200 dark:border-slate-700 rounded-full transition-all text-slate-500 dark:text-slate-400 hover:text-brand-600 shadow-sm hover:shadow"
                               title="Link TV"
                             >
                               <LinkIcon className="w-4 h-4" />
@@ -722,14 +722,14 @@ export const Screens = () => {
                               <>
                                 <Link
                                   to={`/screens/${screen.id}/design`}
-                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-brand-600 shadow-sm hover:shadow"
+                                  className="p-2 hover:bg-white dark:bg-slate-900 border border-transparent hover:border-slate-200 dark:border-slate-700 rounded-full transition-all text-slate-500 dark:text-slate-400 hover:text-brand-600 shadow-sm hover:shadow"
                                   title="Design / Conținut"
                                 >
                                   <Settings className="w-4 h-4" />
                                 </Link>
                                 <button
                                   onClick={() => handleEdit(screen)}
-                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-brand-600 shadow-sm hover:shadow"
+                                  className="p-2 hover:bg-white dark:bg-slate-900 border border-transparent hover:border-slate-200 dark:border-slate-700 rounded-full transition-all text-slate-500 dark:text-slate-400 hover:text-brand-600 shadow-sm hover:shadow"
                                   title="Editează"
                                 >
                                   <Edit className="w-4 h-4" />
@@ -758,9 +758,9 @@ export const Screens = () => {
               <div key={locationId}>
                 {/* Location Header */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm">
+                  <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
                     <MapPin className="w-4 h-4 text-brand-500" />
-                    <span className="text-sm font-bold text-slate-700">{getLocationName(locationId)}</span>
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{getLocationName(locationId)}</span>
                     <span className="text-[10px] font-bold text-white bg-brand-500 px-2 py-0.5 rounded-full">{locationScreens.length}</span>
                   </div>
                   <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
@@ -775,20 +775,20 @@ export const Screens = () => {
                             type="checkbox"
                             checked={selectedScreens.includes(screen.id)}
                             onChange={() => toggleSelectScreen(screen.id)}
-                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
+                            className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 shrink-0"
                           />
                           {getBrand(screen.logo_brand_id) && getBrand(screen.logo_brand_id).logo_url && (
                             <img src={getBrand(screen.logo_brand_id).logo_url} alt={getBrand(screen.logo_brand_id).name} title={getBrand(screen.logo_brand_id).name} className="w-5 h-5 object-contain shrink-0" />
                           )}
-                          <h3 className="text-sm font-semibold text-slate-800 truncate" title={screen.name}>{screen.name}</h3>
+                          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate" title={screen.name}>{screen.name}</h3>
                         </div>
                         <div className="flex gap-1 shrink-0">
                           {isAdmin() && (
                             <>
-                              <Link to={`/screens/${screen.id}/design`} className="p-1.5 hover:bg-white/80 rounded-full text-slate-400 hover:text-brand-600" title="Configurează">
+                              <Link to={`/screens/${screen.id}/design`} className="p-1.5 hover:bg-white/80 dark:bg-slate-900/80 rounded-full text-slate-400 hover:text-brand-600" title="Configurează">
                                 <Settings className="w-3.5 h-3.5" />
                               </Link>
-                              <button onClick={() => handleEdit(screen)} className="p-1.5 hover:bg-white/80 rounded-full text-slate-400 hover:text-brand-600" title="Editează">
+                              <button onClick={() => handleEdit(screen)} className="p-1.5 hover:bg-white/80 dark:bg-slate-900/80 rounded-full text-slate-400 hover:text-brand-600" title="Editează">
                                 <Edit className="w-3.5 h-3.5" />
                               </button>
                             </>
@@ -800,7 +800,7 @@ export const Screens = () => {
                       <ScreenThumbnail screen={screen} thumbData={thumbnails[screen.slug]} thumbLoading={thumbnailsLoading} />
 
                       {/* Info bar: status · location · slug · rotation · resolution */}
-                      <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 mb-2 px-1">
+                      <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 dark:text-slate-400 mb-2 px-1">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-black uppercase tracking-wider ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-700' : 'bg-brand-100 text-brand-700'}`} style={screen.status === 'online' ? { boxShadow: '0 0 6px 1px rgba(16, 185, 129, 0.3)' } : { boxShadow: '0 0 6px 1px rgba(239, 68, 68, 0.3)' }}>
                           <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-brand-500'}`}></div>
                           {screen.status === 'online' ? 'ONLINE' : 'OFFLINE'}
@@ -875,7 +875,7 @@ export const Screens = () => {
                     value={shortUrl}
                     readOnly
                     onClick={(e) => e.target.select()}
-                    className="text-2xl font-bold text-center bg-white border-2 border-brand-200 rounded-2xl py-4 cursor-pointer"
+                    className="text-2xl font-bold text-center bg-white dark:bg-slate-900 border-2 border-brand-200 rounded-2xl py-4 cursor-pointer"
                     data-testid="short-url-input"
                   />
                 </div>
@@ -901,23 +901,23 @@ export const Screens = () => {
                 </p>
               </div>
 
-              <div className="bg-white/40 rounded-2xl p-6 text-center">
+              <div className="bg-white/40 dark:bg-slate-900/40 rounded-2xl p-6 text-center">
                 <Label className="text-base font-semibold mb-4 block">📱 QR Code</Label>
-                <div className="bg-white p-4 rounded-2xl inline-block">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl inline-block">
                   <img
                     src={generateQRCode(shortUrl || selectedScreenForLink.slug)}
                     alt="QR Code"
                     className="w-64 h-64"
                   />
                 </div>
-                <p className="text-xs text-slate-500 mt-4">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-4">
                   Scanează cu telefonul → Trimite link la TV
                 </p>
               </div>
 
               <div className="glass-card p-4">
-                <h3 className="font-semibold text-slate-800 mb-3">📺 Instrucțiuni TV:</h3>
-                <ol className="space-y-2 text-sm text-slate-600">
+                <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-3">📺 Instrucțiuni TV:</h3>
+                <ol className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
                   <li className="flex gap-2">
                     <span className="font-bold text-brand-600">1.</span>
                     <span>Deschide browser-ul pe TV (Chrome, Firefox, Safari)</span>

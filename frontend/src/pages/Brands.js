@@ -132,8 +132,8 @@ export const Brands = () => {
             <div className="animate-in" data-testid="brands-page">
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-4xl font-bold text-slate-800 mb-2">Branduri</h1>
-                        <p className="text-slate-500">Gestionează identitatea brandurilor tale</p>
+                        <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-200 mb-2">Branduri</h1>
+                        <p className="text-slate-500 dark:text-slate-400">Gestionează identitatea brandurilor tale</p>
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -145,7 +145,7 @@ export const Brands = () => {
                                 if (!open) resetForm();
                             }}>
                                 <DialogTrigger asChild>
-                                    <Button className="btn-red px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]" data-testid="add-brand-button">
+                                    <Button className="btn-primary px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]" data-testid="add-brand-button">
                                         <Plus className="w-4 h-4 mr-2" />
                                         Adăugă brand
                                     </Button>
@@ -181,16 +181,16 @@ export const Brands = () => {
                                                 <Label>Logo</Label>
                                                 {/* Preview */}
                                                 {formData.logo_url && (
-                                                    <div className="mb-2 flex items-center gap-3 p-2 border border-slate-200 rounded-2xl bg-slate-50">
+                                                    <div className="mb-2 flex items-center gap-3 p-2 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
                                                         <img src={formData.logo_url} alt="Logo preview" className="w-12 h-12 object-contain rounded" />
-                                                        <span className="text-xs text-slate-500 truncate flex-1">{formData.logo_url.split('/').pop()}</span>
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400 truncate flex-1">{formData.logo_url.split('/').pop()}</span>
                                                     </div>
                                                 )}
                                                 {/* Upload button */}
                                                 <div className="flex gap-2">
-                                                    <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-300 rounded-full cursor-pointer hover:border-brand-400 hover:bg-brand-50/30 transition-all">
+                                                    <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-full cursor-pointer hover:border-brand-400 hover:bg-brand-50/30 transition-all">
                                                         <Upload className="w-4 h-4 text-slate-400" />
-                                                        <span className="text-sm text-slate-500">{uploadingLogo ? 'Se încarcă...' : 'Încarcă logo (PNG, JPG, SVG)'}</span>
+                                                        <span className="text-sm text-slate-500 dark:text-slate-400">{uploadingLogo ? 'Se încarcă...' : 'Încarcă logo (PNG, JPG, SVG)'}</span>
                                                         <input
                                                             type="file"
                                                             accept="image/*"
@@ -235,18 +235,18 @@ export const Brands = () => {
                 {brands.length === 0 ? (
                     <div className="glass-card p-12 text-center" data-testid="no-brands">
                         <Building2 className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-slate-800 mb-2">
+                        <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
                             Niciun brand
                         </h3>
-                        <p className="text-slate-500 mb-6">
+                        <p className="text-slate-500 dark:text-slate-400 mb-6">
                             Începe prin a adăuga primul brand
                         </p>
                     </div>
                 ) : viewMode === 'list' ? (
                     <div className="glass-card overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm text-slate-600">
-                                <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-semibold text-slate-500">
+                            <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                                <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">
                                     <tr>
                                         <th className="px-6 py-4">Brand</th>
                                         <th className="px-6 py-4">Adresă</th>
@@ -256,9 +256,9 @@ export const Brands = () => {
                                 <tbody className="divide-y divide-slate-100">
                                     {brands.map((brand) => (
                                         <tr key={brand.id} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-slate-800">
+                                            <td className="px-6 py-4 font-medium text-slate-800 dark:text-slate-200">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-2xl border border-slate-100 flex items-center justify-center bg-white overflow-hidden shadow-sm">
+                                                    <div className="w-10 h-10 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center justify-center bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
                                                         {brand.logo_url ? (
                                                             <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain" />
                                                         ) : (
@@ -304,7 +304,7 @@ export const Brands = () => {
                         {brands.map((brand) => (
                             <div key={brand.id} className="glass-card p-6 relative group border border-white/40 shadow-sm" data-testid={`brand-card-${brand.id}`}>
                                 <div className="flex items-start justify-between mb-4">
-                                    <div className="w-16 h-16 rounded-2xl border border-slate-200 flex items-center justify-center bg-white overflow-hidden shadow-inner">
+                                    <div className="w-16 h-16 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-center bg-white dark:bg-slate-900 overflow-hidden shadow-inner">
                                         {brand.logo_url ? (
                                             <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain" />
                                         ) : (
@@ -330,13 +330,13 @@ export const Brands = () => {
                                         </div>
                                     )}
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-800 mb-1 leading-tight">
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-1 leading-tight">
                                     {brand.name}
                                 </h3>
-                                <p className="text-sm text-slate-600 mb-4 line-clamp-2 min-h-[40px]">
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-2 min-h-[40px]">
                                     {brand.address || 'Nicio adresă specificată'}
                                 </p>
-                                <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                                     <span className="text-xs font-medium text-slate-400">
                                         Creat pe {new Date(brand.created_at).toLocaleDateString()}
                                     </span>

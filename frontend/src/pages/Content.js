@@ -638,7 +638,7 @@ export const Content = () => {
       return (
         <div className="glass-card p-12 text-center" data-testid="no-content">
           <FileImage className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <p className="text-slate-500 font-medium">Niciun fișier găsit aici.</p>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">Niciun fișier găsit aici.</p>
           <p className="text-sm text-slate-400 mt-1">Încarcă un fișier nou sau alege alt folder.</p>
         </div>
       );
@@ -650,18 +650,18 @@ export const Content = () => {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-slate-200/60 bg-gradient-to-r from-slate-50 to-slate-100/50">
+                <tr className="border-b border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 dark:from-slate-900 to-slate-100/50">
                   <th className="p-4 text-left w-10">
                     <input
                       type="checkbox"
                       checked={selectedItems.size === items.length && items.length > 0}
                       onChange={() => toggleSelectAll(items)}
-                      className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                      className="rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500"
                     />
                   </th>
-                  <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Previzualizare</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Previzualizare</th>
                   <th
-                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
+                    className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
                     onClick={() => requestSort('title')}
                   >
                     <div className="flex items-center gap-1">
@@ -669,9 +669,9 @@ export const Content = () => {
                       {sortConfig.key === 'title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </div>
                   </th>
-                  <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Branduri</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Branduri</th>
                   <th
-                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
+                    className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
                     onClick={() => requestSort('type')}
                   >
                     <div className="flex items-center gap-1">
@@ -680,7 +680,7 @@ export const Content = () => {
                     </div>
                   </th>
                   <th
-                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
+                    className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
                     onClick={() => requestSort('file_size')}
                   >
                     <div className="flex items-center gap-1">
@@ -688,9 +688,9 @@ export const Content = () => {
                       {sortConfig.key === 'file_size' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </div>
                   </th>
-                  <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Creat de</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Creat de</th>
                   <th
-                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
+                    className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
                     onClick={() => requestSort('created_at')}
                   >
                     <div className="flex items-center gap-1">
@@ -698,7 +698,7 @@ export const Content = () => {
                       {sortConfig.key === 'created_at' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </div>
                   </th>
-                  <th className="p-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Acțiuni</th>
+                  <th className="p-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acțiuni</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -722,7 +722,7 @@ export const Content = () => {
                     </td>
                     <td className="p-4 w-24">
                       <div
-                        className="w-16 h-10 rounded-2xl overflow-hidden bg-slate-100 cursor-pointer flex items-center justify-center border border-slate-200 shadow-sm transition-transform hover:scale-105"
+                        className="w-16 h-10 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-sm transition-transform hover:scale-105"
                         onClick={() => handlePreview(item)}
                       >
                         {item.type === 'youtube' ? (
@@ -750,7 +750,7 @@ export const Content = () => {
                           <div className="relative w-full h-full">
                             <img src={getFileUrl(item.thumbnail_url)} className="w-full h-full object-cover" alt="" />
                             <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                              <div className="bg-white/30 backdrop-blur-sm rounded-full p-0.5">
+                              <div className="bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm rounded-full p-0.5">
                                 <Film className="w-3 h-3 text-white" />
                               </div>
                             </div>
@@ -768,7 +768,7 @@ export const Content = () => {
                       </div>
                     </td>
                     <td className="p-4">
-                      <div className="text-sm font-semibold text-slate-800">{item.title}</div>
+                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">{item.title}</div>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
@@ -777,7 +777,7 @@ export const Content = () => {
                             getBrandLogo(brandName) && (
                               <div
                                 key={idx}
-                                className="w-8 h-8 rounded border border-slate-100 bg-white overflow-hidden shrink-0 shadow-sm ring-2 ring-white"
+                                className="w-8 h-8 rounded border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-sm ring-2 ring-white"
                                 title={brandName}
                               >
                                 <img src={getBrandLogo(brandName)} className="w-full h-full object-contain" alt="" />
@@ -785,7 +785,7 @@ export const Content = () => {
                             )
                           ))}
                           {Array.isArray(item.brand) && item.brand.length > 3 && (
-                            <div className="w-8 h-8 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500 ring-2 ring-white">
+                            <div className="w-8 h-8 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 ring-2 ring-white">
                               +{item.brand.length - 3}
                             </div>
                           )}
@@ -802,31 +802,31 @@ export const Content = () => {
                     <td className="p-4">
                       <div className="flex items-center gap-1.5">
                         {item.type === 'image' && <FileImage className="w-3.5 h-3.5 text-brand-500" />}
-                        {item.type === 'video' && <Film className="w-3.5 h-3.5 text-slate-500" />}
+                        {item.type === 'video' && <Film className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />}
                         {item.type === 'youtube' && <Film className="w-3.5 h-3.5 text-brand-600" />}
                         {item.type === 'web' && <LayoutGrid className="w-3.5 h-3.5 text-brand-600" />}
                         <span className={`text-xs font-medium capitalize ${item.type === 'youtube' ? 'text-brand-600' :
-                          item.type === 'web' ? 'text-brand-600' : 'text-slate-600'
+                          item.type === 'web' ? 'text-brand-600' : 'text-slate-600 dark:text-slate-400'
                           }`}>
                           {item.type}
                         </span>
                       </div>
                     </td>
-                    <td className="p-4 text-slate-600 text-sm">
+                    <td className="p-4 text-slate-600 dark:text-slate-400 text-sm">
                       {item.file_size ? `${(item.file_size / 1024 / 1024).toFixed(2)} MB` : '-'}
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col text-xs">
-                        <span className="text-slate-700 font-medium">{item.created_by_name || 'System'}</span>
+                        <span className="text-slate-700 dark:text-slate-300 font-medium">{item.created_by_name || 'System'}</span>
                       </div>
                     </td>
-                    <td className="p-4 text-slate-600 text-sm">
+                    <td className="p-4 text-slate-600 dark:text-slate-400 text-sm">
                       {item.created_at ? new Date(item.created_at).toLocaleDateString('ro-RO') : '-'}
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-slate-100" onClick={() => handlePreview(item)}>
-                          <Eye className="w-4 h-4 text-slate-500" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800" onClick={() => handlePreview(item)}>
+                          <Eye className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                         </Button>
                         {isAdmin() && (
                           <>
@@ -854,7 +854,7 @@ export const Content = () => {
                 ))}
                 {/* Padding Empty Rows */}
                 {Array.from({ length: Math.max(0, 10 - items.length) }).map((_, i) => (
-                  <tr key={`empty-${i}`} className="h-[65px] bg-white/40">
+                  <tr key={`empty-${i}`} className="h-[65px] bg-white/40 dark:bg-slate-900/40">
                     <td colSpan={9} className="p-4"></td>
                   </tr>
                 ))}
@@ -892,7 +892,7 @@ export const Content = () => {
                     getBrandLogo(brandName) ? (
                       <div
                         key={idx}
-                        className="w-6 h-6 rounded border border-slate-100 bg-white overflow-hidden shrink-0 shadow-sm ring-2 ring-white z-10"
+                        className="w-6 h-6 rounded border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-sm ring-2 ring-white z-10"
                         title={brandName}
                       >
                         <img src={getBrandLogo(brandName)} className="w-full h-full object-contain p-0.5" alt="" />
@@ -907,7 +907,7 @@ export const Content = () => {
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Fără Brand</span>
                   )}
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 leading-tight truncate pr-2" title={item.title}>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 leading-tight truncate pr-2" title={item.title}>
                   {item.title}
                 </h3>
               </div>
@@ -925,7 +925,7 @@ export const Content = () => {
             </div>
 
             {/* Media Area - Aspect Video */}
-            <div className="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden mb-5 border border-slate-200 shadow-inner group-inner">
+            <div className="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden mb-5 border border-slate-200 dark:border-slate-700 shadow-inner group-inner">
               {item.type === 'youtube' ? (
                 <div className="w-full h-full bg-brand-900 flex items-center justify-center">
                   <Film className="w-16 h-16 text-white/80" />
@@ -960,11 +960,11 @@ export const Content = () => {
                     />
                   ) : (
                     <div className="w-full h-full bg-slate-900 flex items-center justify-center">
-                      <Film className="w-12 h-12 text-slate-500" />
+                      <Film className="w-12 h-12 text-slate-500 dark:text-slate-400" />
                     </div>
                   )}
                   <div className="absolute inset-0 bg-black/20 flex items-center justify-center cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}>
-                    <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 border border-white/30 group-hover:scale-110 transition-transform">
+                    <div className="bg-white/20 dark:bg-slate-900/20 backdrop-blur-sm rounded-full p-3 border border-white/30 group-hover:scale-110 transition-transform">
                       <Film className="w-6 h-6 text-white" />
                     </div>
                   </div>
@@ -981,21 +981,21 @@ export const Content = () => {
             {/* Metadata Section */}
             <div className="flex-1 space-y-3 mb-5">
               <div className="flex items-center gap-3">
-                <div className="bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-2xl border border-slate-100 dark:border-slate-800">
                   {item.type === 'video' || item.type === 'youtube' ? <Film className="w-4 h-4 text-slate-400" /> : <FileImage className="w-4 h-4 text-slate-400" />}
                 </div>
                 <div>
                   <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Tip</p>
-                  <p className="text-sm font-bold text-slate-700 capitalize">{item.type}</p>
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300 capitalize">{item.type}</p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+              <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
                 <div className="flex flex-col">
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Categorie</span>
                   <span className="text-xs font-bold text-brand-600 capitalize">{item.category}</span>
                 </div>
-                <span className="text-[10px] text-slate-400 font-bold uppercase bg-white px-2 py-0.5 rounded-md border border-slate-100">
+                <span className="text-[10px] text-slate-400 font-bold uppercase bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-100 dark:border-slate-800">
                   {(item.file_size / 1024 / 1024).toFixed(1)} MB
                 </span>
               </div>
@@ -1057,11 +1057,11 @@ export const Content = () => {
           {isAdmin() && selectedItems.size > 0 && (
             <div className="mb-6 bg-gradient-to-r from-brand-600 to-rose-600 text-white px-6 py-4 rounded-2xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
               <span className="font-semibold text-lg">{selectedItems.size} selectate</span>
-              <div className="h-6 w-px bg-white/30"></div>
+              <div className="h-6 w-px bg-white/30 dark:bg-slate-900/30"></div>
 
               {/* Move to Folder Dropdown */}
               <Select onValueChange={(value) => handleBulkMoveToFolder(value === 'none' ? null : value)}>
-                <SelectTrigger className="w-48 bg-white text-slate-900 border-none shadow-sm font-medium hover:bg-slate-50">
+                <SelectTrigger className="w-48 bg-white dark:bg-slate-900 text-slate-900 border-none shadow-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-800/50">
                   <SelectValue placeholder="Mută în folder..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -1069,7 +1069,7 @@ export const Content = () => {
                   {folders.map(folder => (
                     <SelectItem key={folder.id} value={folder.id}>
                       <div className="flex items-center gap-2">
-                        <Folder className="w-4 h-4" style={{ color: folder.color }} />
+                        <Folder className="w-4 h-4" style={{ color: (folder.color === '#ef4444' || folder.color === '#dc2626') ? 'var(--brand-500)' : folder.color }} />
                         {folder.name}
                       </div>
                     </SelectItem>
@@ -1079,7 +1079,7 @@ export const Content = () => {
 
               <button
                 onClick={handleBulkDelete}
-                className="ml-auto bg-white text-rose-600 hover:bg-slate-100 px-4 py-2 rounded-full font-semibold flex items-center gap-2 transition-colors shadow-sm"
+                className="ml-auto bg-white dark:bg-slate-900 text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 px-4 py-2 rounded-full font-semibold flex items-center gap-2 transition-colors shadow-sm"
               >
                 <Trash2 className="w-4 h-4" />
                 Șterge
@@ -1109,7 +1109,7 @@ export const Content = () => {
         />
 
         {/* Header Row: Search (Left) + Actions (Right) */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm mb-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm mb-6">
           <div className="w-full sm:w-64 shrink-0">
              <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -1120,7 +1120,7 @@ export const Content = () => {
                     setSearchQuery(e.target.value);
                     setCurrentPage(1);
                   }}
-                  className="pl-9 bg-slate-50 border-slate-200 rounded-2xl h-10 text-sm w-full"
+                  className="pl-9 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 rounded-2xl h-10 text-sm w-full"
                 />
              </div>
           </div>
@@ -1142,7 +1142,7 @@ export const Content = () => {
                       className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                       title={`${brand.name} (${count})`}
                     >
-                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${selectedBrands.includes(brand.name) ? 'border-brand-500' : 'border-slate-100'}`}>
+                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white dark:bg-slate-900 shadow-sm border ${selectedBrands.includes(brand.name) ? 'border-brand-500' : 'border-slate-100 dark:border-slate-800'}`}>
                         {brand.logo_url ? (
                           <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
                         ) : (
@@ -1167,22 +1167,22 @@ export const Content = () => {
                 </button>
               )}
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-3 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-2xl overflow-x-auto custom-scrollbar shrink-0">
-                  <div className="flex items-center gap-1.5 border-r border-slate-200 pr-3">
+                <div className="flex items-center gap-3 px-3 py-1.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 rounded-2xl overflow-x-auto custom-scrollbar shrink-0">
+                  <div className="flex items-center gap-1.5 border-r border-slate-200 dark:border-slate-700 pr-3">
                     <Switch
                       checked={showImages}
                       onCheckedChange={setShowImages}
                       className="data-[state=checked]:bg-brand-500 scale-75"
                     />
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Imagini</span>
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Imagini</span>
                   </div>
-                  <div className="flex items-center gap-1.5 border-r border-slate-200 pr-3">
+                  <div className="flex items-center gap-1.5 border-r border-slate-200 dark:border-slate-700 pr-3">
                     <Switch
                       checked={showVideos}
                       onCheckedChange={setShowVideos}
                       className="data-[state=checked]:bg-brand-500 scale-75"
                     />
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Video</span>
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Video</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Switch
@@ -1190,24 +1190,24 @@ export const Content = () => {
                       onCheckedChange={setVideoAutoplay}
                       className="data-[state=checked]:bg-brand-500 scale-75"
                     />
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Autoplay</span>
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">Autoplay</span>
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
               {/* View Mode Switcher */}
-              <div className="bg-slate-100 p-1 rounded-2xl flex border border-slate-200">
+              <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl flex border border-slate-200 dark:border-slate-700">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-900 text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
                   title="Grid View"
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-900 text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
                   title="List View"
                 >
                   <ListIcon className="w-4 h-4" />
@@ -1221,7 +1221,7 @@ export const Content = () => {
                   if (!open) resetForm();
                 }}>
                   <DialogTrigger asChild>
-                    <Button className="btn-red px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]">
+                    <Button className="btn-primary px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]">
                       <Plus className="w-4 h-4 mr-2" />
                       Adăugă conținut
                     </Button>
@@ -1237,7 +1237,7 @@ export const Content = () => {
                           value={formData.folder_id || 'none'}
                           onValueChange={(val) => setFormData({ ...formData, folder_id: val })}
                         >
-                          <SelectTrigger className="w-full bg-white border-slate-200">
+                          <SelectTrigger className="w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
                             <SelectValue placeholder="Selectează folder" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1250,7 +1250,7 @@ export const Content = () => {
                                       <img src={folder.icon} className="w-full h-full object-cover" alt="" />
                                     </div>
                                   ) : (
-                                    <Folder className="w-4 h-4" style={{ color: folder.color }} fill={folder.color} />
+                                    <Folder className="w-4 h-4" style={{ color: (folder.color === '#ef4444' || folder.color === '#dc2626') ? 'var(--brand-500)' : folder.color }} fill={(folder.color === '#ef4444' || folder.color === '#dc2626') ? 'var(--brand-500)' : folder.color} />
                                   )}
                                   {folder.name}
                                 </div>
@@ -1262,7 +1262,7 @@ export const Content = () => {
 
                       <div className="space-y-2">
                         <Label className="text-sm font-semibold">Branduri (Clienți)</Label>
-                        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl max-h-40 overflow-y-auto">
+                        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl max-h-40 overflow-y-auto">
                           {brands.length === 0 ? (
                             <p className="text-xs text-slate-400 italic">Niciun brand creat încă.</p>
                           ) : (
@@ -1271,7 +1271,7 @@ export const Content = () => {
                                 key={brand.id}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border cursor-pointer transition-all ${formData.brand?.includes(brand.name)
                                   ? 'bg-brand-50 border-brand-200 text-brand-700 shadow-sm'
-                                  : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:border-slate-600'
                                   }`}
                               >
                                 <input
@@ -1287,7 +1287,7 @@ export const Content = () => {
                                   }}
                                 />
                                 {brand.logo_url && (
-                                  <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0 border border-slate-100 bg-white">
+                                  <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0 border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                                     <img src={brand.logo_url} className="w-full h-full object-contain" alt="" />
                                   </div>
                                 )}
@@ -1316,8 +1316,8 @@ export const Content = () => {
                                 <div className="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mb-3">
                                   <Upload className="w-8 h-8 text-brand-600" />
                                 </div>
-                                <p className="text-sm font-semibold text-slate-700 mb-1">Click pentru a selecta fișiere</p>
-                                <p className="text-xs text-slate-500">sau drag & drop aici</p>
+                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Click pentru a selecta fișiere</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">sau drag & drop aici</p>
                               </div>
                               <Label
                                 htmlFor="file-upload-input"
@@ -1420,14 +1420,14 @@ export const Content = () => {
 
             {/* Right Column (Content) */}
             <div className="flex-1 flex flex-col w-full min-w-0">
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden flex flex-col h-full">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 overflow-hidden flex flex-col h-full">
                 {/* Header */}
-                <div className="px-4 py-3 flex items-center justify-between border-b border-slate-100/80 shrink-0">
+                <div className="px-4 py-3 flex items-center justify-between border-b border-slate-100/80 dark:border-slate-800/80 shrink-0">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 bg-gradient-to-br from-brand-500 to-rose-600 rounded-2xl flex items-center justify-center shadow-sm">
                       <FileImage className="w-3.5 h-3.5 text-white" />
                     </div>
-                    <h3 className="font-bold text-sm text-slate-800 tracking-tight">Bibliotecă Conținut</h3>
+                    <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 tracking-tight">Bibliotecă Conținut</h3>
                   </div>
                 </div>
 
@@ -1436,12 +1436,12 @@ export const Content = () => {
                 </div>
 
                 {/* Pagination Footer */}
-                <div className="px-4 py-3 border-t border-slate-200/60 flex items-center justify-between bg-gradient-to-r from-slate-50/80 to-white shrink-0">
+                <div className="px-4 py-3 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between bg-gradient-to-r from-slate-50/80 to-white dark:to-slate-900 shrink-0">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-400 font-medium">Afișează:</span>
                       <select
-                        className="text-xs border border-slate-200 rounded-2xl px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all cursor-pointer font-medium text-slate-600 shadow-sm"
+                        className="text-xs border border-slate-200 dark:border-slate-700 rounded-2xl px-2 py-1.5 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all cursor-pointer font-medium text-slate-600 dark:text-slate-400 shadow-sm"
                         value={itemsPerPage}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1460,7 +1460,7 @@ export const Content = () => {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs text-slate-400 font-medium">Pagina</span>
-                      <span className="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-2xl px-2.5 py-1 shadow-sm min-w-[2.5rem] text-center">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-2.5 py-1 shadow-sm min-w-[2.5rem] text-center">
                         {currentPage}
                       </span>
                       <span className="text-xs text-slate-400 font-medium">din {totalPages}</span>
@@ -1473,7 +1473,7 @@ export const Content = () => {
                       size="sm"
                       disabled={currentPage === 1}
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      className="h-8 px-3 text-xs font-semibold rounded-full border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-40"
+                      className="h-8 px-3 text-xs font-semibold rounded-full border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-800/50 hover:border-slate-300 dark:border-slate-600 transition-all disabled:opacity-40"
                     >
                       ← Anterior
                     </Button>
@@ -1482,7 +1482,7 @@ export const Content = () => {
                       size="sm"
                       disabled={currentPage === totalPages}
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      className="h-8 px-3 text-xs font-semibold rounded-full border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all disabled:opacity-40"
+                      className="h-8 px-3 text-xs font-semibold rounded-full border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-800/50 hover:border-slate-300 dark:border-slate-600 transition-all disabled:opacity-40"
                     >
                       Următor →
                     </Button>
@@ -1513,7 +1513,7 @@ export const Content = () => {
                   ) : previewItem.type === 'web' ? (
                     <iframe
                       src={previewItem.file_url}
-                      className="w-full h-[500px] border-0 bg-white"
+                      className="w-full h-[500px] border-0 bg-white dark:bg-slate-900"
                     />
                   ) : previewItem.type === 'image' ? (
                     <img
@@ -1535,23 +1535,23 @@ export const Content = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 p-4 bg-white/40 rounded-2xl">
+                <div className="grid grid-cols-2 gap-4 p-4 bg-white/40 dark:bg-slate-900/40 rounded-2xl">
                   <div>
-                    <p className="text-xs text-slate-500 mb-1">Tip</p>
-                    <p className="text-sm font-medium text-slate-800 capitalize">{previewItem.type}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Tip</p>
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 capitalize">{previewItem.type}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 mb-1">Categorie</p>
-                    <p className="text-sm font-medium text-slate-800 capitalize">{previewItem.category}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Categorie</p>
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 capitalize">{previewItem.category}</p>
                   </div>
                   {previewItem.type === 'image' && (
                     <div>
-                      <p className="text-xs text-slate-500 mb-1">Durată afișare</p>
-                      <p className="text-sm font-medium text-slate-800">{previewItem.duration} secunde</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Durată afișare</p>
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{previewItem.duration} secunde</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-xs text-slate-500 mb-1">URL fișier</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">URL fișier</p>
                     <a
                       href={getFileUrl(previewItem.file_url)}
                       rel="noopener noreferrer"
@@ -1585,7 +1585,7 @@ export const Content = () => {
 
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">Branduri (Clienți)</Label>
-                <div className="flex flex-wrap gap-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl max-h-48 overflow-y-auto">
+                <div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl max-h-48 overflow-y-auto">
                   {brands.length === 0 ? (
                     <p className="text-xs text-slate-400 italic">Niciun brand creat încă.</p>
                   ) : (
@@ -1594,7 +1594,7 @@ export const Content = () => {
                         key={brand.id}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border cursor-pointer transition-all ${editBrands.includes(brand.name)
                           ? 'bg-brand-50 border-brand-200 text-brand-700 shadow-sm'
-                          : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:border-slate-600'
                           }`}
                       >
                         <input
@@ -1609,7 +1609,7 @@ export const Content = () => {
                           }}
                         />
                         {brand.logo_url && (
-                          <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0 border border-slate-100 bg-white">
+                          <div className="w-4 h-4 rounded-sm overflow-hidden shrink-0 border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                             <img src={brand.logo_url} className="w-full h-full object-contain" alt="" />
                           </div>
                         )}
@@ -1651,13 +1651,13 @@ export const Content = () => {
             </DialogHeader>
 
             <div className="py-4 space-y-4">
-              <p className="text-slate-600">
+              <p className="text-slate-600 dark:text-slate-400">
                 Sigur dorești să ștergi fișierul <span className="font-semibold text-slate-900">"{itemToDelete?.title}"</span>?
               </p>
 
               {isCheckingUsage ? (
                 <div className="flex items-center gap-2 text-slate-400 italic py-2">
-                  <div className="h-4 w-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
+                  <div className="h-4 w-4 border-2 border-slate-300 dark:border-slate-600 border-t-slate-600 rounded-full animate-spin" />
                   Se verifică utilizarea...
                 </div>
               ) : (
@@ -1667,7 +1667,7 @@ export const Content = () => {
                       <span className="text-xl">⚠️</span>
                       <p>Fișierul rulează pe ecrane sau este într-un playlist!</p>
                     </div>
-                    <div className="space-y-2 text-sm text-rose-700 bg-white/50 p-3 rounded-xl border border-rose-100">
+                    <div className="space-y-2 text-sm text-rose-700 bg-white/50 dark:bg-slate-900/50 p-3 rounded-xl border border-rose-100">
                       {usageInfo.screens.length > 0 && (
                         <div>
                           <span className="font-bold">Ecrane:</span> {usageInfo.screens.map(s => s.name).join(', ')}
@@ -1706,7 +1706,7 @@ export const Content = () => {
                 variant="destructive"
                 onClick={handleConfirmDelete}
                 disabled={isCheckingUsage || isDeleting || ((usageInfo.screens.length > 0 || usageInfo.playlists.length > 0) && !forceDeleteConfirm)}
-                className={`transition-all ${((usageInfo.screens.length > 0 || usageInfo.playlists.length > 0) && !forceDeleteConfirm) ? 'bg-slate-300 hover:bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-rose-600 hover:bg-rose-700'}`}
+                className={`transition-all ${((usageInfo.screens.length > 0 || usageInfo.playlists.length > 0) && !forceDeleteConfirm) ? 'bg-slate-300 hover:bg-slate-300 text-slate-500 dark:text-slate-400 cursor-not-allowed' : 'bg-rose-600 hover:bg-rose-700'}`}
               >
                 {isDeleting ? 'Se șterge...' : 'Șterge Fișierul'}
               </Button>

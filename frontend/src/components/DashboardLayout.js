@@ -106,8 +106,8 @@ export const DashboardLayout = ({ children }) => {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-[17rem]'} h-screen fixed left-0 top-0 z-50 flex flex-col transition-all duration-300 ease-in-out border-r border-slate-200/80 bg-slate-50`} data-testid="sidebar">
-        <div className={`px-2 border-b border-slate-200/80 bg-white relative flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} h-[72px] shrink-0`}>
+      <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-[17rem]'} h-screen fixed left-0 top-0 z-50 flex flex-col transition-all duration-300 ease-in-out border-r border-slate-200/80 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/50`} data-testid="sidebar">
+        <div className={`px-2 border-b border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 relative flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} h-[72px] shrink-0`}>
           <Link to="/dashboard" className="flex items-center overflow-hidden w-full">
             {isSidebarCollapsed ? (
               <img
@@ -129,7 +129,7 @@ export const DashboardLayout = ({ children }) => {
           </Link>
           <button
              onClick={toggleSidebar}
-             className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white border border-slate-300 rounded-full flex items-center justify-center shadow-md text-slate-500 hover:bg-[#00ced1] hover:border-[#00ced1] hover:text-white transition-colors z-[60]"
+             className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-full flex items-center justify-center shadow-md text-slate-500 dark:text-slate-400 hover:bg-[#00ced1] hover:border-[#00ced1] hover:text-white transition-colors z-[60]"
           >
              {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
@@ -189,9 +189,9 @@ export const DashboardLayout = ({ children }) => {
           )}
         </nav>
 
-        <div className="p-4 border-t border-slate-200/80">
+        <div className="p-4 border-t border-slate-200/80 dark:border-slate-700/80">
           {!isSidebarCollapsed && (
-            <div className="rounded-2xl bg-white/70 backdrop-blur-sm border border-slate-200/80 p-4 mb-3 animate-in fade-in duration-300 shadow-sm">
+            <div className="rounded-2xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border border-slate-200/80 dark:border-slate-700/80 p-4 mb-3 animate-in fade-in duration-300 shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <p className="text-xs text-slate-400">Autentificat ca</p>
                 {isSuperAdmin() && (
@@ -205,7 +205,7 @@ export const DashboardLayout = ({ children }) => {
                   </span>
                 )}
               </div>
-              <p className="text-sm font-medium text-slate-800 truncate">{user?.full_name}</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{user?.full_name}</p>
               <p className="text-xs text-slate-400 truncate">{user?.email}</p>
             </div>
           )}
@@ -224,7 +224,7 @@ export const DashboardLayout = ({ children }) => {
       {/* Main Content */}
       <div className={`${isSidebarCollapsed ? 'ml-20' : 'ml-[17rem]'} flex-1 min-h-screen transition-all duration-300 ease-in-out flex flex-col`}>
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-40 px-8 h-[72px] flex items-center border-b border-slate-200/80 shrink-0 bg-white/80 backdrop-blur-md">
+        <header className="sticky top-0 z-40 px-8 h-[72px] flex items-center border-b border-slate-200/80 dark:border-slate-700/80 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
           <div className="flex items-center justify-end gap-4 w-full">
             {/* Date & Time */}
             <div className="flex items-center gap-3 text-right">
@@ -233,7 +233,7 @@ export const DashboardLayout = ({ children }) => {
                   <Calendar className="w-3 h-3" />
                   <span>{formatDate(currentTime)}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-sm font-bold text-slate-700 justify-end">
+                <div className="flex items-center gap-1.5 text-sm font-bold text-slate-700 dark:text-slate-300 justify-end">
                   <Clock className="w-3.5 h-3.5 text-brand-400" />
                   <span className="tabular-nums">{formatTime(currentTime)}</span>
                 </div>
@@ -242,15 +242,15 @@ export const DashboardLayout = ({ children }) => {
 
             {/* Version / Build Date – only for Super Admin */}
             {isSuperAdmin() && (
-              <div className="px-2 py-1 rounded-md bg-slate-100 border border-slate-200">
-                <span className="text-[10px] font-mono text-slate-500">
+              <div className="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
                   v{process.env.REACT_APP_BUILD_DATE || 'DEV'}
                 </span>
               </div>
             )}
 
             {/* Theme Controls */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/50 border border-slate-200 rounded-full shadow-sm">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/50 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm">
               <button
                 onClick={() => setTheme('red')}
                 className={`w-5 h-5 rounded-full bg-rose-500 transition-all ${theme === 'red' ? 'ring-2 ring-offset-1 ring-rose-500 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
@@ -269,7 +269,7 @@ export const DashboardLayout = ({ children }) => {
               <div className="w-px h-4 bg-slate-300 mx-1" />
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
-                className="p-1 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+                className="p-1 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 transition-colors"
                 title="Toggle Dark Mode"
               >
                 {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -282,7 +282,7 @@ export const DashboardLayout = ({ children }) => {
             {/* User Info */}
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className="text-sm font-semibold text-slate-700 leading-tight">{user?.full_name}</p>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 leading-tight">{user?.full_name}</p>
                 <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
                   {isSuperAdmin() ? 'Admin' : user?.role === 'manager' ? 'Manager' : 'Admin'}
                 </p>
@@ -296,10 +296,10 @@ export const DashboardLayout = ({ children }) => {
                       : `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000'}${user.avatar_url}`
                   }
                   alt={user?.full_name}
-                  className="w-9 h-9 rounded-full object-cover border-2 border-slate-200 shadow-sm"
+                  className="w-9 h-9 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700 shadow-sm"
                 />
               ) : (
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white text-xs font-bold shadow-sm border-2 border-slate-200">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white text-xs font-bold shadow-sm border-2 border-slate-200 dark:border-slate-700">
                   {getInitials(user?.full_name)}
                 </div>
               )}

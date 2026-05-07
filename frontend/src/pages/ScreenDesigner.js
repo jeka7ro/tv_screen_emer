@@ -17,7 +17,7 @@ const TemplateIcon = ({ template, isSelected }) => {
   const zones = template.zones || [];
 
   return (
-    <div className={`relative w-14 h-9 rounded border-2 overflow-hidden ${isSelected ? 'border-indigo-400 bg-indigo-50' : 'border-slate-300 bg-slate-50'}`}>
+    <div className={`relative w-14 h-9 rounded border-2 overflow-hidden ${isSelected ? 'border-indigo-400 bg-indigo-50' : 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50'}`}>
       {zones.map((zone, i) => {
         const colors = ['bg-indigo-400', 'bg-purple-400', 'bg-teal-400'];
         const selectedColors = ['bg-indigo-500', 'bg-purple-500', 'bg-teal-500'];
@@ -501,10 +501,10 @@ export const ScreenDesigner = () => {
               <ArrowLeft className="w-5 h-5 text-indigo-600" />
             </Button>
             <div>
-              <h1 className="text-4xl font-bold text-slate-800 mb-2">
+              <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-200 mb-2">
                 Design Ecran: {screen?.name}
               </h1>
-              <p className="text-slate-500">Configurează template-ul și zonele</p>
+              <p className="text-slate-500 dark:text-slate-400">Configurează template-ul și zonele</p>
             </div>
           </div>
           <div className="flex gap-3">
@@ -528,7 +528,7 @@ export const ScreenDesigner = () => {
             )}
 
             {/* Rotation Control */}
-            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
               <RotateCw className="w-4 h-4 text-indigo-500" />
               <Select
                 value={screen?.orientation || '0'}
@@ -582,7 +582,7 @@ export const ScreenDesigner = () => {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-stretch mb-4">
           {/* Template Selector */}
           <div className="glass-card p-5 lg:col-span-2">
-            <h2 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
               <Monitor className="w-4 h-4 text-indigo-500" />
               Template Ecran
             </h2>
@@ -596,7 +596,7 @@ export const ScreenDesigner = () => {
                     disabled={!isAdmin()}
                     className={`relative p-2 rounded-2xl border-2 transition-all text-left group ${isSelected
                       ? 'border-indigo-400 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-md shadow-indigo-100/50 ring-2 ring-indigo-200/50'
-                      : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30 hover:shadow-sm'
+                      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-indigo-200 hover:bg-indigo-50/30 hover:shadow-sm'
                       }`}
                   >
                     {isSelected && (
@@ -607,7 +607,7 @@ export const ScreenDesigner = () => {
                     <div className="flex justify-center mb-1.5">
                       <TemplateIcon template={template} isSelected={isSelected} />
                     </div>
-                    <p className={`text-[10px] font-bold text-center leading-tight ${isSelected ? 'text-indigo-700' : 'text-slate-700'}`}>
+                    <p className={`text-[10px] font-bold text-center leading-tight ${isSelected ? 'text-indigo-700' : 'text-slate-700 dark:text-slate-300'}`}>
                       {template.name}
                     </p>
                     <p className={`text-[8px] text-center mt-0.5 leading-tight ${isSelected ? 'text-indigo-500' : 'text-slate-400'}`}>
@@ -621,49 +621,49 @@ export const ScreenDesigner = () => {
 
           {/* Efecte Vizuale - Compact Icons */}
           <div className="glass-card p-5 flex flex-col lg:col-span-3">
-            <h2 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-500" />
               Efecte Vizuale
             </h2>
             <div className="grid grid-cols-4 gap-1.5">
-              <button onClick={() => setEnableParallax(!enableParallax)} title="Parallax" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableParallax ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/30'}`}>
+              <button onClick={() => setEnableParallax(!enableParallax)} title="Parallax" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableParallax ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-indigo-200 hover:bg-indigo-50/30'}`}>
                 <Layers className={`w-4 h-4 ${enableParallax ? 'text-indigo-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableParallax ? 'text-indigo-600' : 'text-slate-400'}`}>Parallax</span>
               </button>
-              <button onClick={() => setEnableSteam(!enableSteam)} title="Steam" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableSteam ? 'border-teal-400 bg-teal-50 shadow-sm' : 'border-slate-200 bg-white hover:border-teal-200 hover:bg-teal-50/30'}`}>
+              <button onClick={() => setEnableSteam(!enableSteam)} title="Steam" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableSteam ? 'border-teal-400 bg-teal-50 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-teal-200 hover:bg-teal-50/30'}`}>
                 <Wind className={`w-4 h-4 ${enableSteam ? 'text-teal-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableSteam ? 'text-teal-600' : 'text-slate-400'}`}>Steam</span>
               </button>
-              <button onClick={() => { if (!enableLogo) { setEnableLogo(true); setActiveEffectConfig('logo'); } else if (activeEffectConfig === 'logo') { setEnableLogo(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('logo'); } }} title="Logo Overlay" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableLogo ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/30'}`}>
+              <button onClick={() => { if (!enableLogo) { setEnableLogo(true); setActiveEffectConfig('logo'); } else if (activeEffectConfig === 'logo') { setEnableLogo(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('logo'); } }} title="Logo Overlay" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableLogo ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-amber-200 hover:bg-amber-50/30'}`}>
                 <Image className={`w-4 h-4 ${enableLogo ? 'text-amber-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableLogo ? 'text-amber-600' : 'text-slate-400'}`}>Logo</span>
               </button>
-              <button onClick={() => { if (!enableValentineHearts) { setEnableValentineHearts(true); setActiveEffectConfig('hearts'); } else if (activeEffectConfig === 'hearts') { setEnableValentineHearts(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('hearts'); } }} title="Valentine Hearts" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableValentineHearts ? 'border-pink-400 bg-pink-50 shadow-sm' : 'border-slate-200 bg-white hover:border-pink-200 hover:bg-pink-50/30'}`}>
+              <button onClick={() => { if (!enableValentineHearts) { setEnableValentineHearts(true); setActiveEffectConfig('hearts'); } else if (activeEffectConfig === 'hearts') { setEnableValentineHearts(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('hearts'); } }} title="Valentine Hearts" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableValentineHearts ? 'border-pink-400 bg-pink-50 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-pink-200 hover:bg-pink-50/30'}`}>
                 <Heart className={`w-4 h-4 ${enableValentineHearts ? 'text-pink-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableValentineHearts ? 'text-pink-600' : 'text-slate-400'}`}>Hearts</span>
               </button>
-              <button onClick={() => { if (!enableCustomText) { setEnableCustomText(true); setActiveEffectConfig('text'); } else if (activeEffectConfig === 'text') { setEnableCustomText(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('text'); } }} title="Custom Text" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableCustomText ? 'border-blue-400 bg-blue-50 shadow-sm' : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/30'}`}>
+              <button onClick={() => { if (!enableCustomText) { setEnableCustomText(true); setActiveEffectConfig('text'); } else if (activeEffectConfig === 'text') { setEnableCustomText(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('text'); } }} title="Custom Text" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableCustomText ? 'border-blue-400 bg-blue-50 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-blue-200 hover:bg-blue-50/30'}`}>
                 <Type className={`w-4 h-4 ${enableCustomText ? 'text-blue-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableCustomText ? 'text-blue-600' : 'text-slate-400'}`}>Text</span>
               </button>
-              <button onClick={() => { if (!enableHappyHourTimer) { setEnableHappyHourTimer(true); setActiveEffectConfig('timer'); } else if (activeEffectConfig === 'timer') { setEnableHappyHourTimer(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('timer'); } }} title="Happy Hour Timer" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableHappyHourTimer ? 'border-purple-400 bg-purple-50 shadow-sm' : 'border-slate-200 bg-white hover:border-purple-200 hover:bg-purple-50/30'}`}>
+              <button onClick={() => { if (!enableHappyHourTimer) { setEnableHappyHourTimer(true); setActiveEffectConfig('timer'); } else if (activeEffectConfig === 'timer') { setEnableHappyHourTimer(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('timer'); } }} title="Happy Hour Timer" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableHappyHourTimer ? 'border-purple-400 bg-purple-50 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-purple-200 hover:bg-purple-50/30'}`}>
                 <Clock className={`w-4 h-4 ${enableHappyHourTimer ? 'text-purple-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableHappyHourTimer ? 'text-purple-600' : 'text-slate-400'}`}>Timer</span>
               </button>
-              <button onClick={() => { if (!enableSakura) { setEnableSakura(true); setActiveEffectConfig('sakura'); } else if (activeEffectConfig === 'sakura') { setEnableSakura(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('sakura'); } }} title="Sakura Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableSakura ? 'border-rose-400 bg-rose-50 shadow-sm' : 'border-slate-200 bg-white hover:border-rose-200 hover:bg-rose-50/30'}`}>
+              <button onClick={() => { if (!enableSakura) { setEnableSakura(true); setActiveEffectConfig('sakura'); } else if (activeEffectConfig === 'sakura') { setEnableSakura(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('sakura'); } }} title="Sakura Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableSakura ? 'border-rose-400 bg-rose-50 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-rose-200 hover:bg-rose-50/30'}`}>
                 <Flower2 className={`w-4 h-4 ${enableSakura ? 'text-rose-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableSakura ? 'text-rose-600' : 'text-slate-400'}`}>Sakura</span>
               </button>
-              <button onClick={() => { if (!enableSnow) { setEnableSnow(true); setActiveEffectConfig('snow'); } else if (activeEffectConfig === 'snow') { setEnableSnow(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('snow'); } }} title="Snow Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableSnow ? 'border-sky-400 bg-sky-50 shadow-sm' : 'border-slate-200 bg-white hover:border-sky-200 hover:bg-sky-50/30'}`}>
+              <button onClick={() => { if (!enableSnow) { setEnableSnow(true); setActiveEffectConfig('snow'); } else if (activeEffectConfig === 'snow') { setEnableSnow(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('snow'); } }} title="Snow Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableSnow ? 'border-sky-400 bg-sky-50 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-sky-200 hover:bg-sky-50/30'}`}>
                 <Snowflake className={`w-4 h-4 ${enableSnow ? 'text-sky-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableSnow ? 'text-sky-600' : 'text-slate-400'}`}>Zăpadă</span>
               </button>
             </div>
             {enableLogo && activeEffectConfig === 'logo' && (
-              <div className="space-y-2 border-t border-slate-100 pt-2">
+              <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-2">
                 <div className="flex gap-1.5 overflow-x-auto">
                   {brandsWithLogo.map(brand => (
-                    <button key={brand.id} onClick={() => setSelectedBrandId(brand.id)} className={`flex-shrink-0 w-8 h-8 rounded-full border-2 overflow-hidden p-0.5 transition-all ${selectedBrandId === brand.id ? 'border-amber-400 shadow-sm ring-1 ring-amber-200' : 'border-slate-200 hover:border-amber-300'}`} title={brand.name}>
+                    <button key={brand.id} onClick={() => setSelectedBrandId(brand.id)} className={`flex-shrink-0 w-8 h-8 rounded-full border-2 overflow-hidden p-0.5 transition-all ${selectedBrandId === brand.id ? 'border-amber-400 shadow-sm ring-1 ring-amber-200' : 'border-slate-200 dark:border-slate-700 hover:border-amber-300'}`} title={brand.name}>
                       <img src={getFileUrl(brand.logo_url)} className="w-full h-full object-contain" alt={brand.name} />
                     </button>
                   ))}
@@ -671,29 +671,29 @@ export const ScreenDesigner = () => {
                 <div className="flex items-center gap-3">
                   <div className="grid grid-cols-3 gap-0.5 w-14">
                     {['top-left', 'top-center', 'top-right', 'center-left', 'center', 'center-right', 'bottom-left', 'bottom-center', 'bottom-right'].map(pos => (
-                      <button key={pos} onClick={() => setLogoPosition(pos)} className={`w-4 h-3.5 rounded-sm border transition-all ${logoPosition === pos ? 'bg-amber-400 border-amber-500' : 'bg-slate-100 border-slate-200 hover:bg-amber-100'}`} title={pos} />
+                      <button key={pos} onClick={() => setLogoPosition(pos)} className={`w-4 h-3.5 rounded-sm border transition-all ${logoPosition === pos ? 'bg-amber-400 border-amber-500' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-amber-100'}`} title={pos} />
                     ))}
                   </div>
                   <div className="flex gap-0.5 flex-1">
                     {[{ k: 'sm', l: 'S' }, { k: 'md', l: 'M' }, { k: 'lg', l: 'L' }, { k: 'xl', l: 'XL' }].map(s => (
-                      <button key={s.k} onClick={() => setLogoSize(s.k)} className={`flex-1 py-0.5 rounded text-[9px] font-bold border transition-all ${logoSize === s.k ? 'bg-amber-400 text-white border-amber-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-amber-50'}`}>{s.l}</button>
+                      <button key={s.k} onClick={() => setLogoSize(s.k)} className={`flex-1 py-0.5 rounded text-[9px] font-bold border transition-all ${logoSize === s.k ? 'bg-amber-400 text-white border-amber-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-amber-50'}`}>{s.l}</button>
                     ))}
                   </div>
                 </div>
               </div>
             )}
             {enableValentineHearts && activeEffectConfig === 'hearts' && (
-              <div className="space-y-2 border-t border-slate-100 pt-2 mt-2">
+              <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
                 <div className="text-[9px] font-semibold text-pink-600 mb-1">Intensitate Inimioare</div>
                 <div className="flex gap-0.5">
                   {[{ k: 'low', l: 'Puțin' }, { k: 'medium', l: 'Mediu' }, { k: 'high', l: 'Mult' }].map(s => (
-                    <button key={s.k} onClick={() => setValentineHeartsIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${valentineHeartsIntensity === s.k ? 'bg-pink-400 text-white border-pink-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-pink-50'}`}>{s.l}</button>
+                    <button key={s.k} onClick={() => setValentineHeartsIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${valentineHeartsIntensity === s.k ? 'bg-pink-400 text-white border-pink-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-pink-50'}`}>{s.l}</button>
                   ))}
                 </div>
               </div>
             )}
             {enableCustomText && activeEffectConfig === 'text' && (
-              <div className="space-y-2 border-t border-slate-100 pt-2 mt-2">
+              <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
                 <input
                   type="text"
                   value={customTextContent}
@@ -704,12 +704,12 @@ export const ScreenDesigner = () => {
                 <div className="flex items-center gap-2">
                   <div className="grid grid-cols-3 gap-0.5 w-14">
                     {['top-left', 'top-center', 'top-right', 'center-left', 'center', 'center-right', 'bottom-left', 'bottom-center', 'bottom-right'].map(pos => (
-                      <button key={pos} onClick={() => setCustomTextPosition(pos)} className={`w-4 h-3.5 rounded-sm border transition-all ${customTextPosition === pos ? 'bg-blue-400 border-blue-500' : 'bg-slate-100 border-slate-200 hover:bg-blue-100'}`} title={pos} />
+                      <button key={pos} onClick={() => setCustomTextPosition(pos)} className={`w-4 h-3.5 rounded-sm border transition-all ${customTextPosition === pos ? 'bg-blue-400 border-blue-500' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-blue-100'}`} title={pos} />
                     ))}
                   </div>
                   <div className="flex gap-0.5 flex-1">
                     {[{ k: 'sm', l: 'S' }, { k: 'md', l: 'M' }, { k: 'lg', l: 'L' }, { k: 'xl', l: 'XL' }].map(s => (
-                      <button key={s.k} onClick={() => setCustomTextSize(s.k)} className={`flex-1 py-0.5 rounded text-[9px] font-bold border transition-all ${customTextSize === s.k ? 'bg-blue-400 text-white border-blue-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-blue-50'}`}>{s.l}</button>
+                      <button key={s.k} onClick={() => setCustomTextSize(s.k)} className={`flex-1 py-0.5 rounded text-[9px] font-bold border transition-all ${customTextSize === s.k ? 'bg-blue-400 text-white border-blue-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-blue-50'}`}>{s.l}</button>
                     ))}
                   </div>
                 </div>
@@ -731,7 +731,7 @@ export const ScreenDesigner = () => {
               </div>
             )}
             {enableHappyHourTimer && activeEffectConfig === 'timer' && (
-              <div className="space-y-2 border-t border-slate-100 pt-2 mt-2">
+              <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
                 <div className="text-[9px] font-semibold text-purple-600 mb-1">Durată (hh:mm:ss)</div>
                 <div className="flex gap-2 items-center">
                   <input
@@ -744,7 +744,7 @@ export const ScreenDesigner = () => {
                   />
                   <div className="grid grid-cols-3 gap-0.5 w-14">
                     {['top-left', 'top-center', 'top-right', 'center-left', 'center', 'center-right', 'bottom-left', 'bottom-center', 'bottom-right'].map(pos => (
-                      <button key={pos} onClick={() => setHappyHourTimerPosition(pos)} className={`w-4 h-3.5 rounded-sm border transition-all ${happyHourTimerPosition === pos ? 'bg-purple-400 border-purple-500' : 'bg-slate-100 border-slate-200 hover:bg-purple-100'}`} title={pos} />
+                      <button key={pos} onClick={() => setHappyHourTimerPosition(pos)} className={`w-4 h-3.5 rounded-sm border transition-all ${happyHourTimerPosition === pos ? 'bg-purple-400 border-purple-500' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-purple-100'}`} title={pos} />
                     ))}
                   </div>
                   <button
@@ -767,21 +767,21 @@ export const ScreenDesigner = () => {
               </div>
             )}
             {enableSakura && activeEffectConfig === 'sakura' && (
-              <div className="space-y-2 border-t border-slate-100 pt-2 mt-2">
+              <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
                 <div className="text-[9px] font-semibold text-rose-600 mb-1">Intensitate Sakura</div>
                 <div className="flex gap-0.5">
                   {[{ k: 'low', l: 'Puțin' }, { k: 'medium', l: 'Mediu' }, { k: 'high', l: 'Mult' }].map(s => (
-                    <button key={s.k} onClick={() => setSakuraIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${sakuraIntensity === s.k ? 'bg-rose-400 text-white border-rose-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-rose-50'}`}>{s.l}</button>
+                    <button key={s.k} onClick={() => setSakuraIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${sakuraIntensity === s.k ? 'bg-rose-400 text-white border-rose-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-rose-50'}`}>{s.l}</button>
                   ))}
                 </div>
               </div>
             )}
             {enableSnow && activeEffectConfig === 'snow' && (
-              <div className="space-y-2 border-t border-slate-100 pt-2 mt-2">
+              <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
                 <div className="text-[9px] font-semibold text-sky-600 mb-1">Intensitate Zăpadă</div>
                 <div className="flex gap-0.5">
                   {[{ k: 'low', l: 'Puțin' }, { k: 'medium', l: 'Mediu' }, { k: 'high', l: 'Mult' }].map(s => (
-                    <button key={s.k} onClick={() => setSnowIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${snowIntensity === s.k ? 'bg-sky-400 text-white border-sky-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-sky-50'}`}>{s.l}</button>
+                    <button key={s.k} onClick={() => setSnowIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${snowIntensity === s.k ? 'bg-sky-400 text-white border-sky-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-sky-50'}`}>{s.l}</button>
                   ))}
                 </div>
               </div>
@@ -794,11 +794,11 @@ export const ScreenDesigner = () => {
           <div className="lg:col-span-2">
             {/* Preview */}
             <div className="glass-card p-5 flex-1">
-              <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
                 <Eye className="w-5 h-5 text-indigo-500" />
                 Previzualizare
               </h2>
-              <div className={`bg-slate-100 rounded-2xl p-4 relative overflow-hidden shadow-inner border-2 border-slate-200 ${parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270 ? 'mx-auto' : ''}`}
+              <div className={`bg-slate-100 dark:bg-slate-800 rounded-2xl p-4 relative overflow-hidden shadow-inner border-2 border-slate-200 dark:border-slate-700 ${parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270 ? 'mx-auto' : ''}`}
                 style={{ aspectRatio: (parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270) ? '9/16' : '16/9', width: (parseInt(screen?.orientation || '0', 10) === 90 || parseInt(screen?.orientation || '0', 10) === 270) ? '56.25%' : '100%' }}>
                 {selectedTemplate?.zones.map(zone => {
                   const config = zoneConfigs.find(c => c.zone_id === zone.id);
@@ -1013,15 +1013,15 @@ export const ScreenDesigner = () => {
           <div className="flex flex-col gap-4">
             {/* Zone Configuration */}
             <div className="glass-card p-4 space-y-3 flex-1">
-              <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                 <Layers className="w-4 h-4 text-indigo-500" />
                 Configurare Zone
               </h2>
               {selectedTemplate?.zones.map((zone, index) => {
                 const config = zoneConfigs.find(c => c.zone_id === zone.id) || {};
                 return (
-                  <div key={zone.id} className="p-3 bg-white/40 rounded-2xl space-y-2">
-                    <h3 className="font-medium text-slate-800">{zone.name}</h3>
+                  <div key={zone.id} className="p-3 bg-white/40 dark:bg-slate-900/40 rounded-2xl space-y-2">
+                    <h3 className="font-medium text-slate-800 dark:text-slate-200">{zone.name}</h3>
                     <div>
                       <Label>Tip conținut</Label>
                       <Select
@@ -1065,11 +1065,11 @@ export const ScreenDesigner = () => {
                           if (!menu) return null;
                           return (
                             <div className="mt-2 p-3 bg-indigo-50/50 rounded-2xl text-xs space-y-1 border border-indigo-100">
-                              <div className="flex justify-between font-medium text-slate-700">
+                              <div className="flex justify-between font-medium text-slate-700 dark:text-slate-300">
                                 <span>Produse: {menu.selected_products?.length || 0}</span>
                                 <span>Categorii: {menu.selected_categories?.length || 0}</span>
                               </div>
-                              <div className="text-slate-500">
+                              <div className="text-slate-500 dark:text-slate-400">
                                 {menu.products_per_page} produse / pagină • {menu.page_duration}s
                               </div>
                             </div>
@@ -1103,7 +1103,7 @@ export const ScreenDesigner = () => {
                           if (!playlist) return null;
                           return (
                             <div className="mt-2 p-3 bg-indigo-50/50 rounded-2xl text-xs space-y-2 border border-indigo-100">
-                              <div className="font-medium text-slate-700">{playlist.items?.length || 0} elemente</div>
+                              <div className="font-medium text-slate-700 dark:text-slate-300">{playlist.items?.length || 0} elemente</div>
                               <div className="flex gap-1 overflow-hidden">
                                 {playlist.items?.slice(0, 4).map((item, idx) => {
                                   const contentItem = content.find(c => c.id === item.content_id);
@@ -1168,7 +1168,7 @@ export const ScreenDesigner = () => {
                           if (!item) return null;
                           return (
                             <div className="mt-2 text-xs">
-                              <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-200 group-hover:border-indigo-400 shadow-sm transition-all">
+                              <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 group-hover:border-indigo-400 shadow-sm transition-all">
                                 {item.type === 'image' ? (
                                   <img src={getFileUrl(item.file_url)} className="w-full h-full object-cover" alt={item.title} />
                                 ) : (
@@ -1300,7 +1300,7 @@ export const ScreenDesigner = () => {
                             {Array.from({ length: cols * rows }).map((_, idx) => {
                               const s = groupScreens[idx];
                               if (!s) {
-                                return <div key={idx} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl flex items-center justify-center text-slate-600 text-[10px] font-bold uppercase italic">Empty Slot</div>;
+                                return <div key={idx} className="bg-slate-800/50 border border-slate-700/50 rounded-2xl flex items-center justify-center text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase italic">Empty Slot</div>;
                               }
                               return (
                                 <div
@@ -1323,16 +1323,16 @@ export const ScreenDesigner = () => {
                           </div>
                         )}
                       </div>
-                      <div className="mt-6 flex items-center gap-6 text-slate-100/60 bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
+                      <div className="mt-6 flex items-center gap-6 text-slate-100/60 bg-white/5 dark:bg-slate-900/5 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
                         <div className="flex items-center gap-2">
                           <div className="w-4 h-4 rounded border-2 border-yellow-400 bg-yellow-400/20"></div>
                           <span className="text-xs font-bold uppercase tracking-widest text-white">Ecranul Curent</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded border-2 border-white/40 bg-white/5"></div>
+                          <div className="w-4 h-4 rounded border-2 border-white/40 bg-white/5 dark:bg-slate-900/5"></div>
                           <span className="text-xs font-bold uppercase tracking-widest text-white">Alte Ecrane în Grup</span>
                         </div>
-                        <div className="h-4 w-px bg-white/20 mx-2"></div>
+                        <div className="h-4 w-px bg-white/20 dark:bg-slate-900/20 mx-2"></div>
                         <p className="text-xs font-bold text-white uppercase tracking-tighter italic shadow-sm">
                           {useStorefront ? "Vedere Reală Locație (Simulare 3 TV)" : `Matrice Sincronizată (${cols}x${rows})`}
                         </p>
@@ -1345,12 +1345,12 @@ export const ScreenDesigner = () => {
                 return (
                   <div className="flex flex-wrap gap-4 justify-center">
                     {groupScreens.map((s, idx) => (
-                      <div key={s.id} className={`w-64 aspect-video bg-slate-100 rounded-2xl border-2 overflow-hidden relative ${s.id === screen.id ? 'border-yellow-400' : 'border-slate-200'}`}>
+                      <div key={s.id} className={`w-64 aspect-video bg-slate-100 dark:bg-slate-800 rounded-2xl border-2 overflow-hidden relative ${s.id === screen.id ? 'border-yellow-400' : 'border-slate-200 dark:border-slate-700'}`}>
                         <img src={previewImage} className="w-full h-full object-cover opacity-80" alt="Preview" />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                           <div className="text-white text-center">
                             <p className="font-bold">{s.name}</p>
-                            <span className="text-xs px-2 py-1 bg-white/20 rounded-full">
+                            <span className="text-xs px-2 py-1 bg-white/20 dark:bg-slate-900/20 rounded-full">
                               {screen.sync_type === 'cascade' ? `Offset: ${s.cascade_offset}` : 'Synced'}
                             </span>
                           </div>
@@ -1427,7 +1427,7 @@ export const ScreenDesigner = () => {
 
                     if (!previewUrl) {
                       return (
-                        <div className="w-full h-full flex items-center justify-center text-slate-500 bg-slate-900">
+                        <div className="w-full h-full flex items-center justify-center text-slate-500 dark:text-slate-400 bg-slate-900">
                           <div className="text-center">
                             <p className="text-xl font-bold mb-2">Niciun conținut selectat</p>
                             <p className="text-sm">Selectează o imagine sau video în Configurare Zone</p>
@@ -1479,7 +1479,7 @@ export const ScreenDesigner = () => {
                 </div>
               </div>
 
-              <p className="text-sm text-slate-500 text-center">
+              <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
                 * Aceasta este o simulare smart a conținutului selectat curent (fără a fi nevoie de salvare)
               </p>
             </div>

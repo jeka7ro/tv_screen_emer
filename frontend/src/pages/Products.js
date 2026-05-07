@@ -190,8 +190,8 @@ export const Products = () => {
       <div className="animate-in" data-testid="products-page">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">Produse per Locație</h1>
-            <p className="text-slate-500">Gestionează meniul și prețurile specifice fiecărui restaurant</p>
+            <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-200 mb-2">Produse per Locație</h1>
+            <p className="text-slate-500 dark:text-slate-400">Gestionează meniul și prețurile specifice fiecărui restaurant</p>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
@@ -223,10 +223,10 @@ export const Products = () => {
         {!selectedLocationId ? (
           <div className="glass-card p-12 text-center">
             <MapPin className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">
+            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
               Selectează o locație
             </h3>
-            <p className="text-slate-500">
+            <p className="text-slate-500 dark:text-slate-400">
               Prețurile și produsele diferă de la un restaurant la altul. Selectează locația dorită din meniul de sus.
             </p>
           </div>
@@ -237,7 +237,7 @@ export const Products = () => {
         ) : (
           <>
             {/* Actions Bar for the selected location */}
-            <div className="flex gap-3 mb-6 bg-white/50 p-3 rounded-2xl border border-white/60 shadow-sm backdrop-blur-sm">
+            <div className="flex gap-3 mb-6 bg-white/50 dark:bg-slate-900/50 p-3 rounded-2xl border border-white/60 shadow-sm backdrop-blur-sm">
               <Button
                 onClick={() => setShowSyncDialog(true)}
                 className="btn-primary bg-blue-600 hover:bg-blue-700 shadow-blue-200"
@@ -260,7 +260,7 @@ export const Products = () => {
                   <DialogHeader>
                     <DialogTitle>
                       {editingProduct ? 'Editează produsul' : 'Adaugă produs nou'}
-                      <span className="block text-xs font-normal text-slate-500 mt-1">
+                      <span className="block text-xs font-normal text-slate-500 dark:text-slate-400 mt-1">
                         Pentru: {selectedLocation?.name}
                       </span>
                     </DialogTitle>
@@ -310,13 +310,13 @@ export const Products = () => {
             {products.length === 0 ? (
               <div className="glass-card p-12 text-center">
                 <ShoppingBag className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-slate-800 mb-2">Niciun produs</h3>
-                <p className="text-slate-500 mb-6">Meniul pentru {selectedLocation?.name} este gol. Sincronizează cu IIKO sau adaugă manual.</p>
+                <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">Niciun produs</h3>
+                <p className="text-slate-500 dark:text-slate-400 mb-6">Meniul pentru {selectedLocation?.name} este gol. Sincronizează cu IIKO sau adaugă manual.</p>
               </div>
             ) : viewMode === 'list' ? (
               <div className="glass-card overflow-hidden">
-                <table className="w-full text-left text-sm text-slate-600">
-                  <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-semibold text-slate-500">
+                <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                  <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">
                     <tr>
                       <th className="px-6 py-4">Produs</th>
                       <th className="px-6 py-4">Categorie</th>
@@ -327,19 +327,19 @@ export const Products = () => {
                   <tbody className="divide-y divide-slate-100">
                     {products.map(product => (
                       <tr key={product.id} className="hover:bg-slate-50/50">
-                        <td className="px-6 py-4 font-medium text-slate-800">
+                        <td className="px-6 py-4 font-medium text-slate-800 dark:text-slate-200">
                            <div className="flex items-center gap-3">
                              {product.image_url ? (
                                <img src={product.image_url} className="w-10 h-10 object-cover rounded-full" onError={handleImageError} alt="img" />
                              ) : (
-                               <div className="bg-slate-100 p-2 rounded-full"><ShoppingBag className="w-5 h-5 text-slate-400" /></div>
+                               <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full"><ShoppingBag className="w-5 h-5 text-slate-400" /></div>
                              )}
                              {product.name}
                              {product.iiko_id && <span className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">IIKO</span>}
                            </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full">{categories.find(c => c.value === product.category)?.label || 'Altul'}</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100/50 px-2 py-1 rounded-full">{categories.find(c => c.value === product.category)?.label || 'Altul'}</span>
                         </td>
                         <td className="px-6 py-4 font-bold text-brand-600">{product.price} {product.currency}</td>
                         <td className="px-6 py-4 text-right">
@@ -358,15 +358,15 @@ export const Products = () => {
                     {product.image_url && (
                       <img src={product.image_url} alt={product.name} className="w-full h-40 object-cover rounded-2xl mb-4" onError={handleImageError} />
                     )}
-                    <h3 className="text-lg font-semibold text-slate-800 mb-1 flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-2">
                       {product.name}
                       {product.iiko_id && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">IIKO</span>}
                     </h3>
                     <div className="flex items-center justify-between mt-4">
                       <span className="text-2xl font-bold text-brand-600">{product.price} {product.currency}</span>
                       <div className="flex gap-1">
-                        <button onClick={() => handleEdit(product)} className="p-2 bg-slate-100 hover:bg-brand-50 rounded-full text-slate-600"><Edit className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(product.id)} className="p-2 bg-slate-100 hover:bg-rose-50 rounded-full text-slate-600"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => handleEdit(product)} className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-brand-50 rounded-full text-slate-600 dark:text-slate-400"><Edit className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(product.id)} className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 rounded-full text-slate-600 dark:text-slate-400"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </div>
                   </div>
@@ -401,8 +401,8 @@ export const Products = () => {
                       <span className="font-semibold text-white">Sincronizare în curs...</span>
                     </div>
                     <p className="text-xs text-white/70 mt-1 font-normal">Așteaptă, aducem sute de produse (durează câteva secunde).</p>
-                    <div className="absolute bottom-0 left-0 h-1 bg-white/30 w-full">
-                      <div className="h-full bg-white animate-pulse w-1/2 rounded-full mx-auto"></div>
+                    <div className="absolute bottom-0 left-0 h-1 bg-white/30 dark:bg-slate-900/30 w-full">
+                      <div className="h-full bg-white dark:bg-slate-900 animate-pulse w-1/2 rounded-full mx-auto"></div>
                     </div>
                   </div>
                 ) : 'Pornește Sincronizarea'}

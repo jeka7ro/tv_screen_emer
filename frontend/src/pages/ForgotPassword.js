@@ -34,10 +34,10 @@ export const ForgotPassword = () => {
                         </div>
                     </div>
 
-                    <h1 className="text-3xl font-bold text-center text-slate-800 mb-2">
+                    <h1 className="text-3xl font-bold text-center text-slate-800 dark:text-slate-200 mb-2">
                         Resetare Parolă
                     </h1>
-                    <p className="text-center text-slate-500 mb-8">
+                    <p className="text-center text-slate-500 dark:text-slate-400 mb-8">
                         Introduceți email-ul pentru a primi link-ul de resetare
                     </p>
 
@@ -64,7 +64,7 @@ export const ForgotPassword = () => {
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     <Mail className="w-4 h-4 inline mr-1" />
                                     Email
                                 </label>
@@ -99,7 +99,7 @@ export const ForgotPassword = () => {
                             <div className="text-center">
                                 <Link
                                     to="/login"
-                                    className="text-slate-500 hover:text-slate-700 font-medium text-sm flex items-center justify-center gap-1"
+                                    className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 font-medium text-sm flex items-center justify-center gap-1"
                                 >
                                     <ArrowLeft className="w-4 h-4" />
                                     Înapoi la Autentificare

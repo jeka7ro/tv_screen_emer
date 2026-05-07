@@ -12,7 +12,7 @@ export const BrandSelector = ({ brands, value, onValueChange, placeholder = "Sel
                 <SelectValue placeholder={placeholder}>
                     {selectedBrand && (
                         <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center bg-white overflow-hidden flex-shrink-0">
+                            <div className="w-6 h-6 rounded border border-slate-200 dark:border-slate-700 flex items-center justify-center bg-white dark:bg-slate-900 overflow-hidden flex-shrink-0">
                                 {selectedBrand.logo_url ? (
                                     <img
                                         src={selectedBrand.logo_url}
@@ -31,16 +31,16 @@ export const BrandSelector = ({ brands, value, onValueChange, placeholder = "Sel
             <SelectContent>
                 <SelectItem value="none">
                     <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center bg-slate-50 flex-shrink-0">
+                        <div className="w-6 h-6 rounded border border-slate-200 dark:border-slate-700 flex items-center justify-center bg-slate-50 dark:bg-slate-800/50 flex-shrink-0">
                             <Building2 className="w-3 h-3 text-slate-400" />
                         </div>
-                        <span className="text-slate-700 italic">Niciun brand</span>
+                        <span className="text-slate-700 dark:text-slate-300 italic">Niciun brand</span>
                     </div>
                 </SelectItem>
                 {brands.map(brand => (
                     <SelectItem key={brand.id} value={brand.id}>
                         <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded border border-slate-200 flex items-center justify-center bg-white overflow-hidden flex-shrink-0">
+                            <div className="w-6 h-6 rounded border border-slate-200 dark:border-slate-700 flex items-center justify-center bg-white dark:bg-slate-900 overflow-hidden flex-shrink-0">
                                 {brand.logo_url ? (
                                     <img
                                         src={brand.logo_url}
@@ -51,7 +51,7 @@ export const BrandSelector = ({ brands, value, onValueChange, placeholder = "Sel
                                     <Building2 className="w-3 h-3 text-slate-400" />
                                 )}
                             </div>
-                            <span className="truncate text-slate-800">{brand.name}</span>
+                            <span className="truncate text-slate-800 dark:text-slate-200">{brand.name}</span>
                         </div>
                     </SelectItem>
                 ))}

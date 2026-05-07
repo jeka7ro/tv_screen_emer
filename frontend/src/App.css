@@ -1,15 +1,15 @@
 /* SushiMaster TV - Frosted Edition Styles */
 
 .btn-primary {
-  @apply rounded-full bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200 transition-transform hover:scale-105 active:scale-95 px-6 py-2.5 font-medium;
+  @apply rounded-full bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-200 dark:shadow-brand-900 transition-transform hover:scale-105 active:scale-95 px-6 py-2.5 font-medium;
 }
 
 .btn-secondary {
-  @apply rounded-full bg-white/50 text-slate-700 border border-white/60 hover:bg-white/80 backdrop-blur-sm px-6 py-2.5 font-medium transition-all duration-300;
+  @apply rounded-full bg-white/50 dark:bg-slate-900/50 text-slate-700 dark:text-slate-300 border border-white/60 hover:bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-6 py-2.5 font-medium transition-all duration-300;
 }
 
 .btn-ghost {
-  @apply rounded-full hover:bg-slate-100/50 text-slate-600 px-4 py-2 transition-colors duration-300;
+  @apply rounded-full hover:bg-slate-100/50 text-slate-600 dark:text-slate-400 px-4 py-2 transition-colors duration-300;
 }
 
 /* Card hover effects */
@@ -31,31 +31,30 @@ select:focus {
 }
 
 .status-offline {
-  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-100/50 text-slate-600 border border-slate-200;
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-100/50 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700;
 }
 
 .status-active {
-  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-red-100/50 text-red-700 border border-red-200;
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800;
 }
 
 /* Sidebar active link */
 .sidebar-link-active {
-  @apply bg-red-100/50 text-red-700 font-medium;
+  @apply bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-400 font-medium;
 }
 
 .sidebar-link {
-  @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-white/50 transition-colors duration-200;
+  @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:bg-slate-900/50 transition-colors duration-200;
 }
 
 .sidebar-link svg {
-  color: #dc2626 !important;
-  /* red-600 - always red icons */
+  color: var(--brand-500) !important;
 }
 
 /* Loading spinner */
 .spinner {
-  border: 3px solid rgba(239, 68, 68, 0.1);
-  border-top-color: rgb(239, 68, 68);
+  border: 3px solid var(--brand-100);
+  border-top-color: var(--brand-500);
   border-radius: 50%;
   width: 24px;
   height: 24px;
@@ -77,11 +76,11 @@ select:focus {
 
 /* Zone preview in template designer */
 .zone-preview {
-  @apply absolute border-2 border-red-400 bg-red-100/20 rounded-lg transition-all duration-200;
+  @apply absolute border-2 border-brand-400 bg-brand-100 rounded-lg transition-all duration-200;
 }
 
 .zone-preview:hover {
-  @apply bg-red-100/40 border-red-500;
+  @apply bg-brand-100 border-brand-500;
 }
 
 /* Digital Menu Display Styles */
@@ -94,7 +93,7 @@ select:focus {
 }
 
 .menu-item-price {
-  @apply text-2xl font-bold text-red-600 mt-2;
+  @apply text-2xl font-bold text-brand-600 mt-2;
 }
 
 /* Fullscreen display mode */

@@ -190,14 +190,14 @@ export const LivePreviewDashboard = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-4xl font-bold text-slate-800 mb-2">Live Preview</h1>
-                        <p className="text-slate-500">
+                        <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-200 mb-2">Live Preview</h1>
+                        <p className="text-slate-500 dark:text-slate-400">
                             Monitorizare în timp real a tuturor ecranelor
                         </p>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                             <Clock className="w-4 h-4" />
                             <span>Actualizat: {lastUpdate.toLocaleTimeString('ro-RO')}</span>
                         </div>
@@ -206,7 +206,7 @@ export const LivePreviewDashboard = () => {
                             onClick={() => setAutoRefresh(!autoRefresh)}
                             className={`px-4 py-2 rounded-xl font-medium transition-all ${autoRefresh
                                 ? 'bg-green-100 text-green-700 border-2 border-green-200'
-                                : 'bg-slate-100 text-slate-600 border-2 border-slate-200'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-2 border-slate-200 dark:border-slate-700'
                                 }`}
                         >
                             {autoRefresh ? 'Auto ON' : 'Auto OFF'}
@@ -231,8 +231,8 @@ export const LivePreviewDashboard = () => {
                                 <Monitor className="w-5 h-5 text-indigo-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500">Total Ecrane</p>
-                                <p className="text-2xl font-bold text-slate-800">{screens.length}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Total Ecrane</p>
+                                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{screens.length}</p>
                             </div>
                         </div>
                     </div>
@@ -243,8 +243,8 @@ export const LivePreviewDashboard = () => {
                                 <Circle className="w-5 h-5 text-green-600 fill-green-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500">Online</p>
-                                <p className="text-2xl font-bold text-slate-800">
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Online</p>
+                                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                                     {screens.filter(s => s.status === 'online' || s.status === 'active').length}
                                 </p>
                             </div>
@@ -253,12 +253,12 @@ export const LivePreviewDashboard = () => {
 
                     <div className="glass-card p-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-slate-100 rounded-2xl">
+                            <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-2xl">
                                 <Circle className="w-5 h-5 text-slate-400 fill-slate-400" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500">Offline</p>
-                                <p className="text-2xl font-bold text-slate-800">
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Offline</p>
+                                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">
                                     {screens.filter(s => s.status !== 'online' && s.status !== 'active').length}
                                 </p>
                             </div>
@@ -271,8 +271,8 @@ export const LivePreviewDashboard = () => {
                                 <Monitor className="w-5 h-5 text-purple-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500">Grupuri Sync</p>
-                                <p className="text-2xl font-bold text-slate-800">{syncGroups.length}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Grupuri Sync</p>
+                                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{syncGroups.length}</p>
                             </div>
                         </div>
                     </div>
@@ -337,7 +337,7 @@ export const LivePreviewDashboard = () => {
                                     setFilterStatus('all');
                                     setFilterSyncGroup('all');
                                 }}
-                                className="text-sm text-slate-500 hover:text-slate-700 underline"
+                                className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 underline"
                             >
                                 Resetează filtre
                             </button>
@@ -347,12 +347,12 @@ export const LivePreviewDashboard = () => {
 
                 {/* View Mode Toggle */}
                 <div className="flex justify-end mb-4">
-                    <div className="bg-slate-100 p-1 rounded-2xl flex items-center gap-1">
+                    <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl flex items-center gap-1">
                         <button
                             onClick={() => setLayoutMode('grid')}
                             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${layoutMode === 'grid'
-                                ? 'bg-white shadow text-slate-800'
-                                : 'text-slate-500 hover:text-slate-700'
+                                ? 'bg-white dark:bg-slate-900 shadow text-slate-800 dark:text-slate-200'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300'
                                 }`}
                         >
                             Grid
@@ -360,8 +360,8 @@ export const LivePreviewDashboard = () => {
                         <button
                             onClick={() => setLayoutMode('seamless')}
                             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${layoutMode === 'seamless'
-                                ? 'bg-white shadow text-slate-800'
-                                : 'text-slate-500 hover:text-slate-700'
+                                ? 'bg-white dark:bg-slate-900 shadow text-slate-800 dark:text-slate-200'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300'
                                 }`}
                         >
                             Video Wall
@@ -374,8 +374,8 @@ export const LivePreviewDashboard = () => {
                                 }
                             }}
                             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${layoutMode === 'simulare'
-                                ? 'bg-white shadow text-slate-800'
-                                : 'text-slate-500 hover:text-slate-700'
+                                ? 'bg-white dark:bg-slate-900 shadow text-slate-800 dark:text-slate-200'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300'
                                 }`}
                         >
                             Simulare Live
@@ -388,8 +388,8 @@ export const LivePreviewDashboard = () => {
                     /* Simulare Live - Storefront with Video Wall overlay on TV area */
                     <div className="flex flex-col items-center gap-4">
                         {/* Screen selector */}
-                        <div className="w-full max-w-[1200px] flex flex-wrap items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
-                            <span className="text-sm font-semibold text-slate-600 mr-2">Ecrane afișate:</span>
+                        <div className="w-full max-w-[1200px] flex flex-wrap items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
+                            <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 mr-2">Ecrane afișate:</span>
                             {screens.map(s => {
                                 const isSelected = simulareScreenIds.includes(s.id);
                                 const count = simulareScreenIds.length;
@@ -406,8 +406,8 @@ export const LivePreviewDashboard = () => {
                                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${isSelected
                                             ? 'bg-blue-600 text-white border-blue-700 shadow-md'
                                             : count >= 3
-                                                ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
-                                                : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'
+                                                ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 cursor-not-allowed'
+                                                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-600 hover:border-blue-400'
                                             }`}
                                     >
                                         {s.name}
@@ -519,7 +519,7 @@ export const LivePreviewDashboard = () => {
                                         <div key={gid} className="flex flex-col items-center">
                                             <div className="mb-4 flex items-center gap-3">
                                                 <div className="h-px w-12 bg-slate-700"></div>
-                                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                                                     {gid === 'un-synced' ? 'Ecrane Individuale' : `Grup: ${sample.sync_group_name || gid.substring(0, 8)}`}
                                                 </span>
                                                 <div className="h-px w-12 bg-slate-700"></div>
@@ -611,17 +611,17 @@ export const LivePreviewDashboard = () => {
                                 </div>
                                 {layoutMode === 'grid' && (
                                     <>
-                                        <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
+                                        <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-2">
                                             <Monitor className="w-4 h-4" />
                                             {screen.name}
                                         </h3>
                                         <div className="space-y-1.5 text-sm">
-                                            <div className="flex items-center gap-2 text-slate-600">
+                                            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                                                 <MapPin className="w-3.5 h-3.5" />
                                                 <span>{getLocationName(screen.location_id)}</span>
                                             </div>
                                             {screen.currentContent && (
-                                                <div className="flex items-center gap-2 text-slate-600">
+                                                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                                                     {getContentIcon(screen.currentContent)}
                                                     <span className="truncate">{screen.currentContent.name}</span>
                                                 </div>
@@ -632,7 +632,7 @@ export const LivePreviewDashboard = () => {
                                                         className="w-3 h-3 rounded-full"
                                                         style={{ backgroundColor: getSyncGroupColor(screen.sync_group) }}
                                                     />
-                                                    <span className="text-xs text-slate-500">
+                                                    <span className="text-xs text-slate-500 dark:text-slate-400">
                                                         Sync: {screen.sync_group.substring(0, 8)}...
                                                     </span>
                                                 </div>
@@ -648,10 +648,10 @@ export const LivePreviewDashboard = () => {
                 {filteredScreens.length === 0 && layoutMode !== 'simulare' && (
                     <div className="glass-card p-12 text-center">
                         <Monitor className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-slate-700 mb-2">
+                        <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">
                             Niciun ecran găsit
                         </h3>
-                        <p className="text-slate-500">
+                        <p className="text-slate-500 dark:text-slate-400">
                             Ajustează filtrele pentru a vedea ecranele.
                         </p>
                     </div>
@@ -687,14 +687,14 @@ export const LivePreviewDashboard = () => {
                             {/* Screen Details */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="glass-card p-4">
-                                    <p className="text-sm text-slate-500 mb-1">Locație</p>
-                                    <p className="font-medium text-slate-800">
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Locație</p>
+                                    <p className="font-medium text-slate-800 dark:text-slate-200">
                                         {getLocationName(selectedScreen.location_id)}
                                     </p>
                                 </div>
 
                                 <div className="glass-card p-4">
-                                    <p className="text-sm text-slate-500 mb-1">Status</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Status</p>
                                     <span className={(selectedScreen.status === 'online' || selectedScreen.status === 'active') ? 'status-active' : 'status-offline'}>
                                         {(selectedScreen.status === 'online' || selectedScreen.status === 'active') ? 'online' : 'offline'}
                                     </span>
@@ -702,8 +702,8 @@ export const LivePreviewDashboard = () => {
 
                                 {selectedScreen.currentContent && (
                                     <div className="glass-card p-4">
-                                        <p className="text-sm text-slate-500 mb-1">Conținut Curent</p>
-                                        <p className="font-medium text-slate-800 flex items-center gap-2">
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Conținut Curent</p>
+                                        <p className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">
                                             {getContentIcon(selectedScreen.currentContent)}
                                             {selectedScreen.currentContent.name}
                                         </p>
@@ -712,8 +712,8 @@ export const LivePreviewDashboard = () => {
 
                                 {selectedScreen.sync_group && (
                                     <div className="glass-card p-4">
-                                        <p className="text-sm text-slate-500 mb-1">Grup Sincronizare</p>
-                                        <p className="font-medium text-slate-800 flex items-center gap-2">
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Grup Sincronizare</p>
+                                        <p className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">
                                             <div
                                                 className="w-3 h-3 rounded-full"
                                                 style={{ backgroundColor: getSyncGroupColor(selectedScreen.sync_group) }}

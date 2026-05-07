@@ -182,8 +182,8 @@ export const Locations = () => {
       <div className="animate-in" data-testid="locations-page">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">Locații</h1>
-            <p className="text-slate-500">Gestionează restaurantele și punctele de vânzare</p>
+            <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-200 mb-2">Locații</h1>
+            <p className="text-slate-500 dark:text-slate-400">Gestionează restaurantele și punctele de vânzare</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -206,7 +206,7 @@ export const Locations = () => {
                 if (!open) resetForm();
               }}>
                 <DialogTrigger asChild>
-                  <Button className="btn-red px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]" data-testid="add-location-button">
+                  <Button className="btn-primary px-6 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition-all h-[40px]" data-testid="add-location-button">
                     <Plus className="w-4 h-4 mr-2" />
                     Adăugă locație
                   </Button>
@@ -257,7 +257,7 @@ export const Locations = () => {
                           placeholder="1234"
                           data-testid="location-security-input"
                         />
-                        <p className="text-xs text-slate-500 mt-1">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                           Va fi cerut la accesarea ecranelor din această locație
                         </p>
                       </div>
@@ -269,7 +269,7 @@ export const Locations = () => {
                           placeholder="ex: adddb5a0-26e5..."
                           className="glass-input"
                         />
-                        <p className="text-xs text-slate-500 mt-1">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                           Necesar pentru sincronizarea meniului
                         </p>
                       </div>
@@ -304,12 +304,12 @@ export const Locations = () => {
                 placeholder="Caută după nume sau adresă..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm"
+                className="w-full pl-10 pr-10 py-2 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -321,7 +321,7 @@ export const Locations = () => {
               <select
                 value={selectedCity}
                 onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm bg-white"
+                className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm bg-white dark:bg-slate-900"
               >
                 <option value="all">Toate orașele</option>
                 {cities.map(city => (
@@ -331,7 +331,7 @@ export const Locations = () => {
             </div>
 
             {/* Results count */}
-            <div className="flex items-center px-4 py-2 bg-slate-50 rounded-lg text-sm text-slate-600 font-medium">
+            <div className="flex items-center px-4 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-sm text-slate-600 dark:text-slate-400 font-medium">
               {filteredLocations.length} {filteredLocations.length === 1 ? 'locație' : 'locații'}
             </div>
           </div>
@@ -340,10 +340,10 @@ export const Locations = () => {
         {isAdmin() && selectedItems.size > 0 && (
           <div className="mb-6 bg-gradient-to-r from-brand-600 to-rose-600 text-white px-6 py-4 rounded-2xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
             <span className="font-semibold text-lg">{selectedItems.size} selectate</span>
-            <div className="h-6 w-px bg-white/30"></div>
+            <div className="h-6 w-px bg-white/30 dark:bg-slate-900/30"></div>
             <button
               onClick={handleBulkDelete}
-              className="ml-auto bg-white text-rose-600 hover:bg-slate-100 px-4 py-2 rounded-full font-semibold flex items-center gap-2 transition-colors shadow-sm"
+              className="ml-auto bg-white dark:bg-slate-900 text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 px-4 py-2 rounded-full font-semibold flex items-center gap-2 transition-colors shadow-sm"
             >
               <Trash2 className="w-4 h-4" />
               Șterge
@@ -360,10 +360,10 @@ export const Locations = () => {
         {filteredLocations.length === 0 && locations.length > 0 ? (
           <div className="glass-card p-12 text-center">
             <Search className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">
+            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
               Nicio locație găsită
             </h3>
-            <p className="text-slate-500 mb-6">
+            <p className="text-slate-500 dark:text-slate-400 mb-6">
               Încearcă să modifici filtrele de căutare
             </p>
             <button
@@ -379,18 +379,18 @@ export const Locations = () => {
         ) : locations.length === 0 ? (
           <div className="glass-card p-12 text-center" data-testid="no-locations">
             <MapPin className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">
+            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
               Nicio locație
             </h3>
-            <p className="text-slate-500 mb-6">
+            <p className="text-slate-500 dark:text-slate-400 mb-6">
               Începe prin a adăuga prima locație
             </p>
           </div>
         ) : viewMode === 'list' ? (
           <div className="glass-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-semibold text-slate-500">
+              <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">
                   <tr>
                     {isAdmin() && (
                       <th className="px-6 py-4 w-10">
@@ -398,7 +398,7 @@ export const Locations = () => {
                           type="checkbox"
                           checked={selectedItems.size === locations.length && locations.length > 0}
                           onChange={() => toggleSelectAll(locations)}
-                          className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                          className="rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500"
                         />
                       </th>
                     )}
@@ -417,11 +417,11 @@ export const Locations = () => {
                             type="checkbox"
                             checked={selectedItems.has(location.id)}
                             onChange={() => toggleSelectItem(location.id)}
-                            className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                            className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500"
                           />
                         </td>
                       )}
-                      <td className="px-6 py-4 font-medium text-slate-800">
+                      <td className="px-6 py-4 font-medium text-slate-800 dark:text-slate-200">
                         <div className="flex items-center gap-3">
                           <div className="bg-brand-100 p-2 rounded-2xl">
                             <MapPin className="w-4 h-4 text-brand-600" />
@@ -441,7 +441,7 @@ export const Locations = () => {
                             {location.status === 'active' ? 'Activ' : 'Inactiv'}
                           </span>
                           {location.security_code && (
-                            <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full border border-slate-200">
+                            <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100/50 px-2 py-1 rounded-full border border-slate-200 dark:border-slate-700">
                               Protejat
                             </span>
                           )}
@@ -515,17 +515,17 @@ export const Locations = () => {
                     </div>
                   )}
                 </div>
-                <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">
                   {location.name}
                 </h3>
-                <p className="text-sm text-slate-600 mb-1">{location.address}</p>
-                <p className="text-sm text-slate-500 mb-3">{location.city}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">{location.address}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{location.city}</p>
                 <div className="flex items-center gap-2">
                   <span className={location.status === 'active' ? 'status-active' : 'status-offline'}>
                     {location.status === 'active' ? 'Activ' : 'Inactiv'}
                   </span>
                   {location.security_code && (
-                    <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 bg-slate-100/50 px-2 py-1 rounded-full">
                       Protejat
                     </span>
                   )}

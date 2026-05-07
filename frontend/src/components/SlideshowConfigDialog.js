@@ -49,25 +49,25 @@ export const SlideshowConfigDialog = ({ open, onOpenChange, onConfirm, count, se
                         <Label htmlFor="item-count" className="text-right">
                             Fișiere
                         </Label>
-                        <div className="col-span-3 text-sm font-medium text-slate-700">
+                        <div className="col-span-3 text-sm font-medium text-slate-700 dark:text-slate-300">
                             {count} elemente selectate
                         </div>
                     </div>
 
                     {/* Content Preview Grid */}
                     {selectedContent.length > 0 && (
-                        <div className="col-span-4 border-t border-b border-slate-200 py-4">
-                            <Label className="text-sm font-semibold text-slate-700 mb-3 block">
+                        <div className="col-span-4 border-t border-b border-slate-200 dark:border-slate-700 py-4">
+                            <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 block">
                                 Preview conținut
                             </Label>
                             <div className="grid grid-cols-3 gap-3 max-h-[300px] overflow-y-auto">
                                 {selectedContent.map((item) => (
                                     <div
                                         key={item.id}
-                                        className="relative group rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 hover:border-indigo-300 transition-all"
+                                        className="relative group rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-indigo-300 transition-all"
                                     >
                                         {/* Preview Image/Video */}
-                                        <div className="aspect-video bg-slate-100 relative overflow-hidden">
+                                        <div className="aspect-video bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
                                             {item.type === 'youtube' ? (
                                                 <div className="w-full h-full bg-brand-600 flex items-center justify-center">
                                                     <Film className="w-8 h-8 text-white" />
@@ -90,8 +90,8 @@ export const SlideshowConfigDialog = ({ open, onOpenChange, onConfirm, count, se
                                                         muted
                                                     />
                                                     <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                                        <div className="bg-white/90 rounded-full p-2">
-                                                            <Video className="w-6 h-6 text-slate-800" />
+                                                        <div className="bg-white/90 dark:bg-slate-900/90 rounded-full p-2">
+                                                            <Video className="w-6 h-6 text-slate-800 dark:text-slate-200" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -112,8 +112,8 @@ export const SlideshowConfigDialog = ({ open, onOpenChange, onConfirm, count, se
                                         </div>
 
                                         {/* Title */}
-                                        <div className="p-2 bg-white">
-                                            <p className="text-xs text-slate-700 truncate font-medium">
+                                        <div className="p-2 bg-white dark:bg-slate-900">
+                                            <p className="text-xs text-slate-700 dark:text-slate-300 truncate font-medium">
                                                 {item.title}
                                             </p>
                                         </div>
@@ -136,7 +136,7 @@ export const SlideshowConfigDialog = ({ open, onOpenChange, onConfirm, count, se
                                 onChange={(e) => setUseTimer(e.target.checked)}
                                 className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                             />
-                            <span className="text-sm text-slate-600">
+                            <span className="text-sm text-slate-600 dark:text-slate-400">
                                 Activează schimbarea automată
                             </span>
                         </div>

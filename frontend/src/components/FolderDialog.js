@@ -33,7 +33,7 @@ export const FolderDialog = ({
                 </DialogHeader>
                 <form onSubmit={editingFolder ? handleUpdateFolder : handleCreateFolder} className="space-y-5">
                     <div>
-                        <Label className="text-sm font-semibold text-slate-700">Nume folder</Label>
+                        <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Nume folder</Label>
                         <Input
                             className="mt-1.5"
                             value={folderFormData.name}
@@ -43,7 +43,7 @@ export const FolderDialog = ({
                         />
                     </div>
                     <div>
-                        <Label className="text-sm font-semibold text-slate-700">Descriere (opțional)</Label>
+                        <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Descriere (opțional)</Label>
                         <Input
                             className="mt-1.5"
                             value={folderFormData.description}
@@ -53,10 +53,10 @@ export const FolderDialog = ({
                     </div>
 
                     <div className="space-y-3">
-                        <Label className="text-sm font-semibold text-slate-700">Iconiță Folder (Imagine / Link)</Label>
+                        <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Iconiță Folder (Imagine / Link)</Label>
 
                         <div className="flex items-center gap-4">
-                            <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0 relative group">
+                            <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center overflow-hidden shrink-0 relative group">
                                 {folderFormData.icon && folderFormData.icon !== 'folder' ? (
                                     <>
                                         <img src={folderFormData.icon} alt="Icon" className="w-full h-full object-cover" />
@@ -107,7 +107,7 @@ export const FolderDialog = ({
                     </div>
 
                     <div>
-                        <Label className="text-sm font-semibold text-slate-700">Culoare (pentru iconița standard)</Label>
+                        <Label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Culoare (pentru iconița standard)</Label>
                         <div className="flex gap-2 mt-2">
                             {colorOptions.map(color => (
                                 <button

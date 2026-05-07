@@ -246,8 +246,8 @@ export const Users = () => {
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center h-96 text-center">
           <XCircle className="w-16 h-16 text-brand-400 mb-4" />
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">Acces restricționat</h2>
-          <p className="text-slate-500">Doar Super Admin-ul poate vedea utilizatorii.</p>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">Acces restricționat</h2>
+          <p className="text-slate-500 dark:text-slate-400">Doar Super Admin-ul poate vedea utilizatorii.</p>
         </div>
           <ConfirmDialog />
         </DashboardLayout>
@@ -284,8 +284,8 @@ export const Users = () => {
       <div className="animate-in" data-testid="users-page">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-slate-800 mb-2">Utilizatori</h1>
-            <p className="text-slate-500">
+            <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-200 mb-2">Utilizatori</h1>
+            <p className="text-slate-500 dark:text-slate-400">
               Evidență utilizatori înregistrați în aplicație
             </p>
           </div>
@@ -311,8 +311,8 @@ export const Users = () => {
                 <UsersIcon className="w-5 h-5 text-indigo-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">Total utilizatori</p>
-                <p className="text-2xl font-bold text-slate-800">{users.length}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Total utilizatori</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{users.length}</p>
               </div>
             </div>
           </div>
@@ -322,8 +322,8 @@ export const Users = () => {
                 <Shield className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-sm text-slate-500">Super Admin</p>
-                <p className="text-2xl font-bold text-slate-800">{superAdminCount}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Super Admin</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{superAdminCount}</p>
               </div>
             </div>
           </div>
@@ -333,8 +333,8 @@ export const Users = () => {
         {users.length === 0 ? (
           <div className="glass-card p-12 text-center">
             <UsersIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-slate-700 mb-2">Niciun utilizator</h3>
-            <p className="text-slate-500">
+            <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">Niciun utilizator</h3>
+            <p className="text-slate-500 dark:text-slate-400">
               Utilizatorii care se înregistrează vor apărea aici.
             </p>
           </div>
@@ -343,23 +343,23 @@ export const Users = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-slate-200/60">
-                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                  <tr className="border-b border-slate-200/60 dark:border-slate-700/60">
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Utilizator
                     </th>
-                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Email
                     </th>
-                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Rol
                     </th>
-                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Înregistrat
                     </th>
-                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="text-right py-4 px-5 text-sm font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="text-right py-4 px-5 text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Acțiuni
                     </th>
                   </tr>
@@ -368,17 +368,17 @@ export const Users = () => {
                   {users.map((u) => (
                     <tr
                       key={u.id}
-                      className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50 transition-colors"
+                      className="border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50/50 transition-colors"
                       data-testid={`user-${u.email}`}
                     >
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
                           {renderAvatar(u, 'md')}
-                          <span className="font-medium text-slate-800">{u.full_name || '—'}</span>
+                          <span className="font-medium text-slate-800 dark:text-slate-200">{u.full_name || '—'}</span>
                         </div>
                       </td>
                       <td className="py-4 px-5">
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                           <Mail className="w-4 h-4 text-slate-400" />
                           {u.email}
                         </div>
@@ -404,13 +404,13 @@ export const Users = () => {
                         )}
                       </td>
                       <td className="py-4 px-5">
-                        <div className="flex items-center gap-2 text-slate-500 text-sm">
+                        <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                           <Calendar className="w-4 h-4 text-slate-400" />
                           {formatDate(u.created_at)}
                         </div>
                       </td>
                       <td className="py-4 px-5">
-                        <div className="flex items-center gap-2 text-slate-500 text-sm">
+                        <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                           <Clock className="w-4 h-4 text-slate-400" />
                           {formatDate(u.last_login)}
                         </div>
@@ -435,14 +435,14 @@ export const Users = () => {
                               setSelectedUser(u);
                               setShowPasswordDialog(true);
                             }}
-                            className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500 hover:text-indigo-600"
+                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 rounded-full transition-colors text-slate-500 dark:text-slate-400 hover:text-indigo-600"
                             title="Resetare parolă"
                           >
                             <Key className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleEditClick(u)}
-                            className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500 hover:text-indigo-600"
+                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800 rounded-full transition-colors text-slate-500 dark:text-slate-400 hover:text-indigo-600"
                             title="Editează utilizator"
                           >
                             <Edit className="w-4 h-4" />
@@ -450,8 +450,8 @@ export const Users = () => {
                           <button
                             onClick={() => handleUpdateStatus(u.id, u.status)}
                             className={`p-2 rounded-2xl transition-colors ${u.status === 'active'
-                              ? 'hover:bg-amber-50 text-slate-500 hover:text-amber-600'
-                              : 'hover:bg-emerald-50 text-slate-500 hover:text-emerald-600'
+                              ? 'hover:bg-amber-50 text-slate-500 dark:text-slate-400 hover:text-amber-600'
+                              : 'hover:bg-emerald-50 text-slate-500 dark:text-slate-400 hover:text-emerald-600'
                               }`}
                             title={u.status === 'active' ? 'Suspendă' : 'Activează'}
                           >
@@ -459,7 +459,7 @@ export const Users = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteUser(u.id)}
-                            className="p-2 hover:bg-brand-50 rounded-full transition-colors text-slate-500 hover:text-brand-600"
+                            className="p-2 hover:bg-brand-50 rounded-full transition-colors text-slate-500 dark:text-slate-400 hover:text-brand-600"
                             title="Șterge utilizator"
                             disabled={u.is_super_admin && users.filter(usr => usr.is_super_admin).length === 1}
                           >
@@ -481,11 +481,11 @@ export const Users = () => {
                   {renderAvatar(u, 'lg')}
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-800 mb-1">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-1">
                   {u.full_name || '—'}
                 </h3>
 
-                <div className="flex items-center gap-1.5 text-sm text-slate-500 mb-4">
+                <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 mb-4">
                   <Mail className="w-3.5 h-3.5" />
                   {u.email}
                 </div>
@@ -507,43 +507,43 @@ export const Users = () => {
                       Manager
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-600 text-sm font-medium rounded-full border border-slate-200">
+                    <span className="inline-flex items-center px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-sm font-medium rounded-full border border-slate-200 dark:border-slate-700">
                       Utilizator
                     </span>
                   )}
                 </div>
 
-                <div className="w-full space-y-3 border-t border-slate-100 pt-4">
+                <div className="w-full space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
                   <div className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-2 text-slate-500">
+                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                       <Calendar className="w-4 h-4" />
                       <span>Înregistrat</span>
                     </div>
-                    <span className="font-medium text-slate-700">{formatDate(u.created_at).split(',')[0]}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{formatDate(u.created_at).split(',')[0]}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-2 text-slate-500">
+                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                       <Clock className="w-4 h-4" />
                       <span>Ultima logare</span>
                     </div>
-                    <span className="font-medium text-slate-700">{formatDate(u.last_login).split(',')[0]}</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{formatDate(u.last_login).split(',')[0]}</span>
                   </div>
                 </div>
 
-                <div className="w-full grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-100">
+                <div className="w-full grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                   <button
                     onClick={() => {
                       setSelectedUser(u);
                       setShowPasswordDialog(true);
                     }}
-                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 rounded-2xl transition-colors text-slate-500 hover:text-indigo-600"
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-800/50 rounded-2xl transition-colors text-slate-500 dark:text-slate-400 hover:text-indigo-600"
                   >
                     <Key className="w-4 h-4" />
                     <span className="text-[10px] font-medium">Parolă</span>
                   </button>
                   <button
                     onClick={() => handleEditClick(u)}
-                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 rounded-2xl transition-colors text-slate-500 hover:text-indigo-600"
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-800/50 rounded-2xl transition-colors text-slate-500 dark:text-slate-400 hover:text-indigo-600"
                   >
                     <Edit className="w-4 h-4" />
                     <span className="text-[10px] font-medium">Editează</span>
@@ -551,8 +551,8 @@ export const Users = () => {
                   <button
                     onClick={() => handleUpdateStatus(u.id, u.status)}
                     className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-colors ${u.status === 'active'
-                      ? 'hover:bg-amber-50 text-slate-500 hover:text-amber-600'
-                      : 'hover:bg-emerald-50 text-slate-500 hover:text-emerald-600'
+                      ? 'hover:bg-amber-50 text-slate-500 dark:text-slate-400 hover:text-amber-600'
+                      : 'hover:bg-emerald-50 text-slate-500 dark:text-slate-400 hover:text-emerald-600'
                       }`}
                   >
                     {u.status === 'active' ? <Ban className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
@@ -560,7 +560,7 @@ export const Users = () => {
                   </button>
                   <button
                     onClick={() => handleDeleteUser(u.id)}
-                    className="flex flex-col items-center gap-1 p-2 hover:bg-brand-50 rounded-2xl transition-colors text-slate-500 hover:text-brand-600"
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-brand-50 rounded-2xl transition-colors text-slate-500 dark:text-slate-400 hover:text-brand-600"
                     disabled={u.is_super_admin && users.filter(usr => usr.is_super_admin).length === 1}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -654,7 +654,7 @@ export const Users = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Managerii pot vedea doar ecranele din locația atribuită.
                   </p>
                 </div>

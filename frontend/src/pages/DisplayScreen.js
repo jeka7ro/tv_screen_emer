@@ -102,7 +102,7 @@ const PlaylistMediaItem = ({ item, isActive, fitMode, syncType }) => {
   } else if (item.type === 'youtube') {
     return <iframe src={getYouTubeEmbedUrl(item.file_url)} className="w-full h-full border-0" allow="autoplay; encrypted-media" allowFullScreen title={item.title || ''} />;
   } else if (item.type === 'web') {
-    return <iframe src={item.file_url} className="w-full h-full border-0 bg-white" title={item.title || ''} />;
+    return <iframe src={item.file_url} className="w-full h-full border-0 bg-white dark:bg-slate-900" title={item.title || ''} />;
   }
   return null;
 };
@@ -469,7 +469,7 @@ export const DisplayScreen = () => {
     return (
       <div className="display-fullscreen flex items-center justify-center p-8 bg-black">
         <div className="glass-card p-8 max-w-md w-full border-2 border-amber-500/50">
-          <h1 className="text-2xl font-bold text-slate-800 mb-4 text-center">Cod de securitate necesar</h1>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-4 text-center">Cod de securitate necesar</h1>
           <form onSubmit={handleSecuritySubmit} className="space-y-4">
             <input
               type="password"
@@ -528,8 +528,8 @@ export const DisplayScreen = () => {
                   onError={(e) => { e.target.style.display = 'none'; }}
                 />
               )}
-              <h3 className="text-2xl font-bold text-slate-800 mb-2 underline decoration-brand-200 decoration-2 underline-offset-4">{product.name}</h3>
-              {menu.show_descriptions && product.description && <p className="text-slate-600 mb-4 text-sm line-clamp-2">{product.description}</p>}
+              <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2 underline decoration-brand-200 decoration-2 underline-offset-4">{product.name}</h3>
+              {menu.show_descriptions && product.description && <p className="text-slate-600 dark:text-slate-400 mb-4 text-sm line-clamp-2">{product.description}</p>}
               <p className="text-3xl font-bold text-indigo-600">{product.price} {product.currency || 'RON'}</p>
             </div>
           ))}

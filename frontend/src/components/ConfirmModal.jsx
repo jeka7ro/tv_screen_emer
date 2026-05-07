@@ -18,12 +18,12 @@ export const ConfirmModal = ({
             <DialogContent className="modal-panel max-w-sm">
                 <DialogHeader className="flex flex-col items-center text-center gap-3">
                     {isDanger && (
-                        <div className="w-12 h-12 rounded-full bg-brand-100 flex items-center justify-center mb-1">
-                            <AlertTriangle className="w-6 h-6 text-brand-600" />
+                        <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-1">
+                            <AlertTriangle className="w-6 h-6 text-red-600" />
                         </div>
                     )}
                     <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
-                    <DialogDescription className="text-slate-500">
+                    <DialogDescription className="text-slate-500 dark:text-slate-400">
                         {message}
                     </DialogDescription>
                 </DialogHeader>
@@ -41,7 +41,7 @@ export const ConfirmModal = ({
                             onConfirm();
                             onClose();
                         }} 
-                        className={`flex-1 ${isDanger ? 'btn-red' : 'btn-primary'}`}
+                        className={`flex-1 ${isDanger ? 'bg-red-600 hover:bg-red-700 text-white shadow-md rounded-full px-6 py-2.5 font-medium transition-transform hover:scale-105 active:scale-95' : 'btn-primary'}`}
                     >
                         {confirmText}
                     </Button>

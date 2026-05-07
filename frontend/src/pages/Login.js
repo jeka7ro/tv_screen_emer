@@ -113,7 +113,7 @@ export const Login = () => {
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="glass-card p-8 text-center">
           <div className="spinner w-8 h-8 mx-auto mb-4"></div>
-          <p className="text-slate-600">Se verifică invitația...</p>
+          <p className="text-slate-600 dark:text-slate-400">Se verifică invitația...</p>
         </div>
       </div>
     );
@@ -165,7 +165,7 @@ export const Login = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   <User className="w-4 h-4 inline mr-1" />
                   Nume complet
                 </label>
@@ -215,7 +215,7 @@ export const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400 transition-colors"
                   tabIndex={-1}
                   data-testid="toggle-password-visibility"
                 >
@@ -235,7 +235,7 @@ export const Login = () => {
                       onChange={(e) => setRememberMe(e.target.checked)}
                       className="sr-only"
                     />
-                    <div className={`w-5 h-5 rounded border-2 transition-all ${rememberMe ? 'bg-[#00ced1] border-[#00ced1]' : 'bg-white border-slate-300 group-hover:border-[#00ced1]'}`}>
+                    <div className={`w-5 h-5 rounded border-2 transition-all ${rememberMe ? 'bg-[#00ced1] border-[#00ced1]' : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 group-hover:border-[#00ced1]'}`}>
                       {rememberMe && (
                         <svg className="w-full h-full text-white p-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -260,7 +260,7 @@ export const Login = () => {
             {/* Invitation code field - only shown when registering and not first user */}
             {!isLogin && !isOpenRegistration && !inviteCode && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   <KeyRound className="w-4 h-4 inline mr-1" />
                   Cod de invitație
                 </label>
@@ -273,7 +273,7 @@ export const Login = () => {
                   required
                   data-testid="invitation-code-input"
                 />
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   Solicitați un cod de invitație de la administratorul sistemului
                 </p>
               </div>

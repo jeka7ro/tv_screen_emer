@@ -172,24 +172,24 @@ export const HappyHour = () => {
             <div className="p-8">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
+                        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200 flex items-center gap-3">
                             <Clock className="w-8 h-8 text-brand-600" />
                             Happy Hour
                         </h1>
-                        <p className="text-slate-600 mt-1">Programare conținut pe intervale orare</p>
+                        <p className="text-slate-600 dark:text-slate-400 mt-1">Programare conținut pe intervale orare</p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 mr-2">
+                        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 mr-2">
                             <button
                                 onClick={() => setViewMode('grid')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white dark:bg-slate-900 shadow-sm text-brand-600' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
                                 title="Grid View"
                             >
                                 <LayoutGrid className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => setViewMode('list')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-900 shadow-sm text-brand-600' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
                                 title="List View"
                             >
                                 <ListIcon className="w-4 h-4" />
@@ -213,23 +213,23 @@ export const HappyHour = () => {
                         {schedules.map((schedule) => (
                             <div
                                 key={schedule.id}
-                                className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-all flex flex-col"
+                                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm hover:shadow-md transition-all flex flex-col"
                             >
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex-1">
-                                        <h3 className="font-semibold text-slate-800">{schedule.name}</h3>
+                                        <h3 className="font-semibold text-slate-800 dark:text-slate-200">{schedule.name}</h3>
                                         <div className="flex flex-wrap gap-1 mt-1">
                                             {(schedule.location_ids || []).map(locId => {
                                                 const loc = locations.find(l => l.id === locId);
                                                 return loc ? (
-                                                    <span key={locId} className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-full">
+                                                    <span key={locId} className="text-[10px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full">
                                                         {loc.name}
                                                     </span>
                                                 ) : null;
                                             })}
                                         </div>
                                     </div>
-                                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${schedule.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
+                                    <div className={`px-2 py-1 rounded-full text-xs font-medium ${schedule.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                                         }`}>
                                         {schedule.active ? 'Activ' : 'Inactiv'}
                                     </div>
@@ -238,7 +238,7 @@ export const HappyHour = () => {
                                 <div className="space-y-2 text-sm flex-1">
                                     <div className="flex items-center gap-2">
                                         <Clock className="w-4 h-4 text-slate-400" />
-                                        <span className="text-slate-700">
+                                        <span className="text-slate-700 dark:text-slate-300">
                                             {schedule.start_time} - {schedule.end_time}
                                         </span>
                                     </div>
@@ -252,13 +252,13 @@ export const HappyHour = () => {
                                             ))}
                                         </div>
                                     </div>
-                                    <div className="text-slate-600 flex items-center gap-2">
+                                    <div className="text-slate-600 dark:text-slate-400 flex items-center gap-2">
                                         <LayoutGrid className="w-4 h-4 text-slate-400" />
                                         {schedule.screen_ids?.length || 0} ecrane
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100">
+                                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
                                     <button
                                         onClick={() => {
                                             setFormData(schedule);
@@ -288,32 +288,32 @@ export const HappyHour = () => {
                         ))}
                     </div>
                 ) : (
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
                         <table className="w-full text-left border-collapse">
-                            <thead className="bg-slate-50 border-b border-slate-200">
+                            <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
                                 <tr>
-                                    <th className="p-4 text-xs font-semibold text-slate-500 uppercase">Previzualizare</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-500 uppercase">Nume</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-500 uppercase">Locații</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-500 uppercase">Program</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-500 uppercase">Zile</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-500 uppercase">Creat de</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-500 uppercase text-center">Stare</th>
-                                    <th className="p-4 text-xs font-semibold text-slate-500 uppercase text-right">Acțiuni</th>
+                                    <th className="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Previzualizare</th>
+                                    <th className="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Nume</th>
+                                    <th className="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Locații</th>
+                                    <th className="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Program</th>
+                                    <th className="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Zile</th>
+                                    <th className="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Creat de</th>
+                                    <th className="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase text-center">Stare</th>
+                                    <th className="p-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase text-right">Acțiuni</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {schedules.map(schedule => (
                                     <tr key={schedule.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="p-4">
-                                            <div className="w-16 h-10 rounded-2xl border border-slate-200 bg-slate-100 overflow-hidden">
+                                            <div className="w-16 h-10 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 overflow-hidden">
                                                 {schedule.content_type === 'single_content' ? (
                                                     (() => {
                                                         const item = content.find(c => c.id === schedule.content_id);
                                                         if (item?.thumbnail_url || (item?.type === 'image' && item?.file_url)) {
                                                             return <img src={item.thumbnail_url || item.file_url} className="w-full h-full object-cover" />;
                                                         }
-                                                        return <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-100">
+                                                        return <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-100 dark:bg-slate-800">
                                                             {item?.type === 'video' ? <Film className="w-4 h-4" /> : <ImageIcon className="w-4 h-4" />}
                                                         </div>;
                                                     })()
@@ -325,21 +325,21 @@ export const HappyHour = () => {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <span className="text-sm font-semibold text-slate-800">{schedule.name}</span>
+                                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{schedule.name}</span>
                                         </td>
                                         <td className="p-4">
                                             <div className="flex flex-wrap gap-1">
                                                 {(schedule.location_ids || []).map(locId => {
                                                     const loc = locations.find(l => l.id === locId);
                                                     return loc ? (
-                                                        <span key={locId} className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded-full border border-slate-200">
+                                                        <span key={locId} className="text-[10px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full border border-slate-200 dark:border-slate-700">
                                                             {loc.name}
                                                         </span>
                                                     ) : null;
                                                 })}
                                             </div>
                                         </td>
-                                        <td className="p-4 text-sm text-slate-600">
+                                        <td className="p-4 text-sm text-slate-600 dark:text-slate-400">
                                             {schedule.start_time} - {schedule.end_time}
                                         </td>
                                         <td className="p-4">
@@ -353,12 +353,12 @@ export const HappyHour = () => {
                                         </td>
                                         <td className="p-4">
                                             <div className="flex flex-col text-xs">
-                                                <span className="text-slate-700 font-medium">{schedule.created_by_name || 'System'}</span>
+                                                <span className="text-slate-700 dark:text-slate-300 font-medium">{schedule.created_by_name || 'System'}</span>
                                                 <span className="text-slate-400">{schedule.created_at ? new Date(schedule.created_at).toLocaleDateString() : '-'}</span>
                                             </div>
                                         </td>
                                         <td className="p-4 text-center">
-                                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${schedule.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${schedule.active ? 'bg-green-100 text-green-700' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>
                                                 {schedule.active ? 'Activ' : 'Inactiv'}
                                             </span>
                                         </td>
@@ -431,7 +431,7 @@ export const HappyHour = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowOnlyWithScreens(!showOnlyWithScreens)}
-                                                    className={`text-[10px] font-bold uppercase tracking-tighter transition-colors ${showOnlyWithScreens ? 'text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                    className={`text-[10px] font-bold uppercase tracking-tighter transition-colors ${showOnlyWithScreens ? 'text-brand-600' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
                                                 >
                                                     {showOnlyWithScreens ? 'Toate locațiile' : 'Doar cu ecrane'}
                                                 </button>
@@ -445,16 +445,16 @@ export const HappyHour = () => {
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="border border-slate-200 rounded-2xl p-3 max-h-32 overflow-y-auto space-y-1 bg-slate-50/50">
+                                        <div className="border border-slate-200 dark:border-slate-700 rounded-2xl p-3 max-h-32 overflow-y-auto space-y-1 bg-slate-50/50">
                                             {filteredLocations.map(loc => (
-                                                <label key={loc.id} className="flex items-center gap-2 cursor-pointer hover:bg-white p-1 rounded-full transition-colors">
+                                                <label key={loc.id} className="flex items-center gap-2 cursor-pointer hover:bg-white dark:bg-slate-900 p-1 rounded-full transition-colors">
                                                     <input
                                                         type="checkbox"
                                                         checked={(formData.location_ids || []).includes(loc.id)}
                                                         onChange={() => toggleLocation(loc.id)}
-                                                        className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                                                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500"
                                                     />
-                                                    <span className="text-sm font-medium text-slate-700">{loc.name} <span className="text-[10px] text-slate-400">({loc.city})</span></span>
+                                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{loc.name} <span className="text-[10px] text-slate-400">({loc.city})</span></span>
                                                 </label>
                                             ))}
                                         </div>
@@ -481,7 +481,7 @@ export const HappyHour = () => {
                                                 </button>
                                             )}
                                         </div>
-                                        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                                        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                                             {formData.location_ids.length === 0 ? (
                                                 <p className="text-xs text-slate-400 italic text-center py-4">Selectează cel puțin o locație</p>
                                             ) : (
@@ -494,8 +494,8 @@ export const HappyHour = () => {
                                                             return (
                                                                 <div key={loc.id} className="border-b border-slate-50 last:border-0">
                                                                     <div className="flex items-center gap-2 px-3 py-2 text-xs">
-                                                                        <span className="font-semibold text-slate-700 flex-1">{loc.name}</span>
-                                                                        <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">{locScreens.length}</span>
+                                                                        <span className="font-semibold text-slate-700 dark:text-slate-300 flex-1">{loc.name}</span>
+                                                                        <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full">{locScreens.length}</span>
                                                                     </div>
                                                                     <div className="pl-4 pr-3 pb-2 flex flex-wrap gap-1.5">
                                                                         {locScreens.map(screen => (
@@ -503,7 +503,7 @@ export const HappyHour = () => {
                                                                                 key={screen.id}
                                                                                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] cursor-pointer transition-all border ${(formData.screen_ids || []).includes(screen.id)
                                                                                         ? 'bg-brand-100 border-brand-300 text-brand-700 font-bold shadow-sm'
-                                                                                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-brand-50 hover:border-brand-200'
+                                                                                        : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-brand-50 hover:border-brand-200'
                                                                                     }`}
                                                                             >
                                                                                 <input
@@ -557,7 +557,7 @@ export const HappyHour = () => {
                                                 onClick={() => toggleDay(idx + 1)}
                                                 className={`w-10 h-10 rounded-full font-medium transition-all ${(formData.days_of_week || []).includes(idx + 1)
                                                     ? 'bg-brand-600 text-white shadow-md shadow-brand-200'
-                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
                                                     }`}
                                             >
                                                 {day}
@@ -596,7 +596,7 @@ export const HappyHour = () => {
                                                 {content.map(item => (
                                                     <SelectItem key={item.id} value={item.id}>
                                                         <div className="flex items-center gap-3 py-1">
-                                                            <div className="w-10 h-10 rounded border border-slate-200 overflow-hidden shrink-0 bg-slate-50 flex items-center justify-center">
+                                                            <div className="w-10 h-10 rounded border border-slate-200 dark:border-slate-700 overflow-hidden shrink-0 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-center">
                                                                 {item.thumbnail_url || (item.type === 'image' && item.file_url) ? (
                                                                     <img src={item.thumbnail_url || item.file_url} alt="" className="w-full h-full object-cover" />
                                                                 ) : (
@@ -607,7 +607,7 @@ export const HappyHour = () => {
                                                             </div>
                                                             <div className="flex flex-col min-w-0">
                                                                 <span className="text-sm font-medium truncate">{item.title}</span>
-                                                                <span className="text-[10px] text-slate-500 uppercase">{item.type}</span>
+                                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase">{item.type}</span>
                                                             </div>
                                                         </div>
                                                     </SelectItem>

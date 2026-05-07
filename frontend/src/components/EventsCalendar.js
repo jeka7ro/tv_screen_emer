@@ -106,9 +106,9 @@ export const EventsCalendar = ({
 
     if (loading) {
         return (
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 flex flex-col items-center justify-center min-h-[400px]">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-12 flex flex-col items-center justify-center min-h-[400px]">
                 <div className="spinner mb-4"></div>
-                <p className="text-slate-500 font-medium">Se încarcă calendarul...</p>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">Se încarcă calendarul...</p>
             </div>
         );
     }
@@ -116,14 +116,14 @@ export const EventsCalendar = ({
     const isToday = (day) => isSameDay(day, new Date());
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-4 relative overflow-hidden transition-all duration-500">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-4 mb-4 relative overflow-hidden transition-all duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-brand-50 rounded-2xl shadow-sm shadow-brand-100/50">
                         <CalendarIcon className="w-6 h-6 text-brand-600" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-bold text-slate-800 capitalize tracking-tight leading-none mb-1.5">
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 capitalize tracking-tight leading-none mb-1.5">
                             {calendarView === 'week' ? (
                                 `${format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'd MMM', { locale: ro })} - ${format(endOfWeek(currentDate, { weekStartsOn: 1 }), 'd MMM yyyy', { locale: ro })}`
                             ) : calendarView === 'month' ? (
@@ -133,15 +133,15 @@ export const EventsCalendar = ({
                             )}
                         </h3>
                         <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800/50 px-2 py-0.5 rounded-md border border-slate-100 dark:border-slate-800">
                                 {calendarView === 'week' ? 'Program Săptămânal' : calendarView === 'month' ? 'Prezentare Lunară' : 'Program Zilnic'}
                             </span>
-                            <div className="flex bg-slate-100 rounded-2xl p-1 shadow-inner">
+                            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-2xl p-1 shadow-inner">
                                 {['week', 'month', 'day'].map(view => (
                                     <button
                                         key={view}
                                         onClick={() => setCalendarView(view)}
-                                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-2xl transition-all ${calendarView === view ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-2xl transition-all ${calendarView === view ? 'bg-white dark:bg-slate-900 text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
                                     >
                                         {view === 'week' ? 'Săpt' : view === 'month' ? 'Lună' : 'Zi'}
                                     </button>
@@ -151,7 +151,7 @@ export const EventsCalendar = ({
                     </div>
                 </div>
 
-                <div className="flex items-center bg-slate-50 p-1.5 rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex items-center bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
                     <button
                         onClick={() => setCurrentDate(curr => {
                             if (calendarView === 'week') return subWeeks(curr, 1);
@@ -160,13 +160,13 @@ export const EventsCalendar = ({
                             prev.setDate(prev.getDate() - 1);
                             return prev;
                         })}
-                        className="p-2 hover:bg-white rounded-full transition-all text-slate-500 hover:text-brand-600 shadow-sm hover:shadow"
+                        className="p-2 hover:bg-white dark:bg-slate-900 rounded-full transition-all text-slate-500 dark:text-slate-400 hover:text-brand-600 shadow-sm hover:shadow"
                     >
                         <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                         onClick={() => setCurrentDate(new Date())}
-                        className="px-5 text-xs font-black text-slate-600 hover:text-brand-600 transition-colors uppercase tracking-widest"
+                        className="px-5 text-xs font-black text-slate-600 dark:text-slate-400 hover:text-brand-600 transition-colors uppercase tracking-widest"
                     >
                         Azi
                     </button>
@@ -178,7 +178,7 @@ export const EventsCalendar = ({
                             next.setDate(next.getDate() + 1);
                             return next;
                         })}
-                        className="p-2 hover:bg-white rounded-full transition-all text-slate-500 hover:text-brand-600 shadow-sm hover:shadow"
+                        className="p-2 hover:bg-white dark:bg-slate-900 rounded-full transition-all text-slate-500 dark:text-slate-400 hover:text-brand-600 shadow-sm hover:shadow"
                     >
                         <ChevronRight className="w-5 h-5" />
                     </button>
@@ -186,7 +186,7 @@ export const EventsCalendar = ({
             </div>
 
             {calendarView === 'week' ? (
-                <div className="grid grid-cols-7 gap-px bg-slate-200 border border-slate-200 rounded-2xl overflow-hidden mt-2">
+                <div className="grid grid-cols-7 gap-px bg-slate-200 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden mt-2">
                     {eachDayOfInterval({
                         start: startOfWeek(currentDate, { weekStartsOn: 1 }),
                         end: endOfWeek(currentDate, { weekStartsOn: 1 })
@@ -195,10 +195,10 @@ export const EventsCalendar = ({
                         const isDayToday = isToday(day);
 
                         return (
-                            <div key={idx} className={`bg-white min-h-[160px] p-2 flex flex-col gap-2 transition-colors ${isDayToday ? 'bg-brand-50/20' : ''}`} onClick={() => { setCurrentDate(day); setCalendarView('day'); }}>
-                                <div className={`text-center mb-1 p-2 rounded-2xl border ${isDayToday ? 'bg-brand-50 border-brand-100' : 'bg-slate-50 border-slate-100'}`}>
+                            <div key={idx} className={`bg-white dark:bg-slate-900 min-h-[160px] p-2 flex flex-col gap-2 transition-colors ${isDayToday ? 'bg-brand-50/20' : ''}`} onClick={() => { setCurrentDate(day); setCalendarView('day'); }}>
+                                <div className={`text-center mb-1 p-2 rounded-2xl border ${isDayToday ? 'bg-brand-50 border-brand-100' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800'}`}>
                                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{format(day, 'EEE', { locale: ro })}</div>
-                                    <div className={`text-lg font-black ${isDayToday ? 'text-brand-600' : 'text-slate-800'}`}>{format(day, 'd')}</div>
+                                    <div className={`text-lg font-black ${isDayToday ? 'text-brand-600' : 'text-slate-800 dark:text-slate-200'}`}>{format(day, 'd')}</div>
                                 </div>
 
                                 <div className="space-y-1.5 flex-1 overflow-y-auto max-h-[220px] scrollbar-hide pr-1">
@@ -220,7 +220,7 @@ export const EventsCalendar = ({
                                                     <Clock className="w-2.5 h-2.5" />
                                                     <span>{event.startTime}-{event.endTime}</span>
                                                 </div>
-                                                {event.hours && <span className="text-[9px] font-black bg-white rounded px-1 shadow-sm" style={{ color: event.color }}>{event.hours}</span>}
+                                                {event.hours && <span className="text-[9px] font-black bg-white dark:bg-slate-900 rounded px-1 shadow-sm" style={{ color: event.color }}>{event.hours}</span>}
                                             </div>
                                         </div>
                                     ))}
@@ -230,9 +230,9 @@ export const EventsCalendar = ({
                     })}
                 </div>
             ) : calendarView === 'month' ? (
-                <div className="grid grid-cols-7 gap-px bg-slate-200 border border-slate-200 rounded-2xl overflow-hidden mt-2">
+                <div className="grid grid-cols-7 gap-px bg-slate-200 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden mt-2">
                     {['Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă', 'Duminică'].map(day => (
-                        <div key={day} className="bg-slate-50 p-3 text-center text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-200">
+                        <div key={day} className="bg-slate-50 dark:bg-slate-800/50 p-3 text-center text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-200 dark:border-slate-700">
                             {day}
                         </div>
                     ))}
@@ -247,11 +247,11 @@ export const EventsCalendar = ({
                         return (
                             <div
                                 key={idx}
-                                className={`bg-white min-h-[100px] p-2 flex flex-col gap-1 transition-all hover:bg-slate-50 cursor-pointer ${!isSameMonthDay ? 'bg-slate-50/50 opacity-30 grayscale' : ''} ${isDayToday ? 'bg-brand-50/30' : ''}`}
+                                className={`bg-white dark:bg-slate-900 min-h-[100px] p-2 flex flex-col gap-1 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-800/50 cursor-pointer ${!isSameMonthDay ? 'bg-slate-50/50 opacity-30 grayscale' : ''} ${isDayToday ? 'bg-brand-50/30' : ''}`}
                                 onClick={() => { setCurrentDate(day); setCalendarView('day'); }}
                             >
                                 <div className="flex justify-between items-start mb-1">
-                                    <span className={`text-xs font-black rounded-2xl w-7 h-7 flex items-center justify-center transition-all ${isDayToday ? 'bg-brand-600 text-white shadow-lg shadow-brand-200 border border-brand-500' : 'text-slate-700 bg-slate-50 border border-slate-100'}`}>
+                                    <span className={`text-xs font-black rounded-2xl w-7 h-7 flex items-center justify-center transition-all ${isDayToday ? 'bg-brand-600 text-white shadow-lg shadow-brand-200 border border-brand-500' : 'text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800'}`}>
                                         {format(day, 'd')}
                                     </span>
                                     {dayEvents.length > 0 && (
@@ -272,7 +272,7 @@ export const EventsCalendar = ({
                                         </div>
                                     ))}
                                     {dayEvents.length > 3 && (
-                                        <div className="text-[9px] font-black text-slate-400 text-center bg-slate-50 rounded py-0.5 border border-dashed border-slate-200">
+                                        <div className="text-[9px] font-black text-slate-400 text-center bg-slate-50 dark:bg-slate-800/50 rounded py-0.5 border border-dashed border-slate-200 dark:border-slate-700">
                                             + {dayEvents.length - 3} altele
                                         </div>
                                     )}
@@ -282,7 +282,7 @@ export const EventsCalendar = ({
                     })}
                 </div>
             ) : (
-                <div className="relative h-32 bg-slate-50 rounded-2xl border border-slate-200 mt-2 select-none overflow-hidden shadow-inner p-2">
+                <div className="relative h-32 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 mt-2 select-none overflow-hidden shadow-inner p-2">
                     {/* Time Grid Lines */}
                     <div className="absolute inset-0 flex justify-between px-4 pt-2 pointer-events-none opacity-50">
                         {[0, 4, 8, 12, 16, 20, 24].map(hour => (
@@ -322,7 +322,7 @@ export const EventsCalendar = ({
                                 <div
                                     key={event.id}
                                     onClick={() => onEventClick(event)}
-                                    className="bg-white border rounded-2xl shadow-sm hover:shadow-xl hover:scale-[1.02] hover:z-10 transition-all cursor-pointer overflow-hidden group flex items-center px-3 gap-3 h-10 border-l-4"
+                                    className="bg-white dark:bg-slate-900 border rounded-2xl shadow-sm hover:shadow-xl hover:scale-[1.02] hover:z-10 transition-all cursor-pointer overflow-hidden group flex items-center px-3 gap-3 h-10 border-l-4"
                                     style={{
                                         marginLeft: `${leftPercent}%`,
                                         width: `${widthPercent}%`,
@@ -336,7 +336,7 @@ export const EventsCalendar = ({
                                         <PlaySquare className="w-4 h-4" style={{ color: event.color }} />
                                     </div>
                                     <div className="flex flex-col min-w-0">
-                                        <span className="text-[11px] font-black text-slate-800 truncate leading-tight group-hover:text-brand-600 uppercase tracking-tight">{event.name}</span>
+                                        <span className="text-[11px] font-black text-slate-800 dark:text-slate-200 truncate leading-tight group-hover:text-brand-600 uppercase tracking-tight">{event.name}</span>
                                         <div className="flex items-center gap-2">
                                             <span className="text-[9px] font-black opacity-40 uppercase tracking-widest">{event.startTime}-{event.endTime}</span>
                                             {event.hours && <span className="text-[9px] font-black text-brand-500 bg-brand-50 px-1 rounded border border-brand-100">{event.hours}</span>}

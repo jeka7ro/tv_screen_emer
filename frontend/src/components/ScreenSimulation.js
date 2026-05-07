@@ -22,7 +22,7 @@ export const ScreenSimulation = ({ screenIds, screens, onClose }) => {
             {/* Close button */}
             <button
                 onClick={onClose}
-                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 dark:bg-slate-900/10 hover:bg-white/20 dark:bg-slate-900/20 text-white transition-colors"
                 title="Închide"
             >
                 <X className="w-5 h-5" />
