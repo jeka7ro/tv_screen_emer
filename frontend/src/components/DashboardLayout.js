@@ -256,34 +256,34 @@ export const DashboardLayout = ({ children }) => {
             )}
 
             {/* Theme Controls */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/50 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm">
+            <div className="flex items-center gap-1 px-2 py-1 bg-slate-100/50 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm">
               <button
                 onClick={() => setTheme('red')}
-                className={`w-5 h-5 rounded-full bg-rose-500 transition-all ${theme === 'red' ? 'ring-2 ring-offset-1 ring-rose-500 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                className={`w-4 h-4 rounded-full bg-rose-500 transition-all ${theme === 'red' ? 'ring-2 ring-offset-1 ring-rose-500 scale-110' : 'hover:scale-110 opacity-60 hover:opacity-100'}`}
                 title="Tema Roșie"
               />
               <button
                 onClick={() => setTheme('blue')}
-                className={`w-5 h-5 rounded-full bg-blue-500 transition-all ${theme === 'blue' ? 'ring-2 ring-offset-1 ring-blue-500 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                className={`w-4 h-4 rounded-full bg-blue-500 transition-all ${theme === 'blue' ? 'ring-2 ring-offset-1 ring-blue-500 scale-110' : 'hover:scale-110 opacity-60 hover:opacity-100'}`}
                 title="Tema Albastră"
               />
               <button
                 onClick={() => setTheme('green')}
-                className={`w-5 h-5 rounded-full bg-emerald-500 transition-all ${theme === 'green' ? 'ring-2 ring-offset-1 ring-emerald-500 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                className={`w-4 h-4 rounded-full bg-emerald-500 transition-all ${theme === 'green' ? 'ring-2 ring-offset-1 ring-emerald-500 scale-110' : 'hover:scale-110 opacity-60 hover:opacity-100'}`}
                 title="Tema Verde"
               />
               <button
                 onClick={() => setTheme('purple')}
-                className={`w-5 h-5 rounded-full bg-violet-600 transition-all ${theme === 'purple' ? 'ring-2 ring-offset-1 ring-violet-600 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                className={`w-4 h-4 rounded-full bg-violet-600 transition-all ${theme === 'purple' ? 'ring-2 ring-offset-1 ring-violet-600 scale-110' : 'hover:scale-110 opacity-60 hover:opacity-100'}`}
                 title="Tema Violet"
               />
-              <div className="w-px h-4 bg-slate-300 mx-1" />
+              <div className="w-px h-3 bg-slate-300 mx-0.5" />
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
-                className="p-1 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 transition-colors"
+                className="p-0.5 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                 title="Toggle Dark Mode"
               >
-                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
               </button>
             </div>
 

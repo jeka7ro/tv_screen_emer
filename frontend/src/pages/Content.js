@@ -701,10 +701,21 @@ export const Content = () => {
       return (
         <div className="overflow-hidden rounded-xl">
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full border-collapse table-fixed">
+              <colgroup>
+                <col className="w-10" />
+                <col className="w-16" />
+                <col />
+                <col className="w-16" />
+                <col className="w-20" />
+                <col className="w-20" />
+                <col className="w-20" />
+                <col className="w-24" />
+                <col className="w-24" />
+              </colgroup>
               <thead>
                 <tr className="border-b border-slate-200/60 dark:border-slate-700/60 bg-gradient-to-r from-slate-50 dark:from-slate-900 to-slate-100/50">
-                  <th className="p-4 text-left w-10">
+                  <th className="p-3 text-left w-10">
                     <input
                       type="checkbox"
                       checked={selectedItems.size === items.length && items.length > 0}
@@ -712,9 +723,9 @@ export const Content = () => {
                       className="rounded border-slate-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500"
                     />
                   </th>
-                  <th className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Previzualizare</th>
+                  <th className="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Preview</th>
                   <th
-                    className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
+                    className="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
                     onClick={() => requestSort('title')}
                   >
                     <div className="flex items-center gap-1">
@@ -722,9 +733,9 @@ export const Content = () => {
                       {sortConfig.key === 'title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </div>
                   </th>
-                  <th className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Branduri</th>
+                  <th className="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Brand</th>
                   <th
-                    className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
+                    className="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
                     onClick={() => requestSort('type')}
                   >
                     <div className="flex items-center gap-1">
@@ -733,17 +744,17 @@ export const Content = () => {
                     </div>
                   </th>
                   <th
-                    className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
+                    className="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
                     onClick={() => requestSort('file_size')}
                   >
                     <div className="flex items-center gap-1">
-                      Dimensiune
+                      Dim.
                       {sortConfig.key === 'file_size' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </div>
                   </th>
-                  <th className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Creat de</th>
+                  <th className="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Adăugat</th>
                   <th
-                    className="p-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
+                    className="p-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
                     onClick={() => requestSort('created_at')}
                   >
                     <div className="flex items-center gap-1">
@@ -751,7 +762,7 @@ export const Content = () => {
                       {sortConfig.key === 'created_at' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                     </div>
                   </th>
-                  <th className="p-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acțiuni</th>
+                  <th className="p-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Acțiuni</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
