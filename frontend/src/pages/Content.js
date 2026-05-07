@@ -336,6 +336,22 @@ export const Content = () => {
     });
   };
 
+  const getVideoDuration = (file) => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        resolve(Math.ceil(video.duration));
+      };
+      video.onerror = () => {
+        window.URL.revokeObjectURL(video.src);
+        resolve(10);
+      };
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleFileUpload = async (e) => {
     e.preventDefault();
     if (uploadMethod === 'file' && selectedFiles.length === 0) {
@@ -346,42 +362,42 @@ export const Content = () => {
     setUploading(true);
     try {
       if (uploadMethod === 'file') {
-        const formDataToSend = new FormData();
-        Array.from(selectedFiles).forEach((file) => {
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          const type = file.type.startsWith('video') ? 'video' : 'image';
+          
+          const formDataToSend = new FormData();
           formDataToSend.append('files', file);
-        });
-        formDataToSend.append('title', formData.title);
-        formDataToSend.append('type', formData.type);
-        formDataToSend.append('category', formData.category);
-        formDataToSend.append('duration', formData.duration);
-        if (formData.folder_id && formData.folder_id !== 'none') {
-          formDataToSend.append('folder_id', formData.folder_id);
-        }
-        if (formData.brand && Array.isArray(formData.brand) && formData.brand.length > 0) {
-          formDataToSend.append('brand', formData.brand.join(','));
-        }
-
-        // Generate video thumbnail on client side
-        if (formData.type === 'video' && selectedFiles.length > 0) {
-          try {
-            const thumbBlob = await generateVideoThumbnail(selectedFiles[0]);
+          
+          const itemTitle = (selectedFiles.length === 1 && formData.title) ? formData.title : file.name;
+          formDataToSend.append('title', itemTitle);
+          formDataToSend.append('type', type);
+          formDataToSend.append('category', formData.category);
+          
+          if (type === 'video') {
+            const dur = await getVideoDuration(file);
+            formDataToSend.append('duration', dur);
+            
+            const thumbBlob = await generateVideoThumbnail(file);
             if (thumbBlob) {
               formDataToSend.append('thumbnail', thumbBlob, 'thumbnail.jpg');
             }
-          } catch (e) {
-            console.warn('Could not generate video thumbnail:', e);
+          } else {
+            formDataToSend.append('duration', formData.duration);
           }
-        }
 
-        // Increase timeout for large files
-        await api.post('/content', formDataToSend, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-          timeout: 300000, // 5 minutes for large video files
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            console.log('Upload progress:', percentCompleted + '%');
+          if (formData.folder_id && formData.folder_id !== 'none') {
+            formDataToSend.append('folder_id', formData.folder_id);
           }
-        });
+          if (formData.brand && Array.isArray(formData.brand) && formData.brand.length > 0) {
+            formDataToSend.append('brand', formData.brand.join(','));
+          }
+
+          await api.post('/content', formDataToSend, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 300000
+          });
+        }
       } else {
         await api.post('/content/external', {
           title: formData.title,
