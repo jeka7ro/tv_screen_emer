@@ -509,6 +509,7 @@ class Content(BaseModel):
     folder_id: Optional[str] = None
     brand: List[str] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_by_name: Optional[str] = None
 
 class ContentCreate(BaseModel):
     title: str
@@ -1712,7 +1713,8 @@ async def create_content(
                 "loop": True,
                 "playlist_urls": [],
                 "created_at": datetime.now(timezone.utc),
-                "created_by": current_user.id
+                "created_by": current_user.id,
+                "created_by_name": current_user.full_name
             }
             
             await content_insert(new_content)
@@ -1732,6 +1734,7 @@ async def create_content(
 @api_router.post("/content/external", response_model=Content)
 async def create_external_content(content_data: ContentCreate, current_user: User = Depends(require_admin)):
     content = Content(**content_data.model_dump())
+    content.created_by_name = current_user.full_name
     await content_insert(content.model_dump())
     return content
 

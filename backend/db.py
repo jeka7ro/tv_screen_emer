@@ -212,6 +212,12 @@ async def init_db() -> None:
     except Exception:
         pass
 
+    # Add created_by_name to content
+    try:
+        await pool.execute("ALTER TABLE content ADD COLUMN IF NOT EXISTS created_by_name TEXT")
+    except Exception:
+        pass
+
     # Billing config table (single-row config for superadmin)
     await pool.execute("""
         CREATE TABLE IF NOT EXISTS billing_config (
@@ -592,13 +598,13 @@ async def content_insert(row: Dict[str, Any]) -> None:
     playlist_urls = json.dumps(row.get("playlist_urls") or [])
     await _execute(
         """INSERT INTO content (id, title, type, file_url, duration, category, tags, thumbnail_url,
-           autoplay, loop, playlist_urls, created_at, source_type, file_size, folder_id, brand)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)""",
+           autoplay, loop, playlist_urls, created_at, source_type, file_size, folder_id, brand, created_by_name)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)""",
         row["id"], row["title"], row["type"], row["file_url"], row.get("duration", 10),
         row.get("category", "other"), tags, row.get("thumbnail_url"),
         row.get("autoplay", True), row.get("loop", True), playlist_urls, row["created_at"],
         row.get("source_type", "file"), row.get("file_size", 0), row.get("folder_id"),
-        json.dumps(row.get("brand") or [])
+        json.dumps(row.get("brand") or []), row.get("created_by_name")
     )
 
 

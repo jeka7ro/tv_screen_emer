@@ -851,7 +851,7 @@ export const Content = () => {
                             getBrandLogo(brandName) && (
                               <div
                                 key={idx}
-                                className="w-8 h-8 rounded border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-sm ring-2 ring-white"
+                                className="w-8 h-8 rounded-full border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-sm ring-2 ring-white"
                                 title={brandName}
                               >
                                 <img src={getBrandLogo(brandName)} className="w-full h-full object-contain" alt="" />
@@ -859,7 +859,7 @@ export const Content = () => {
                             )
                           ))}
                           {Array.isArray(item.brand) && item.brand.length > 3 && (
-                            <div className="w-8 h-8 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 ring-2 ring-white">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 ring-2 ring-white">
                               +{item.brand.length - 3}
                             </div>
                           )}
@@ -966,7 +966,7 @@ export const Content = () => {
                     getBrandLogo(brandName) ? (
                       <div
                         key={idx}
-                        className="w-6 h-6 rounded border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-sm ring-2 ring-white z-10"
+                        className="w-6 h-6 rounded-full border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-sm ring-2 ring-white z-10"
                         title={brandName}
                       >
                         <img src={getBrandLogo(brandName)} className="w-full h-full object-contain p-0.5" alt="" />
