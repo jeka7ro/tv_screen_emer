@@ -245,7 +245,7 @@ export const Users = () => {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center h-96 text-center">
-          <XCircle className="w-16 h-16 text-red-400 mb-4" />
+          <XCircle className="w-16 h-16 text-brand-400 mb-4" />
           <h2 className="text-2xl font-bold text-slate-800 mb-2">Acces restricționat</h2>
           <p className="text-slate-500">Doar Super Admin-ul poate vedea utilizatorii.</p>
         </div>
@@ -417,7 +417,7 @@ export const Users = () => {
                       </td>
                       <td className="py-4 px-5">
                         {u.status === 'suspended' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-full">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-100 text-brand-700 text-xs font-medium rounded-full">
                             <Ban className="w-3 h-3" />
                             Suspendat
                           </span>
@@ -459,7 +459,7 @@ export const Users = () => {
                           </button>
                           <button
                             onClick={() => handleDeleteUser(u.id)}
-                            className="p-2 hover:bg-red-50 rounded-full transition-colors text-slate-500 hover:text-red-600"
+                            className="p-2 hover:bg-brand-50 rounded-full transition-colors text-slate-500 hover:text-brand-600"
                             title="Șterge utilizator"
                             disabled={u.is_super_admin && users.filter(usr => usr.is_super_admin).length === 1}
                           >
@@ -560,7 +560,7 @@ export const Users = () => {
                   </button>
                   <button
                     onClick={() => handleDeleteUser(u.id)}
-                    className="flex flex-col items-center gap-1 p-2 hover:bg-red-50 rounded-2xl transition-colors text-slate-500 hover:text-red-600"
+                    className="flex flex-col items-center gap-1 p-2 hover:bg-brand-50 rounded-2xl transition-colors text-slate-500 hover:text-brand-600"
                     disabled={u.is_super_admin && users.filter(usr => usr.is_super_admin).length === 1}
                   >
                     <Trash2 className="w-4 h-4" />

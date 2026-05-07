@@ -119,8 +119,8 @@ export const EventsCalendar = ({
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-4 relative overflow-hidden transition-all duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-red-50 rounded-2xl shadow-sm shadow-red-100/50">
-                        <CalendarIcon className="w-6 h-6 text-red-600" />
+                    <div className="p-3 bg-brand-50 rounded-2xl shadow-sm shadow-brand-100/50">
+                        <CalendarIcon className="w-6 h-6 text-brand-600" />
                     </div>
                     <div>
                         <h3 className="text-xl font-bold text-slate-800 capitalize tracking-tight leading-none mb-1.5">
@@ -141,7 +141,7 @@ export const EventsCalendar = ({
                                     <button
                                         key={view}
                                         onClick={() => setCalendarView(view)}
-                                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-2xl transition-all ${calendarView === view ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`px-3 py-1 text-[10px] font-black uppercase tracking-tighter rounded-2xl transition-all ${calendarView === view ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                                     >
                                         {view === 'week' ? 'Săpt' : view === 'month' ? 'Lună' : 'Zi'}
                                     </button>
@@ -160,13 +160,13 @@ export const EventsCalendar = ({
                             prev.setDate(prev.getDate() - 1);
                             return prev;
                         })}
-                        className="p-2 hover:bg-white rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                        className="p-2 hover:bg-white rounded-full transition-all text-slate-500 hover:text-brand-600 shadow-sm hover:shadow"
                     >
                         <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                         onClick={() => setCurrentDate(new Date())}
-                        className="px-5 text-xs font-black text-slate-600 hover:text-red-600 transition-colors uppercase tracking-widest"
+                        className="px-5 text-xs font-black text-slate-600 hover:text-brand-600 transition-colors uppercase tracking-widest"
                     >
                         Azi
                     </button>
@@ -178,7 +178,7 @@ export const EventsCalendar = ({
                             next.setDate(next.getDate() + 1);
                             return next;
                         })}
-                        className="p-2 hover:bg-white rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                        className="p-2 hover:bg-white rounded-full transition-all text-slate-500 hover:text-brand-600 shadow-sm hover:shadow"
                     >
                         <ChevronRight className="w-5 h-5" />
                     </button>
@@ -195,10 +195,10 @@ export const EventsCalendar = ({
                         const isDayToday = isToday(day);
 
                         return (
-                            <div key={idx} className={`bg-white min-h-[160px] p-2 flex flex-col gap-2 transition-colors ${isDayToday ? 'bg-red-50/20' : ''}`} onClick={() => { setCurrentDate(day); setCalendarView('day'); }}>
-                                <div className={`text-center mb-1 p-2 rounded-2xl border ${isDayToday ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'}`}>
+                            <div key={idx} className={`bg-white min-h-[160px] p-2 flex flex-col gap-2 transition-colors ${isDayToday ? 'bg-brand-50/20' : ''}`} onClick={() => { setCurrentDate(day); setCalendarView('day'); }}>
+                                <div className={`text-center mb-1 p-2 rounded-2xl border ${isDayToday ? 'bg-brand-50 border-brand-100' : 'bg-slate-50 border-slate-100'}`}>
                                     <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{format(day, 'EEE', { locale: ro })}</div>
-                                    <div className={`text-lg font-black ${isDayToday ? 'text-red-600' : 'text-slate-800'}`}>{format(day, 'd')}</div>
+                                    <div className={`text-lg font-black ${isDayToday ? 'text-brand-600' : 'text-slate-800'}`}>{format(day, 'd')}</div>
                                 </div>
 
                                 <div className="space-y-1.5 flex-1 overflow-y-auto max-h-[220px] scrollbar-hide pr-1">
@@ -247,15 +247,15 @@ export const EventsCalendar = ({
                         return (
                             <div
                                 key={idx}
-                                className={`bg-white min-h-[100px] p-2 flex flex-col gap-1 transition-all hover:bg-slate-50 cursor-pointer ${!isSameMonthDay ? 'bg-slate-50/50 opacity-30 grayscale' : ''} ${isDayToday ? 'bg-red-50/30' : ''}`}
+                                className={`bg-white min-h-[100px] p-2 flex flex-col gap-1 transition-all hover:bg-slate-50 cursor-pointer ${!isSameMonthDay ? 'bg-slate-50/50 opacity-30 grayscale' : ''} ${isDayToday ? 'bg-brand-50/30' : ''}`}
                                 onClick={() => { setCurrentDate(day); setCalendarView('day'); }}
                             >
                                 <div className="flex justify-between items-start mb-1">
-                                    <span className={`text-xs font-black rounded-2xl w-7 h-7 flex items-center justify-center transition-all ${isDayToday ? 'bg-red-600 text-white shadow-lg shadow-red-200 border border-red-500' : 'text-slate-700 bg-slate-50 border border-slate-100'}`}>
+                                    <span className={`text-xs font-black rounded-2xl w-7 h-7 flex items-center justify-center transition-all ${isDayToday ? 'bg-brand-600 text-white shadow-lg shadow-brand-200 border border-brand-500' : 'text-slate-700 bg-slate-50 border border-slate-100'}`}>
                                         {format(day, 'd')}
                                     </span>
                                     {dayEvents.length > 0 && (
-                                        <span className="text-[10px] font-black bg-red-600 text-white px-2 py-0.5 rounded-full shadow-sm animate-in fade-in zoom-in">
+                                        <span className="text-[10px] font-black bg-brand-600 text-white px-2 py-0.5 rounded-full shadow-sm animate-in fade-in zoom-in">
                                             {dayEvents.length}
                                         </span>
                                     )}
@@ -287,7 +287,7 @@ export const EventsCalendar = ({
                     <div className="absolute inset-0 flex justify-between px-4 pt-2 pointer-events-none opacity-50">
                         {[0, 4, 8, 12, 16, 20, 24].map(hour => (
                             <div key={hour} className="flex flex-col items-center h-full relative group">
-                                <span className="text-[10px] font-black text-slate-300 group-hover:text-red-400 transition-colors uppercase">{hour}:00</span>
+                                <span className="text-[10px] font-black text-slate-300 group-hover:text-brand-400 transition-colors uppercase">{hour}:00</span>
                                 <div className="h-full w-px bg-slate-200 mt-1 border-r border-dashed border-white"></div>
                             </div>
                         ))}
@@ -296,12 +296,12 @@ export const EventsCalendar = ({
                     {/* Current Time Line */}
                     {isSameDay(currentDate, new Date()) && (
                         <div
-                            className="absolute top-0 bottom-0 w-px bg-red-500 z-20 shadow-[0_0_12px_rgba(239,68,68,0.8)]"
+                            className="absolute top-0 bottom-0 w-px bg-brand-500 z-20 shadow-[0_0_12px_rgba(239,68,68,0.8)]"
                             style={{
                                 left: `${((new Date().getHours() * 60 + new Date().getMinutes()) / 1440) * 100}%`
                             }}
                         >
-                            <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
+                            <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-brand-500 rounded-full border-2 border-white shadow-sm animate-pulse"></div>
                         </div>
                     )}
 
@@ -336,10 +336,10 @@ export const EventsCalendar = ({
                                         <PlaySquare className="w-4 h-4" style={{ color: event.color }} />
                                     </div>
                                     <div className="flex flex-col min-w-0">
-                                        <span className="text-[11px] font-black text-slate-800 truncate leading-tight group-hover:text-red-600 uppercase tracking-tight">{event.name}</span>
+                                        <span className="text-[11px] font-black text-slate-800 truncate leading-tight group-hover:text-brand-600 uppercase tracking-tight">{event.name}</span>
                                         <div className="flex items-center gap-2">
                                             <span className="text-[9px] font-black opacity-40 uppercase tracking-widest">{event.startTime}-{event.endTime}</span>
-                                            {event.hours && <span className="text-[9px] font-black text-red-500 bg-red-50 px-1 rounded border border-red-100">{event.hours}</span>}
+                                            {event.hours && <span className="text-[9px] font-black text-brand-500 bg-brand-50 px-1 rounded border border-brand-100">{event.hours}</span>}
                                         </div>
                                     </div>
                                 </div>

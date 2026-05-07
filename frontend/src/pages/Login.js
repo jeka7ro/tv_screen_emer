@@ -280,8 +280,8 @@ export const Login = () => {
             )}
 
             {loginError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700 flex items-center gap-2">
-                <Lock className="w-4 h-4 text-red-500 flex-shrink-0" />
+              <div className="p-3 bg-brand-50 border border-brand-200 rounded-2xl text-sm text-brand-700 flex items-center gap-2">
+                <Lock className="w-4 h-4 text-brand-500 flex-shrink-0" />
                 {loginError}
               </div>
             )}

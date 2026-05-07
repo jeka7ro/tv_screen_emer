@@ -489,7 +489,7 @@ export const DisplayScreen = () => {
   if (error) {
     return (
       <div className="display-fullscreen flex flex-col items-center justify-center bg-black p-4">
-        <div className="bg-red-900/20 border border-red-500/50 p-6 rounded-2xl text-center">
+        <div className="bg-brand-900/20 border border-brand-500/50 p-6 rounded-2xl text-center">
           <div className="text-white text-3xl mb-4">⚠️</div>
           <div className="text-white text-xl font-bold">{error}</div>
           <button onClick={() => loadDisplayData()} className="mt-4 text-xs text-white/50 underline">Reîncearcă</button>
@@ -528,7 +528,7 @@ export const DisplayScreen = () => {
                   onError={(e) => { e.target.style.display = 'none'; }}
                 />
               )}
-              <h3 className="text-2xl font-bold text-slate-800 mb-2 underline decoration-red-200 decoration-2 underline-offset-4">{product.name}</h3>
+              <h3 className="text-2xl font-bold text-slate-800 mb-2 underline decoration-brand-200 decoration-2 underline-offset-4">{product.name}</h3>
               {menu.show_descriptions && product.description && <p className="text-slate-600 mb-4 text-sm line-clamp-2">{product.description}</p>}
               <p className="text-3xl font-bold text-indigo-600">{product.price} {product.currency || 'RON'}</p>
             </div>
@@ -544,9 +544,9 @@ export const DisplayScreen = () => {
   const renderZone = (zone, zoneConfig) => {
     if (!zoneConfig) {
       return (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 border border-red-500/20 text-white font-mono text-[10px]">
+        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 border border-brand-500/20 text-white font-mono text-[10px]">
           <div className="opacity-40 uppercase">{zone.name}</div>
-          {isDebug && <div className="text-red-400 mt-2">NO CONFIG FOUND ({zone.id})</div>}
+          {isDebug && <div className="text-brand-400 mt-2">NO CONFIG FOUND ({zone.id})</div>}
         </div>
       );
     }

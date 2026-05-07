@@ -69,7 +69,7 @@ export const SlideshowConfigDialog = ({ open, onOpenChange, onConfirm, count, se
                                         {/* Preview Image/Video */}
                                         <div className="aspect-video bg-slate-100 relative overflow-hidden">
                                             {item.type === 'youtube' ? (
-                                                <div className="w-full h-full bg-red-600 flex items-center justify-center">
+                                                <div className="w-full h-full bg-brand-600 flex items-center justify-center">
                                                     <Film className="w-8 h-8 text-white" />
                                                 </div>
                                             ) : item.type === 'web' ? (
@@ -100,7 +100,7 @@ export const SlideshowConfigDialog = ({ open, onOpenChange, onConfirm, count, se
 
                                         {/* Content Type Badge */}
                                         <div className="absolute top-1 right-1">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${item.type === 'youtube' ? 'bg-red-600 text-white' :
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${item.type === 'youtube' ? 'bg-brand-600 text-white' :
                                                 item.type === 'web' ? 'bg-blue-600 text-white' :
                                                     item.type === 'image' ? 'bg-green-600 text-white' :
                                                         'bg-purple-600 text-white'

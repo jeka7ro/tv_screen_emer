@@ -147,7 +147,7 @@ const ActivityLogs = () => {
                     <div className="flex flex-wrap gap-2 w-full md:w-auto">
                         {/* User Filter */}
                         <select
-                            className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none min-w-[150px]"
+                            className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none min-w-[150px]"
                             value={filters.user_id}
                             onChange={(e) => setFilters(prev => ({ ...prev, user_id: e.target.value, offset: 0 }))}
                         >
@@ -159,7 +159,7 @@ const ActivityLogs = () => {
 
                         {/* Location Filter */}
                         <select
-                            className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none min-w-[150px]"
+                            className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none min-w-[150px]"
                             value={filters.location_id}
                             onChange={(e) => setFilters(prev => ({ ...prev, location_id: e.target.value, offset: 0 }))}
                         >
@@ -171,7 +171,7 @@ const ActivityLogs = () => {
 
                         {/* Entity Type Filter */}
                         <select
-                            className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none"
+                            className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none"
                             value={filters.entity_type}
                             onChange={(e) => setFilters(prev => ({ ...prev, entity_type: e.target.value, offset: 0 }))}
                         >
@@ -187,7 +187,7 @@ const ActivityLogs = () => {
 
                         {/* Level Filter */}
                         <select
-                            className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none"
+                            className="bg-white border border-slate-200 rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none"
                             value={filters.level}
                             onChange={(e) => setFilters(prev => ({ ...prev, level: e.target.value, offset: 0 }))}
                         >
@@ -217,7 +217,7 @@ const ActivityLogs = () => {
                                     <tr>
                                         <td colSpan="6" className="px-4 py-8 text-center text-slate-400">
                                             <div className="flex items-center justify-center gap-2">
-                                                <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                                                <div className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
                                                 Se încarcă...
                                             </div>
                                         </td>
@@ -242,7 +242,7 @@ const ActivityLogs = () => {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-xs uppercase border border-red-200">
+                                                    <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-xs uppercase border border-brand-200">
                                                         {log.user_real_name ? log.user_real_name.substring(0, 2) : (log.user_name ? log.user_name.substring(0, 2) : '??')}
                                                     </div>
                                                     <div>

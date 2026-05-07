@@ -188,7 +188,7 @@ export const Brands = () => {
                                                 )}
                                                 {/* Upload button */}
                                                 <div className="flex gap-2">
-                                                    <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-300 rounded-full cursor-pointer hover:border-red-400 hover:bg-red-50/30 transition-all">
+                                                    <label className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-slate-300 rounded-full cursor-pointer hover:border-brand-400 hover:bg-brand-50/30 transition-all">
                                                         <Upload className="w-4 h-4 text-slate-400" />
                                                         <span className="text-sm text-slate-500">{uploadingLogo ? 'Se încarcă...' : 'Încarcă logo (PNG, JPG, SVG)'}</span>
                                                         <input
@@ -277,10 +277,10 @@ export const Brands = () => {
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            className="h-8 w-8 hover:bg-red-50"
+                                                            className="h-8 w-8 hover:bg-brand-50"
                                                             onClick={() => handleEdit(brand)}
                                                         >
-                                                            <Edit2 className="w-4 h-4 text-red-500" />
+                                                            <Edit2 className="w-4 h-4 text-brand-500" />
                                                         </Button>
                                                         <Button
                                                             variant="ghost"
@@ -315,7 +315,7 @@ export const Brands = () => {
                                         <div className="flex gap-1">
                                             <button
                                                 onClick={() => handleEdit(brand)}
-                                                className="p-2 bg-red-500 text-white rounded-full shadow-sm hover:bg-red-600 transition-colors"
+                                                className="p-2 bg-brand-500 text-white rounded-full shadow-sm hover:bg-brand-600 transition-colors"
                                                 data-testid={`edit-brand-${brand.id}`}
                                             >
                                                 <Edit2 className="w-4 h-4" />

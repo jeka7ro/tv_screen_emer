@@ -131,7 +131,7 @@ export const Invitations = () => {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center h-96 text-center">
-          <XCircle className="w-16 h-16 text-red-400 mb-4" />
+          <XCircle className="w-16 h-16 text-brand-400 mb-4" />
           <h2 className="text-2xl font-bold text-slate-800 mb-2">Acces restricționat</h2>
           <p className="text-slate-500">Doar Super Admin-ul poate gestiona invitațiile.</p>
         </div>
@@ -185,8 +185,8 @@ export const Invitations = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="glass-card p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-2xl">
-                <Link2 className="w-5 h-5 text-red-600" />
+              <div className="p-2 bg-brand-100 rounded-2xl">
+                <Link2 className="w-5 h-5 text-brand-600" />
               </div>
               <div>
                 <p className="text-sm text-slate-500">Total invitații</p>
@@ -257,7 +257,7 @@ export const Invitations = () => {
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <code className="text-lg font-mono font-bold text-red-600 bg-red-50 px-3 py-1 rounded-lg">
+                        <code className="text-lg font-mono font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-lg">
                           {invitation.code}
                         </code>
                         {status === 'active' && (
@@ -271,7 +271,7 @@ export const Invitations = () => {
                           </span>
                         )}
                         {status === 'exhausted' && (
-                          <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded-full">
+                          <span className="px-2 py-1 bg-brand-100 text-brand-700 text-xs font-medium rounded-full">
                             Utilizări epuizate
                           </span>
                         )}
@@ -322,7 +322,7 @@ export const Invitations = () => {
                       {invitation.is_active && (
                         <button
                           onClick={() => handleDeleteInvitation(invitation.id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                          className="p-2 text-brand-500 hover:bg-brand-50 rounded-full transition-colors"
                           title="Dezactivează"
                           data-testid={`delete-invitation-${invitation.code}`}
                         >

@@ -32,7 +32,7 @@ const MediaHoverPreview = ({ item, className, onError }) => {
             className={`rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center relative shadow-sm cursor-pointer group/vid ${className || 'w-10 h-10'}`}
           >
             {hasError ? (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-red-900/80 p-0.5">
+              <div className="w-full h-full flex flex-col items-center justify-center bg-brand-900/80 p-0.5">
                 <span className="text-[7px] font-black text-white text-center leading-tight">FIȘIER<br/>LIPSĂ</span>
               </div>
             ) : item.type === 'video' ? (
@@ -757,33 +757,33 @@ export const Playlists = () => {
                                   end_at: checked ? formData.end_at : '' // Keep existing or reset if unchecked
                                 });
                               }}
-                              className="rounded text-red-600 focus:ring-red-500"
+                              className="rounded text-brand-600 focus:ring-brand-500"
                             />
                             <span className="text-sm font-medium text-slate-700">Programează</span>
                           </label>
                         </div>
 
                         {formData.is_scheduled && (
-                          <div className="grid grid-cols-2 gap-4 p-4 bg-red-50/50 rounded-2xl border border-red-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                          <div className="grid grid-cols-2 gap-4 p-4 bg-brand-50/50 rounded-2xl border border-brand-100 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div className="space-y-2">
-                              <Label htmlFor="start_at" className="text-xs font-bold text-red-700 uppercase tracking-wider">Începe la</Label>
+                              <Label htmlFor="start_at" className="text-xs font-bold text-brand-700 uppercase tracking-wider">Începe la</Label>
                               <Input
                                 id="start_at"
                                 type="datetime-local"
                                 value={formData.start_at ? formData.start_at.substring(0, 16) : ''}
                                 onChange={(e) => setFormData({ ...formData, start_at: e.target.value })}
-                                className="bg-white border-red-200 focus:border-red-500 rounded-2xl shadow-sm h-10"
+                                className="bg-white border-brand-200 focus:border-brand-500 rounded-2xl shadow-sm h-10"
                                 required={formData.is_scheduled}
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="end_at" className="text-xs font-bold text-red-700 uppercase tracking-wider">Se termină la (Opțional)</Label>
+                              <Label htmlFor="end_at" className="text-xs font-bold text-brand-700 uppercase tracking-wider">Se termină la (Opțional)</Label>
                               <Input
                                 id="end_at"
                                 type="datetime-local"
                                 value={formData.end_at ? formData.end_at.substring(0, 16) : ''}
                                 onChange={(e) => setFormData({ ...formData, end_at: e.target.value })}
-                                className="bg-white border-red-200 focus:border-red-500 rounded-2xl shadow-sm h-10"
+                                className="bg-white border-brand-200 focus:border-brand-500 rounded-2xl shadow-sm h-10"
                               />
                               <p className="text-[10px] text-slate-500">Lasă gol pentru a rula până la oprire manuală</p>
                             </div>
@@ -794,15 +794,15 @@ export const Playlists = () => {
                         <div className="space-y-2 mt-2 p-4 bg-slate-50/50 rounded-2xl border border-slate-200">
                           <div className="flex items-center justify-between mb-2">
                             <Label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                              Selectează Ecrane {formData.screen_ids?.length > 0 && <span className="ml-1 text-red-500 font-normal">({formData.screen_ids.length} selectate)</span>}
+                              Selectează Ecrane {formData.screen_ids?.length > 0 && <span className="ml-1 text-brand-500 font-normal">({formData.screen_ids.length} selectate)</span>}
                             </Label>
                             <div className="flex items-center gap-2">
-                              <label className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-slate-600 hover:text-red-600">
+                              <label className="flex items-center gap-1.5 cursor-pointer text-[10px] font-medium text-slate-600 hover:text-brand-600">
                                 <input
                                   type="checkbox"
                                   checked={filterWithScreens}
                                   onChange={(e) => setFilterWithScreens(e.target.checked)}
-                                  className="rounded w-3 h-3 text-red-600 focus:ring-1 focus:ring-red-500 border-slate-300"
+                                  className="rounded w-3 h-3 text-brand-600 focus:ring-1 focus:ring-brand-500 border-slate-300"
                                 />
                                 Doar locații cu ecrane
                               </label>
@@ -819,7 +819,7 @@ export const Playlists = () => {
                                   placeholder="🔍 Caută locație..."
                                   value={locationSearch}
                                   onChange={(e) => setLocationSearch(e.target.value)}
-                                  className="w-full text-xs p-1.5 border border-slate-200 rounded-2xl focus:ring-1 focus:ring-red-500 outline-none bg-white"
+                                  className="w-full text-xs p-1.5 border border-slate-200 rounded-2xl focus:ring-1 focus:ring-brand-500 outline-none bg-white"
                                 />
                               </div>
                               <div className="max-h-40 overflow-y-auto">
@@ -833,13 +833,13 @@ export const Playlists = () => {
                                       setFormData(prev => ({ ...prev, screen_ids: screens.map(s => s.id) }));
                                     }
                                   }}
-                                  className="w-full flex items-center gap-2 text-xs px-3 py-2 font-bold text-red-700 border-b border-red-100 hover:bg-red-50 transition-colors text-left"
+                                  className="w-full flex items-center gap-2 text-xs px-3 py-2 font-bold text-brand-700 border-b border-brand-100 hover:bg-brand-50 transition-colors text-left"
                                 >
                                   <input
                                     type="checkbox"
                                     checked={screens.length > 0 && formData.screen_ids?.length === screens.length}
                                     readOnly
-                                    className="rounded text-red-600 focus:ring-red-500 w-3 h-3 pointer-events-none"
+                                    className="rounded text-brand-600 focus:ring-brand-500 w-3 h-3 pointer-events-none"
                                   />
                                   <span>Selectează Tot</span>
                                 </button>
@@ -859,7 +859,7 @@ export const Playlists = () => {
                                         key={loc.id}
                                         type="button"
                                         onClick={() => setSelectedLocationForScreens(isActive ? null : loc.id)}
-                                        className={`w-full flex items-center gap-2 text-xs px-3 py-2 transition-colors text-left border-b border-slate-50 last:border-0 ${isActive ? 'bg-red-50 border-l-2 border-l-red-500' : 'hover:bg-slate-50'
+                                        className={`w-full flex items-center gap-2 text-xs px-3 py-2 transition-colors text-left border-b border-slate-50 last:border-0 ${isActive ? 'bg-brand-50 border-l-2 border-l-red-500' : 'hover:bg-slate-50'
                                           }`}
                                       >
                                         <input
@@ -881,7 +881,7 @@ export const Playlists = () => {
                                             });
                                           }}
                                           readOnly
-                                          className="rounded text-red-600 focus:ring-red-500 w-3 h-3 cursor-pointer"
+                                          className="rounded text-brand-600 focus:ring-brand-500 w-3 h-3 cursor-pointer"
                                         />
                                         <span className="font-medium text-slate-700 flex-1 truncate">{loc.name}</span>
                                         <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full shrink-0">{locScreens.length}</span>
@@ -919,8 +919,8 @@ export const Playlists = () => {
                                           <label
                                             key={screen.id}
                                             className={`flex items-center gap-2 px-3 py-2 rounded-2xl text-xs cursor-pointer transition-all border ${isChecked
-                                              ? 'bg-red-100 border-red-300 text-red-700 font-bold shadow-sm'
-                                              : 'bg-white border-slate-200 text-slate-600 hover:bg-red-50 hover:border-red-200'
+                                              ? 'bg-brand-100 border-brand-300 text-brand-700 font-bold shadow-sm'
+                                              : 'bg-white border-slate-200 text-slate-600 hover:bg-brand-50 hover:border-brand-200'
                                               }`}
                                           >
                                             <input
@@ -937,9 +937,9 @@ export const Playlists = () => {
                                                   }
                                                 });
                                               }}
-                                              className="rounded text-red-600 focus:ring-red-500 w-3.5 h-3.5"
+                                              className="rounded text-brand-600 focus:ring-brand-500 w-3.5 h-3.5"
                                             />
-                                            <span className={`w-2 h-2 rounded-full shrink-0 ${isChecked ? 'bg-red-500' : 'bg-slate-300'}`} />
+                                            <span className={`w-2 h-2 rounded-full shrink-0 ${isChecked ? 'bg-brand-500' : 'bg-slate-300'}`} />
                                             {screen.name}
                                           </label>
                                         );
@@ -993,7 +993,7 @@ export const Playlists = () => {
                                       {folderItems.map(item => (
                                         <div
                                           key={item.id}
-                                          className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-2xl hover:border-red-200 hover:shadow-sm transition-all group"
+                                          className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-2xl hover:border-brand-200 hover:shadow-sm transition-all group"
                                         >
                                           <div className="flex items-center gap-3 flex-1 min-w-0">
                                             <MediaHoverPreview item={item} className="w-10 h-10" />
@@ -1005,7 +1005,7 @@ export const Playlists = () => {
                                           <Button
                                             type="button"
                                             onClick={() => addContentToPlaylist(item.id)}
-                                            className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-full border-none shadow-none"
+                                            className="bg-brand-50 hover:bg-brand-600 text-brand-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-full border-none shadow-none"
                                           >
                                             Adaugă
                                           </Button>
@@ -1031,7 +1031,7 @@ export const Playlists = () => {
                                       {rootItems.map(item => (
                                         <div
                                           key={item.id}
-                                          className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-2xl hover:border-red-200 hover:shadow-sm transition-all group"
+                                          className="flex items-center justify-between p-2 bg-white border border-slate-100 rounded-2xl hover:border-brand-200 hover:shadow-sm transition-all group"
                                         >
                                           <div className="flex items-center gap-3 flex-1 min-w-0">
                                             <MediaHoverPreview item={item} className="w-10 h-10" />
@@ -1043,7 +1043,7 @@ export const Playlists = () => {
                                           <Button
                                             type="button"
                                             onClick={() => addContentToPlaylist(item.id)}
-                                            className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-full border-none shadow-none"
+                                            className="bg-brand-50 hover:bg-brand-600 text-brand-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-full border-none shadow-none"
                                           >
                                             Adaugă
                                           </Button>
@@ -1058,7 +1058,7 @@ export const Playlists = () => {
 
                           <div className="space-y-3">
                             <Label className="text-base font-bold text-slate-700 flex items-center gap-2">
-                              <ListIcon className="w-4 h-4 text-red-500" />
+                              <ListIcon className="w-4 h-4 text-brand-500" />
                               Playlist ({playlistItems.length} elemente • {formatDuration(calculateTotalDuration(playlistItems))})
                             </Label>
                             <div className="max-h-[500px] overflow-y-auto space-y-3 border border-slate-100 rounded-2xl p-4 bg-slate-50 shadow-inner">
@@ -1115,7 +1115,7 @@ export const Playlists = () => {
                                       {/* Info */}
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                          <span className="text-[10px] font-black text-red-500">#{index + 1}</span>
+                                          <span className="text-[10px] font-black text-brand-500">#{index + 1}</span>
                                           <p className="text-xs font-bold text-slate-700 truncate">{contentItem?.title || 'Unknown'}</p>
                                         </div>
                                         <div className="flex items-center gap-1 mt-0.5">
@@ -1125,7 +1125,7 @@ export const Playlists = () => {
                                             min="1"
                                             value={item.duration || 10}
                                             onChange={(e) => updateItemDuration(index, e.target.value)}
-                                            className="h-5 w-12 px-1 text-[10px] font-bold text-slate-600 bg-slate-50 border-none rounded focus:ring-1 focus:ring-red-500"
+                                            className="h-5 w-12 px-1 text-[10px] font-bold text-slate-600 bg-slate-50 border-none rounded focus:ring-1 focus:ring-brand-500"
                                           />
                                           <span className="text-[9px] text-slate-400 uppercase">sec</span>
                                         </div>
@@ -1186,7 +1186,7 @@ export const Playlists = () => {
                         className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                         title={`${brand.name} (${count})`}
                       >
-                        <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${selectedBrands.includes(brand.name) ? 'border-red-500' : 'border-slate-100'}`}>
+                        <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${selectedBrands.includes(brand.name) ? 'border-brand-500' : 'border-slate-100'}`}>
                           {brand.logo_url ? (
                             <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
                           ) : (
@@ -1194,7 +1194,7 @@ export const Playlists = () => {
                           )}
                         </div>
                         {selectedBrands.includes(brand.name) && (
-                          <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-red-600 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-20 animate-in zoom-in duration-200">
+                          <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-brand-600 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-20 animate-in zoom-in duration-200">
                             {count}
                           </div>
                         )}
@@ -1217,13 +1217,13 @@ export const Playlists = () => {
               <div className="bg-slate-100 p-1 rounded-2xl flex border border-slate-200 shrink-0">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-1.5 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-1.5 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-1.5 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-1.5 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                   <ListIcon className="w-4 h-4" />
                 </button>
@@ -1254,7 +1254,7 @@ export const Playlists = () => {
                 <div className="p-3 border-b border-slate-100">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Monitor className="w-4 h-4 text-red-500" />
+                      <Monitor className="w-4 h-4 text-brand-500" />
                       <span className="text-sm font-bold text-slate-700">Ecrane</span>
                       <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full font-bold">{screens.length}</span>
                     </div>
@@ -1314,14 +1314,14 @@ export const Playlists = () => {
                                     handleDropOnScreen(screen.id);
                                   }}
                                   className={`p-2.5 rounded-2xl border-2 transition-all ${droppingOnScreenId === screen.id
-                                    ? 'border-red-400 bg-red-50 scale-[1.02] shadow-lg'
+                                    ? 'border-brand-400 bg-brand-50 scale-[1.02] shadow-lg'
                                     : draggedPlaylistId
-                                      ? 'border-dashed border-slate-300 bg-slate-50 hover:border-red-300 hover:bg-red-50/50'
+                                      ? 'border-dashed border-slate-300 bg-slate-50 hover:border-brand-300 hover:bg-brand-50/50'
                                       : 'border-transparent bg-slate-50/50 hover:bg-slate-100/80'
                                     }`}
                                 >
                                   <div className="flex items-center gap-2">
-                                    <Monitor className={`w-5 h-5 shrink-0 ${droppingOnScreenId === screen.id ? 'text-red-500' : 'text-slate-400'
+                                    <Monitor className={`w-5 h-5 shrink-0 ${droppingOnScreenId === screen.id ? 'text-brand-500' : 'text-slate-400'
                                       }`} />
                                     <div className="flex-1 min-w-0">
                                       <p className="text-xs font-bold text-slate-700 truncate">{screen.name}</p>
@@ -1384,7 +1384,7 @@ export const Playlists = () => {
                               type="checkbox"
                               checked={filteredPlaylists.length > 0 && selectedPlaylists.length === filteredPlaylists.length}
                               onChange={toggleSelectAll}
-                              className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                              className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                             />
                           </th>
                           <th className="px-6 py-4">Status</th>
@@ -1397,13 +1397,13 @@ export const Playlists = () => {
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {filteredPlaylists.map((playlist) => (
-                          <tr key={playlist.id} className={`hover:bg-slate-50/50 transition-colors ${selectedPlaylists.includes(playlist.id) ? 'bg-red-50/30' : ''}`}>
+                          <tr key={playlist.id} className={`hover:bg-slate-50/50 transition-colors ${selectedPlaylists.includes(playlist.id) ? 'bg-brand-50/30' : ''}`}>
                             <td className="px-6 py-4">
                               <input
                                 type="checkbox"
                                 checked={selectedPlaylists.includes(playlist.id)}
                                 onChange={() => toggleSelectPlaylist(playlist.id)}
-                                className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                                className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                               />
                             </td>
                             <td className="px-6 py-4">
@@ -1427,7 +1427,7 @@ export const Playlists = () => {
                                   </div>
                                 )}
                                 <div className="flex flex-col">
-                                  {playlist.brand && <span className="text-[10px] font-bold text-red-600 uppercase mb-0.5">{playlist.brand}</span>}
+                                  {playlist.brand && <span className="text-[10px] font-bold text-brand-600 uppercase mb-0.5">{playlist.brand}</span>}
                                   <span>{playlist.name}</span>
                                 </div>
                               </div>
@@ -1439,7 +1439,7 @@ export const Playlists = () => {
                                   {playlist.created_at ? new Date(playlist.created_at).toLocaleDateString('ro-RO') : '-'}
                                 </span>
                                 {playlist.is_scheduled && playlist.start_at && (
-                                  <div className="mt-1 flex items-center gap-1 text-red-600 font-bold">
+                                  <div className="mt-1 flex items-center gap-1 text-brand-600 font-bold">
                                     <Clock className="w-3 h-3" />
                                     <span>{format(new Date(playlist.start_at), 'dd.MM HH:mm', { locale: ro })}</span>
                                   </div>
@@ -1464,7 +1464,7 @@ export const Playlists = () => {
                                   </span>
                                 )}
                                 {playlist.is_scheduled && (
-                                  <span className="text-[10px] text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter flex items-center gap-1">
+                                  <span className="text-[10px] text-brand-700 bg-brand-50 border border-brand-200 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter flex items-center gap-1">
                                     <CalendarIcon className="w-2.5 h-2.5" />
                                     Programat
                                   </span>
@@ -1476,12 +1476,12 @@ export const Playlists = () => {
                                 <div className="relative">
                                   <button
                                     onClick={() => setScreenAssignOpen(screenAssignOpen === playlist.id ? null : playlist.id)}
-                                    className={`p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all shadow-sm hover:shadow ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-red-500' : 'text-slate-500 hover:text-red-600'}`}
+                                    className={`p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all shadow-sm hover:shadow ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-brand-500' : 'text-slate-500 hover:text-brand-600'}`}
                                     title="Setare pe ecran"
                                   >
                                     <Airplay className="w-4 h-4" />
                                     {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 && (
-                                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
+                                      <span className="absolute -top-1 -right-1 bg-brand-500 text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
                                         {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length}
                                       </span>
                                     )}
@@ -1496,14 +1496,14 @@ export const Playlists = () => {
                                 </button>
                                 <button
                                   onClick={() => handleDuplicate(playlist)}
-                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-brand-600 shadow-sm hover:shadow"
                                   title="Duplică"
                                 >
                                   <Copy className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => handleEdit(playlist)}
-                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-brand-600 shadow-sm hover:shadow"
                                   title="Editează"
                                 >
                                   <Edit className="w-4 h-4" />
@@ -1530,9 +1530,9 @@ export const Playlists = () => {
                       {/* Location Header */}
                       <div className="flex items-center gap-3 mb-4">
                         <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm">
-                          <MapPin className="w-4 h-4 text-red-500" />
+                          <MapPin className="w-4 h-4 text-brand-500" />
                           <span className="text-sm font-bold text-slate-700">{getLocationName(locationKey === '__none__' ? null : locationKey)}</span>
-                          <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">{groupPlaylists.length}</span>
+                          <span className="text-[10px] font-bold text-white bg-brand-500 px-2 py-0.5 rounded-full">{groupPlaylists.length}</span>
                         </div>
                         <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
                       </div>
@@ -1582,7 +1582,7 @@ export const Playlists = () => {
                                 setDraggedPlaylistId(null);
                                 setDroppingOnScreenId(null);
                               }}
-                              className={`bg-white rounded-3xl border border-slate-200 transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''} ${selectedPlaylists.includes(playlist.id) ? 'ring-2 ring-red-500 shadow-xl scale-[1.02]' : ''}`}
+                              className={`bg-white rounded-3xl border border-slate-200 transition-all hover:shadow-lg group flex flex-col relative overflow-hidden cursor-grab active:cursor-grabbing ${draggedPlaylistId === playlist.id ? 'opacity-50 scale-95' : ''} ${selectedPlaylists.includes(playlist.id) ? 'ring-2 ring-brand-500 shadow-xl scale-[1.02]' : ''}`}
                               style={{
                                 boxShadow: selectedPlaylists.includes(playlist.id) ? `0 15px 40px -10px ${(playlist.color || '#EF4444')}80` : 'none',
                                 '--playlist-color': playlist.color || '#EF4444'
@@ -1616,12 +1616,12 @@ export const Playlists = () => {
                                   <div className="flex gap-1 shrink-0">
                                     <button
                                       onClick={() => setScreenAssignOpen(screenAssignOpen === playlist.id ? null : playlist.id)}
-                                      className={`relative h-7 w-7 p-1.5 rounded-full transition-all ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-red-500 hover:bg-red-100' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}
+                                      className={`relative h-7 w-7 p-1.5 rounded-full transition-all ${screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 ? 'text-brand-500 hover:bg-brand-100' : 'text-slate-400 hover:text-brand-600 hover:bg-brand-50'}`}
                                       title="Atribuie ecrane"
                                     >
                                       <Airplay className="w-4 h-4" />
                                       {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length > 0 && (
-                                        <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
+                                        <span className="absolute -top-0.5 -right-0.5 bg-brand-500 text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
                                           {screens.filter(s => isPlaylistOnScreen(playlist.id, s.id)).length}
                                         </span>
                                       )}
@@ -1788,7 +1788,7 @@ export const Playlists = () => {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <Airplay className="w-5 h-5 text-red-500" />
+              <Airplay className="w-5 h-5 text-brand-500" />
               Selectați ecranele
             </DialogTitle>
             <DialogDescription>
@@ -1815,7 +1815,7 @@ export const Playlists = () => {
                         <label
                           key={screen.id}
                           className={`flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer transition-all border-2 ${assigned
-                            ? 'bg-red-50 border-red-200 shadow-sm'
+                            ? 'bg-brand-50 border-brand-200 shadow-sm'
                             : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50'
                             }`}
                         >
@@ -1823,11 +1823,11 @@ export const Playlists = () => {
                             type="checkbox"
                             checked={assigned}
                             onChange={() => handleToggleScreenAssign(screenAssignOpen, screen.id)}
-                            className="rounded text-red-500 w-4 h-4"
+                            className="rounded text-brand-500 w-4 h-4"
                           />
-                          <Monitor className={`w-5 h-5 ${assigned ? 'text-red-500' : 'text-slate-400'}`} />
+                          <Monitor className={`w-5 h-5 ${assigned ? 'text-brand-500' : 'text-slate-400'}`} />
                           <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-bold ${assigned ? 'text-red-700' : 'text-slate-700'}`}>{screen.name}</p>
+                            <p className={`text-sm font-bold ${assigned ? 'text-brand-700' : 'text-slate-700'}`}>{screen.name}</p>
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className={`w-2 h-2 rounded-full ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-slate-300'}`} />

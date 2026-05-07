@@ -141,7 +141,7 @@ export const Dashboard = () => {
 
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-red-600" />
+            <TrendingUp className="w-6 h-6 text-brand-600" />
             Calendar Evenimente & Programe
           </h2>
           <EventsCalendar
@@ -158,7 +158,7 @@ export const Dashboard = () => {
             </h2>
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs font-bold">
+                <div className="flex-shrink-0 w-6 h-6 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xs font-bold">
                   1
                 </div>
                 <div>
@@ -167,7 +167,7 @@ export const Dashboard = () => {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs font-bold">
+                <div className="flex-shrink-0 w-6 h-6 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xs font-bold">
                   2
                 </div>
                 <div>
@@ -176,7 +176,7 @@ export const Dashboard = () => {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs font-bold">
+                <div className="flex-shrink-0 w-6 h-6 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xs font-bold">
                   3
                 </div>
                 <div>
@@ -185,7 +185,7 @@ export const Dashboard = () => {
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs font-bold">
+                <div className="flex-shrink-0 w-6 h-6 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xs font-bold">
                   4
                 </div>
                 <div>
@@ -202,23 +202,23 @@ export const Dashboard = () => {
             </h2>
             <div className="space-y-3">
               <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Management multi-locații</p>
               </div>
               <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Template-uri personalizabile</p>
               </div>
               <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Sincronizare ecrane</p>
               </div>
               <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Upload imagini și video-uri</p>
               </div>
               <div className="flex items-center gap-3 p-3 bg-white/50 rounded-2xl">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
                 <p className="text-sm text-slate-700">Proteție cu cod de securitate</p>
               </div>
             </div>

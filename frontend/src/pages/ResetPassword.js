@@ -51,10 +51,10 @@ export const ResetPassword = () => {
         return (
             <div className="min-h-screen flex items-center justify-center p-6">
                 <div className="w-full max-w-md glass-card p-8 text-center">
-                    <div className="bg-red-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Lock className="w-6 h-6 text-red-600" />
+                    <div className="bg-brand-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Lock className="w-6 h-6 text-brand-600" />
                     </div>
-                    <h3 className="text-lg font-semibold text-red-800 mb-2">Link Invalid</h3>
+                    <h3 className="text-lg font-semibold text-brand-800 mb-2">Link Invalid</h3>
                     <p className="text-slate-600 mb-6">
                         Link-ul de resetare lipsește sau este invalid. Vă rugăm să solicitați unul nou.
                     </p>

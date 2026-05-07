@@ -255,7 +255,7 @@ const AudioStreaming = () => {
                     {view === 'list' && (
                         <button
                             onClick={() => setShowCreateModal(true)}
-                            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full transition-colors shadow-md"
+                            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-full transition-colors shadow-md"
                         >
                             <Plus size={20} />
                             Playlist Nou
@@ -269,15 +269,15 @@ const AudioStreaming = () => {
                             <div
                                 key={pl.id}
                                 onClick={() => openPlaylist(pl.id)}
-                                className="bg-white/80 backdrop-blur-md border border-white/40 p-6 rounded-2xl cursor-pointer hover:shadow-lg hover:border-red-200 transition-all group relative shadow-sm"
+                                className="bg-white/80 backdrop-blur-md border border-white/40 p-6 rounded-2xl cursor-pointer hover:shadow-lg hover:border-brand-200 transition-all group relative shadow-sm"
                             >
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className="p-3 bg-red-50 rounded-full text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors">
+                                    <div className="p-3 bg-brand-50 rounded-full text-brand-600 group-hover:bg-brand-600 group-hover:text-white transition-colors">
                                         <Music size={24} />
                                     </div>
                                     <button
                                         onClick={(e) => handleDeletePlaylist(pl.id, e)}
-                                        className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-red-500 transition-colors"
+                                        className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-brand-500 transition-colors"
                                     >
                                         <Trash2 size={18} />
                                     </button>
@@ -369,7 +369,7 @@ const AudioStreaming = () => {
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteTrack(track.id)}
-                                                    className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2"
+                                                    className="text-slate-400 hover:text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity p-2"
                                                 >
                                                     <Trash2 size={18} />
                                                 </button>
@@ -406,7 +406,7 @@ const AudioStreaming = () => {
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteTrack(track.id)}
-                                                    className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2"
+                                                    className="text-slate-400 hover:text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity p-2"
                                                 >
                                                     <Trash2 size={18} />
                                                 </button>
@@ -452,7 +452,7 @@ const AudioStreaming = () => {
                                             onChange={e => setTrackTitle(e.target.value)}
                                             required
                                             placeholder="Ex: Summer Vibes sau Promo 50%"
-                                            className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 shadow-sm"
+                                            className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 shadow-sm"
                                         />
                                     </div>
 
@@ -468,7 +468,7 @@ const AudioStreaming = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => { setYoutubeUrl('https://'); setUploadFile(null); }}
-                                                className={`text-xs uppercase font-bold px-2 py-1 ${youtubeUrl ? 'text-red-600 border-b-2 border-red-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                className={`text-xs uppercase font-bold px-2 py-1 ${youtubeUrl ? 'text-brand-600 border-b-2 border-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
                                             >
                                                 YouTube Link
                                             </button>
@@ -480,7 +480,7 @@ const AudioStreaming = () => {
                                                 value={youtubeUrl}
                                                 onChange={e => setYoutubeUrl(e.target.value)}
                                                 placeholder="https://youtube.com/watch?v=..."
-                                                className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-red-500 text-sm shadow-sm"
+                                                className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-brand-500 text-sm shadow-sm"
                                             />
                                         ) : (
                                             <div className="border-2 border-dashed border-slate-300 rounded-3xl p-8 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer bg-slate-50">
@@ -504,7 +504,7 @@ const AudioStreaming = () => {
                                     <button
                                         type="submit"
                                         disabled={uploading}
-                                        className="w-full bg-red-600 hover:bg-red-700 text-white py-3.5 rounded-full font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 shadow-md mt-4"
+                                        className="w-full bg-brand-600 hover:bg-brand-700 text-white py-3.5 rounded-full font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 shadow-md mt-4"
                                     >
                                         {uploading ? 'Se încarcă...' : (
                                             <>
@@ -531,7 +531,7 @@ const AudioStreaming = () => {
                                         required
                                         value={newPlaylistName}
                                         onChange={e => setNewPlaylistName(e.target.value)}
-                                        className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-red-500 shadow-sm"
+                                        className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-brand-500 shadow-sm"
                                         placeholder="Ex: Restaurant Centru"
                                     />
                                 </div>
@@ -541,7 +541,7 @@ const AudioStreaming = () => {
                                     <select
                                         value={selectedLocation}
                                         onChange={e => setSelectedLocation(e.target.value)}
-                                        className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-red-500 shadow-sm"
+                                        className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-brand-500 shadow-sm"
                                     >
                                         <option value="">Fără locație (Playlist General)</option>
                                         {locations.map(loc => (
@@ -560,7 +560,7 @@ const AudioStreaming = () => {
                                         max="20"
                                         value={adFrequency}
                                         onChange={e => setAdFrequency(e.target.value)}
-                                        className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-red-500 shadow-sm"
+                                        className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-brand-500 shadow-sm"
                                     />
                                     <p className="text-xs text-slate-500 mt-1 ml-1">Ex: 3 înseamnă o reclamă după fiecare 3 melodii.</p>
                                 </div>
@@ -575,7 +575,7 @@ const AudioStreaming = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-full font-bold transition-colors shadow-md"
+                                        className="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-full font-bold transition-colors shadow-md"
                                     >
                                         Creează
                                     </button>
@@ -598,7 +598,7 @@ const AudioStreaming = () => {
                                         required
                                         value={editPlaylistData.name}
                                         onChange={e => setEditPlaylistData({ ...editPlaylistData, name: e.target.value })}
-                                        className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-red-500 shadow-sm"
+                                        className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-brand-500 shadow-sm"
                                     />
                                 </div>
 
@@ -607,7 +607,7 @@ const AudioStreaming = () => {
                                     <select
                                         value={editPlaylistData.location_id}
                                         onChange={e => setEditPlaylistData({ ...editPlaylistData, location_id: e.target.value })}
-                                        className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-red-500 shadow-sm"
+                                        className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-brand-500 shadow-sm"
                                     >
                                         <option value="">Fără locație (Playlist General)</option>
                                         {locations.map(loc => (
@@ -626,7 +626,7 @@ const AudioStreaming = () => {
                                         max="20"
                                         value={editPlaylistData.ad_frequency}
                                         onChange={e => setEditPlaylistData({ ...editPlaylistData, ad_frequency: e.target.value })}
-                                        className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-red-500 shadow-sm"
+                                        className="w-full bg-white border border-slate-300 rounded-2xl p-3 text-slate-900 focus:outline-none focus:border-brand-500 shadow-sm"
                                     />
                                     <p className="text-xs text-slate-500 mt-1 ml-1">Ex: 3 înseamnă o reclamă după fiecare 3 melodii.</p>
                                 </div>
@@ -641,7 +641,7 @@ const AudioStreaming = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-full font-bold transition-colors shadow-md"
+                                        className="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-full font-bold transition-colors shadow-md"
                                     >
                                         Salvează
                                     </button>

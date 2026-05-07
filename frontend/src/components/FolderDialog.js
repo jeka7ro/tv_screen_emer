@@ -63,7 +63,7 @@ export const FolderDialog = ({
                                         <button
                                             type="button"
                                             onClick={() => setFolderFormData({ ...folderFormData, icon: 'folder' })}
-                                            className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="absolute top-0.5 right-0.5 bg-brand-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
                                         >
                                             <X size={12} />
                                         </button>

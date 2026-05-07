@@ -656,12 +656,12 @@ export const Content = () => {
                       type="checkbox"
                       checked={selectedItems.size === items.length && items.length > 0}
                       onChange={() => toggleSelectAll(items)}
-                      className="rounded border-slate-300 text-red-600 focus:ring-red-500"
+                      className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                     />
                   </th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Previzualizare</th>
                   <th
-                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-red-600 transition-colors"
+                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
                     onClick={() => requestSort('title')}
                   >
                     <div className="flex items-center gap-1">
@@ -671,7 +671,7 @@ export const Content = () => {
                   </th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Branduri</th>
                   <th
-                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-red-600 transition-colors"
+                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
                     onClick={() => requestSort('type')}
                   >
                     <div className="flex items-center gap-1">
@@ -680,7 +680,7 @@ export const Content = () => {
                     </div>
                   </th>
                   <th
-                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-red-600 transition-colors"
+                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
                     onClick={() => requestSort('file_size')}
                   >
                     <div className="flex items-center gap-1">
@@ -690,7 +690,7 @@ export const Content = () => {
                   </th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Creat de</th>
                   <th
-                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-red-600 transition-colors"
+                    className="p-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider cursor-pointer hover:text-brand-600 transition-colors"
                     onClick={() => requestSort('created_at')}
                   >
                     <div className="flex items-center gap-1">
@@ -705,7 +705,7 @@ export const Content = () => {
                 {items.map((item) => (
                   <tr
                     key={item.id}
-                    className={`group hover:bg-slate-50/50 transition-colors ${selectedItems.has(item.id) ? 'bg-red-50/30' : ''} cursor-move active:opacity-50 active:scale-[0.99] transform`}
+                    className={`group hover:bg-slate-50/50 transition-colors ${selectedItems.has(item.id) ? 'bg-brand-50/30' : ''} cursor-move active:opacity-50 active:scale-[0.99] transform`}
                     draggable
                     onDragStart={(e) => {
                       e.dataTransfer.setData('contentId', item.id);
@@ -715,7 +715,7 @@ export const Content = () => {
                     <td className="p-4">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                        className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                         checked={selectedItems.has(item.id)}
                         onChange={() => toggleSelectItem(item.id)}
                       />
@@ -726,11 +726,11 @@ export const Content = () => {
                         onClick={() => handlePreview(item)}
                       >
                         {item.type === 'youtube' ? (
-                          <div className="w-full h-full bg-red-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
+                          <div className="w-full h-full bg-brand-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
                             <Film className="w-4 h-4 mr-0.5" /> YT
                           </div>
                         ) : item.type === 'web' ? (
-                          <div className="w-full h-full bg-red-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
+                          <div className="w-full h-full bg-brand-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
                             <LayoutGrid className="w-4 h-4 mr-0.5" /> WEB
                           </div>
                         ) : item.type === 'image' ? (
@@ -791,7 +791,7 @@ export const Content = () => {
                           )}
                         </div>
                         {Array.isArray(item.brand) && item.brand.length > 0 ? (
-                          <div className="text-[10px] text-red-500 font-bold uppercase truncate max-w-[120px]">
+                          <div className="text-[10px] text-brand-500 font-bold uppercase truncate max-w-[120px]">
                             {item.brand.join(', ')}
                           </div>
                         ) : (
@@ -801,12 +801,12 @@ export const Content = () => {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-1.5">
-                        {item.type === 'image' && <FileImage className="w-3.5 h-3.5 text-red-500" />}
+                        {item.type === 'image' && <FileImage className="w-3.5 h-3.5 text-brand-500" />}
                         {item.type === 'video' && <Film className="w-3.5 h-3.5 text-slate-500" />}
-                        {item.type === 'youtube' && <Film className="w-3.5 h-3.5 text-red-600" />}
-                        {item.type === 'web' && <LayoutGrid className="w-3.5 h-3.5 text-red-600" />}
-                        <span className={`text-xs font-medium capitalize ${item.type === 'youtube' ? 'text-red-600' :
-                          item.type === 'web' ? 'text-red-600' : 'text-slate-600'
+                        {item.type === 'youtube' && <Film className="w-3.5 h-3.5 text-brand-600" />}
+                        {item.type === 'web' && <LayoutGrid className="w-3.5 h-3.5 text-brand-600" />}
+                        <span className={`text-xs font-medium capitalize ${item.type === 'youtube' ? 'text-brand-600' :
+                          item.type === 'web' ? 'text-brand-600' : 'text-slate-600'
                           }`}>
                           {item.type}
                         </span>
@@ -833,7 +833,7 @@ export const Content = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 hover:bg-red-50"
+                              className="h-8 w-8 hover:bg-brand-50"
                               onClick={() => {
                                 setRenamingItem(item);
                                 setNewTitle(item.title);
@@ -841,7 +841,7 @@ export const Content = () => {
                                 setShowRenameDialog(true);
                               }}
                             >
-                              <Edit2 className="w-4 h-4 text-red-500" />
+                              <Edit2 className="w-4 h-4 text-brand-500" />
                             </Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-rose-50 group/d" onClick={() => handleDelete(item)}>
                               <Trash2 className="h-4 w-4 text-slate-400 group-hover/d:text-rose-600 transition-colors" />
@@ -870,7 +870,7 @@ export const Content = () => {
         {items.map((item) => (
           <div
             key={item.id}
-            className={`glass-card p-6 flex flex-col group transition-all duration-300 ${selectedItems.has(item.id) ? 'ring-2 ring-red-500 shadow-lg scale-[1.02]' : 'hover:shadow-md'}`}
+            className={`glass-card p-6 flex flex-col group transition-all duration-300 ${selectedItems.has(item.id) ? 'ring-2 ring-brand-500 shadow-lg scale-[1.02]' : 'hover:shadow-md'}`}
             style={{ minHeight: '600px' }}
             data-testid={`content-card-${item.id}`}
             draggable
@@ -898,7 +898,7 @@ export const Content = () => {
                         <img src={getBrandLogo(brandName)} className="w-full h-full object-contain p-0.5" alt="" />
                       </div>
                     ) : (
-                      <span key={idx} className="text-[10px] font-black text-red-600 uppercase tracking-widest mr-2 underline decoration-2 decoration-red-200 underline-offset-4">
+                      <span key={idx} className="text-[10px] font-black text-brand-600 uppercase tracking-widest mr-2 underline decoration-2 decoration-brand-200 underline-offset-4">
                         {brandName}
                       </span>
                     )
@@ -914,7 +914,7 @@ export const Content = () => {
               <div className="flex gap-1.5">
                 <input
                   type="checkbox"
-                  className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500 shadow-sm cursor-pointer mt-1"
+                  className="w-5 h-5 rounded border-gray-300 text-brand-600 focus:ring-brand-500 shadow-sm cursor-pointer mt-1"
                   checked={selectedItems.has(item.id)}
                   onChange={(e) => {
                     e.stopPropagation();
@@ -927,16 +927,16 @@ export const Content = () => {
             {/* Media Area - Aspect Video */}
             <div className="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden mb-5 border border-slate-200 shadow-inner group-inner">
               {item.type === 'youtube' ? (
-                <div className="w-full h-full bg-red-900 flex items-center justify-center">
+                <div className="w-full h-full bg-brand-900 flex items-center justify-center">
                   <Film className="w-16 h-16 text-white/80" />
                   <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}></div>
-                  <div className="absolute top-3 right-3 z-20 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest shadow-sm">YOUTUBE</div>
+                  <div className="absolute top-3 right-3 z-20 bg-brand-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest shadow-sm">YOUTUBE</div>
                 </div>
               ) : item.type === 'web' ? (
-                <div className="w-full h-full bg-red-900 flex items-center justify-center">
+                <div className="w-full h-full bg-brand-900 flex items-center justify-center">
                   <LayoutGrid className="w-16 h-16 text-white/80" />
                   <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}></div>
-                  <div className="absolute top-3 right-3 z-20 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest shadow-sm">WEB</div>
+                  <div className="absolute top-3 right-3 z-20 bg-brand-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest shadow-sm">WEB</div>
                 </div>
               ) : item.type === 'image' ? (
                 <>
@@ -968,7 +968,7 @@ export const Content = () => {
                       <Film className="w-6 h-6 text-white" />
                     </div>
                   </div>
-                  <div className="absolute top-3 right-3 z-20 bg-red-600/90 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest shadow-sm">
+                  <div className="absolute top-3 right-3 z-20 bg-brand-600/90 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest shadow-sm">
                     VIDEO
                   </div>
                   <div className="absolute bottom-3 left-3 z-20 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded font-medium">
@@ -993,7 +993,7 @@ export const Content = () => {
               <div className="flex items-center justify-between p-3 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
                 <div className="flex flex-col">
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Categorie</span>
-                  <span className="text-xs font-bold text-red-600 capitalize">{item.category}</span>
+                  <span className="text-xs font-bold text-brand-600 capitalize">{item.category}</span>
                 </div>
                 <span className="text-[10px] text-slate-400 font-bold uppercase bg-white px-2 py-0.5 rounded-md border border-slate-100">
                   {(item.file_size / 1024 / 1024).toFixed(1)} MB
@@ -1005,7 +1005,7 @@ export const Content = () => {
             <div className="flex gap-2 mt-auto">
               <button
                 onClick={(e) => { e.stopPropagation(); handlePreview(item); }}
-                className="flex-1 flex items-center justify-center gap-2 text-sm bg-red-600 text-white hover:bg-red-700 px-4 py-3 rounded-full transition-all shadow-md hover:shadow-lg font-bold"
+                className="flex-1 flex items-center justify-center gap-2 text-sm bg-brand-600 text-white hover:bg-brand-700 px-4 py-3 rounded-full transition-all shadow-md hover:shadow-lg font-bold"
               >
                 <Eye className="w-4 h-4" />
                 Preview
@@ -1021,7 +1021,7 @@ export const Content = () => {
                       setEditBrands(Array.isArray(item.brand) ? item.brand : []);
                       setShowRenameDialog(true);
                     }}
-                    className="p-3 hover:bg-red-50 rounded-full transition-all text-slate-400 hover:text-red-600 border border-transparent hover:border-red-100"
+                    className="p-3 hover:bg-brand-50 rounded-full transition-all text-slate-400 hover:text-brand-600 border border-transparent hover:border-brand-100"
                     title="Editează"
                   >
                     <Edit2 className="w-5 h-5" />
@@ -1055,7 +1055,7 @@ export const Content = () => {
           </div>
 
           {isAdmin() && selectedItems.size > 0 && (
-            <div className="mb-6 bg-gradient-to-r from-red-600 to-rose-600 text-white px-6 py-4 rounded-2xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
+            <div className="mb-6 bg-gradient-to-r from-brand-600 to-rose-600 text-white px-6 py-4 rounded-2xl shadow-lg flex items-center gap-4 animate-in slide-in-from-top-4">
               <span className="font-semibold text-lg">{selectedItems.size} selectate</span>
               <div className="h-6 w-px bg-white/30"></div>
 
@@ -1142,7 +1142,7 @@ export const Content = () => {
                       className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                       title={`${brand.name} (${count})`}
                     >
-                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${selectedBrands.includes(brand.name) ? 'border-red-500' : 'border-slate-100'}`}>
+                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${selectedBrands.includes(brand.name) ? 'border-brand-500' : 'border-slate-100'}`}>
                         {brand.logo_url ? (
                           <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
                         ) : (
@@ -1150,7 +1150,7 @@ export const Content = () => {
                         )}
                       </div>
                       {selectedBrands.includes(brand.name) && (
-                        <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-red-600 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-20 animate-in zoom-in duration-200">
+                        <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-brand-600 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-20 animate-in zoom-in duration-200">
                           {count}
                         </div>
                       )}
@@ -1172,7 +1172,7 @@ export const Content = () => {
                     <Switch
                       checked={showImages}
                       onCheckedChange={setShowImages}
-                      className="data-[state=checked]:bg-red-500 scale-75"
+                      className="data-[state=checked]:bg-brand-500 scale-75"
                     />
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Imagini</span>
                   </div>
@@ -1180,7 +1180,7 @@ export const Content = () => {
                     <Switch
                       checked={showVideos}
                       onCheckedChange={setShowVideos}
-                      className="data-[state=checked]:bg-red-500 scale-75"
+                      className="data-[state=checked]:bg-brand-500 scale-75"
                     />
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Video</span>
                   </div>
@@ -1188,7 +1188,7 @@ export const Content = () => {
                     <Switch
                       checked={videoAutoplay}
                       onCheckedChange={setVideoAutoplay}
-                      className="data-[state=checked]:bg-red-500 scale-75"
+                      className="data-[state=checked]:bg-brand-500 scale-75"
                     />
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Autoplay</span>
                   </div>
@@ -1200,14 +1200,14 @@ export const Content = () => {
               <div className="bg-slate-100 p-1 rounded-2xl flex border border-slate-200">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                   title="Grid View"
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`p-2 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                   title="List View"
                 >
                   <ListIcon className="w-4 h-4" />
@@ -1270,7 +1270,7 @@ export const Content = () => {
                               <label
                                 key={brand.id}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border cursor-pointer transition-all ${formData.brand?.includes(brand.name)
-                                  ? 'bg-red-50 border-red-200 text-red-700 shadow-sm'
+                                  ? 'bg-brand-50 border-brand-200 text-brand-700 shadow-sm'
                                   : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                                   }`}
                               >
@@ -1311,17 +1311,17 @@ export const Content = () => {
                         <TabsContent value="file" className="space-y-4 mt-4">
                           <div>
                             <Label className="text-base font-semibold">Selectează fișier(e)</Label>
-                            <div className="mt-3 border-2 border-dashed border-red-300 rounded-2xl p-6 bg-gradient-to-br from-red-50/50 to-red-50/30 hover:from-red-50 hover:to-red-50 transition-all">
+                            <div className="mt-3 border-2 border-dashed border-brand-300 rounded-2xl p-6 bg-gradient-to-br from-brand-50/50 to-brand-50/30 hover:from-brand-50 hover:to-brand-50 transition-all">
                               <div className="flex flex-col items-center mb-4">
-                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-3">
-                                  <Upload className="w-8 h-8 text-red-600" />
+                                <div className="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mb-3">
+                                  <Upload className="w-8 h-8 text-brand-600" />
                                 </div>
                                 <p className="text-sm font-semibold text-slate-700 mb-1">Click pentru a selecta fișiere</p>
                                 <p className="text-xs text-slate-500">sau drag & drop aici</p>
                               </div>
                               <Label
                                 htmlFor="file-upload-input"
-                                className="inline-block px-6 py-3 bg-red-600 text-white font-bold rounded-full cursor-pointer hover:bg-red-700 transition-colors shadow-md hover:shadow-lg mb-4"
+                                className="inline-block px-6 py-3 bg-brand-600 text-white font-bold rounded-full cursor-pointer hover:bg-brand-700 transition-colors shadow-md hover:shadow-lg mb-4"
                               >
                                 Alege fișierele
                               </Label>
@@ -1424,7 +1424,7 @@ export const Content = () => {
                 {/* Header */}
                 <div className="px-4 py-3 flex items-center justify-between border-b border-slate-100/80 shrink-0">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 bg-gradient-to-br from-red-500 to-rose-600 rounded-2xl flex items-center justify-center shadow-sm">
+                    <div className="w-7 h-7 bg-gradient-to-br from-brand-500 to-rose-600 rounded-2xl flex items-center justify-center shadow-sm">
                       <FileImage className="w-3.5 h-3.5 text-white" />
                     </div>
                     <h3 className="font-bold text-sm text-slate-800 tracking-tight">Bibliotecă Conținut</h3>
@@ -1441,7 +1441,7 @@ export const Content = () => {
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-400 font-medium">Afișează:</span>
                       <select
-                        className="text-xs border border-slate-200 rounded-2xl px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-all cursor-pointer font-medium text-slate-600 shadow-sm"
+                        className="text-xs border border-slate-200 rounded-2xl px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all cursor-pointer font-medium text-slate-600 shadow-sm"
                         value={itemsPerPage}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1555,7 +1555,7 @@ export const Content = () => {
                     <a
                       href={getFileUrl(previewItem.file_url)}
                       rel="noopener noreferrer"
-                      className="text-sm text-red-600 hover:text-red-700 truncate block"
+                      className="text-sm text-brand-600 hover:text-brand-700 truncate block"
                     >
                       Deschide în tab nou →
                     </a>
@@ -1593,7 +1593,7 @@ export const Content = () => {
                       <label
                         key={brand.id}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border cursor-pointer transition-all ${editBrands.includes(brand.name)
-                          ? 'bg-red-50 border-red-200 text-red-700 shadow-sm'
+                          ? 'bg-brand-50 border-brand-200 text-brand-700 shadow-sm'
                           : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
                           }`}
                       >
@@ -1624,7 +1624,7 @@ export const Content = () => {
                 <Button type="button" variant="outline" onClick={() => setShowRenameDialog(false)}>
                   Anulează
                 </Button>
-                <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white font-semibold flex-1 shadow-md">
+                <Button type="submit" className="bg-brand-600 hover:bg-brand-700 text-white font-semibold flex-1 shadow-md">
                   Salvează modificările
                 </Button>
               </div>

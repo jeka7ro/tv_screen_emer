@@ -57,7 +57,7 @@ export const PlaylistSimulation = ({ playlistIds, playlists, onClose }) => {
         return (
             <div className="flex items-center justify-center h-full bg-slate-900">
                 <div className="flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 border-4 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-12 h-12 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
                     <p className="text-white/60 text-sm">Se încarcă simularea...</p>
                 </div>
             </div>

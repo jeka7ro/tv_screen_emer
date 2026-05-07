@@ -339,7 +339,7 @@ export const Screens = () => {
             <div>
               <h1 className="text-4xl font-bold text-slate-800 mb-2">
                 Ecrane
-                <span className="ml-3 inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-full bg-red-600 text-white text-lg font-bold align-middle">{screens.length}</span>
+                <span className="ml-3 inline-flex items-center justify-center min-w-[36px] h-9 px-3 rounded-full bg-brand-600 text-white text-lg font-bold align-middle">{screens.length}</span>
               </h1>
               <p className="text-slate-500">Gestionează ecranele digitale și conținutul lor</p>
             </div>
@@ -505,7 +505,7 @@ export const Screens = () => {
                       className={`relative group transition-all duration-200 ${isActive ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                       title={`${brand.name} (${count})`}
                     >
-                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${isActive ? 'border-red-500' : 'border-slate-100'}`}>
+                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white shadow-sm border ${isActive ? 'border-brand-500' : 'border-slate-100'}`}>
                         {brand.logo_url ? (
                           <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
                         ) : (
@@ -513,7 +513,7 @@ export const Screens = () => {
                         )}
                       </div>
                       {isActive && (
-                        <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-red-600 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-20 animate-in zoom-in duration-200">
+                        <div className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 bg-brand-600 rounded-full flex items-center justify-center text-[8px] font-bold text-white border border-white shadow-sm z-20 animate-in zoom-in duration-200">
                           {count}
                         </div>
                       )}
@@ -585,13 +585,13 @@ export const Screens = () => {
             <div className="bg-slate-100 p-1 rounded-2xl flex border border-slate-200">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-2xl transition-all ${viewMode === 'grid' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                className={`p-1.5 rounded-2xl transition-all ${viewMode === 'list' ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
               >
                 <ListIcon className="w-4 h-4" />
               </button>
@@ -602,7 +602,7 @@ export const Screens = () => {
                   <button
                     key={size}
                     onClick={() => { setGridSize(size); localStorage.setItem('screens_grid_size', size); }}
-                    className={`px-2 py-1 rounded-2xl text-[10px] font-bold transition-all ${gridSize === size ? 'bg-white text-red-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`px-2 py-1 rounded-2xl text-[10px] font-bold transition-all ${gridSize === size ? 'bg-white text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                   >
                     {label}
                   </button>
@@ -633,7 +633,7 @@ export const Screens = () => {
                         type="checkbox"
                         checked={filteredScreens.length > 0 && selectedScreens.length === filteredScreens.length}
                         onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                        className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                       />
                     </th>
                     <th className="px-6 py-4">Status</th>
@@ -648,18 +648,18 @@ export const Screens = () => {
                   {filteredScreens.map((screen) => {
                     const location = getLocation(screen.location_id);
                     return (
-                      <tr key={screen.id} className={`hover:bg-slate-50/50 transition-colors ${selectedScreens.includes(screen.id) ? 'bg-red-50/30' : ''}`}>
+                      <tr key={screen.id} className={`hover:bg-slate-50/50 transition-colors ${selectedScreens.includes(screen.id) ? 'bg-brand-50/30' : ''}`}>
                         <td className="px-6 py-4">
                           <input
                             type="checkbox"
                             checked={selectedScreens.includes(screen.id)}
                             onChange={() => toggleSelectScreen(screen.id)}
-                            className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                            className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                           />
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-2xl text-[10px] font-bold uppercase tracking-wider ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`} style={screen.status === 'online' ? { boxShadow: '0 0 8px 2px rgba(16, 185, 129, 0.4)' } : { boxShadow: '0 0 8px 2px rgba(239, 68, 68, 0.4)' }}>
-                            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-2xl text-[10px] font-bold uppercase tracking-wider ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-800' : 'bg-brand-100 text-brand-800'}`} style={screen.status === 'online' ? { boxShadow: '0 0 8px 2px rgba(16, 185, 129, 0.4)' } : { boxShadow: '0 0 8px 2px rgba(239, 68, 68, 0.4)' }}>
+                            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-brand-500'}`}></div>
                             {screen.status === 'online' ? 'ONLINE' : 'OFFLINE'}
                           </span>
                         </td>
@@ -670,7 +670,7 @@ export const Screens = () => {
                                 {getBrand(screen.logo_brand_id).logo_url && (
                                   <img src={getBrand(screen.logo_brand_id).logo_url} alt="" className="w-4 h-4 object-contain" />
                                 )}
-                                <span className="text-[10px] font-bold text-red-600 uppercase">{getBrand(screen.logo_brand_id).name}</span>
+                                <span className="text-[10px] font-bold text-brand-600 uppercase">{getBrand(screen.logo_brand_id).name}</span>
                               </div>
                             )}
                             <span className="font-semibold text-slate-800">{screen.name}</span>
@@ -713,7 +713,7 @@ export const Screens = () => {
                             </button>
                             <button
                               onClick={() => handleShowLink(screen)}
-                              className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                              className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-brand-600 shadow-sm hover:shadow"
                               title="Link TV"
                             >
                               <LinkIcon className="w-4 h-4" />
@@ -722,14 +722,14 @@ export const Screens = () => {
                               <>
                                 <Link
                                   to={`/screens/${screen.id}/design`}
-                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-brand-600 shadow-sm hover:shadow"
                                   title="Design / Conținut"
                                 >
                                   <Settings className="w-4 h-4" />
                                 </Link>
                                 <button
                                   onClick={() => handleEdit(screen)}
-                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-red-600 shadow-sm hover:shadow"
+                                  className="p-2 hover:bg-white border border-transparent hover:border-slate-200 rounded-full transition-all text-slate-500 hover:text-brand-600 shadow-sm hover:shadow"
                                   title="Editează"
                                 >
                                   <Edit className="w-4 h-4" />
@@ -759,9 +759,9 @@ export const Screens = () => {
                 {/* Location Header */}
                 <div className="flex items-center gap-3 mb-4">
                   <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm">
-                    <MapPin className="w-4 h-4 text-red-500" />
+                    <MapPin className="w-4 h-4 text-brand-500" />
                     <span className="text-sm font-bold text-slate-700">{getLocationName(locationId)}</span>
-                    <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">{locationScreens.length}</span>
+                    <span className="text-[10px] font-bold text-white bg-brand-500 px-2 py-0.5 rounded-full">{locationScreens.length}</span>
                   </div>
                   <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
                 </div>
@@ -785,10 +785,10 @@ export const Screens = () => {
                         <div className="flex gap-1 shrink-0">
                           {isAdmin() && (
                             <>
-                              <Link to={`/screens/${screen.id}/design`} className="p-1.5 hover:bg-white/80 rounded-full text-slate-400 hover:text-red-600" title="Configurează">
+                              <Link to={`/screens/${screen.id}/design`} className="p-1.5 hover:bg-white/80 rounded-full text-slate-400 hover:text-brand-600" title="Configurează">
                                 <Settings className="w-3.5 h-3.5" />
                               </Link>
-                              <button onClick={() => handleEdit(screen)} className="p-1.5 hover:bg-white/80 rounded-full text-slate-400 hover:text-red-600" title="Editează">
+                              <button onClick={() => handleEdit(screen)} className="p-1.5 hover:bg-white/80 rounded-full text-slate-400 hover:text-brand-600" title="Editează">
                                 <Edit className="w-3.5 h-3.5" />
                               </button>
                             </>
@@ -801,15 +801,15 @@ export const Screens = () => {
 
                       {/* Info bar: status · location · slug · rotation · resolution */}
                       <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-500 mb-2 px-1">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-black uppercase tracking-wider ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`} style={screen.status === 'online' ? { boxShadow: '0 0 6px 1px rgba(16, 185, 129, 0.3)' } : { boxShadow: '0 0 6px 1px rgba(239, 68, 68, 0.3)' }}>
-                          <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-black uppercase tracking-wider ${screen.status === 'online' ? 'bg-emerald-100 text-emerald-700' : 'bg-brand-100 text-brand-700'}`} style={screen.status === 'online' ? { boxShadow: '0 0 6px 1px rgba(16, 185, 129, 0.3)' } : { boxShadow: '0 0 6px 1px rgba(239, 68, 68, 0.3)' }}>
+                          <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${screen.status === 'online' ? 'bg-emerald-500' : 'bg-brand-500'}`}></div>
                           {screen.status === 'online' ? 'ONLINE' : 'OFFLINE'}
                         </span>
                         <span className="flex items-center gap-1 font-medium">
-                          <MapPin className="w-3 h-3 text-red-400" />
+                          <MapPin className="w-3 h-3 text-brand-400" />
                           {getLocationName(screen.location_id)}
                         </span>
-                        <span className="font-mono font-bold text-red-600">/{screen.slug}</span>
+                        <span className="font-mono font-bold text-brand-600">/{screen.slug}</span>
                         {parseInt(screen.orientation || '0', 10) !== 0 && (
                           <span className="flex items-center gap-0.5 font-bold text-indigo-500">
                             <RotateCw className="w-2.5 h-2.5" />
@@ -833,7 +833,7 @@ export const Screens = () => {
                         </button>
                         <button
                           onClick={() => handleShowLink(screen)}
-                          className="flex-1 flex items-center justify-center gap-1.5 text-xs bg-red-600 text-white hover:bg-red-700 px-3 py-2 rounded-full font-bold shadow-sm"
+                          className="flex-1 flex items-center justify-center gap-1.5 text-xs bg-brand-600 text-white hover:bg-brand-700 px-3 py-2 rounded-full font-bold shadow-sm"
                         >
                           <LinkIcon className="w-3.5 h-3.5" />
                           Link TV
@@ -866,8 +866,8 @@ export const Screens = () => {
           {selectedScreenForLink && (
             <div className="space-y-6">
               {/* Short URL - PROMINENT */}
-              <div className="bg-gradient-to-br from-red-50 to-purple-50 rounded-2xl p-6 border-2 border-red-300">
-                <Label className="text-lg font-bold text-red-900 mb-3 block flex items-center gap-2">
+              <div className="bg-gradient-to-br from-brand-50 to-purple-50 rounded-2xl p-6 border-2 border-brand-300">
+                <Label className="text-lg font-bold text-brand-900 mb-3 block flex items-center gap-2">
                   ⚡ Link Scurt pentru TV
                 </Label>
                 <div className="flex gap-2 mb-3">
@@ -875,14 +875,14 @@ export const Screens = () => {
                     value={shortUrl}
                     readOnly
                     onClick={(e) => e.target.select()}
-                    className="text-2xl font-bold text-center bg-white border-2 border-red-200 rounded-2xl py-4 cursor-pointer"
+                    className="text-2xl font-bold text-center bg-white border-2 border-brand-200 rounded-2xl py-4 cursor-pointer"
                     data-testid="short-url-input"
                   />
                 </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={() => copyToClipboard(shortUrl)}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-full py-3"
+                    className="flex-1 bg-brand-600 hover:bg-brand-700 text-white rounded-full py-3"
                     data-testid="copy-short-url-button"
                   >
                     <LinkIcon className="w-5 h-5 mr-2" />
@@ -896,7 +896,7 @@ export const Screens = () => {
                     <ExternalLink className="w-5 h-5" />
                   </a>
                 </div>
-                <p className="text-sm text-red-700 mt-3 text-center font-medium">
+                <p className="text-sm text-brand-700 mt-3 text-center font-medium">
                   👆 Scrie acest link pe TV
                 </p>
               </div>
@@ -919,19 +919,19 @@ export const Screens = () => {
                 <h3 className="font-semibold text-slate-800 mb-3">📺 Instrucțiuni TV:</h3>
                 <ol className="space-y-2 text-sm text-slate-600">
                   <li className="flex gap-2">
-                    <span className="font-bold text-red-600">1.</span>
+                    <span className="font-bold text-brand-600">1.</span>
                     <span>Deschide browser-ul pe TV (Chrome, Firefox, Safari)</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-bold text-red-600">2.</span>
+                    <span className="font-bold text-brand-600">2.</span>
                     <span>Introdu URL-ul de mai sus sau scanează QR code-ul</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-bold text-red-600">3.</span>
+                    <span className="font-bold text-brand-600">3.</span>
                     <span>Apasă F11 pentru fullscreen (sau butonul fullscreen din browser)</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-bold text-red-600">4.</span>
+                    <span className="font-bold text-brand-600">4.</span>
                     <span>Conținutul va porni automat!</span>
                   </li>
                 </ol>

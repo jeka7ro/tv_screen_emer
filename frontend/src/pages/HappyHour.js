@@ -173,7 +173,7 @@ export const HappyHour = () => {
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
-                            <Clock className="w-8 h-8 text-red-600" />
+                            <Clock className="w-8 h-8 text-brand-600" />
                             Happy Hour
                         </h1>
                         <p className="text-slate-600 mt-1">Programare conținut pe intervale orare</p>
@@ -182,14 +182,14 @@ export const HappyHour = () => {
                         <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 mr-2">
                             <button
                                 onClick={() => setViewMode('grid')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-red-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
                                 title="Grid View"
                             >
                                 <LayoutGrid className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => setViewMode('list')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-red-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
                                 title="List View"
                             >
                                 <ListIcon className="w-4 h-4" />
@@ -200,7 +200,7 @@ export const HappyHour = () => {
                                 resetForm();
                                 setShowDialog(true);
                             }}
-                            className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-200"
+                            className="bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-200"
                         >
                             <Plus className="w-4 h-4 mr-2" />
                             Program Nou
@@ -246,7 +246,7 @@ export const HappyHour = () => {
                                         <Calendar className="w-4 h-4 text-slate-400" />
                                         <div className="flex gap-1 flex-wrap">
                                             {(schedule.days_of_week || []).map(day => (
-                                                <span key={day} className="px-1.5 py-0.5 bg-red-100 text-red-700 text-xs rounded">
+                                                <span key={day} className="px-1.5 py-0.5 bg-brand-100 text-brand-700 text-xs rounded">
                                                     {dayNames[day - 1]}
                                                 </span>
                                             ))}
@@ -265,14 +265,14 @@ export const HappyHour = () => {
                                             setEditingSchedule(schedule);
                                             setShowDialog(true);
                                         }}
-                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-full transition-colors text-sm font-medium"
+                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-brand-50 hover:bg-brand-100 text-brand-600 rounded-full transition-colors text-sm font-medium"
                                     >
                                         <Edit2 className="w-4 h-4" />
                                         Editează
                                     </button>
                                     <button
                                         onClick={() => handleDuplicate(schedule)}
-                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-full transition-colors text-sm font-medium"
+                                        className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-brand-50 hover:bg-brand-100 text-brand-600 rounded-full transition-colors text-sm font-medium"
                                     >
                                         <Copy className="w-4 h-4" />
                                         Duplică
@@ -318,7 +318,7 @@ export const HappyHour = () => {
                                                         </div>;
                                                     })()
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-red-500 bg-red-50">
+                                                    <div className="w-full h-full flex items-center justify-center text-brand-500 bg-brand-50">
                                                         <LayoutGrid className="w-4 h-4" />
                                                     </div>
                                                 )}
@@ -345,7 +345,7 @@ export const HappyHour = () => {
                                         <td className="p-4">
                                             <div className="flex gap-1">
                                                 {(schedule.days_of_week || []).map(day => (
-                                                    <span key={day} className="w-5 h-5 flex items-center justify-center bg-red-50 text-red-600 text-[10px] font-bold rounded">
+                                                    <span key={day} className="w-5 h-5 flex items-center justify-center bg-brand-50 text-brand-600 text-[10px] font-bold rounded">
                                                         {dayNames[day - 1]}
                                                     </span>
                                                 ))}
@@ -367,7 +367,7 @@ export const HappyHour = () => {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-8 w-8 hover:bg-red-50 text-red-600"
+                                                    className="h-8 w-8 hover:bg-brand-50 text-brand-600"
                                                     onClick={() => {
                                                         setFormData(schedule);
                                                         setEditingSchedule(schedule);
@@ -379,7 +379,7 @@ export const HappyHour = () => {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-8 w-8 hover:bg-red-50 text-red-600"
+                                                    className="h-8 w-8 hover:bg-brand-50 text-brand-600"
                                                     onClick={() => handleDuplicate(schedule)}
                                                 >
                                                     <Copy className="w-4 h-4" />
@@ -431,7 +431,7 @@ export const HappyHour = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowOnlyWithScreens(!showOnlyWithScreens)}
-                                                    className={`text-[10px] font-bold uppercase tracking-tighter transition-colors ${showOnlyWithScreens ? 'text-red-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                                    className={`text-[10px] font-bold uppercase tracking-tighter transition-colors ${showOnlyWithScreens ? 'text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
                                                 >
                                                     {showOnlyWithScreens ? 'Toate locațiile' : 'Doar cu ecrane'}
                                                 </button>
@@ -439,7 +439,7 @@ export const HappyHour = () => {
                                                 <button
                                                     type="button"
                                                     onClick={toggleAllLocations}
-                                                    className="text-[10px] font-bold text-red-600 hover:text-red-700 uppercase tracking-tighter"
+                                                    className="text-[10px] font-bold text-brand-600 hover:text-brand-700 uppercase tracking-tighter"
                                                 >
                                                     {formData.location_ids.length === locations.length ? 'Deselectează tot' : 'Selectează tot'}
                                                 </button>
@@ -452,7 +452,7 @@ export const HappyHour = () => {
                                                         type="checkbox"
                                                         checked={(formData.location_ids || []).includes(loc.id)}
                                                         onChange={() => toggleLocation(loc.id)}
-                                                        className="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+                                                        className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                                                     />
                                                     <span className="text-sm font-medium text-slate-700">{loc.name} <span className="text-[10px] text-slate-400">({loc.city})</span></span>
                                                 </label>
@@ -475,7 +475,7 @@ export const HappyHour = () => {
                                                             setFormData({ ...formData, screen_ids: allVisibleIds });
                                                         }
                                                     }}
-                                                    className="text-[10px] font-bold text-red-600 hover:text-red-700 uppercase tracking-tighter"
+                                                    className="text-[10px] font-bold text-brand-600 hover:text-brand-700 uppercase tracking-tighter"
                                                 >
                                                     {formData.screen_ids.length > 0 ? 'Deselectează tot' : 'Selectează tot'}
                                                 </button>
@@ -502,8 +502,8 @@ export const HappyHour = () => {
                                                                             <label
                                                                                 key={screen.id}
                                                                                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] cursor-pointer transition-all border ${(formData.screen_ids || []).includes(screen.id)
-                                                                                        ? 'bg-red-100 border-red-300 text-red-700 font-bold shadow-sm'
-                                                                                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-red-50 hover:border-red-200'
+                                                                                        ? 'bg-brand-100 border-brand-300 text-brand-700 font-bold shadow-sm'
+                                                                                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-brand-50 hover:border-brand-200'
                                                                                     }`}
                                                                             >
                                                                                 <input
@@ -512,7 +512,7 @@ export const HappyHour = () => {
                                                                                     onChange={() => toggleScreen(screen.id)}
                                                                                     className="hidden"
                                                                                 />
-                                                                                <span className={`w-2 h-2 rounded-full ${(formData.screen_ids || []).includes(screen.id) ? 'bg-red-500' : 'bg-slate-300'}`} />
+                                                                                <span className={`w-2 h-2 rounded-full ${(formData.screen_ids || []).includes(screen.id) ? 'bg-brand-500' : 'bg-slate-300'}`} />
                                                                                 {screen.name}
                                                                             </label>
                                                                         ))}
@@ -556,7 +556,7 @@ export const HappyHour = () => {
                                                 type="button"
                                                 onClick={() => toggleDay(idx + 1)}
                                                 className={`w-10 h-10 rounded-full font-medium transition-all ${(formData.days_of_week || []).includes(idx + 1)
-                                                    ? 'bg-red-600 text-white shadow-md shadow-red-200'
+                                                    ? 'bg-brand-600 text-white shadow-md shadow-brand-200'
                                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                                     }`}
                                             >
@@ -639,7 +639,7 @@ export const HappyHour = () => {
                                         type="checkbox"
                                         checked={formData.active}
                                         onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                                        className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                        className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
                                     />
                                     <Label>Activ</Label>
                                 </div>
@@ -648,7 +648,7 @@ export const HappyHour = () => {
                                     <Button type="button" variant="outline" onClick={() => setShowDialog(false)}>
                                         Anulează
                                     </Button>
-                                    <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-200">
+                                    <Button type="submit" className="bg-brand-600 hover:bg-brand-700 text-white shadow-lg shadow-brand-200">
                                         {editingSchedule ? 'Actualizează' : 'Creează'}
                                     </Button>
                                 </DialogFooter>

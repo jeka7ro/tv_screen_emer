@@ -111,7 +111,7 @@ const AudioPlayer = () => {
     };
 
     if (loading) return <div className="h-screen bg-slate-900 text-white flex items-center justify-center">Se încarcă Playerul...</div>;
-    if (error) return <div className="h-screen bg-slate-900 text-red-500 flex flex-col gap-4 items-center justify-center"><AlertCircle size={48} /><p>{error}</p></div>;
+    if (error) return <div className="h-screen bg-slate-900 text-brand-500 flex flex-col gap-4 items-center justify-center"><AlertCircle size={48} /><p>{error}</p></div>;
 
     return (
         <div className="h-screen bg-slate-900 text-white flex flex-col items-center justify-center relative overflow-hidden font-sans">
@@ -146,7 +146,7 @@ const AudioPlayer = () => {
                 <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center">
                     <button
                         onClick={handleStartPlayback}
-                        className="group relative flex items-center justify-center gap-4 bg-red-600 hover:bg-red-700 text-white px-12 py-6 rounded-2xl text-2xl font-bold transition-all transform hover:scale-105 shadow-2xl shadow-red-600/50"
+                        className="group relative flex items-center justify-center gap-4 bg-brand-600 hover:bg-brand-700 text-white px-12 py-6 rounded-2xl text-2xl font-bold transition-all transform hover:scale-105 shadow-2xl shadow-brand-600/50"
                     >
                         <Play size={32} fill="white" className="animate-pulse" />
                         START RADIO
@@ -163,7 +163,7 @@ const AudioPlayer = () => {
                 {[...Array(12)].map((_, i) => (
                     <div
                         key={i}
-                        className="w-3 md:w-4 bg-gradient-to-t from-red-600 to-orange-400 rounded-t-full shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+                        className="w-3 md:w-4 bg-gradient-to-t from-brand-600 to-orange-400 rounded-t-full shadow-[0_0_15px_rgba(239,68,68,0.5)]"
                         style={{
                             height: isPlaying ? `${15 + Math.random() * 80}%` : '10%',
                             transition: 'height 0.2s ease',
@@ -176,16 +176,16 @@ const AudioPlayer = () => {
             {/* Main Player Card */}
             <div className="z-10 bg-white/10 backdrop-blur-xl p-8 rounded-3xl border border-white/10 w-full max-w-md text-center shadow-2xl relative overflow-hidden group">
                 {/* Glow behind */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-red-600/20 to-indigo-600/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-brand-600/20 to-indigo-600/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
                 <div className="relative z-10">
                     <div className="mb-8 relative">
-                        <div className={`w-32 h-32 mx-auto rounded-full flex items-center justify-center mb-6 shadow-2xl transition-all duration-700 ${isPlaying ? 'scale-100 shadow-red-500/40' : 'scale-95 shadow-none grayscale opacity-70'}`}>
-                            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-red-600 to-orange-500 animate-spin-slow" style={{ animationDuration: '10s' }}></div>
+                        <div className={`w-32 h-32 mx-auto rounded-full flex items-center justify-center mb-6 shadow-2xl transition-all duration-700 ${isPlaying ? 'scale-100 shadow-brand-500/40' : 'scale-95 shadow-none grayscale opacity-70'}`}>
+                            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-brand-600 to-orange-500 animate-spin-slow" style={{ animationDuration: '10s' }}></div>
                             <div className="absolute inset-1 rounded-full bg-slate-900 flex items-center justify-center">
                                 {currentTrack?.type === 'ad' ?
                                     <Radio size={48} className="text-orange-500" /> :
-                                    <Music size={48} className="text-red-500" />
+                                    <Music size={48} className="text-brand-500" />
                                 }
                             </div>
                         </div>
@@ -195,7 +195,7 @@ const AudioPlayer = () => {
                                 {currentTrack?.title || "Se încarcă..."}
                             </h2>
                             <div className="flex justify-center items-center gap-2">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${currentTrack?.source_type === 'youtube' ? 'border-red-500 text-red-400 bg-red-500/10' : 'border-blue-500 text-blue-400 bg-blue-500/10'}`}>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${currentTrack?.source_type === 'youtube' ? 'border-brand-500 text-brand-400 bg-brand-500/10' : 'border-blue-500 text-blue-400 bg-blue-500/10'}`}>
                                     {currentTrack?.source_type === 'youtube' ? 'YOUTUBE' : 'MP3'}
                                 </span>
                                 <p className="text-slate-400 text-xs uppercase tracking-widest font-medium">
@@ -216,7 +216,7 @@ const AudioPlayer = () => {
 
                         <button
                             onClick={handleNextTrack}
-                            className="p-4 rounded-full bg-white/5 hover:bg-white/10 transition-colors text-white hover:text-red-400 border border-white/5 hover:border-white/20"
+                            className="p-4 rounded-full bg-white/5 hover:bg-white/10 transition-colors text-white hover:text-brand-400 border border-white/5 hover:border-white/20"
                             title="Următoarea piesă"
                         >
                             <SkipForward size={24} />

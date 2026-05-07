@@ -1073,7 +1073,7 @@ export const ScreenSync = () => {
               <Button variant="outline" onClick={() => setDeleteGroupId(null)}>Anulează</Button>
               <Button
                 onClick={() => handleUnsync(deleteGroupId)}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className="bg-brand-600 hover:bg-brand-700 text-white"
               >
                 Șterge Grupul
               </Button>

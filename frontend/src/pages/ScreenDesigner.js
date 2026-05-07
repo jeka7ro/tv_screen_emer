@@ -882,10 +882,10 @@ export const ScreenDesigner = () => {
 
                         </div>
                       ) : isPlaylist && playlistInfo ? (
-                        <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-red-50 to-orange-50 border-2 border-dashed border-red-200">
-                          <ListIcon className="w-6 h-6 text-red-400 mb-1" />
-                          <span className="text-xs font-bold text-red-600 text-center px-1 truncate w-full">{playlistInfo.name}</span>
-                          <span className="text-[9px] text-red-400 font-bold">{playlistInfo.count} elemente</span>
+                        <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-brand-50 to-orange-50 border-2 border-dashed border-brand-200">
+                          <ListIcon className="w-6 h-6 text-brand-400 mb-1" />
+                          <span className="text-xs font-bold text-brand-600 text-center px-1 truncate w-full">{playlistInfo.name}</span>
+                          <span className="text-[9px] text-brand-400 font-bold">{playlistInfo.count} elemente</span>
                         </div>
                       ) : (
                         <div className="flex items-center justify-center h-full text-xs font-bold text-indigo-400 bg-indigo-50/50 backdrop-blur-sm border-2 border-dashed border-indigo-200">

@@ -341,9 +341,9 @@ export const Products = () => {
                         <td className="px-6 py-4">
                           <span className="text-xs text-slate-500 bg-slate-100/50 px-2 py-1 rounded-full">{categories.find(c => c.value === product.category)?.label || 'Altul'}</span>
                         </td>
-                        <td className="px-6 py-4 font-bold text-red-600">{product.price} {product.currency}</td>
+                        <td className="px-6 py-4 font-bold text-brand-600">{product.price} {product.currency}</td>
                         <td className="px-6 py-4 text-right">
-                          <button onClick={() => handleEdit(product)} className="p-2 text-slate-400 hover:text-red-600"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => handleEdit(product)} className="p-2 text-slate-400 hover:text-brand-600"><Edit className="w-4 h-4" /></button>
                           <button onClick={() => handleDelete(product.id)} className="p-2 text-slate-400 hover:text-rose-600"><Trash2 className="w-4 h-4" /></button>
                         </td>
                       </tr>
@@ -363,9 +363,9 @@ export const Products = () => {
                       {product.iiko_id && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">IIKO</span>}
                     </h3>
                     <div className="flex items-center justify-between mt-4">
-                      <span className="text-2xl font-bold text-red-600">{product.price} {product.currency}</span>
+                      <span className="text-2xl font-bold text-brand-600">{product.price} {product.currency}</span>
                       <div className="flex gap-1">
-                        <button onClick={() => handleEdit(product)} className="p-2 bg-slate-100 hover:bg-red-50 rounded-full text-slate-600"><Edit className="w-4 h-4" /></button>
+                        <button onClick={() => handleEdit(product)} className="p-2 bg-slate-100 hover:bg-brand-50 rounded-full text-slate-600"><Edit className="w-4 h-4" /></button>
                         <button onClick={() => handleDelete(product.id)} className="p-2 bg-slate-100 hover:bg-rose-50 rounded-full text-slate-600"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </div>
@@ -393,7 +393,7 @@ export const Products = () => {
                 </div>
               )}
 
-              <Button onClick={syncWithIiko} disabled={syncing} className="w-full btn-primary bg-red-600 hover:bg-red-700 relative overflow-hidden">
+              <Button onClick={syncWithIiko} disabled={syncing} className="w-full btn-primary bg-brand-600 hover:bg-brand-700 relative overflow-hidden">
                 {syncing ? (
                   <div className="flex flex-col items-center justify-center py-2">
                     <div className="flex items-center gap-3">

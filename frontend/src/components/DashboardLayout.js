@@ -22,7 +22,9 @@ import {
   Activity,
   Clock,
   Calendar,
-  DollarSign
+  DollarSign,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const menuItems = [
@@ -52,6 +54,8 @@ export const DashboardLayout = ({ children }) => {
     const saved = localStorage.getItem('sidebarCollapsed');
     return saved === 'true';
   });
+  const [theme, setTheme] = useState(() => localStorage.getItem('app-theme') || 'red');
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('app-dark-mode') === 'true');
   const [currentTime, setCurrentTime] = useState(new Date());
   const location = useLocation();
   const navigate = useNavigate();
@@ -61,6 +65,20 @@ export const DashboardLayout = ({ children }) => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('app-theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('app-dark-mode', isDarkMode);
+  }, [isDarkMode]);
 
   const handleLogout = () => {
     logout();
@@ -88,7 +106,7 @@ export const DashboardLayout = ({ children }) => {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-[17rem]'} h-screen fixed left-0 top-0 z-50 flex flex-col transition-all duration-300 ease-in-out border-r border-slate-200/80`} style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #eef2f7 50%, #e8edf5 100%)' }} data-testid="sidebar">
+      <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-[17rem]'} h-screen fixed left-0 top-0 z-50 flex flex-col transition-all duration-300 ease-in-out border-r border-slate-200/80 bg-slate-50`} data-testid="sidebar">
         <div className={`px-2 border-b border-slate-200/80 bg-white relative flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} h-[72px] shrink-0`}>
           <Link to="/dashboard" className="flex items-center overflow-hidden w-full">
             {isSidebarCollapsed ? (
@@ -206,7 +224,7 @@ export const DashboardLayout = ({ children }) => {
       {/* Main Content */}
       <div className={`${isSidebarCollapsed ? 'ml-20' : 'ml-[17rem]'} flex-1 min-h-screen transition-all duration-300 ease-in-out flex flex-col`}>
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-40 px-8 h-[72px] flex items-center border-b border-slate-200/80 shrink-0" style={{ background: 'linear-gradient(90deg, #f8fafc 0%, #eef2f7 100%)' }}>
+        <header className="sticky top-0 z-40 px-8 h-[72px] flex items-center border-b border-slate-200/80 shrink-0 bg-white/80 backdrop-blur-md">
           <div className="flex items-center justify-end gap-4 w-full">
             {/* Date & Time */}
             <div className="flex items-center gap-3 text-right">
@@ -216,7 +234,7 @@ export const DashboardLayout = ({ children }) => {
                   <span>{formatDate(currentTime)}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-sm font-bold text-slate-700 justify-end">
-                  <Clock className="w-3.5 h-3.5 text-red-400" />
+                  <Clock className="w-3.5 h-3.5 text-brand-400" />
                   <span className="tabular-nums">{formatTime(currentTime)}</span>
                 </div>
               </div>
@@ -230,6 +248,33 @@ export const DashboardLayout = ({ children }) => {
                 </span>
               </div>
             )}
+
+            {/* Theme Controls */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/50 border border-slate-200 rounded-full shadow-sm">
+              <button
+                onClick={() => setTheme('red')}
+                className={`w-5 h-5 rounded-full bg-rose-500 transition-all ${theme === 'red' ? 'ring-2 ring-offset-1 ring-rose-500 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                title="Tema Roșie"
+              />
+              <button
+                onClick={() => setTheme('blue')}
+                className={`w-5 h-5 rounded-full bg-blue-500 transition-all ${theme === 'blue' ? 'ring-2 ring-offset-1 ring-blue-500 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                title="Tema Albastră"
+              />
+              <button
+                onClick={() => setTheme('green')}
+                className={`w-5 h-5 rounded-full bg-emerald-500 transition-all ${theme === 'green' ? 'ring-2 ring-offset-1 ring-emerald-500 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                title="Tema Verde"
+              />
+              <div className="w-px h-4 bg-slate-300 mx-1" />
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="p-1 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors"
+                title="Toggle Dark Mode"
+              >
+                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+            </div>
 
             {/* Separator */}
             <div className="w-px h-8 bg-slate-200" />
@@ -254,7 +299,7 @@ export const DashboardLayout = ({ children }) => {
                   className="w-9 h-9 rounded-full object-cover border-2 border-slate-200 shadow-sm"
                 />
               ) : (
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white text-xs font-bold shadow-sm border-2 border-slate-200">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white text-xs font-bold shadow-sm border-2 border-slate-200">
                   {getInitials(user?.full_name)}
                 </div>
               )}
