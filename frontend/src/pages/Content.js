@@ -65,6 +65,7 @@ export const Content = () => {
   const [showImages, setShowImages] = useState(true);
   const [showVideos, setShowVideos] = useState(true);
   const [brands, setBrands] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
   const [showSlideshowDialog, setShowSlideshowDialog] = useState(false);
   const [pendingSlideshowScreen, setPendingSlideshowScreen] = useState(null);
 
@@ -81,6 +82,7 @@ export const Content = () => {
     loadFolders();
     loadScreens();
     loadBrands();
+    loadPlaylists();
   }, []);
 
   const loadContent = async () => {
@@ -117,6 +119,15 @@ export const Content = () => {
       setBrands(response.data);
     } catch (error) {
       console.error('Error loading brands:', error);
+    }
+  };
+
+  const loadPlaylists = async () => {
+    try {
+      const response = await api.get('/playlists');
+      setPlaylists(response.data);
+    } catch (error) {
+      console.error('Error loading playlists:', error);
     }
   };
 
@@ -666,6 +677,15 @@ export const Content = () => {
     }
   };
 
+  // Map content usage in playlists
+  const getPlaylistsForContent = (contentId) => {
+    return playlists.filter(p => {
+      if (!p.items) return false;
+      let items = typeof p.items === 'string' ? JSON.parse(p.items) : p.items;
+      return items.some(item => item.content_id === contentId);
+    });
+  };
+
   const renderView = (items) => {
     if (items.length === 0) {
       return (
@@ -802,6 +822,27 @@ export const Content = () => {
                     </td>
                     <td className="p-4">
                       <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">{item.title}</div>
+                      {(() => {
+                        const itemPlaylists = getPlaylistsForContent(item.id);
+                        if (itemPlaylists.length > 0) {
+                          return (
+                            <div className="mt-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = `/playlists?edit=${itemPlaylists[0].id}`;
+                                }}
+                                title={`Folosit în ${itemPlaylists.length} playlist(uri). Click pentru a edita.`}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-50 hover:bg-brand-100 text-brand-600 border border-brand-200 text-[10px] font-bold uppercase transition-colors shadow-sm"
+                              >
+                                <ListIcon className="w-3 h-3" />
+                                Playlist ({itemPlaylists.length})
+                              </button>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
@@ -979,8 +1020,10 @@ export const Content = () => {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}></div>
-                  <div className="absolute top-3 right-3 z-20 bg-slate-900/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest border border-white/10">
-                    {item.duration}s
+                  <div className="absolute top-3 right-3 z-20 flex flex-col gap-1 items-end">
+                    <div className="bg-slate-900/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest border border-white/10">
+                      {item.duration}s
+                    </div>
                   </div>
                 </>
               ) : (
@@ -1009,6 +1052,29 @@ export const Content = () => {
                   </div>
                 </>
               )}
+
+              {/* Playlist Badge overlay for Grid View */}
+              {(() => {
+                const itemPlaylists = getPlaylistsForContent(item.id);
+                if (itemPlaylists.length > 0) {
+                  return (
+                    <div className="absolute top-3 left-3 z-30">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.location.href = `/playlists?edit=${itemPlaylists[0].id}`;
+                        }}
+                        title={`Folosit în ${itemPlaylists.length} playlist(uri). Click pentru a edita.`}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-600/90 hover:bg-brand-500 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest shadow-lg border border-white/20 transition-all transform hover:scale-105"
+                      >
+                        <ListIcon className="w-3.5 h-3.5" />
+                        În Playlist
+                      </button>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             {/* Metadata Section */}

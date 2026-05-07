@@ -156,6 +156,23 @@ export const Playlists = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Auto-open edit modal if "edit" parameter is present
+  useEffect(() => {
+    if (playlists.length === 0 || screens.length === 0) return;
+    
+    const params = new URLSearchParams(window.location.search);
+    const editId = params.get('edit');
+    
+    if (editId) {
+      const playlistToEdit = playlists.find(p => p.id === editId);
+      if (playlistToEdit && !showDialog) {
+        handleEdit(playlistToEdit);
+        // Clear param so it doesn't re-open on refresh
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [playlists, screens, screenZones]);
+
   const loadData = async () => {
     try {
       const [playlistsRes, contentRes, brandsRes, screensRes, locationsRes, happyHoursRes, foldersRes] = await Promise.all([
