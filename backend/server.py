@@ -315,6 +315,7 @@ class User(BaseModel):
     location_id: Optional[str] = None
     status: str = "active"  # active, suspended
     avatar_url: Optional[str] = None
+    organization_id: str = "default_sushimaster"
     created_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_login: Optional[datetime] = None
 
@@ -357,6 +358,7 @@ class UserResponse(BaseModel):
     location_id: Optional[str] = None
     status: str = "active"
     avatar_url: Optional[str] = None
+    organization_id: str = "default_sushimaster"
     last_login: Optional[datetime] = None
 
 class UserStatusUpdate(BaseModel):
@@ -991,8 +993,10 @@ async def upload_user_avatar(
         raise HTTPException(status_code=400, detail=f"Tip fișier invalid: {file.content_type}")
     
     file_bytes = await file.read()
-    file_ext = Path(file.filename).suffix.lower() or '.jpg'
-    unique_filename = f"avatars/{user_id}{file_ext}"
+    # Generate unique filename with org_id prefix
+    file_ext = Path(file.filename).suffix.lower() if file.filename else '.png'
+    org_id = getattr(current_user, "organization_id", "default_sushimaster")
+    unique_filename = f"{org_id}/avatars/{user_id}{file_ext}"
     
     avatar_url = await upload_to_supabase(file_bytes, unique_filename, file.content_type)
     await user_update(user_id, {"avatar_url": avatar_url})
@@ -1592,16 +1596,14 @@ async def upload_folder_icon(
         file_ext = Path(file.filename).suffix.lower()
         if not file_ext:
             file_ext = '.jpg'
-        unique_filename = f"icon_{uuid.uuid4()}{file_ext}"
         
-        # Read file bytes
+        # Upload to Storage
         file_bytes = await file.read()
-        
-        # Upload to Supabase Storage in folder-icons directory
-        supabase_path = f"folder-icons/{unique_filename}"
+        org_id = getattr(current_user, "organization_id", "default_sushimaster")
+        supabase_path = f"{org_id}/icons/{uuid.uuid4()}{file_ext}"
         icon_url = await upload_to_supabase(file_bytes, supabase_path, file.content_type)
         
-        return {"id": unique_filename, "url": icon_url}
+        return {"id": supabase_path, "url": icon_url}
     except Exception as e:
         logger.error(f"Error uploading folder icon: {e}")
         raise HTTPException(status_code=500, detail=f"Eroare la încărcarea iconiței: {str(e)}")
@@ -1641,7 +1643,8 @@ async def create_content(
         try:
             thumb_bytes = await thumbnail.read()
             thumb_ext = Path(thumbnail.filename).suffix.lower() or '.jpg'
-            thumb_filename = f"thumbnails/{uuid.uuid4()}{thumb_ext}"
+            org_id = getattr(current_user, "organization_id", "default_sushimaster")
+            thumb_filename = f"{org_id}/thumbnails/{uuid.uuid4()}{thumb_ext}"
             thumbnail_url_shared = await upload_to_supabase(thumb_bytes, thumb_filename, thumbnail.content_type or "image/jpeg")
         except Exception as e:
             logger.warning(f"Thumbnail upload failed: {e}")
@@ -1682,7 +1685,8 @@ async def create_content(
                 raise HTTPException(status_code=400, detail="Imaginea depășește limita maximă de 20MB.")
             
             # Upload to Supabase Storage
-            supabase_path = f"{file_type_folder}/{unique_filename}"
+            org_id = getattr(current_user, "organization_id", "default_sushimaster")
+            supabase_path = f"{org_id}/{file_type_folder}/{unique_filename}"
             file_url = await upload_to_supabase(file_bytes, supabase_path, file.content_type)
             
             # Create content record - Title from filename
@@ -2570,7 +2574,8 @@ async def upload_audio_track_endpoint(
         source_type = "youtube"
     elif file:
         file_ext = Path(file.filename).suffix.lower() or ".mp3"
-        unique_filename = f"{uuid.uuid4()}{file_ext}"
+        org_id = getattr(current_user, "organization_id", "default_sushimaster")
+        unique_filename = f"{org_id}/audio/{uuid.uuid4()}{file_ext}"
         try:
             file_bytes = await file.read()
             final_url = await upload_audio_to_supabase(file_bytes, unique_filename, file.content_type or "audio/mpeg")
@@ -2754,10 +2759,12 @@ async def upload_brand_logo(
         raise HTTPException(status_code=400, detail=f"Tip fișier invalid: {file.content_type}")
     
     file_bytes = await file.read()
-    file_ext = Path(file.filename).suffix.lower() or '.png'
-    unique_filename = f"brand-logos/{brand_id}{file_ext}"
+    file_ext = Path(file.filename).suffix.lower() if file.filename else '.png'
+    org_id = getattr(current_user, "organization_id", "default_sushimaster")
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    supabase_path = f"{org_id}/brands/{unique_filename}"
     
-    logo_url = await upload_to_supabase(file_bytes, unique_filename, file.content_type)
+    logo_url = await upload_to_supabase(file_bytes, supabase_path, file.content_type)
     await brand_update(brand_id, {**existing, "logo_url": logo_url})
     
     return {"logo_url": logo_url}
