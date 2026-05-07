@@ -121,7 +121,13 @@ export const DashboardLayout = ({ children }) => {
                   <img 
                     src="/getapp_smart_displays_black.png" 
                     alt="GET App Smart Displays" 
-                    className="h-[52px] w-auto object-contain transition-all hover:scale-105"
+                    className="h-[52px] w-auto object-contain transition-all hover:scale-105 block dark:hidden"
+                  />
+                  <img 
+                    src="/getapp_smart_displays_black.png" 
+                    alt="GET App Smart Displays" 
+                    className="h-[52px] w-auto object-contain transition-all hover:scale-105 hidden dark:block"
+                    style={{filter: 'brightness(0) invert(1)'}}
                   />
                 </div>
               </div>

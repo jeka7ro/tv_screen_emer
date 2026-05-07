@@ -845,13 +845,13 @@ export const Content = () => {
                       })()}
                     </td>
                     <td className="p-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
                         <div className="flex -space-x-2 overflow-hidden">
                           {Array.isArray(item.brand) && item.brand.slice(0, 3).map((brandName, idx) => (
                             getBrandLogo(brandName) && (
                               <div
                                 key={idx}
-                                className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-md ring-2 ring-white/50"
+                                className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-md"
                                 title={brandName}
                               >
                                 <img src={getBrandLogo(brandName)} className="w-full h-full object-cover rounded-full" alt="" />
@@ -859,17 +859,16 @@ export const Content = () => {
                             )
                           ))}
                           {Array.isArray(item.brand) && item.brand.length > 3 && (
-                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 shadow-md ring-2 ring-white/50">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 shadow-md">
                               +{item.brand.length - 3}
                             </div>
                           )}
                         </div>
-                        {Array.isArray(item.brand) && item.brand.length > 0 ? (
-                          <div className="text-[10px] text-brand-500 font-bold uppercase truncate max-w-[120px]">
-                            {item.brand.join(', ')}
-                          </div>
-                        ) : (
-                          <span className="text-[10px] text-slate-300 italic">Fără brand</span>
+                        {Array.isArray(item.brand) && item.brand.length > 0 && !item.brand.some(b => getBrandLogo(b)) && (
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 italic truncate max-w-[100px]">{item.brand.join(', ')}</span>
+                        )}
+                        {(!Array.isArray(item.brand) || item.brand.length === 0) && (
+                          <span className="text-[10px] text-slate-300 dark:text-slate-600 italic">—</span>
                         )}
                       </div>
                     </td>
