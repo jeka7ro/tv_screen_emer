@@ -851,7 +851,7 @@ export const Content = () => {
                             getBrandLogo(brandName) && (
                               <div
                                 key={idx}
-                                className="w-8 h-8 rounded-full border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-sm ring-2 ring-white"
+                                className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-md ring-2 ring-white/50"
                                 title={brandName}
                               >
                                 <img src={getBrandLogo(brandName)} className="w-full h-full object-cover rounded-full" alt="" />
@@ -859,7 +859,7 @@ export const Content = () => {
                             )
                           ))}
                           {Array.isArray(item.brand) && item.brand.length > 3 && (
-                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 ring-2 ring-white">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 shadow-md ring-2 ring-white/50">
                               +{item.brand.length - 3}
                             </div>
                           )}
@@ -966,7 +966,7 @@ export const Content = () => {
                     getBrandLogo(brandName) ? (
                       <div
                         key={idx}
-                        className="w-6 h-6 rounded-full border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-sm ring-2 ring-white z-10"
+                        className="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-md ring-2 ring-white/50 z-10"
                         title={brandName}
                       >
                         <img src={getBrandLogo(brandName)} className="w-full h-full object-cover rounded-full" alt="" />
@@ -1241,7 +1241,7 @@ export const Content = () => {
                       className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                       title={`${brand.name} (${count})`}
                     >
-                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-full bg-white dark:bg-slate-900 shadow-sm border-2 ring-2 ring-white ${selectedBrands.includes(brand.name) ? 'border-brand-500' : 'border-slate-100 dark:border-slate-800'}`}>
+                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-full bg-white dark:bg-slate-900 shadow-md border border-slate-200 dark:border-slate-700 ${selectedBrands.includes(brand.name) ? 'ring-2 ring-brand-500 border-brand-500' : ''}`}>
                         {brand.logo_url ? (
                           <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-cover rounded-full" />
                         ) : (

@@ -505,7 +505,7 @@ export const Screens = () => {
                       className={`relative group transition-all duration-200 ${isActive ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                       title={`${brand.name} (${count})`}
                     >
-                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-full bg-white dark:bg-slate-900 shadow-sm border-2 ring-2 ring-white ${isActive ? 'border-brand-500' : 'border-slate-100 dark:border-slate-800'}`}>
+                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-full bg-white dark:bg-slate-900 shadow-md border border-slate-200 dark:border-slate-700 ${isActive ? 'ring-2 ring-brand-500 border-brand-500' : ''}`}>
                         {brand.logo_url ? (
                           <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-cover rounded-full" />
                         ) : (

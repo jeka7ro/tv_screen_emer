@@ -1286,7 +1286,7 @@ export const Playlists = () => {
                         className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                         title={`${brand.name} (${count})`}
                       >
-                        <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-full bg-white dark:bg-slate-900 shadow-sm border-2 ring-2 ring-white ${selectedBrands.includes(brand.name) ? 'border-brand-500' : 'border-slate-100 dark:border-slate-800'}`}>
+                        <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-full bg-white dark:bg-slate-900 shadow-md border border-slate-200 dark:border-slate-700 ${selectedBrands.includes(brand.name) ? 'ring-2 ring-brand-500 border-brand-500' : ''}`}>
                           {brand.logo_url ? (
                             <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-cover rounded-full" />
                           ) : (
@@ -1522,7 +1522,7 @@ export const Playlists = () => {
                             <td className="px-6 py-4 font-semibold text-slate-800 dark:text-slate-200">
                               <div className="flex items-center gap-3">
                                 {playlist.brand && getBrandLogo(playlist.brand) && (
-                                  <div className="w-9 h-9 rounded-full border-2 border-slate-100 dark:border-slate-800 flex items-center justify-center bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-sm">
+                                  <div className="w-9 h-9 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-md">
                                     <img src={getBrandLogo(playlist.brand)} alt="" className="w-full h-full object-cover rounded-full" />
                                   </div>
                                 )}
@@ -1700,7 +1700,7 @@ export const Playlists = () => {
                                   onChange={() => toggleSelectPlaylist(playlist.id)}
                                   className="rounded text-white focus:ring-white/50 w-4 h-4 cursor-pointer shrink-0"
                                 />
-                                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-white shadow-sm ${brandLogo ? 'bg-white dark:bg-slate-900' : 'bg-white/20 dark:bg-slate-900/20'}`}>
+                                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden border border-slate-200 dark:border-slate-700 shadow-md ${brandLogo ? 'bg-white dark:bg-slate-900' : 'bg-white/20 dark:bg-slate-900/20'}`}>
                                   {brandLogo ? (
                                     <img src={brandLogo} alt={brandName} className="w-full h-full object-cover rounded-full" />
                                   ) : (
