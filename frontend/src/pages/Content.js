@@ -216,8 +216,10 @@ export const Content = () => {
 
   // 1. Filter by folder
   const folderFilteredContent = selectedFolder
-    ? content.filter(item => String(item.folder_id) === String(selectedFolder.id))
-    : content.filter(item => !item.folder_id);
+    ? (selectedFolder.id === 'unassigned'
+      ? content.filter(item => !item.folder_id)
+      : content.filter(item => String(item.folder_id) === String(selectedFolder.id)))
+    : content;
 
   // 2. Filter by brand
   const [selectedBrands, setSelectedBrands] = useState([]);

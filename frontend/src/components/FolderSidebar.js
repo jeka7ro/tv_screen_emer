@@ -97,7 +97,36 @@ export const FolderSidebar = ({
                             {content.length}
                         </span>
                     </button>
-
+                    
+                    {/* Unassigned Content */}
+                    <button
+                        onClick={() => setSelectedFolder({ id: 'unassigned', name: 'Necategorizate' })}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-full transition-all mb-3 ${selectedFolder?.id === 'unassigned'
+                            ? 'bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 shadow-sm border border-slate-300/60 dark:from-slate-800 dark:to-slate-700 dark:text-slate-200'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400'
+                            }`}
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.add('bg-slate-200', 'scale-[1.02]', 'dark:bg-slate-700');
+                        }}
+                        onDragLeave={(e) => {
+                            e.currentTarget.classList.remove('bg-slate-200', 'scale-[1.02]', 'dark:bg-slate-700');
+                        }}
+                        onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove('bg-slate-200', 'scale-[1.02]', 'dark:bg-slate-700');
+                            const contentId = e.dataTransfer.getData('contentId');
+                            if (contentId) {
+                                handleMoveToFolder(contentId, null);
+                            }
+                        }}
+                    >
+                        <ListIcon className="w-4 h-4 shrink-0" />
+                        <span className="flex-1 text-left text-sm font-semibold truncate">Necategorizate</span>
+                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full shrink-0 ${selectedFolder?.id === 'unassigned' ? 'bg-slate-300/70 text-slate-800 dark:bg-slate-600 dark:text-slate-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'}`}>
+                            {content.filter(item => !item.folder_id).length}
+                        </span>
+                    </button>
                     {/* Folder List */}
                     <div className="space-y-0.5">
                         {folders.map(folder => {
