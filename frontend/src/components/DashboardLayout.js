@@ -110,11 +110,17 @@ export const DashboardLayout = ({ children }) => {
         <div className={`px-3 border-b border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 relative flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'} h-[72px] shrink-0`}>
           <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden w-full min-w-0">
             {/* Squircle Icon — always visible */}
-            <img
-              src="/app_logo_icon.png"
-              alt="GetApp Logo"
-              className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-md transition-all hover:scale-105"
-            />
+            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-lg">
+              <img
+                src="/app_logo_icon.png"
+                alt="GetApp Logo"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.parentNode.innerHTML = '<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%"><rect width="100" height="100" rx="22" fill="#7c3aed"/><rect x="18" y="24" width="64" height="42" rx="4" stroke="white" stroke-width="5" fill="transparent"/><path d="M42 66 L34 82 L66 82 L58 66" fill="transparent" stroke="white" stroke-width="5" stroke-linejoin="round"/><line x1="30" y1="82" x2="70" y2="82" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="45" r="14" fill="white"/><path d="M46 38 L57 45 L46 52 Z" fill="#7c3aed"/></svg>';
+                }}
+              />
+            </div>
             {/* Text — hidden when collapsed */}
             {!isSidebarCollapsed && (
               <div className="animate-in fade-in slide-in-from-left-2 duration-300 min-w-0">
