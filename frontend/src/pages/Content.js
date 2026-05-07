@@ -1241,7 +1241,7 @@ export const Content = () => {
                       className={`relative group transition-all duration-200 ${selectedBrands.includes(brand.name) ? 'scale-110 opacity-100' : 'opacity-60 hover:opacity-100 hover:scale-105'}`}
                       title={`${brand.name} (${count})`}
                     >
-                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-md bg-white dark:bg-slate-900 shadow-sm border ${selectedBrands.includes(brand.name) ? 'border-brand-500' : 'border-slate-100 dark:border-slate-800'}`}>
+                      <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-full bg-white dark:bg-slate-900 shadow-sm border-2 ring-2 ring-white ${selectedBrands.includes(brand.name) ? 'border-brand-500' : 'border-slate-100 dark:border-slate-800'}`}>
                         {brand.logo_url ? (
                           <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
                         ) : (
