@@ -491,7 +491,7 @@ export const LivePreviewDashboard = () => {
                 ) : (
                     <div className={
                         layoutMode === 'seamless'
-                            ? "bg-slate-950 p-12 rounded-2xl overflow-y-auto space-y-12 min-h-[600px] border border-slate-800 shadow-2xl flex flex-col items-center"
+                            ? "bg-slate-950 p-8 md:p-12 rounded-2xl overflow-auto w-full max-w-full space-y-12 min-h-[600px] border border-slate-800 shadow-2xl flex flex-col items-center"
                             : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
                     }>
                         {layoutMode === 'seamless' ? (
@@ -526,11 +526,9 @@ export const LivePreviewDashboard = () => {
                                             </div>
 
                                             <div
-                                                className="grid gap-1 bg-black p-1 rounded-2xl shadow-2xl border border-slate-800"
+                                                className="grid gap-1 bg-black p-1 rounded-2xl shadow-2xl border border-slate-800 w-full"
                                                 style={{
-                                                    gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                                                    width: 'fit-content',
-                                                    maxWidth: '100%'
+                                                    gridTemplateColumns: `repeat(${cols}, 1fr)`
                                                 }}
                                             >
                                                 {groupScreens.map(screen => {
@@ -538,10 +536,23 @@ export const LivePreviewDashboard = () => {
                                                         <div
                                                             key={screen.id}
                                                             className="relative aspect-video bg-black overflow-hidden group cursor-pointer border border-white/5"
-                                                            style={{ width: isMatrix ? '260px' : '320px' }}
                                                             onClick={() => {
                                                                 setSelectedScreen(screen);
                                                                 setShowFullscreen(true);
+                                                            }}
+                                                            ref={container => {
+                                                                if (!container) return;
+                                                                if (!container.dataset.observed) {
+                                                                    container.dataset.observed = 'true';
+                                                                    const ro = new ResizeObserver(() => {
+                                                                        const iframe = container.querySelector('iframe');
+                                                                        if (iframe) {
+                                                                            const scale = container.offsetWidth / 1920;
+                                                                            iframe.style.transform = `scale(${scale})`;
+                                                                        }
+                                                                    });
+                                                                    ro.observe(container);
+                                                                }
                                                             }}
                                                         >
                                                             <iframe
@@ -550,7 +561,6 @@ export const LivePreviewDashboard = () => {
                                                                 className="absolute inset-0 border-0 w-[1920px] h-[1080px]"
                                                                 style={{
                                                                     pointerEvents: 'none',
-                                                                    transform: `scale(${isMatrix ? 260 / 1920 : 320 / 1920})`,
                                                                     transformOrigin: 'top left'
                                                                 }}
                                                             />
