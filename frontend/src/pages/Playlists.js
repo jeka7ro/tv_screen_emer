@@ -1161,6 +1161,50 @@ export const Playlists = () => {
                               <ListIcon className="w-4 h-4 text-brand-500" />
                               Playlist ({playlistItems.length} elemente • {formatDuration(calculateTotalDuration(playlistItems))})
                             </Label>
+
+                            {/* ── TIMELINE VIZUAL ── */}
+                            {playlistItems.length > 0 && (() => {
+                              const totalDur = playlistItems.reduce((s, i) => s + (parseInt(i.duration) || 10), 0);
+                              const COLORS = ['#7c3aed','#2563eb','#0891b2','#059669','#d97706','#dc2626','#db2777','#65a30d'];
+                              return (
+                                <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                                  {/* Bar */}
+                                  <div className="flex h-8">
+                                    {playlistItems.map((item, idx) => {
+                                      const pct = ((parseInt(item.duration) || 10) / totalDur) * 100;
+                                      const ci = getContentById(item.content_id);
+                                      return (
+                                        <div
+                                          key={idx}
+                                          style={{ width: `${pct}%`, backgroundColor: COLORS[idx % COLORS.length] }}
+                                          className="relative group flex items-center justify-center overflow-hidden transition-all hover:brightness-110 cursor-default border-r border-white/20 last:border-r-0"
+                                          title={`${ci?.title || '#'+(idx+1)} — ${item.duration || 10}s`}
+                                        >
+                                          {pct > 6 && (
+                                            <span className="text-[9px] font-bold text-white/90 truncate px-1 select-none">
+                                              {item.duration || 10}s
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                  {/* Labels */}
+                                  <div className="flex bg-slate-50 dark:bg-slate-800/60 px-2 py-1 gap-2 flex-wrap">
+                                    {playlistItems.map((item, idx) => {
+                                      const ci = getContentById(item.content_id);
+                                      return (
+                                        <div key={idx} className="flex items-center gap-1">
+                                          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                                          <span className="text-[9px] text-slate-500 dark:text-slate-400 truncate max-w-[80px]">{ci?.title || `#${idx+1}`}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+
                             <div className="max-h-[500px] overflow-y-auto space-y-3 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/50 shadow-inner">
                               {playlistItems.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-20 text-slate-400">

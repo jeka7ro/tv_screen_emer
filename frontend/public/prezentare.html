@@ -1,448 +1,299 @@
 <!DOCTYPE html>
 <html lang="ro">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get App Smart Displays - Digital Signage Platform</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #1a1714;
-            --text-color: #fff8f0;
-            --accent-color: #f97316;
-            --accent-glow: rgba(249, 115, 22, 0.4);
-            --card-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App Smart Displays – Digital Signage Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font-family:'Inter',sans-serif;background:#f0f2f8}
+  
+  /* ── PRINT ── */
+  @media print{
+    body{background:white}
+    .no-print{display:none!important}
+    .page{page-break-after:always;box-shadow:none!important;border-radius:0!important;margin:0!important}
+    .page:last-child{page-break-after:avoid}
+  }
+  @page{size:A4 landscape;margin:0}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
+  /* ── CONTROLS ── */
+  .controls{position:fixed;top:20px;right:20px;z-index:999;display:flex;gap:10px;flex-direction:column}
+  .controls button{padding:10px 20px;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;transition:all .2s;display:flex;align-items:center;gap:8px}
+  .btn-print{background:#7834FF;color:white}
+  .btn-lang{background:white;color:#7834FF;border:2px solid #7834FF}
+  .controls button:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,.2)}
+  
+  /* ── PAGE BASE ── */
+  .page{width:297mm;min-height:210mm;margin:20px auto;position:relative;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.15);border-radius:12px;display:flex;flex-direction:column}
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            overflow-x: hidden;
-            scroll-behavior: smooth;
-        }
+  /* ── PAGE 1: COVER ── */
+  .cover{background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);color:white;justify-content:center;align-items:center;text-align:center;padding:50px}
+  .cover-logo{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:40px}
+  .cover-logo svg{display:none}
+  .cover-logo img.logo-icon{width:70px;height:70px;border-radius:16px;box-shadow:0 8px 24px rgba(120,52,255,.5)}
+  .cover-logo-text{text-align:left}
+  .cover-logo-text .app{font-size:42px;font-weight:900;color:#ffffff;line-height:1;text-shadow:0 0 30px rgba(120,52,255,0.8)}
+  .cover-logo-text .smart{background:#1a1a1a;color:white;font-size:13px;font-weight:700;padding:4px 10px;border-radius:6px;letter-spacing:1px}
+  .cover h1{font-size:48px;font-weight:900;line-height:1.1;margin-bottom:20px}
+  .cover h1 span{background:linear-gradient(90deg,#7834FF,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .cover p{font-size:19px;color:rgba(255,255,255,.75);max-width:600px;margin:0 auto 40px}
+  .cover-badges{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+  .badge{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:10px 24px;border-radius:50px;font-size:14px;font-weight:600;backdrop-filter:blur(10px);display:flex;align-items:center;gap:8px}
+  .badge svg{opacity:.85}
+  .cover-img-row{display:flex;gap:20px;margin-top:40px;justify-content:center}
+  .cover-img-row img{height:130px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);object-fit:cover}
+  .cover-footer{position:absolute;bottom:24px;left:0;right:0;text-align:center;color:rgba(255,255,255,.4);font-size:12px}
 
-        /* Nav & Header */
-        header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            padding: 1.5rem 5%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(11, 15, 25, 0.8);
-            backdrop-filter: blur(12px);
-            z-index: 1000;
-            border-bottom: 1px solid var(--glass-border);
-        }
+  /* ── PAGE 2: FEATURE SPLIT ── */
+  .split{flex-direction:row;background:white}
+  .split-text{flex:1;padding:50px;display:flex;flex-direction:column;justify-content:center;background:linear-gradient(135deg,#7834FF,#4f1d9c);color:white}
+  .split-text .section-label{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;opacity:.7;margin-bottom:12px}
+  .split-text h2{font-size:36px;font-weight:900;line-height:1.15;margin-bottom:20px}
+  .split-text p{font-size:15px;opacity:.85;line-height:1.7;margin-bottom:14px}
+  .split-img{flex:1.2;position:relative;overflow:hidden}
+  .split-img img{width:100%;height:100%;object-fit:cover}
+  .split-img-right{order:1}
+  .split-text-right{order:2;background:linear-gradient(135deg,#f97316,#dc2626)!important}
+  .feature-list{list-style:none;margin-top:16px}
+  .feature-list li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.15);font-size:14px;font-weight:500}
+  .feature-list li::before{content:"✓";background:rgba(255,255,255,.2);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0}
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            text-decoration: none;
-        }
+  /* ── PAGE 3: FULL DARK ── */
+  .dark-feat{background:linear-gradient(135deg,#0f0c29,#1a1040);color:white;padding:50px}
+  .dark-feat .page-header{text-align:center;margin-bottom:40px}
+  .dark-feat .page-header .label{font-size:11px;font-weight:700;letter-spacing:3px;color:#7834FF;margin-bottom:8px}
+  .dark-feat .page-header h2{font-size:38px;font-weight:900}
+  .dark-feat .page-header p{color:rgba(255,255,255,.6);font-size:15px;margin-top:10px}
+  .cards-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+  .feat-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;backdrop-filter:blur(10px);transition:all .3s}
+  .feat-card .icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
+  .feat-card h3{font-size:17px;font-weight:700;margin-bottom:8px}
+  .feat-card p{font-size:13px;color:rgba(255,255,255,.6);line-height:1.6}
+  .icon-purple{background:rgba(120,52,255,.3)}
+  .icon-orange{background:rgba(249,115,22,.3)}
+  .icon-blue{background:rgba(59,130,246,.3)}
+  .icon-green{background:rgba(34,197,94,.3)}
+  .icon-pink{background:rgba(236,72,153,.3)}
+  .icon-cyan{background:rgba(6,182,212,.3)}
 
-        .brand-text {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            justify-content: center;
-            transform: translateY(-2px);
-        }
+  /* ── PAGE 4: FULL LIGHT ── */
+  .light-page{background:#f8f9ff;padding:50px;color:#1e293b}
+  .light-page .page-header{text-align:center;margin-bottom:36px}
+  .light-page .page-header .label{font-size:11px;font-weight:700;letter-spacing:3px;color:#7834FF;margin-bottom:8px}
+  .light-page .page-header h2{font-size:36px;font-weight:900;color:#1e293b}
+  .light-page .page-header p{color:#64748b;font-size:15px;margin-top:8px}
+  .img-showcase{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;margin-bottom:20px}
+  .img-showcase img,.img-small img{border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.12);width:100%;object-fit:cover}
+  .img-showcase img{height:200px}
+  .img-small{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .img-small img{height:150px}
 
-        .brand-text .app-title {
-            color: #7834FF;
-            font-family: 'Inter', sans-serif;
-            font-weight: 900;
-            font-size: 26px;
-            line-height: 1;
-            margin-bottom: 3px;
-            margin-left: 2px;
-        }
+  /* ── PAGE 5: PRICING / HOW ── */
+  .how-page{background:white;padding:50px;color:#1e293b}
+  .how-page .page-header{text-align:center;margin-bottom:40px}
+  .how-page .page-header .label{font-size:11px;font-weight:700;letter-spacing:3px;color:#7834FF;margin-bottom:8px}
+  .how-page .page-header h2{font-size:36px;font-weight:900;color:#1e293b}
+  .steps{display:flex;gap:0;position:relative;margin-bottom:40px}
+  .steps::before{content:'';position:absolute;top:28px;left:60px;right:60px;height:2px;background:linear-gradient(90deg,#7834FF,#f97316);z-index:0}
+  .step{flex:1;text-align:center;position:relative;z-index:1}
+  .step-num{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7834FF,#4f1d9c);color:white;font-size:22px;font-weight:900;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 4px 15px rgba(120,52,255,.4)}
+  .step h4{font-size:15px;font-weight:700;margin-bottom:6px;color:#1e293b}
+  .step p{font-size:12px;color:#64748b;line-height:1.5;padding:0 10px}
+  .compatible{display:flex;justify-content:center;gap:30px;flex-wrap:wrap;margin-top:10px}
+  .compat-item{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#475569}
+  .compat-item span{font-size:22px}
 
-        .brand-text .smart-displays {
-            background-color: #1a1a1a;
-            color: #ffffff;
-            font-family: 'Inter', sans-serif;
-            font-weight: 700;
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 6px;
-            letter-spacing: 0.5px;
-            line-height: 1;
-        }
-
-        .lang-selector {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .lang-btn {
-            background: transparent;
-            color: #94a3b8;
-            border: 1px solid #334155;
-            padding: 0.4rem 0.8rem;
-            border-radius: 9999px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-        }
-
-        .lang-btn.active,
-        .lang-btn:hover {
-            color: white;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 10px var(--accent-glow);
-            background: rgba(249, 115, 22, 0.1);
-        }
-
-        /* Hero Section */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            padding: 6rem 5% 2rem;
-            position: relative;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 70% 30%, rgba(245, 158, 11, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 30% 70%, rgba(234, 88, 12, 0.15) 0%, transparent 50%);
-            z-index: -1;
-        }
-
-        .hero-content {
-            flex: 1;
-            max-width: 600px;
-            animation: fadeUp 1s ease-out;
-            padding-right: 2rem;
-        }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-        }
-
-        .hero p {
-            font-size: 1.25rem;
-            color: #cbd5e1;
-            margin-bottom: 2rem;
-        }
-
-        .hero-image {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .hero-image img {
-            width: 100%;
-            max-width: 700px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 40px var(--accent-glow);
-            border: 1px solid var(--glass-border);
-        }
-
-        /* Features / Explanations */
-        .section {
-            padding: 6rem 5%;
-        }
-
-        .feature-block {
-            display: flex;
-            align-items: center;
-            gap: 4rem;
-            margin-bottom: 6rem;
-            background: var(--card-bg);
-            padding: 3rem;
-            border-radius: 24px;
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-        }
-
-        .feature-block.reverse {
-            flex-direction: row-reverse;
-        }
-
-        .feature-text {
-            flex: 1;
-        }
-
-        .feature-text h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            color: white;
-        }
-
-        .feature-text p {
-            font-size: 1.1rem;
-            color: #94a3b8;
-            margin-bottom: 1rem;
-        }
-
-        .feature-img {
-            flex: 1;
-        }
-
-        .feature-img img {
-            width: 100%;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--glass-border);
-            transition: transform 0.3s ease;
-        }
-
-        .feature-img img:hover {
-            transform: scale(1.02);
-            box-shadow: 0 15px 40px rgba(249, 115, 22, 0.2);
-        }
-
-        /* Call To Action */
-        .cta {
-            text-align: center;
-            padding: 4rem 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .cta h2 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        .cta p {
-            color: #94a3b8;
-            margin-bottom: 2rem;
-        }
-
-        .cta-btn {
-            background: linear-gradient(90deg, #f59e0b, #ea580c);
-            color: white;
-            font-size: 1.2rem;
-            font-weight: 600;
-            padding: 1rem 2.5rem;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 20px rgba(234, 88, 12, 0.3);
-        }
-
-        .cta-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 25px rgba(245, 158, 11, 0.4);
-        }
-
-        /* Animations */
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes float {
-            0% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-15px);
-            }
-
-            100% {
-                transform: translateY(0px);
-            }
-        }
-
-        /* Responsive */
-        @media (max-width: 992px) {
-
-            .hero,
-            .feature-block {
-                flex-direction: column !important;
-                text-align: center;
-                gap: 2rem;
-            }
-
-            .hero-content {
-                margin: 0 auto;
-                padding-right: 0;
-            }
-
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .feature-text h2 {
-                font-size: 2rem;
-            }
-        }
-    </style>
+  /* ── PAGE 6: CONTACT ── */
+  .contact-page{background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);color:white;justify-content:center;align-items:center;text-align:center;padding:60px}
+  .contact-page h2{font-size:44px;font-weight:900;margin-bottom:16px}
+  .contact-page h2 span{background:linear-gradient(90deg,#7834FF,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .contact-page .sub{font-size:18px;color:rgba(255,255,255,.7);margin-bottom:50px;max-width:500px;margin-left:auto;margin-right:auto}
+  .contact-cards{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:50px}
+  .contact-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:28px 36px;backdrop-filter:blur(10px)}
+  .contact-card .icon{font-size:32px;margin-bottom:10px}
+  .contact-card .label{font-size:11px;font-weight:700;letter-spacing:2px;opacity:.6;margin-bottom:6px}
+  .contact-card .value{font-size:18px;font-weight:700}
+  .tagline{font-size:14px;color:rgba(255,255,255,.4);margin-top:20px}
+  .page-num{position:absolute;bottom:18px;right:24px;font-size:11px;opacity:.4;font-weight:600}
+</style>
 </head>
-
 <body>
 
-    <header>
-        <div class="brand">
-            <!-- App Smart Displays Logo SVG -->
-            <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Purple background with rounded corners -->
-                <rect width="100" height="100" rx="22" fill="#7834FF" />
-                <!-- Screen Outline -->
-                <rect x="18" y="24" width="64" height="42" rx="4" stroke="white" stroke-width="5" fill="transparent" />
-                <path d="M42 66 L34 82 L66 82 L58 66" fill="transparent" stroke="white" stroke-width="5"
-                    stroke-linejoin="round" />
-                <line x1="30" y1="82" x2="70" y2="82" stroke="white" stroke-width="5" stroke-linecap="round" />
-                <!-- Play triangle inside white circle -->
-                <circle cx="50" cy="45" r="14" fill="white" />
-                <path d="M46 38 L57 45 L46 52 Z" fill="#7834FF" />
-            </svg>
-            <div class="brand-text">
-                <span class="app-title">App</span>
-                <span class="smart-displays">SMART DISPLAYS</span>
-            </div>
-        </div>
-        <div class="lang-selector">
-            <button class="lang-btn active" onclick="setLang('ro')">RO</button>
-            <button class="lang-btn" onclick="setLang('en')">EN</button>
-        </div>
-    </header>
+<div class="controls no-print">
+  <button class="btn-print" onclick="window.print()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Salvează PDF</button>
+  <button class="btn-lang" id="langBtn" onclick="toggleLang()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7834FF" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> English</button>
+</div>
 
-    <section class="hero">
-        <div class="hero-content">
-            <h1 data-i18n="hero_title">Transformă orice ecran într-un magnet pentru clienți</h1>
-            <p data-i18n="hero_sub">Soluția supremă de digital signage. Gestionează conținut dinamic, meniuri și reclame
-                în timp real, pe orice Smart TV sau Kiosk.</p>
-        </div>
-        <div class="hero-image">
-            <img src="./images/restaurant_kiosk.png" alt="Digital Signage Hero">
-        </div>
-    </section>
+<!-- PAGE 1: COVER -->
+<div class="page cover">
+  <div class="cover-logo">
+    <img src="./images/app_logo_icon.png" alt="App Smart Displays Logo" class="logo-icon">
+    <div class="cover-logo-text">
+      <div class="app">GetApp</div>
+      <div class="smart">SMART DISPLAYS</div>
+    </div>
+  </div>
+  <h1 class="i18n" data-ro="Transformă orice ecran într-un<br><span>magnet pentru clienți</span>" data-en="Turn Any Screen Into a<br><span>Customer Magnet</span>"></h1>
+  <p class="i18n" data-ro="Platforma profesională de Digital Signage pentru restaurante, retail și spații comerciale. Gestionare centralizată, conținut dinamic, rezultate reale." data-en="The professional Digital Signage platform for restaurants, retail and commercial spaces. Centralized management, dynamic content, real results."></p>
+  <div class="cover-badges">
+    <div class="badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg> <span class="i18n" data-ro="Orice Smart TV" data-en="Any Smart TV"></span></div>
+    <div class="badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg> <span class="i18n" data-ro="100% Cloud" data-en="100% Cloud"></span></div>
+    <div class="badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> <span class="i18n" data-ro="Actualizare în timp real" data-en="Real-time Updates"></span></div>
+    <div class="badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> <span class="i18n" data-ro="Fără USB" data-en="No USB needed"></span></div>
+  </div>
+  <div class="cover-img-row">
+    <img src="./images/hero_restaurant.png" alt="Restaurant Signage">
+    <img src="./images/tv_cafe.png" alt="Cafe Display">
+    <img src="./images/dashboard_ui.png" alt="Dashboard">
+  </div>
+  <div class="cover-footer">App Smart Displays © 2025 · contact@getapp.ro · +40 7575 7777 12</div>
+</div>
 
-    <section class="section">
-        <div class="feature-block reverse">
-            <div class="feature-text">
-                <h2 data-i18n="feat2_title">Afișare Premium & Stabilă</h2>
-                <p data-i18n="feat2_p1">Folosim o arhitectură special concepută pentru mediul comercial ce previne
-                    intrarea în repaus (standby) a televizoarelor Smart.</p>
-                <p data-i18n="feat2_p2">Oferim tranziții animate, suport pentru video și design impecabil 24/7 care
-                    captează atenția clienților.</p>
-            </div>
-            <div class="feature-img">
-                <!-- Using another generated/existing image to show difference or reuse hero_bg if no other -->
-                <img src="./images/mall_displays.png" alt="Mall Signage Displays">
-            </div>
-        </div>
+<!-- PAGE 2: FEATURE – CLOUD CONTROL -->
+<div class="page split">
+  <div class="split-img">
+    <img src="./images/dashboard_ui.png" alt="Cloud Dashboard">
+  </div>
+  <div class="split-text" style="order:2">
+    <div class="section-label">01 / <span class="i18n" data-ro="Control Centralizat" data-en="Centralized Control"></span></div>
+    <h2 class="i18n" data-ro="Administrează toate ecranele dintr-un singur loc" data-en="Manage All Screens From One Place"></h2>
+    <p class="i18n" data-ro="Panoul nostru cloud îți oferă controlul complet asupra tuturor ecranelor, din orice locație, de pe orice dispozitiv conectat la internet." data-en="Our cloud panel gives you full control over all screens, from any location, on any internet-connected device."></p>
+    <ul class="feature-list">
+      <li><span class="i18n" data-ro="Monitorizare status în timp real (Online/Offline)" data-en="Real-time status monitoring (Online/Offline)"></span></li>
+      <li><span class="i18n" data-ro="Actualizare conținut instantanee pe toate ecranele" data-en="Instant content update across all screens"></span></li>
+      <li><span class="i18n" data-ro="Gestionare utilizatori cu roluri diferite" data-en="User management with different roles"></span></li>
+      <li><span class="i18n" data-ro="Suport multi-locație și multi-brand" data-en="Multi-location and multi-brand support"></span></li>
+      <li><span class="i18n" data-ro="Istoricul activității și log-uri complete" data-en="Activity history and full audit logs"></span></li>
+    </ul>
+  </div>
+  <div class="page-num">2 / 6</div>
+</div>
 
-        <div class="feature-block">
-            <div class="feature-text">
-                <h2 data-i18n="feat1_title">Control Centralizat din Cloud</h2>
-                <p data-i18n="feat1_p1">Schimbă prețurile, imaginile și designul pe zeci de ecrane simultan dintr-un
-                    singur panou de control conectat la cloud.</p>
-                <p data-i18n="feat1_p2">Nu mai este nevoie de memorie USB. Tot conținutul media este sincronizat și
-                    redat instant pe unitățile de afișaj.</p>
-            </div>
-            <div class="feature-img">
-                <img src="./images/cms_dashboard.png" alt="Cloud Dashboard">
-            </div>
-        </div>
-    </section>
+<!-- PAGE 3: FEATURE – CONTENT & PLAYLIST -->
+<div class="page split">
+  <div class="split-text split-text-right" style="order:1">
+    <div class="section-label">02 / <span class="i18n" data-ro="Conținut & Playlist-uri" data-en="Content & Playlists"></span></div>
+    <h2 class="i18n" data-ro="Playlist-uri inteligente cu programare automată" data-en="Smart Playlists With Automatic Scheduling"></h2>
+    <p class="i18n" data-ro="Creează playlist-uri cu imagini și video-uri, setează durata fiecărui element și programează-le să ruleze exact când ai nevoie – dimineața, seara sau în Happy Hour." data-en="Create playlists with images and videos, set duration for each item and schedule them to run exactly when needed – morning, evening or Happy Hour."></p>
+    <ul class="feature-list">
+      <li><span class="i18n" data-ro="Drag & drop pentru organizarea conținutului" data-en="Drag & drop content organization"></span></li>
+      <li><span class="i18n" data-ro="Suport imagini JPG/PNG și video MP4" data-en="JPG/PNG image and MP4 video support"></span></li>
+      <li><span class="i18n" data-ro="Durată automată detectată pentru videoclipuri" data-en="Auto-detected duration for video files"></span></li>
+      <li><span class="i18n" data-ro="Programare Happy Hour cu ore personalizate" data-en="Happy Hour scheduling with custom times"></span></li>
+      <li><span class="i18n" data-ro="Atribuire playlist pe ecran cu confirmare" data-en="Playlist assignment to screen with confirmation"></span></li>
+    </ul>
+  </div>
+  <div class="split-img" style="order:2">
+    <img src="./images/playlist_editor.png" alt="Playlist Editor">
+  </div>
+  <div class="page-num">3 / 6</div>
+</div>
 
-    <section class="cta">
-        <h2 data-i18n="cta_title">Pregătit să îți modernizezi afacerea?</h2>
-        <p data-i18n="cta_sub">Alătură-te partenerilor Get App Smart Displays chiar astăzi.</p>
-        <button class="cta-btn" data-i18n="cta_btn">Contactează-ne</button>
-    </section>
+<!-- PAGE 4: FEATURES GRID -->
+<div class="page dark-feat">
+  <div class="page-header">
+    <div class="label"><span class="i18n" data-ro="FUNCȚIONALITĂȚI COMPLETE" data-en="COMPLETE FEATURES"></span></div>
+    <h2 class="i18n" data-ro="Tot ce ai nevoie, într-o singură platformă" data-en="Everything You Need, in One Platform"></h2>
+    <p class="i18n" data-ro="Construit special pentru mediul comercial românesc, testat în zeci de locații." data-en="Built specifically for the commercial environment, tested in dozens of locations."></p>
+  </div>
+  <div class="cards-grid">
+    <div class="feat-card">
+      <div class="icon icon-purple"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10" r="3" fill="#a78bfa" stroke="none"/><path d="M10.5 9l3 1.5-3 1.5V9z" fill="white" stroke="none"/></svg></div>
+      <h3 class="i18n" data-ro="Anti-Standby 24/7" data-en="Anti-Standby 24/7"></h3>
+      <p class="i18n" data-ro="Sistem dedicat care previne intrarea în repaus a Smart TV-urilor, garantând afișare continuă." data-en="Dedicated system that prevents Smart TVs from going to sleep, guaranteeing continuous display."></p>
+    </div>
+    <div class="feat-card">
+      <div class="icon icon-orange"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg></div>
+      <h3 class="i18n" data-ro="Bibliotecă Media" data-en="Media Library"></h3>
+      <p class="i18n" data-ro="Organizează conținutul în foldere pe brand sau categorie. Caută rapid orice fișier." data-en="Organize content in folders by brand or category. Quickly search any file."></p>
+    </div>
+    <div class="feat-card">
+      <div class="icon icon-blue"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="8" height="6" rx="1"/><rect x="14" y="3" width="8" height="6" rx="1"/><rect x="2" y="15" width="8" height="6" rx="1"/><rect x="14" y="15" width="8" height="6" rx="1"/><path d="M10 6h4M10 18h4M6 9v6M18 9v6"/></svg></div>
+      <h3 class="i18n" data-ro="Sincronizare Ecrane" data-en="Screen Synchronization"></h3>
+      <p class="i18n" data-ro="Grupează mai multe ecrane și sincronizează-le să ruleze conținut identic simultan." data-en="Group multiple screens and synchronize them to run identical content simultaneously."></p>
+    </div>
+    <div class="feat-card">
+      <div class="icon icon-green"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14" stroke-width="3"/><line x1="12" y1="14" x2="12" y2="14" stroke-width="3"/><line x1="16" y1="14" x2="16" y2="14" stroke-width="3"/></svg></div>
+      <h3 class="i18n" data-ro="Programare Avansată" data-en="Advanced Scheduling"></h3>
+      <p class="i18n" data-ro="Happy Hour, program zilnic/săptămânal, conținut sezonier. Totul automat, fără intervenție manuală." data-en="Happy Hour, daily/weekly schedule, seasonal content. All automatic, no manual intervention."></p>
+    </div>
+    <div class="feat-card">
+      <div class="icon icon-pink"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+      <h3 class="i18n" data-ro="Multi-Brand & Locații" data-en="Multi-Brand & Locations"></h3>
+      <p class="i18n" data-ro="Gestionează mai multe branduri și locații din același cont. Fiecare cu propriul conținut." data-en="Manage multiple brands and locations from the same account. Each with its own content."></p>
+    </div>
+    <div class="feat-card">
+      <div class="icon icon-cyan"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
+      <h3 class="i18n" data-ro="Protecție Erori" data-en="Error Protection"></h3>
+      <p class="i18n" data-ro="Confirmare la atribuire playlist, validare brand, blocare ștergere fișiere active în playlist." data-en="Confirmation on playlist assignment, brand validation, blocking deletion of active playlist files."></p>
+    </div>
+  </div>
+  <div class="page-num" style="color:rgba(255,255,255,.4)">4 / 6</div>
+</div>
 
-    <script>
-        const translations = {
-            'ro': {
-                'hero_title': 'Transformă orice ecran într-un magnet pentru clienți',
-                'hero_sub': 'Soluția supremă de digital signage. Gestionează conținut dinamic, meniuri și reclame în timp real, pe orice Smart TV sau Kiosk.',
-                'feat1_title': 'Control Centralizat din Cloud',
-                'feat1_p1': 'Schimbă prețurile, imaginile și designul pe zeci de ecrane simultan dintr-un singur panou de control conectat la cloud.',
-                'feat1_p2': 'Nu mai este nevoie de memorie USB. Tot conținutul media este sincronizat și redat instant pe unitățile de afișaj.',
-                'feat2_title': 'Afișare Premium & Stabilă',
-                'feat2_p1': 'Folosim o arhitectură special concepută pentru mediul comercial ce previne intrarea în repaus (standby) a televizoarelor Smart.',
-                'feat2_p2': 'Oferim tranziții animate, suport pentru video și design impecabil 24/7 care captează atenția clienților.',
-                'cta_title': 'Pregătit să îți modernizezi afacerea?',
-                'cta_sub': 'Alătură-te partenerilor Get App Smart Displays chiar astăzi.',
-                'cta_btn': 'Contactează-ne'
-            },
-            'en': {
-                'hero_title': 'Turn Any Screen Into a Customer Magnet',
-                'hero_sub': 'The ultimate digital signage solution. Manage dynamic content, menus, and ads in real-time on any Smart TV or Kiosk.',
-                'feat1_title': 'Centralized Cloud Control',
-                'feat1_p1': 'Update prices, images, and designs across dozens of screens simultaneously from a single cutting-edge web dashboard.',
-                'feat1_p2': 'No more USB physical drives. All your media content is seamlessly synchronized and instantly played on display units.',
-                'feat2_title': 'Premium & Stable Display',
-                'feat2_p1': 'We utilize a specialized commercial architecture that reliably prevents Smart TVs from entering sleep or standby mode.',
-                'feat2_p2': 'We offer animated transitions, high-quality video support, and flawless 24/7 design that captures your clients attention.',
-                'cta_title': 'Ready to modernize your business?',
-                'cta_sub': 'Join Get App Smart Displays partners today.',
-                'cta_btn': 'Contact Us'
-            }
-        };
+<!-- PAGE 5: SCREENSHOTS + HOW IT WORKS -->
+<div class="page light-page">
+  <div class="page-header">
+    <div class="label"><span class="i18n" data-ro="ÎN ACȚIUNE" data-en="IN ACTION"></span></div>
+    <h2 class="i18n" data-ro="Cum funcționează?" data-en="How Does It Work?"></h2>
+    <p class="i18n" data-ro="De la instalare la primul ecran activ – în mai puțin de 30 de minute." data-en="From installation to the first active screen – in less than 30 minutes."></p>
+  </div>
+  <div class="img-showcase">
+    <img src="./images/hero_restaurant.png" alt="Restaurant">
+    <img src="./images/multi_location.png" alt="Multi Location">
+  </div>
+  <div class="img-small">
+    <img src="./images/tv_cafe.png" alt="Cafe TV">
+    <img src="./images/playlist_editor.png" alt="Playlist">
+  </div>
+  <div class="page-num">5 / 6</div>
+</div>
 
-        function setLang(lang) {
-            // Update active states
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                const isActive = btn.textContent.toLowerCase() === lang;
-                if (isActive) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
+<!-- PAGE 6: CONTACT -->
+<div class="page contact-page">
+  <div style="margin-bottom:20px">
+    <img src="./images/app_logo_icon.png" alt="App Logo" style="width:70px;height:70px;border-radius:16px;box-shadow:0 8px 30px rgba(120,52,255,.6)">
+  </div>
+  <h2 class="i18n" data-ro="Gata să îți <span>modernizezi</span> afacerea?" data-en="Ready to <span>modernize</span> your business?"></h2>
+  <p class="sub i18n" data-ro="Contactează-ne astăzi pentru o demonstrație gratuită și personalizată pe nevoile tale." data-en="Contact us today for a free demo tailored to your needs."></p>
+  <div class="contact-cards">
+    <div class="contact-card">
+      <div class="icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+      <div class="label">EMAIL</div>
+      <div class="value">contact@getapp.ro</div>
+    </div>
+    <div class="contact-card">
+      <div class="icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.11h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.69a16 16 0 0 0 6.29 6.29l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+      <div class="label"><span class="i18n" data-ro="TELEFON" data-en="PHONE"></span></div>
+      <div class="value">+40 7575 7777 12</div>
+    </div>
+    <div class="contact-card">
+      <div class="icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+      <div class="label">WEB</div>
+      <div class="value">getapp.ro</div>
+    </div>
+  </div>
+  <div class="tagline">App Smart Displays · <span class="i18n" data-ro="Soluția digitală pentru afacerea ta" data-en="The digital solution for your business"></span> · © 2025</div>
+  <div class="page-num" style="color:rgba(255,255,255,.3)">6 / 6</div>
+</div>
 
-            // Update translations
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (translations[lang] && translations[lang][key]) {
-                    el.style.opacity = 0;
-                    setTimeout(() => {
-                        el.textContent = translations[lang][key];
-                        el.style.opacity = 1;
-                    }, 200);
-                }
-            });
-            document.documentElement.lang = lang;
-        }
-
-        // Add CSS transition explicitly for JS fade out/in effect
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-            el.style.transition = 'opacity 0.2s ease-in-out';
-        });
-    </script>
+<script>
+let lang = 'ro';
+function toggleLang() {
+  lang = lang === 'ro' ? 'en' : 'ro';
+  document.getElementById('langBtn').innerHTML = lang === 'ro' ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> English' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Română';
+  document.querySelectorAll('.i18n').forEach(el => {
+    const val = el.getAttribute('data-' + lang);
+    if (val) el.innerHTML = val;
+  });
+}
+// Init
+document.querySelectorAll('.i18n').forEach(el => {
+  const val = el.getAttribute('data-ro');
+  if (val) el.innerHTML = val;
+});
+</script>
 </body>
-
 </html>

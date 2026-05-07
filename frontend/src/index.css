@@ -196,3 +196,17 @@ html.dark body::before {
     --brand-800: #166534;
     --brand-900: #14532d;
 }
+
+[data-theme="purple"] {
+    --brand-50: #f5f3ff;
+    --brand-100: #ede9fe;
+    --brand-200: #ddd6fe;
+    --brand-300: #c4b5fd;
+    --brand-400: #a78bfa;
+    --brand-500: #7c3aed;
+    --brand-600: #6d28d9;
+    --brand-700: #5b21b6;
+    --brand-800: #4c1d95;
+    --brand-900: #2e1065;
+}
+

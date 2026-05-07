@@ -266,6 +266,11 @@ export const DashboardLayout = ({ children }) => {
                 className={`w-5 h-5 rounded-full bg-emerald-500 transition-all ${theme === 'green' ? 'ring-2 ring-offset-1 ring-emerald-500 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
                 title="Tema Verde"
               />
+              <button
+                onClick={() => setTheme('purple')}
+                className={`w-5 h-5 rounded-full bg-violet-600 transition-all ${theme === 'purple' ? 'ring-2 ring-offset-1 ring-violet-600 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
+                title="Tema Violet"
+              />
               <div className="w-px h-4 bg-slate-300 mx-1" />
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
