@@ -497,7 +497,54 @@ export const Playlists = () => {
     if (!draggedPlaylistId) return;
     const playlist = playlists.find(p => p.id === draggedPlaylistId);
     const screen = screens.find(s => s.id === screenId);
-    if (!playlist || !screen) return;
+    if (!playlist || !screen) {
+      setDraggedPlaylistId(null);
+      setDroppingOnScreenId(null);
+      return;
+    }
+
+    // Brand matching logic
+    const playlistBrand = Array.isArray(playlist.brand) ? playlist.brand[0] : playlist.brand;
+    const location = locations.find(l => l.id === screen.location_id);
+    const locationName = location ? location.name.toLowerCase() : '';
+    const screenName = screen.name.toLowerCase();
+
+    let isMismatch = false;
+    let assumedScreenBrand = null;
+
+    if (playlistBrand) {
+      const pBrandKey = playlistBrand.split(' ')[0].toLowerCase();
+      const matchesPlaylistBrand = locationName.includes(pBrandKey) || screenName.includes(pBrandKey);
+
+      if (!matchesPlaylistBrand) {
+        // Check if screen matches another brand
+        for (const b of brands) {
+          const otherBrandKey = b.name.split(' ')[0].toLowerCase();
+          if (otherBrandKey !== pBrandKey && (locationName.includes(otherBrandKey) || screenName.includes(otherBrandKey))) {
+            isMismatch = true;
+            assumedScreenBrand = b.name;
+            break;
+          }
+        }
+      }
+    }
+
+    const message = isMismatch
+      ? `ATENȚIE! POSIBILĂ GREȘEALĂ DE BRAND!\n\nPlaylist-ul "${playlist.name}" este pentru brandul "${playlistBrand}", dar ecranul "${screen.name}" pare să fie pentru "${assumedScreenBrand}".\n\nSigur dorești să-l atribui?`
+      : `Sigur dorești să atribui playlist-ul "${playlist.name}" pe ecranul "${screen.name}"?`;
+
+    const confirmed = await confirm({
+      title: isMismatch ? 'Avertizare Brand Mismatch' : 'Confirmare Atribuire',
+      message: message,
+      isDanger: isMismatch,
+      confirmText: 'Atribuie Playlist'
+    });
+
+    if (!confirmed) {
+      setDraggedPlaylistId(null);
+      setDroppingOnScreenId(null);
+      return;
+    }
 
     try {
       // Assign to the first zone (zone1) with content_type 'playlist'
