@@ -754,7 +754,7 @@ export const Playlists = () => {
                                     <SelectItem key={brand.id} value={brand.name || "unknown"}>
                                       <div className="flex items-center gap-2">
                                         {brand.logo_url && (
-                                          <img src={brand.logo_url} alt="" className="w-4 h-4 object-contain" />
+                                          <img src={brand.logo_url} alt="" className="w-4 h-4 object-cover rounded-full" />
                                         )}
                                         <span>{brand.name}</span>
                                       </div>
@@ -1288,7 +1288,7 @@ export const Playlists = () => {
                       >
                         <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-full bg-white dark:bg-slate-900 shadow-sm border-2 ring-2 ring-white ${selectedBrands.includes(brand.name) ? 'border-brand-500' : 'border-slate-100 dark:border-slate-800'}`}>
                           {brand.logo_url ? (
-                            <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
+                            <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-cover rounded-full" />
                           ) : (
                             <span className="text-[8px] font-bold text-slate-400">{brand.name?.substring(0, 2).toUpperCase()}</span>
                           )}

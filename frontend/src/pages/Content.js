@@ -854,7 +854,7 @@ export const Content = () => {
                                 className="w-8 h-8 rounded-full border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-sm ring-2 ring-white"
                                 title={brandName}
                               >
-                                <img src={getBrandLogo(brandName)} className="w-full h-full object-contain" alt="" />
+                                <img src={getBrandLogo(brandName)} className="w-full h-full object-cover rounded-full" alt="" />
                               </div>
                             )
                           ))}
@@ -969,7 +969,7 @@ export const Content = () => {
                         className="w-6 h-6 rounded-full border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-sm ring-2 ring-white z-10"
                         title={brandName}
                       >
-                        <img src={getBrandLogo(brandName)} className="w-full h-full object-contain p-0.5" alt="" />
+                        <img src={getBrandLogo(brandName)} className="w-full h-full object-cover rounded-full" alt="" />
                       </div>
                     ) : (
                       <span key={idx} className="text-[10px] font-black text-brand-600 uppercase tracking-widest mr-2 underline decoration-2 decoration-brand-200 underline-offset-4">
@@ -1243,7 +1243,7 @@ export const Content = () => {
                     >
                       <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-full bg-white dark:bg-slate-900 shadow-sm border-2 ring-2 ring-white ${selectedBrands.includes(brand.name) ? 'border-brand-500' : 'border-slate-100 dark:border-slate-800'}`}>
                         {brand.logo_url ? (
-                          <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
+                          <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-cover rounded-full" />
                         ) : (
                           <span className="text-[8px] font-bold text-slate-400">{brand.name?.substring(0, 2).toUpperCase()}</span>
                         )}

@@ -507,7 +507,7 @@ export const Screens = () => {
                     >
                       <div className={`w-8 h-8 flex items-center justify-center overflow-hidden transition-all rounded-full bg-white dark:bg-slate-900 shadow-sm border-2 ring-2 ring-white ${isActive ? 'border-brand-500' : 'border-slate-100 dark:border-slate-800'}`}>
                         {brand.logo_url ? (
-                          <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-contain p-0.5" />
+                          <img src={brand.logo_url} alt={brand.name} className="w-full h-full object-cover rounded-full" />
                         ) : (
                           <span className="text-[8px] font-bold text-slate-400">{brand.name?.substring(0, 2).toUpperCase()}</span>
                         )}
@@ -668,7 +668,7 @@ export const Screens = () => {
                             {getBrand(screen.logo_brand_id) && (
                               <div className="flex items-center gap-1.5 mb-0.5">
                                 {getBrand(screen.logo_brand_id).logo_url && (
-                                  <img src={getBrand(screen.logo_brand_id).logo_url} alt="" className="w-4 h-4 object-contain" />
+                                  <img src={getBrand(screen.logo_brand_id).logo_url} alt="" className="w-4 h-4 object-cover rounded-full" />
                                 )}
                                 <span className="text-[10px] font-bold text-brand-600 uppercase">{getBrand(screen.logo_brand_id).name}</span>
                               </div>
@@ -778,7 +778,7 @@ export const Screens = () => {
                             className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 shrink-0"
                           />
                           {getBrand(screen.logo_brand_id) && getBrand(screen.logo_brand_id).logo_url && (
-                            <img src={getBrand(screen.logo_brand_id).logo_url} alt={getBrand(screen.logo_brand_id).name} title={getBrand(screen.logo_brand_id).name} className="w-5 h-5 object-contain shrink-0" />
+                            <img src={getBrand(screen.logo_brand_id).logo_url} alt={getBrand(screen.logo_brand_id).name} title={getBrand(screen.logo_brand_id).name} className="w-5 h-5 object-cover rounded-full shrink-0" />
                           )}
                           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate" title={screen.name}>{screen.name}</h3>
                         </div>
