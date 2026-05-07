@@ -285,7 +285,7 @@ export const LivePreviewDashboard = () => {
 
                         <div className="flex-1">
                             <Select value={filterLocation} onValueChange={setFilterLocation}>
-                                <SelectTrigger className="w-48">
+                                <SelectTrigger className="w-48 bg-slate-50 dark:bg-slate-800/50 dark:border-slate-700">
                                     <SelectValue placeholder="Toate locațiile" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -299,7 +299,7 @@ export const LivePreviewDashboard = () => {
 
                         <div className="flex-1">
                             <Select value={filterStatus} onValueChange={setFilterStatus}>
-                                <SelectTrigger className="w-48">
+                                <SelectTrigger className="w-48 bg-slate-50 dark:bg-slate-800/50 dark:border-slate-700">
                                     <SelectValue placeholder="Toate statusurile" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -312,7 +312,7 @@ export const LivePreviewDashboard = () => {
 
                         <div className="flex-1">
                             <Select value={filterSyncGroup} onValueChange={setFilterSyncGroup}>
-                                <SelectTrigger className="w-48">
+                                <SelectTrigger className="w-48 bg-slate-50 dark:bg-slate-800/50 dark:border-slate-700">
                                     <SelectValue placeholder="Toate grupurile" />
                                 </SelectTrigger>
                                 <SelectContent>
