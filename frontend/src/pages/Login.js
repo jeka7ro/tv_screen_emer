@@ -135,11 +135,25 @@ export const Login = () => {
       <div className="w-full max-w-md relative z-10 transition-transform hover:scale-[1.01] duration-500">
         <div className="bg-slate-950/60 backdrop-blur-3xl border border-slate-600/50 rounded-[2.5rem] p-8" style={{ boxShadow: '0 30px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.15), inset 0 2px 20px rgba(255,255,255,0.05)' }}>
           <div className="flex justify-center items-center pt-2 mb-8">
-            <img 
-              src="/getapp_smart_displays_white.png" 
-              alt="Get App Smart Displays" 
-              className="h-20 w-auto object-contain hover:scale-[1.02] transition-transform duration-300"
-            />
+            <div className="flex items-center gap-4">
+              {/* Squircle Icon */}
+              <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/30 ring-2 ring-white/20">
+                <img
+                  src="/app_logo_icon.png"
+                  alt="GetApp Logo"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.parentNode.innerHTML = '<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%"><rect width="100" height="100" rx="22" fill="#7c3aed"/><rect x="18" y="24" width="64" height="42" rx="4" stroke="white" stroke-width="5" fill="transparent"/><path d="M42 66 L34 82 L66 82 L58 66" fill="transparent" stroke="white" stroke-width="5" stroke-linejoin="round"/><line x1="30" y1="82" x2="70" y2="82" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="45" r="14" fill="white"/><path d="M46 38 L57 45 L46 52 Z" fill="#7c3aed"/></svg>';
+                  }}
+                />
+              </div>
+              {/* Text */}
+              <div className="text-left">
+                <div className="text-4xl font-black text-white leading-none tracking-tight drop-shadow-lg">GetApp</div>
+                <div className="inline-block bg-white/15 backdrop-blur-sm text-white/90 text-[10px] font-bold px-3 py-1 rounded-full mt-1.5 tracking-widest uppercase border border-white/20">Smart Displays</div>
+              </div>
+            </div>
           </div>
 
           {/* Show badge for first user registration */}
