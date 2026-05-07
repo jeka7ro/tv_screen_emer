@@ -18,8 +18,9 @@ import { PlaylistSimulation } from '../components/PlaylistSimulation';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '../components/ui/hover-card';
 import { useConfirm } from '../hooks/useConfirm';
 
-const MediaHoverPreview = ({ item, className }) => {
+const MediaHoverPreview = ({ item, className, onError }) => {
   const [open, setOpen] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   if (!item) return null;
   return (
@@ -30,7 +31,11 @@ const MediaHoverPreview = ({ item, className }) => {
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(true); }}
             className={`rounded border border-slate-100 overflow-hidden shrink-0 bg-black flex items-center justify-center relative shadow-sm cursor-pointer group/vid ${className || 'w-10 h-10'}`}
           >
-            {item.type === 'video' ? (
+            {hasError ? (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-red-900/80 p-0.5">
+                <span className="text-[7px] font-black text-white text-center leading-tight">FIȘIER<br/>LIPSĂ</span>
+              </div>
+            ) : item.type === 'video' ? (
               <>
                 <video 
                   src={item.file_url} 
@@ -39,13 +44,19 @@ const MediaHoverPreview = ({ item, className }) => {
                   muted 
                   loop 
                   playsInline
+                  onError={(e) => { setHasError(true); if (onError) onError(item.id); }}
                 />
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/vid:opacity-100 transition-opacity">
                   <Eye className="w-4 h-4 text-white" />
                 </div>
               </>
             ) : (
-              <img src={item.thumbnail_url || item.file_url} alt="" className="w-full h-full object-cover group-hover/vid:scale-110 transition-transform" />
+              <img 
+                src={item.thumbnail_url || item.file_url} 
+                alt="" 
+                className="w-full h-full object-cover group-hover/vid:scale-110 transition-transform" 
+                onError={(e) => { setHasError(true); if (onError) onError(item.id); }}
+              />
             )}
           </div>
         </HoverCardTrigger>
@@ -1085,7 +1096,21 @@ export const Playlists = () => {
                                       </div>
 
                                       {/* Thumbnail */}
-                                      <MediaHoverPreview item={contentItem} className="w-12 h-8" />
+                                      <MediaHoverPreview 
+                                        item={contentItem} 
+                                        className="w-12 h-8" 
+                                        onError={(brokenContentId) => {
+                                          setPlaylistItems(prev => {
+                                            const filtered = prev.filter(i => i.content_id !== brokenContentId);
+                                            if (filtered.length !== prev.length) {
+                                              toast.error(`Fișier lipsă scos din playlist!`, {
+                                                description: `Fișierul "${contentItem?.title || 'Unknown'}" nu mai există pe server și a fost eliminat automat. Salvează pentru a confirma.`
+                                              });
+                                            }
+                                            return filtered;
+                                          });
+                                        }}
+                                      />
 
                                       {/* Info */}
                                       <div className="flex-1 min-w-0">

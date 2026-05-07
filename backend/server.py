@@ -1147,17 +1147,19 @@ async def get_screens_thumbnails(current_user: User = Depends(get_current_user))
                         first_item = playlist["items"][0]
                         content = await content_get(first_item["content_id"])
                         if content:
+                            thumb_url = content.get("thumbnail_url")
                             thumb_info = {
-                                "url": content.get("thumbnail_url") or content.get("file_url"),
-                                "type": content.get("type", "image")
+                                "url": thumb_url or content.get("file_url"),
+                                "type": "image" if thumb_url else content.get("type", "image")
                             }
                             break
                 elif zc.get("content_type") == "single_content" and zc.get("content_id"):
                     content = await content_get(zc["content_id"])
                     if content:
+                        thumb_url = content.get("thumbnail_url")
                         thumb_info = {
-                            "url": content.get("thumbnail_url") or content.get("file_url"),
-                            "type": content.get("type", "image")
+                            "url": thumb_url or content.get("file_url"),
+                            "type": "image" if thumb_url else content.get("type", "image")
                         }
                         break
         except Exception:

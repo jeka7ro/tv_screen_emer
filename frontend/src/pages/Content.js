@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { FolderSidebar } from '../components/FolderSidebar';
 import { FolderDialog } from '../components/FolderDialog';
-import { Upload, Link as LinkIcon, FileImage, Film, Trash2, Plus, LayoutGrid, List as ListIcon, Eye, Folder, FolderPlus, Edit2, FolderOpen } from 'lucide-react';
+import { Upload, Link as LinkIcon, FileImage, Film, Trash2, Plus, LayoutGrid, List as ListIcon, Eye, Folder, FolderPlus, Edit2, FolderOpen, Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 import { toast } from 'sonner';
@@ -61,7 +61,9 @@ export const Content = () => {
     return saved ? parseInt(saved) : 10; // Default to 10
   });
   const [typeFilter, setTypeFilter] = useState('all');
-
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showImages, setShowImages] = useState(true);
+  const [showVideos, setShowVideos] = useState(true);
   const [brands, setBrands] = useState([]);
   const [showSlideshowDialog, setShowSlideshowDialog] = useState(false);
   const [pendingSlideshowScreen, setPendingSlideshowScreen] = useState(null);
@@ -72,6 +74,7 @@ export const Content = () => {
   const [usageInfo, setUsageInfo] = useState({ screens: [], playlists: [] });
   const [isCheckingUsage, setIsCheckingUsage] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [forceDeleteConfirm, setForceDeleteConfirm] = useState(false);
 
   useEffect(() => {
     loadContent();
@@ -235,14 +238,20 @@ export const Content = () => {
   };
 
 
-  // 3. Filter by type (for display)
-  const typeFilteredContent = typeFilter === 'all'
-    ? brandFilteredContent
-    : brandFilteredContent.filter(item => {
-      if (typeFilter === 'images') return item.type === 'image';
-      if (typeFilter === 'videos') return item.type === 'video';
-      return true;
-    });
+  // 3. Filter by type and search (for display)
+  const typeFilteredContent = brandFilteredContent.filter(item => {
+    // search filter
+    if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+    }
+    // type filter
+    if (item.type === 'image' && !showImages) return false;
+    if (item.type === 'video' && !showVideos) return false;
+    // For youtube/web, we can map them to video, or always show.
+    if ((item.type === 'youtube' || item.type === 'web') && !showVideos) return false;
+    
+    return true;
+  });
 
   // Sorting Logic
   const sortedContent = [...typeFilteredContent].sort((a, b) => {
@@ -400,6 +409,7 @@ export const Content = () => {
     setUsageInfo({ screens: [], playlists: [] });
     setIsCheckingUsage(true);
     setShowDeleteConfirm(true);
+    setForceDeleteConfirm(false);
 
     try {
       const response = await api.get(`/content/${item.id}/usage`);
@@ -1098,23 +1108,22 @@ export const Content = () => {
           handleIconUpload={handleIconUpload}
         />
 
-        <Tabs value={typeFilter} onValueChange={(val) => {
-          setTypeFilter(val);
-          setCurrentPage(1);
-        }} className="space-y-6">
-          {/* Header Row: Tabs (Left) + Actions (Right) */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm mb-6">
-            <TabsList className="bg-slate-100 p-1 rounded-2xl w-full sm:w-auto grid grid-cols-3 sm:flex">
-              <TabsTrigger value="all" className="rounded-2xl px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
-                Toate ({brandFilteredContent.length})
-              </TabsTrigger>
-              <TabsTrigger value="images" className="rounded-2xl px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
-                Imagini ({images.length})
-              </TabsTrigger>
-              <TabsTrigger value="videos" className="rounded-2xl px-4 py-2 text-xs data-[state=active]:bg-white data-[state=active]:shadow-sm flex-1 sm:flex-none">
-                Video ({videos.length})
-              </TabsTrigger>
-            </TabsList>
+        {/* Header Row: Search (Left) + Actions (Right) */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-2 rounded-2xl border border-slate-100 shadow-sm mb-6">
+          <div className="w-full sm:w-64 shrink-0">
+             <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input 
+                  placeholder="Caută fișiere..." 
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-9 bg-slate-50 border-slate-200 rounded-2xl h-10 text-sm w-full"
+                />
+             </div>
+          </div>
 
             <div className="flex items-center gap-3 overflow-x-auto py-2 max-w-4xl scrollbar-hide mr-auto ml-4">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Filtrează:</span>
@@ -1157,16 +1166,33 @@ export const Content = () => {
                   Resetează
                 </button>
               )}
-              {/* Video Autoplay Toggle */}
-              <div className="flex items-center gap-2 ml-2">
-                <Switch
-                  checked={videoAutoplay}
-                  onCheckedChange={setVideoAutoplay}
-                  className="data-[state=checked]:bg-red-500"
-                />
-                <span className={`text-xs font-semibold ${videoAutoplay ? 'text-red-600' : 'text-slate-400'}`}>
-                  Autoplay Video
-                </span>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-2xl overflow-x-auto custom-scrollbar shrink-0">
+                  <div className="flex items-center gap-1.5 border-r border-slate-200 pr-3">
+                    <Switch
+                      checked={showImages}
+                      onCheckedChange={setShowImages}
+                      className="data-[state=checked]:bg-red-500 scale-75"
+                    />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Imagini</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 border-r border-slate-200 pr-3">
+                    <Switch
+                      checked={showVideos}
+                      onCheckedChange={setShowVideos}
+                      className="data-[state=checked]:bg-red-500 scale-75"
+                    />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Video</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Switch
+                      checked={videoAutoplay}
+                      onCheckedChange={setVideoAutoplay}
+                      className="data-[state=checked]:bg-red-500 scale-75"
+                    />
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Autoplay</span>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -1406,15 +1432,7 @@ export const Content = () => {
                 </div>
 
                 <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
-                  <TabsContent value="all" className="mt-0">
-                    {renderView(currentItems)}
-                  </TabsContent>
-                  <TabsContent value="images" className="mt-0">
-                    {renderView(currentItems)}
-                  </TabsContent>
-                  <TabsContent value="videos" className="mt-0">
-                    {renderView(currentItems)}
-                  </TabsContent>
+                  {renderView(currentItems)}
                 </div>
 
                 {/* Pagination Footer */}
@@ -1473,7 +1491,6 @@ export const Content = () => {
               </div>
             </div>
           </div>
-        </Tabs>
 
         {/* Preview Modal */}
         < Dialog open={showPreview} onOpenChange={setShowPreview} >
@@ -1645,25 +1662,36 @@ export const Content = () => {
                 </div>
               ) : (
                 (usageInfo.screens.length > 0 || usageInfo.playlists.length > 0) && (
-                  <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4 space-y-3">
-                    <div className="flex items-start gap-2 text-rose-800 font-medium text-sm">
-                      <span className="mt-0.5">⚠️</span>
-                      Acest fișier este folosit în următoarele locuri:
+                  <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 space-y-4 shadow-sm">
+                    <div className="flex items-start gap-3 text-rose-800 font-bold text-base">
+                      <span className="text-xl">⚠️</span>
+                      <p>Fișierul rulează pe ecrane sau este într-un playlist!</p>
                     </div>
-                    <div className="space-y-2 text-sm text-rose-700">
+                    <div className="space-y-2 text-sm text-rose-700 bg-white/50 p-3 rounded-xl border border-rose-100">
                       {usageInfo.screens.length > 0 && (
                         <div>
-                          <span className="font-semibold">Ecrane:</span> {usageInfo.screens.map(s => s.name).join(', ')}
+                          <span className="font-bold">Ecrane:</span> {usageInfo.screens.map(s => s.name).join(', ')}
                         </div>
                       )}
                       {usageInfo.playlists.length > 0 && (
                         <div>
-                          <span className="font-semibold">Playlist-uri:</span> {usageInfo.playlists.map(p => p.name).join(', ')}
+                          <span className="font-bold">Playlist-uri:</span> {usageInfo.playlists.map(p => p.name).join(', ')}
                         </div>
                       )}
-                      <p className="text-xs font-semibold mt-2 text-rose-900 italic">
-                        * Notă: Fișierul va fi eliminat automat din playlist-uri după ștergere.
-                      </p>
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t border-rose-200/60">
+                      <label className="flex items-start gap-3 cursor-pointer group">
+                        <input 
+                          type="checkbox" 
+                          className="mt-1 w-5 h-5 rounded border-rose-300 text-rose-600 focus:ring-rose-500 cursor-pointer"
+                          checked={forceDeleteConfirm}
+                          onChange={(e) => setForceDeleteConfirm(e.target.checked)}
+                        />
+                        <span className="text-sm font-bold text-rose-900 leading-tight">
+                          Da, sunt de acord să scot automat fișierul din aceste locații pentru a-l putea șterge definitiv.
+                        </span>
+                      </label>
                     </div>
                   </div>
                 )
@@ -1677,8 +1705,8 @@ export const Content = () => {
               <Button
                 variant="destructive"
                 onClick={handleConfirmDelete}
-                disabled={isCheckingUsage || isDeleting}
-                className="bg-rose-600 hover:bg-rose-700"
+                disabled={isCheckingUsage || isDeleting || ((usageInfo.screens.length > 0 || usageInfo.playlists.length > 0) && !forceDeleteConfirm)}
+                className={`transition-all ${((usageInfo.screens.length > 0 || usageInfo.playlists.length > 0) && !forceDeleteConfirm) ? 'bg-slate-300 hover:bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-rose-600 hover:bg-rose-700'}`}
               >
                 {isDeleting ? 'Se șterge...' : 'Șterge Fișierul'}
               </Button>
