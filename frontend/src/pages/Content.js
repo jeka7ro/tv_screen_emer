@@ -624,6 +624,18 @@ export const Content = () => {
 
   const handleBulkMoveToFolder = async (folderId) => {
     try {
+      // 1. Verificăm dacă fișierele sunt în playlist sau pe ecran
+      const usagePromises = Array.from(selectedItems).map(id => api.get(`/content/${id}/usage`));
+      const usageResults = await Promise.all(usagePromises);
+      
+      const isUsed = usageResults.some(res => res.data.playlists.length > 0 || res.data.screens.length > 0);
+      
+      if (isUsed) {
+        toast.error('Unele fișiere sunt folosite în playlist-uri sau ecrane! Nu le poți muta până nu le scoți din playlist.', { autoClose: 5000 });
+        return;
+      }
+
+      // 2. Efectuăm mutarea dacă nu sunt în use
       const movePromises = Array.from(selectedItems).map(id =>
         api.patch(`/content/${id}/folder`, { folder_id: folderId })
       );

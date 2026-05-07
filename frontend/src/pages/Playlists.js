@@ -147,6 +147,7 @@ export const Playlists = () => {
   // Screen zones (active content per screen)
   const [screenZones, setScreenZones] = useState({});
   const [screenLocationFilter, setScreenLocationFilter] = useState('all');
+  const [contentFilter, setContentFilter] = useState('all');
 
   useEffect(() => {
     loadData();
@@ -964,14 +965,42 @@ export const Playlists = () => {
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           <div className="space-y-3">
-                            <Label className="text-base font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                              <Plus className="w-4 h-4 text-emerald-500" />
-                              Conținut disponibil
-                            </Label>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-base font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                <Plus className="w-4 h-4 text-emerald-500" />
+                                Conținut
+                              </Label>
+                              <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); setContentFilter('all'); }}
+                                  className={`px-3 py-1 text-[10px] uppercase font-bold tracking-wider rounded-md transition-all ${contentFilter === 'all' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                >
+                                  Toate
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); setContentFilter('video'); }}
+                                  className={`px-3 py-1 text-[10px] uppercase font-bold tracking-wider rounded-md transition-all ${contentFilter === 'video' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                >
+                                  Video
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); setContentFilter('image'); }}
+                                  className={`px-3 py-1 text-[10px] uppercase font-bold tracking-wider rounded-md transition-all ${contentFilter === 'image' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                                >
+                                  Poze
+                                </button>
+                              </div>
+                            </div>
                             <div className="max-h-[500px] overflow-y-auto space-y-2 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/50 shadow-inner">
                               {/* Named folder sections first */}
                               {folders.map(folder => {
-                                const folderItems = content.filter(item => String(item.folder_id) === String(folder.id));
+                                const folderItems = content.filter(item => 
+                                  String(item.folder_id) === String(folder.id) &&
+                                  (contentFilter === 'all' || item.type === contentFilter)
+                                );
                                 if (folderItems.length === 0) return null;
 
                                 const isIconUrl = folder.icon && (folder.icon.startsWith('http') || folder.icon.startsWith('/') || folder.icon.startsWith('data:'));
@@ -999,7 +1028,9 @@ export const Playlists = () => {
                                             <MediaHoverPreview item={item} className="w-10 h-10" />
                                             <div>
                                               <p className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{item.title}</p>
-                                              <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{item.type}</p>
+                                              <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">
+                                                {item.type} {item.type === 'video' && item.duration ? `• ${item.duration}s` : ''}
+                                              </p>
                                             </div>
                                           </div>
                                           <Button
@@ -1018,7 +1049,10 @@ export const Playlists = () => {
 
                               {/* Root/unorganized items - collapsed by default */}
                               {(() => {
-                                const rootItems = content.filter(item => !item.folder_id);
+                                const rootItems = content.filter(item => 
+                                  !item.folder_id &&
+                                  (contentFilter === 'all' || item.type === contentFilter)
+                                );
                                 if (rootItems.length === 0) return null;
                                 return (
                                   <details className="group/folder">
@@ -1037,7 +1071,9 @@ export const Playlists = () => {
                                             <MediaHoverPreview item={item} className="w-10 h-10" />
                                             <div>
                                               <p className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{item.title}</p>
-                                              <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">{item.type}</p>
+                                              <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">
+                                                {item.type} {item.type === 'video' && item.duration ? `• ${item.duration}s` : ''}
+                                              </p>
                                             </div>
                                           </div>
                                           <Button
