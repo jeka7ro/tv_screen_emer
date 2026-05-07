@@ -851,7 +851,7 @@ export const Content = () => {
                             getBrandLogo(brandName) && (
                               <div
                                 key={idx}
-                                className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-md"
+                                className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-md ring-2 ring-white dark:ring-slate-900"
                                 title={brandName}
                               >
                                 <img src={getBrandLogo(brandName)} className="w-full h-full object-cover rounded-full" alt="" />
@@ -859,7 +859,7 @@ export const Content = () => {
                             )
                           ))}
                           {Array.isArray(item.brand) && item.brand.length > 3 && (
-                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 shadow-md">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 shadow-md ring-2 ring-white dark:ring-slate-900">
                               +{item.brand.length - 3}
                             </div>
                           )}
@@ -965,10 +965,11 @@ export const Content = () => {
                     getBrandLogo(brandName) ? (
                       <div
                         key={idx}
-                        className="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-md ring-2 ring-white/50 z-10"
+                        className="w-6 h-6 rounded-full bg-white dark:bg-slate-900 overflow-hidden shrink-0 shadow-md ring-2 ring-white dark:ring-slate-900 z-10"
                         title={brandName}
                       >
                         <img src={getBrandLogo(brandName)} className="w-full h-full object-cover rounded-full" alt="" />
+                      </div>
                       </div>
                     ) : (
                       <span key={idx} className="text-[10px] font-black text-brand-600 uppercase tracking-widest mr-2 underline decoration-2 decoration-brand-200 underline-offset-4">
