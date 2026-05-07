@@ -146,8 +146,22 @@ async def init_db() -> None:
     if not pool:
         raise RuntimeError("Failed to initialize database pool.")
 
-    
-    # Initialize tables if needed
+    # Multi-tenant: Organizations
+    await pool.execute("""
+        CREATE TABLE IF NOT EXISTS organizations (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+    """)
+
+    # Ensure default organization exists for current Sushi Master client
+    await pool.execute("""
+        INSERT INTO organizations (id, name) 
+        VALUES ('default_sushimaster', 'Sushi Master') 
+        ON CONFLICT (name) DO NOTHING;
+    """)
+
     await pool.execute("""
         CREATE TABLE IF NOT EXISTS password_resets (
             email TEXT PRIMARY KEY,
@@ -163,6 +177,7 @@ async def init_db() -> None:
             name TEXT NOT NULL,
             address TEXT,
             logo_url TEXT,
+            organization_id TEXT REFERENCES organizations(id) DEFAULT 'default_sushimaster',
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
     """)
@@ -187,6 +202,13 @@ async def init_db() -> None:
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
     """)
+
+    # Add organization_id column to existing tables
+    for table in ["content", "users", "screens", "locations", "playlists", "folders"]:
+        try:
+            await pool.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS organization_id TEXT REFERENCES organizations(id) DEFAULT 'default_sushimaster'")
+        except Exception:
+            pass
 
     # Add effects columns to screens table
     for col, col_type, default in [
