@@ -1623,6 +1623,7 @@ async def create_content(
     files: List[UploadFile] = File(...),
     type: str = Form(...), # image, video
     category: str = Form("other"),
+    duration: int = Form(10),
     folder_id: Optional[str] = Form(None),
     brand: Optional[str] = Form(None), # This will be a comma-separated string from the form
     thumbnail: Optional[UploadFile] = File(None),
@@ -1650,7 +1651,7 @@ async def create_content(
         try:
             # Validate file type
             allowed_image_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
-            allowed_video_types = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm']
+            allowed_video_types = ['video/mp4', 'video/webm']
             
             if type == "image" and file.content_type not in allowed_image_types:
                 raise HTTPException(status_code=400, detail=f"Tip fișier imagine invalid: {file.content_type}")
@@ -1669,6 +1670,15 @@ async def create_content(
             # Read file bytes & get size
             file_bytes = await file.read()
             file_size = len(file_bytes)
+            
+            # Size limits (100MB for video, 20MB for image)
+            MAX_VIDEO_SIZE = 100 * 1024 * 1024
+            MAX_IMAGE_SIZE = 20 * 1024 * 1024
+            
+            if type == "video" and file_size > MAX_VIDEO_SIZE:
+                raise HTTPException(status_code=400, detail="Fișierul video depășește limita maximă de 100MB.")
+            if type == "image" and file_size > MAX_IMAGE_SIZE:
+                raise HTTPException(status_code=400, detail="Imaginea depășește limita maximă de 20MB.")
             
             # Upload to Supabase Storage
             supabase_path = f"{file_type_folder}/{unique_filename}"
@@ -1692,7 +1702,7 @@ async def create_content(
                 "type": type,
                 "file_url": file_url,
                 "file_size": file_size,
-                "duration": 10,
+                "duration": duration,
                 "category": category,
                 "folder_id": folder_id,
                 "brand": brand_list,

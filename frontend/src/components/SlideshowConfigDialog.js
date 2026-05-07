@@ -148,24 +148,27 @@ export const SlideshowConfigDialog = ({ open, onOpenChange, onConfirm, count, se
                             <Label htmlFor="duration" className="text-right">
                                 Durată
                             </Label>
-                            <div className="col-span-3 flex gap-2">
-                                <Input
-                                    id="duration"
-                                    type="number"
-                                    value={duration}
-                                    onChange={(e) => setDuration(Number(e.target.value))}
-                                    className="flex-1"
-                                    min={1}
-                                />
-                                <Select value={timeUnit} onValueChange={setTimeUnit}>
-                                    <SelectTrigger className="w-[120px]">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="seconds">Secunde</SelectItem>
-                                        <SelectItem value="minutes">Minute</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                            <div className="col-span-3 flex flex-col gap-1">
+                                <div className="flex gap-2">
+                                    <Input
+                                        id="duration"
+                                        type="number"
+                                        value={duration}
+                                        onChange={(e) => setDuration(Number(e.target.value))}
+                                        className="flex-1"
+                                        min={1}
+                                    />
+                                    <Select value={timeUnit} onValueChange={setTimeUnit}>
+                                        <SelectTrigger className="w-[120px]">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="seconds">Secunde</SelectItem>
+                                            <SelectItem value="minutes">Minute</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <p className="text-[10px] text-slate-500 italic mt-1">Notă: Pentru videoclipuri se va folosi automat durata lor reală, această setare aplicându-se doar imaginilor.</p>
                             </div>
                         </div>
                     )}

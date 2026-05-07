@@ -524,11 +524,14 @@ export const Content = () => {
       // 1. Create Playlist
       const playlistResponse = await api.post('/playlists', {
         name: `Slideshow Screen ${pendingSlideshowScreen} - ${new Date().toLocaleTimeString()}`,
-        items: Array.from(selectedItems).map(id => ({
-          content_id: id,
-          duration: config.duration,
-          transition: config.transition // Backend might need schema update for this if not in JSONB
-        })),
+        items: Array.from(selectedItems).map(id => {
+          const contentItem = content.find(c => c.id === id);
+          return {
+            content_id: id,
+            duration: (contentItem && contentItem.type === 'video') ? contentItem.duration : config.duration,
+            transition: config.transition // Backend might need schema update for this if not in JSONB
+          };
+        }),
         autoplay: true,
         loop: true
       });
@@ -1330,7 +1333,7 @@ export const Content = () => {
                               <Input
                                 id="file-upload-input"
                                 type="file"
-                                accept="image/*,video/*"
+                                accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
                                 multiple
                                 onChange={(e) => {
                                   const files = e.target.files;
@@ -1338,7 +1341,20 @@ export const Content = () => {
                                   if (files.length > 0) {
                                     const file = files[0];
                                     const type = file.type.startsWith('video') ? 'video' : 'image';
-                                    setFormData({ ...formData, type, title: formData.title || file.name });
+                                    setFormData(prev => ({ ...prev, type, title: prev.title || file.name }));
+                                    
+                                    if (type === 'video') {
+                                      const video = document.createElement('video');
+                                      video.preload = 'metadata';
+                                      video.onloadedmetadata = () => {
+                                        window.URL.revokeObjectURL(video.src);
+                                        const duration = Math.ceil(video.duration);
+                                        if (duration > 0 && isFinite(duration)) {
+                                          setFormData(prev => ({ ...prev, duration: duration.toString() }));
+                                        }
+                                      };
+                                      video.src = URL.createObjectURL(file);
+                                    }
                                   }
                                 }}
                                 className="hidden"
