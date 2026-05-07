@@ -107,35 +107,25 @@ export const DashboardLayout = ({ children }) => {
     <div className="flex min-h-screen">
       {/* Sidebar */}
       <aside className={`${isSidebarCollapsed ? 'w-20' : 'w-[17rem]'} h-screen fixed left-0 top-0 z-50 flex flex-col transition-all duration-300 ease-in-out border-r border-slate-200/80 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/50`} data-testid="sidebar">
-        <div className={`px-2 border-b border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 relative flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} h-[72px] shrink-0`}>
-          <Link to="/dashboard" className="flex items-center overflow-hidden w-full">
-            {isSidebarCollapsed ? (
-              <img
-                src="/favicon.png"
-                alt="Smart Displays Logo"
-                className="w-10 h-10 object-contain shrink-0 mx-auto transition-all duration-300"
-              />
-            ) : (
-              <div className="animate-in fade-in duration-300 flex items-center w-full">
-                <div className="flex items-center justify-center w-full px-1 translate-x-3">
-                  <img 
-                    src="/getapp_smart_displays_black.png" 
-                    alt="GET App Smart Displays" 
-                    className="h-[52px] w-auto object-contain transition-all hover:scale-105 block dark:hidden"
-                  />
-                  <img 
-                    src="/getapp_smart_displays_black.png" 
-                    alt="GET App Smart Displays" 
-                    className="h-[52px] w-auto object-contain transition-all hover:scale-105 hidden dark:block"
-                    style={{filter: 'brightness(0) invert(1)'}}
-                  />
-                </div>
+        <div className={`px-3 border-b border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 relative flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-3'} h-[72px] shrink-0`}>
+          <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden w-full min-w-0">
+            {/* Squircle Icon — always visible */}
+            <img
+              src="/app_logo_icon.png"
+              alt="GetApp Logo"
+              className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-md transition-all hover:scale-105"
+            />
+            {/* Text — hidden when collapsed */}
+            {!isSidebarCollapsed && (
+              <div className="animate-in fade-in slide-in-from-left-2 duration-300 min-w-0">
+                <div className="text-[22px] font-black text-slate-800 dark:text-white leading-none tracking-tight">GetApp</div>
+                <div className="inline-block bg-slate-900 dark:bg-slate-700 text-white text-[9px] font-bold px-2 py-0.5 rounded mt-0.5 tracking-widest uppercase">Smart Displays</div>
               </div>
             )}
           </Link>
           <button
              onClick={toggleSidebar}
-             className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-full flex items-center justify-center shadow-md text-slate-500 dark:text-slate-400 hover:bg-[#00ced1] hover:border-[#00ced1] hover:text-white transition-colors z-[60]"
+             className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-full flex items-center justify-center shadow-md text-slate-500 dark:text-slate-400 hover:bg-[#7c3aed] hover:border-[#7c3aed] hover:text-white transition-colors z-[60]"
           >
              {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
@@ -256,34 +246,34 @@ export const DashboardLayout = ({ children }) => {
             )}
 
             {/* Theme Controls */}
-            <div className="flex items-center gap-1 px-2 py-1 bg-slate-100/50 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm">
+            <div className="flex items-center gap-2 px-2 py-1.5 bg-slate-100/50 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm">
               <button
                 onClick={() => setTheme('red')}
-                className={`w-4 h-4 rounded-full bg-rose-500 transition-all ${theme === 'red' ? 'ring-2 ring-offset-1 ring-rose-500 scale-110' : 'hover:scale-110 opacity-60 hover:opacity-100'}`}
+                className={`w-5 h-5 rounded-full bg-rose-500 transition-all ${theme === 'red' ? 'ring-2 ring-offset-1 ring-rose-500 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
                 title="Tema Roșie"
               />
               <button
                 onClick={() => setTheme('blue')}
-                className={`w-4 h-4 rounded-full bg-blue-500 transition-all ${theme === 'blue' ? 'ring-2 ring-offset-1 ring-blue-500 scale-110' : 'hover:scale-110 opacity-60 hover:opacity-100'}`}
+                className={`w-5 h-5 rounded-full bg-blue-500 transition-all ${theme === 'blue' ? 'ring-2 ring-offset-1 ring-blue-500 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
                 title="Tema Albastră"
               />
               <button
                 onClick={() => setTheme('green')}
-                className={`w-4 h-4 rounded-full bg-emerald-500 transition-all ${theme === 'green' ? 'ring-2 ring-offset-1 ring-emerald-500 scale-110' : 'hover:scale-110 opacity-60 hover:opacity-100'}`}
+                className={`w-5 h-5 rounded-full bg-emerald-500 transition-all ${theme === 'green' ? 'ring-2 ring-offset-1 ring-emerald-500 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
                 title="Tema Verde"
               />
               <button
                 onClick={() => setTheme('purple')}
-                className={`w-4 h-4 rounded-full bg-violet-600 transition-all ${theme === 'purple' ? 'ring-2 ring-offset-1 ring-violet-600 scale-110' : 'hover:scale-110 opacity-60 hover:opacity-100'}`}
+                className={`w-5 h-5 rounded-full bg-violet-600 transition-all ${theme === 'purple' ? 'ring-2 ring-offset-1 ring-violet-600 shadow-sm scale-110' : 'hover:scale-110 opacity-70 hover:opacity-100'}`}
                 title="Tema Violet"
               />
-              <div className="w-px h-3 bg-slate-300 mx-0.5" />
+              <div className="w-px h-4 bg-slate-300 mx-0.5" />
               <button
                 onClick={() => setIsDarkMode(!isDarkMode)}
-                className="p-0.5 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                className="p-1 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-300 transition-colors"
                 title="Toggle Dark Mode"
               >
-                {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
             </div>
 
