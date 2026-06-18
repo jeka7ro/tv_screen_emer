@@ -55,12 +55,8 @@
             width: 100%;
             height: 100%;
             opacity: 0;
+            z-index: 1;
             transition: opacity 1.5s ease-in-out
-        }
-
-        .slide.prev {
-            opacity: 1;
-            z-index: 10;
         }
 
         .slide.active {
@@ -516,21 +512,10 @@
             slideTimer = setTimeout(function () {
                 var oldSlideIndex = currentSlide;
                 var oldSlide = document.getElementById('slide-' + oldSlideIndex);
-                if (oldSlide) oldSlide.className = 'slide prev'; // keep opacity 1, but lower z-index
-                
-                // Find any existing 'prev' slides and drop them to base 'slide' (opacity 0)
-                var allDivs = document.querySelectorAll('.slide');
-                for(var d=0; d<allDivs.length; d++) {
-                    if (allDivs[d].id !== 'slide-' + oldSlideIndex && allDivs[d].className.indexOf('active') === -1) {
-                        allDivs[d].className = 'slide';
-                    }
-                }
-
 
                 currentSlide = (currentSlide + 1) % allSlides.length;
 
-                // --- SLIDING WINDOW OPTIMIZATION FOR SMART TV RAM ---
-                // Preload the next video in the queue
+                // Preload the next-next video
                 var nextNextIndex = (currentSlide + 1) % allSlides.length;
                 var nextNextSlide = document.getElementById('slide-' + nextNextIndex);
                 if (nextNextSlide) {
@@ -540,47 +525,39 @@
                         nextNextVid.load();
                     }
                 }
-                
-                // Flush the old video from RAM after crossfade completes (2s)
-                setTimeout(function() {
-                    if (oldSlide) {
-                        var oldVid = oldSlide.querySelector('video');
-                        if (oldVid) {
-                            oldVid.pause();
-                            var keepPreloaded = (allSlides.length <= 3);
-                            if (!keepPreloaded) {
-                                oldVid.removeAttribute('src');
-                                oldVid.load();
-                            }
-                        }
-                    }
-                }, 2000);
-                // Drop prev opacity AFTER crossfade completes (not immediately)
-                setTimeout(function() {
-                    if (oldSlide) oldSlide.className = 'slide';
-                }, 1600);
-                // ----------------------------------------------------
 
                 var newSlide = document.getElementById('slide-' + currentSlide);
 
+                // Show new slide (fades IN from opacity:0 to 1, z:20)
                 if (newSlide) {
+                    newSlide.className = 'slide active';
                     var newVid = newSlide.querySelector('video');
                     if (newVid) {
-                        // Load src if not yet loaded (lazy loading)
                         if (!newVid.getAttribute('src') && newVid.dataset.src) {
                             newVid.src = newVid.dataset.src;
                             newVid.load();
                         }
-                        // Do NOT reset currentTime — causes black seek frame
-                        // Show slide immediately (poster covers loading gap)
-                        newSlide.className = 'slide active';
                         newVid.play().catch(function() {});
-                    } else {
-                        newSlide.className = 'slide active';
                     }
                 }
 
-                // CRITICAL: nextSlide MUST always be called, never wait on video promise
+                // Fade OUT old slide SIMULTANEOUSLY (z:1, opacity:1→0 over 1.5s)
+                // Both transitions happen at same time — no "going back" effect
+                if (oldSlide) {
+                    oldSlide.className = 'slide'; // z:1, triggers opacity 1→0 transition
+                    // Release video memory after fade completes
+                    setTimeout(function() {
+                        var oldVid = oldSlide.querySelector('video');
+                        if (oldVid) {
+                            oldVid.pause();
+                            if (allSlides.length > 3) {
+                                oldVid.removeAttribute('src');
+                                oldVid.load();
+                            }
+                        }
+                    }, 2000);
+                }
+
                 nextSlide();
             }, duration * 1000);
         }
