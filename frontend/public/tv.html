@@ -55,7 +55,7 @@
             width: 100%;
             height: 100%;
             opacity: 0;
-            transition: opacity 1.5s ease-in-out
+            transition: opacity 3s ease-in-out
         }
 
         .slide.prev {
@@ -361,6 +361,12 @@
                 if (items[s].type === 'video') {
                     var vid = document.createElement('video');
                     vid.dataset.src = items[s].url; if(s === 0 || s === 1 || s === items.length - 1) { vid.src = items[s].url; }
+                    if (items[s].thumbnail_url) {
+                        vid.poster = items[s].thumbnail_url;
+                        innerContainer.style.backgroundImage = 'url(' + items[s].thumbnail_url + ')';
+                        innerContainer.style.backgroundSize = 'cover';
+                        innerContainer.style.backgroundPosition = 'center';
+                    }
                     vid.muted = true;
                     vid.loop = true;
                     vid.setAttribute('playsinline', '');
@@ -526,7 +532,7 @@
                             }
                         }
                     }
-                }, 1500);
+                }, 3500);
                 // ----------------------------------------------------
 
                 var newSlide = document.getElementById('slide-' + currentSlide);
