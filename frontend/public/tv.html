@@ -258,6 +258,7 @@
                         items.push({
                             type: pItems[i].type,
                             url: proxyUrl(pItems[i].file_url),
+                            thumbnail_url: proxyUrl(pItems[i].thumbnail_url),
                             duration: pItems[i].duration || 10
                         });
                     }
@@ -267,6 +268,7 @@
                     items.push({
                         type: zone.content.type,
                         url: proxyUrl(zone.content.file_url),
+                        thumbnail_url: proxyUrl(zone.content.thumbnail_url),
                         duration: zone.content.duration || 10
                     });
                 }
@@ -380,6 +382,9 @@
                         vid.dataset.src = items[s].url; 
                         if(totalVideos <= 4 || s === 0 || s === 1 || s === items.length - 1) { 
                             vid.src = items[s].url; 
+                        }
+                        if (items[s].thumbnail_url) {
+                            vid.poster = items[s].thumbnail_url;
                         }
                         vid.muted = true;
                         vid.loop = true;
