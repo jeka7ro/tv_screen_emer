@@ -322,163 +322,172 @@
             var syncInfo = data.sync_info;
             var isMatrix = syncInfo && syncInfo.sync_type && syncInfo.sync_type.indexOf('matrix') === 0;
 
-            // Create slide elements
-            for (var s = 0; s < items.length; s++) {
-                var div = document.createElement('div');
-                div.className = 'slide' + (s === 0 ? ' active' : '');
-                div.id = 'slide-' + s;
-
-                // Inner container for Matrix Sync offset
-                var innerContainer = document.createElement('div');
-                if (isMatrix) {
-                    var cols = syncInfo.grid_cols || (syncInfo.total_screens === 3 ? 3 : syncInfo.total_screens === 4 ? 2 : 1);
-                    var rows = syncInfo.grid_rows || (syncInfo.total_screens === 4 ? 2 : 1);
-                    var myIndex = syncInfo.my_index || 0;
-                    var myRow = Math.floor(myIndex / cols);
-                    var myCol = myIndex % cols;
-
-                    innerContainer.style.width = (cols * 100) + '%';
-                    innerContainer.style.height = (rows * 100) + '%';
-                    innerContainer.style.transform = 'translate3d(-' + ((myCol * 100) / cols) + '%, -' + ((myRow * 100) / rows) + '%, 0)';
-                    innerContainer.style.position = 'absolute';
-                    innerContainer.style.left = '0';
-                    innerContainer.style.top = '0';
-                    innerContainer.style.transformOrigin = 'top left';
-                } else {
-                    innerContainer.style.width = '100%';
-                    innerContainer.style.height = '100%';
-                }
-
-                var fitMode = 'cover'; // default for Matrix
-                if (!isMatrix) {
-                    var zconfig = (data.zones_config && data.zones_config.length > 0) ? data.zones_config[0] : null;
-                    fitMode = (zconfig && zconfig.fit_mode) ? zconfig.fit_mode : 'cover';
-                    // map stretch to fill, fit to contain
-                    if (fitMode === 'stretch') fitMode = 'fill';
-                    if (fitMode === 'fit') fitMode = 'contain';
-                }
-
-                if (items[s].type === 'video') {
-                    var vid = document.createElement('video');
-                    vid.dataset.src = items[s].url; if(s === 0 || s === 1 || s === items.length - 1) { vid.src = items[s].url; }
-                    vid.muted = true;
-                    vid.loop = true;
-                    vid.setAttribute('playsinline', '');
-                    vid.preload = 'auto';
-                    if (s === 0) vid.autoplay = true;
-                    vid.style.width = '100%';
-                    vid.style.height = '100%';
-                    vid.style.objectFit = fitMode;
-                    innerContainer.appendChild(vid);
-                } else {
-                    var img = document.createElement('img');
-                    img.src = items[s].url;
-                    img.alt = '';
-                    img.style.width = '100%';
-                    img.style.height = '100%';
-                    img.style.objectFit = fitMode;
-                    innerContainer.appendChild(img);
-                }
-                
-                div.appendChild(innerContainer);
-                container.appendChild(div);
+            var newItemsString = JSON.stringify(items) + "_" + rotation;
+            if (window._lastItemsString === newItemsString) {
+                // Content hasn't changed, just ensure intervals are setup
+                setupIntervals();
+                return;
             }
 
-            // Pre-load all images before starting the slideshow
             var imagesToLoad = items.filter(function(it) { return it.type === 'image'; });
             var loaded = 0;
             var total = imagesToLoad.length;
 
-            function startSlideshow() {
-                if (items.length > 1) {
-                    nextSlide();
-                } else if (items.length === 1 && items[0].type === 'image') {
-                    // Force the single image to be active
-                    document.getElementById('slide-0').className = 'slide active';
+            function applyNewContent() {
+                window._lastItemsString = newItemsString;
+                if (slideTimer) clearTimeout(slideTimer);
+                container.innerHTML = '';
+                currentSlide = 0;
+                allSlides = items;
+
+                // Create slide elements
+                for (var s = 0; s < items.length; s++) {
+                    var div = document.createElement('div');
+                    div.className = 'slide' + (s === 0 ? ' active' : '');
+                    div.id = 'slide-' + s;
+
+                    var innerContainer = document.createElement('div');
+                    if (isMatrix) {
+                        var cols = syncInfo.grid_cols || (syncInfo.total_screens === 3 ? 3 : syncInfo.total_screens === 4 ? 2 : 1);
+                        var rows = syncInfo.grid_rows || (syncInfo.total_screens === 4 ? 2 : 1);
+                        var myIndex = syncInfo.my_index || 0;
+                        var myRow = Math.floor(myIndex / cols);
+                        var myCol = myIndex % cols;
+
+                        innerContainer.style.width = (cols * 100) + '%';
+                        innerContainer.style.height = (rows * 100) + '%';
+                        innerContainer.style.transform = 'translate3d(-' + ((myCol * 100) / cols) + '%, -' + ((myRow * 100) / rows) + '%, 0)';
+                        innerContainer.style.position = 'absolute';
+                        innerContainer.style.left = '0';
+                        innerContainer.style.top = '0';
+                        innerContainer.style.transformOrigin = 'top left';
+                    } else {
+                        innerContainer.style.width = '100%';
+                        innerContainer.style.height = '100%';
+                    }
+
+                    var fitMode = 'cover';
+                    if (!isMatrix) {
+                        var zconfig = (data.zones_config && data.zones_config.length > 0) ? data.zones_config[0] : null;
+                        fitMode = (zconfig && zconfig.fit_mode) ? zconfig.fit_mode : 'cover';
+                        if (fitMode === 'stretch') fitMode = 'fill';
+                        if (fitMode === 'fit') fitMode = 'contain';
+                    }
+
+                    if (items[s].type === 'video') {
+                        var vid = document.createElement('video');
+                        vid.dataset.src = items[s].url; if(s === 0 || s === 1 || s === items.length - 1) { vid.src = items[s].url; }
+                        vid.muted = true;
+                        vid.loop = true;
+                        vid.setAttribute('playsinline', '');
+                        vid.preload = 'auto';
+                        if (s === 0) vid.autoplay = true;
+                        vid.style.width = '100%';
+                        vid.style.height = '100%';
+                        vid.style.objectFit = fitMode;
+                        innerContainer.appendChild(vid);
+                    } else {
+                        var img = document.createElement('img');
+                        img.src = items[s].url;
+                        img.alt = '';
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = fitMode;
+                        innerContainer.appendChild(img);
+                    }
+                    
+                    div.appendChild(innerContainer);
+                    container.appendChild(div);
                 }
+
+                function startSlideshow() {
+                    if (items.length > 1) {
+                        nextSlide();
+                    } else if (items.length === 1 && items[0].type === 'image') {
+                        document.getElementById('slide-0').className = 'slide active';
+                    }
+                }
+
+                startSlideshow();
+                setupIntervals();
             }
 
             if (total === 0) {
-                startSlideshow();
+                applyNewContent();
             } else {
                 for (var pi = 0; pi < imagesToLoad.length; pi++) {
                     (function(src) {
                         var preImg = new Image();
                         preImg.onload = preImg.onerror = function() {
                             loaded++;
-                            if (loaded >= total) startSlideshow();
+                            if (loaded >= total) applyNewContent();
                         };
                         preImg.src = src;
                     })(imagesToLoad[pi].url);
                 }
             }
 
-            // Anti-standby: The "Safe" Combo (Meta Refresh + 100% Transparent Video + WakeLock)
+            function setupIntervals() {
+                if (window._intervalsSetup) return;
+                window._intervalsSetup = true;
 
-            // Layer 0: 9-Minute Hard Navigation Refresh
-            // This replicates the confirmed working Anti-Standby code from DisplayScreen.js
-            setInterval(function() {
-                var currentUrl = new URL(window.location.href);
-                // Timestamp bypasses the internal TV browser cache
-                currentUrl.searchParams.set('t', Date.now().toString());
-                window.location.replace(currentUrl.toString());
-            }, 9 * 60 * 1000); // 9 minutes (540,000 ms) beats the LG 10/15 min timer
+                // Layer 0: 9-Minute Hard Navigation Refresh
+                setInterval(function() {
+                    var currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('t', Date.now().toString());
+                    window.location.replace(currentUrl.toString());
+                }, 9 * 60 * 1000);
 
-            // Layer 1: WakeLock API
-            function reqWakeLock() {
-                try {
-                    if ('wakeLock' in navigator) {
-                        navigator.wakeLock.request('screen').catch(function () { });
-                    }
-                } catch (e) { }
-            }
-            reqWakeLock();
-            document.addEventListener('visibilitychange', function () {
-                if (document.visibilityState === 'visible') reqWakeLock();
-            });
-
-            // Layer 2: Ensure the full-screen transparent video is playing
-            try {
-                var hwVideo = document.getElementById('hw-video');
-                var playPromise = hwVideo.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(function (error) {
-                        // Autoplay was prevented. Will be triggered by any remote click.
-                    });
+                // Layer 1: WakeLock API
+                function reqWakeLock() {
+                    try {
+                        if ('wakeLock' in navigator) {
+                            navigator.wakeLock.request('screen').catch(function () { });
+                        }
+                    } catch (e) { }
                 }
+                reqWakeLock();
+                document.addEventListener('visibilitychange', function () {
+                    if (document.visibilityState === 'visible') reqWakeLock();
+                });
 
-                // Retry play every 10s to ensure it stays active
-                setInterval(function () {
-                    if (hwVideo && hwVideo.paused) {
-                        hwVideo.play().catch(function () { });
-                    }
-                }, 10000);
-
-                // Play on any user interaction with the remote
-                document.addEventListener('click', function () { hwVideo.play().catch(function () { }); });
-                document.addEventListener('keydown', function () { hwVideo.play().catch(function () { }); });
-                document.addEventListener('mousemove', function () { hwVideo.play().catch(function () { }); });
-            } catch (e) { }
-
-            // Layer 3: ASBL APL Pixel Spike (every 2.5 minutes)
-            // Flips a 2x2px corner pixel white→black to reset OLED APL hardware dimming timers
-            // Uses a tiny hidden element instead of full-screen invert to avoid visible flicker
-            var asblPixel = document.getElementById('asbl-pixel');
-            setInterval(function () {
+                // Layer 2: Ensure the full-screen transparent video is playing
                 try {
-                    if (asblPixel) {
-                        asblPixel.classList.add('spike');
-                        setTimeout(function () {
-                            asblPixel.classList.remove('spike');
-                        }, 200);
+                    var hwVideo = document.getElementById('hw-video');
+                    var playPromise = hwVideo.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(function (error) {});
                     }
-                } catch (e) { }
-            }, 150000);
 
-            // Re-fetch data every 5 minutes (in case content changed)
-            setInterval(function () {
-                loadScreen(slug);
-            }, 300000);
+                    setInterval(function () {
+                        if (hwVideo && hwVideo.paused) {
+                            hwVideo.play().catch(function () { });
+                        }
+                    }, 10000);
+
+                    document.addEventListener('click', function () { hwVideo.play().catch(function () { }); });
+                    document.addEventListener('keydown', function () { hwVideo.play().catch(function () { }); });
+                    document.addEventListener('mousemove', function () { hwVideo.play().catch(function () { }); });
+                } catch (e) { }
+
+                // Layer 3: ASBL APL Pixel Spike
+                var asblPixel = document.getElementById('asbl-pixel');
+                setInterval(function () {
+                    try {
+                        if (asblPixel) {
+                            asblPixel.classList.add('spike');
+                            setTimeout(function () {
+                                asblPixel.classList.remove('spike');
+                            }, 200);
+                        }
+                    } catch (e) { }
+                }, 150000);
+
+                // Re-fetch data every 5 minutes
+                setInterval(function () {
+                    loadScreen(slug);
+                }, 300000);
+            }
         }
 
         function nextSlide() {
