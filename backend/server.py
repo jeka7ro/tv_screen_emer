@@ -2814,21 +2814,10 @@ async def update_billing_config(data: BillingConfigUpdate, current_user: User = 
 app.include_router(api_router)
 
 # FINAL PERMISSIVE CORS SETUP - outermost middleware
-allowed_origins = [
-    "https://smr.onl",
-    "https://www.smr.onl",
-    "https://tv-screen-emer.onrender.com",
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:8000",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_origin_regex=r"https?://.*(smr\.onl|onrender\.com|localhost|127\.0\.0\.1)(:[0-9]+)?",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],

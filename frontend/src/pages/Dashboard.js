@@ -99,16 +99,16 @@ export const Dashboard = () => {
   return (
     <DashboardLayout>
       <div className="animate-in" data-testid="dashboard-page">
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 dark:text-slate-200 mb-2">
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-slate-200 mb-1">
             Bine ai venit, {user?.full_name}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-lg">
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
             Aici este prezentarea generală a sistemului Screen Media
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           {statCards.map((stat) => {
             const Icon = stat.icon;
             const bgColor = `bg-${stat.color}-100`;
@@ -117,22 +117,20 @@ export const Dashboard = () => {
             return (
               <div
                 key={stat.label}
-                className="glass-card p-6 cursor-pointer transition-all hover:shadow-lg hover:scale-105 active:scale-100"
+                className="glass-card py-3 px-4 cursor-pointer transition-all hover:shadow-md hover:scale-105 active:scale-100 flex items-center justify-between rounded-xl"
                 data-testid={stat.testId}
                 onClick={() => navigate(stat.link)}
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">
-                      {stat.label}
-                    </p>
-                    <p className="text-3xl font-bold text-slate-800 dark:text-slate-200">
-                      {stat.value}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-2xl ${bgColor}`}>
-                    <Icon className={`w-6 h-6 ${textColor}`} />
-                  </div>
+                <div>
+                  <p className="text-slate-500 dark:text-slate-400 text-[11px] font-semibold uppercase tracking-wider mb-0.5">
+                    {stat.label}
+                  </p>
+                  <p className="text-xl font-bold text-slate-800 dark:text-slate-200 leading-none">
+                    {stat.value}
+                  </p>
+                </div>
+                <div className={`p-1.5 rounded-lg ${bgColor}`}>
+                  <Icon className={`w-4 h-4 ${textColor}`} />
                 </div>
               </div>
             );

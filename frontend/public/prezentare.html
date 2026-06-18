@@ -9,14 +9,59 @@
   *{margin:0;padding:0;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body{font-family:'Inter',sans-serif;background:#f0f2f8}
   
-  /* ── PRINT ── */
-  @media print{
-    body{background:white}
-    .no-print{display:none!important}
-    .page{page-break-after:always;box-shadow:none!important;border-radius:0!important;margin:0!important}
-    .page:last-child{page-break-after:avoid}
+  /* ── PRINT ENGINE (FIXED A4) ── */
+  @media print {
+    @page { margin: 0; size: auto; }
+    body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print { display: none !important; }
+    
+    .page {
+      width: 210mm !important;
+      height: 297mm !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      page-break-after: always !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      align-items: stretch !important;
+      position: relative !important;
+      overflow: hidden !important;
+      background: white !important;
+    }
+
+    .split { flex: 1 !important; display: flex !important; flex-direction: column !important; }
+    .split-img { height: 120mm !important; width: 100% !important; flex: none !important; }
+    .split-img img { height: 100% !important; width: 100% !important; object-fit: cover !important; }
+    .split-text { flex: 1 !important; padding: 20mm !important; display: flex !important; flex-direction: column !important; justify-content: center !important; text-align: center !important; }
+    
+    .split-text h2 { font-size: 32pt !important; margin-bottom: 20pt !important; line-height: 1.2 !important; }
+    .split-text p { font-size: 15pt !important; margin-bottom: 15pt !important; }
+    .feature-list { display: inline-block !important; text-align: left !important; margin: 0 auto !important; }
+    .feature-list li { font-size: 13pt !important; padding: 6pt 0 !important; }
+    
+    .split-text-right { order: 2 !important; }
+    .split-img-right { order: 1 !important; }
+    
+    .cover { padding: 30mm !important; text-align: center !important; justify-content: center !important; }
+    .cover h1 { font-size: 48pt !important; margin-bottom: 20pt !important; }
+    .cover p { font-size: 18pt !important; margin-bottom: 40pt !important; }
+    .cover-img-row img { height: 110mm !important; }
+    
+    .dark-feat, .light-page, .how-page { padding: 20mm !important; justify-content: center !important; text-align: center !important; }
+    .cards-grid { grid-template-columns: 1fr 1fr !important; gap: 20pt !important; }
+    .feat-card { padding: 20pt !important; }
+    .feat-card h3 { font-size: 16pt !important; }
+    
+    .img-showcase { grid-template-columns: 1fr 1fr !important; gap: 15pt !important; }
+    .img-showcase img { height: 60mm !important; }
+    .img-small { display: none !important; }
+    
+    .contact-page { padding: 30mm !important; }
+    .contact-cards { flex-direction: column !important; gap: 20pt !important; }
   }
-  @page{size:A4 landscape;margin:0}
 
   /* ── CONTROLS ── */
   .controls{position:fixed;top:20px;right:20px;z-index:999;display:flex;gap:10px;flex-direction:column}
@@ -117,6 +162,27 @@
   .contact-card .value{font-size:18px;font-weight:700}
   .tagline{font-size:14px;color:rgba(255,255,255,.4);margin-top:20px}
   .page-num{position:absolute;bottom:18px;right:24px;font-size:11px;opacity:.4;font-weight:600}
+  /* ── RESPONSIVE MOBILE ── */
+  @media screen and (max-width: 800px) {
+    body { padding: 10px; }
+    .page { width: 100%; min-height: auto; margin: 0 0 20px 0; border-radius: 16px; }
+    .split { flex-direction: column; }
+    .split-text { padding: 30px; }
+    .split-img { height: 250px; flex: none; }
+    .split-text-right { order: 2 !important; }
+    .split-img-right { order: 1 !important; }
+    .cards-grid { grid-template-columns: 1fr; gap: 15px; }
+    .img-showcase { grid-template-columns: 1fr; }
+    .img-small { grid-template-columns: 1fr; }
+    .steps { flex-direction: column; gap: 30px; }
+    .steps::before { display: none; }
+    .contact-cards { flex-direction: column; gap: 15px; }
+    .cover h1 { font-size: 32px; }
+    .cover p { font-size: 16px; }
+    .cover { padding: 30px 20px; }
+    .cover-img-row img { height: 80px; }
+    .dark-feat, .light-page, .how-page, .contact-page { padding: 30px 20px; }
+  }
 </style>
 </head>
 <body>

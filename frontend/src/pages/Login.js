@@ -133,27 +133,13 @@ export const Login = () => {
       <div className="fixed inset-0 z-0 bg-black/50"></div>
 
       <div className="w-full max-w-md relative z-10 transition-transform hover:scale-[1.01] duration-500">
-        <div className="bg-slate-950/60 backdrop-blur-3xl border border-slate-600/50 rounded-[2.5rem] p-8" style={{ boxShadow: '0 30px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.15), inset 0 2px 20px rgba(255,255,255,0.05)' }}>
+        <div className="bg-white/95 backdrop-blur-3xl border border-white/60 rounded-[2.5rem] p-8 shadow-2xl" style={{ boxShadow: '0 30px 60px rgba(0,0,0,0.12)' }}>
           <div className="flex justify-center items-center pt-2 mb-8">
-            <div className="flex items-center gap-4">
-              {/* Squircle Icon */}
-              <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/30 ring-2 ring-white/20">
-                <img
-                  src="/app_logo_icon.png"
-                  alt="GetApp Logo"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.parentNode.innerHTML = '<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%"><rect width="100" height="100" rx="22" fill="#7c3aed"/><rect x="18" y="24" width="64" height="42" rx="4" stroke="white" stroke-width="5" fill="transparent"/><path d="M42 66 L34 82 L66 82 L58 66" fill="transparent" stroke="white" stroke-width="5" stroke-linejoin="round"/><line x1="30" y1="82" x2="70" y2="82" stroke="white" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="45" r="14" fill="white"/><path d="M46 38 L57 45 L46 52 Z" fill="#7c3aed"/></svg>';
-                  }}
-                />
-              </div>
-              {/* Text */}
-              <div className="text-left">
-                <div className="text-4xl font-black text-white leading-none tracking-tight drop-shadow-lg">GetApp</div>
-                <div className="inline-block bg-white/15 backdrop-blur-sm text-white/90 text-[10px] font-bold px-3 py-1 rounded-full mt-1.5 tracking-widest uppercase border border-white/20">Smart Displays</div>
-              </div>
-            </div>
+            <img
+              src="/logo_smart_display.png"
+              alt="Logo"
+              className="h-16 object-contain"
+            />
           </div>
 
           {/* Show badge for first user registration */}
@@ -179,7 +165,7 @@ export const Login = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   <User className="w-4 h-4 inline mr-1" />
                   Nume complet
                 </label>
@@ -187,7 +173,7 @@ export const Login = () => {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full glass-input px-4 py-3 border"
+                  className="w-full bg-slate-50 text-slate-900 rounded-2xl px-4 py-3 border border-slate-200 focus:border-[#1e293b] focus:ring-1 focus:ring-[#1e293b] outline-none transition-all"
                   placeholder="Ionescu Adrian"
                   required={!isLogin}
                   data-testid="fullname-input"
@@ -196,7 +182,7 @@ export const Login = () => {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 <Mail className="w-4 h-4 inline mr-1" />
                 Email
               </label>
@@ -204,7 +190,7 @@ export const Login = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-900 border-slate-800 text-white rounded-2xl px-4 py-3 border focus:border-[#20b2aa] focus:ring-1 focus:ring-[#20b2aa] outline-none transition-all"
+                className="w-full bg-slate-50 text-slate-900 rounded-2xl px-4 py-3 border border-slate-200 focus:border-[#1e293b] focus:ring-1 focus:ring-[#1e293b] outline-none transition-all"
                 placeholder="admin@sushimaster.ro"
                 required
                 data-testid="email-input"
@@ -212,7 +198,7 @@ export const Login = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 <Lock className="w-4 h-4 inline mr-1" />
                 Parolă
               </label>
@@ -221,7 +207,7 @@ export const Login = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-slate-900 border-slate-800 text-white rounded-2xl px-4 py-3 pr-12 border focus:border-[#20b2aa] focus:ring-1 focus:ring-[#20b2aa] outline-none transition-all"
+                  className="w-full bg-slate-50 text-slate-900 rounded-2xl px-4 py-3 pr-12 border border-slate-200 focus:border-[#1e293b] focus:ring-1 focus:ring-[#1e293b] outline-none transition-all"
                   placeholder="••••••••"
                   required
                   data-testid="password-input"
@@ -229,7 +215,7 @@ export const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:text-slate-400 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
                   tabIndex={-1}
                   data-testid="toggle-password-visibility"
                 >
@@ -238,7 +224,6 @@ export const Login = () => {
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password */}
             {isLogin && (
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 cursor-pointer group">
@@ -249,7 +234,7 @@ export const Login = () => {
                       onChange={(e) => setRememberMe(e.target.checked)}
                       className="sr-only"
                     />
-                    <div className={`w-5 h-5 rounded border-2 transition-all ${rememberMe ? 'bg-[#00ced1] border-[#00ced1]' : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 group-hover:border-[#00ced1]'}`}>
+                    <div className={`w-5 h-5 rounded border-2 transition-all ${rememberMe ? 'bg-[#1e293b] border-[#1e293b]' : 'bg-white border-slate-300 group-hover:border-[#1e293b]'}`}>
                       {rememberMe && (
                         <svg className="w-full h-full text-white p-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -257,14 +242,14 @@ export const Login = () => {
                       )}
                     </div>
                   </div>
-                  <span className="text-sm font-medium text-slate-400 group-hover:text-white transition-colors">
+                  <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">
                     Memorează parola
                   </span>
                 </label>
                 
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-[#00ced1] hover:text-[#25c8cc] font-semibold"
+                  className="text-sm text-slate-600 hover:text-slate-900 font-semibold"
                 >
                   Ai uitat parola?
                 </Link>
@@ -274,7 +259,7 @@ export const Login = () => {
             {/* Invitation code field - only shown when registering and not first user */}
             {!isLogin && !isOpenRegistration && !inviteCode && (
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   <KeyRound className="w-4 h-4 inline mr-1" />
                   Cod de invitație
                 </label>
@@ -282,12 +267,12 @@ export const Login = () => {
                   type="text"
                   value={invitationCode}
                   onChange={(e) => setInvitationCode(e.target.value)}
-                  className="w-full glass-input px-4 py-3 border"
+                  className="w-full bg-slate-50 text-slate-900 rounded-2xl px-4 py-3 border border-slate-200 focus:border-[#1e293b] focus:ring-1 focus:ring-[#1e293b] outline-none transition-all"
                   placeholder="Introduceți codul primit"
                   required
                   data-testid="invitation-code-input"
                 />
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Solicitați un cod de invitație de la administratorul sistemului
                 </p>
               </div>
@@ -303,7 +288,7 @@ export const Login = () => {
             <button
               type="submit"
               disabled={loading || (!isLogin && !canRegister)}
-              className="w-full bg-[#20b2aa] hover:bg-[#25c8cc] text-white font-bold py-4 rounded-full shadow-lg shadow-[#20b2aa]/20 transition-all flex items-center justify-center gap-2 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#1e293b] hover:bg-[#0f172a] text-white font-bold py-4 rounded-full shadow-lg shadow-slate-800/20 transition-all flex items-center justify-center gap-2 mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="submit-button"
             >
               {loading ? (
@@ -333,7 +318,7 @@ export const Login = () => {
             {isLogin ? (
               <button
                 onClick={() => setIsLogin(false)}
-                className="text-slate-400 hover:text-white font-medium transition-colors"
+                className="text-slate-500 hover:text-slate-800 font-medium transition-colors"
                 data-testid="toggle-auth-mode"
               >
                 {isOpenRegistration ? 'Creează primul cont (Super Admin)' : 'Ai un cod de invitație?'}
@@ -341,7 +326,7 @@ export const Login = () => {
             ) : (
               <button
                 onClick={() => setIsLogin(true)}
-                className="text-slate-400 hover:text-white font-medium transition-colors"
+                className="text-slate-500 hover:text-slate-800 font-medium transition-colors"
                 data-testid="toggle-auth-mode"
               >
                 Ai deja cont? Autentifică-te
