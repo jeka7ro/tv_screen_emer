@@ -549,12 +549,28 @@
                 var newSlide = document.getElementById('slide-' + currentSlide);
 
                 if (newSlide) {
-                    newSlide.className = 'slide active';
                     var newVid = newSlide.querySelector('video');
                     if (newVid) {
+                        // Load src if not yet loaded
+                        if (!newVid.getAttribute('src') && newVid.dataset.src) {
+                            newVid.src = newVid.dataset.src;
+                            newVid.load();
+                        }
                         newVid.currentTime = 0;
-                        var p = newVid.play();
-                        if (p !== undefined) p.catch(function(){});
+                        var playPromise = newVid.play();
+                        if (playPromise !== undefined) {
+                            playPromise.then(function() {
+                                // Video is playing — now show slide
+                                newSlide.className = 'slide active';
+                            }).catch(function() {
+                                // Autoplay blocked or not loaded yet — show anyway
+                                newSlide.className = 'slide active';
+                            });
+                        } else {
+                            newSlide.className = 'slide active';
+                        }
+                    } else {
+                        newSlide.className = 'slide active';
                     }
                 }
 
