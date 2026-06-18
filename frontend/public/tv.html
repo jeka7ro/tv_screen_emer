@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
     <meta http-equiv="cache-control" content="no-cache,no-store,must-revalidate">
     <meta http-equiv="pragma" content="no-cache">
-    <meta http-equiv="refresh" content="540">
+    <!-- meta refresh removed: caused 3-5s black screen every 9 min -->
 
     <title>Screen Media</title>
     <style>
@@ -439,12 +439,11 @@
                 if (window._intervalsSetup) return;
                 window._intervalsSetup = true;
 
-                // Layer 0: 9-Minute Hard Navigation Refresh
+                // Layer 0: Soft Content Refresh every 5 min (no black screen)
+                // Uses _lastItemsString cache - only rebuilds DOM if content changed
                 setInterval(function() {
-                    var currentUrl = new URL(window.location.href);
-                    currentUrl.searchParams.set('t', Date.now().toString());
-                    window.location.replace(currentUrl.toString());
-                }, 9 * 60 * 1000);
+                    loadScreen(slug);
+                }, 5 * 60 * 1000);
 
                 // Layer 1: WakeLock API
                 function reqWakeLock() {
@@ -551,31 +550,21 @@
                 if (newSlide) {
                     var newVid = newSlide.querySelector('video');
                     if (newVid) {
-                        // Load src if not yet loaded
+                        // Load src if not yet loaded (lazy loading)
                         if (!newVid.getAttribute('src') && newVid.dataset.src) {
                             newVid.src = newVid.dataset.src;
                             newVid.load();
                         }
                         newVid.currentTime = 0;
-                        var playPromise = newVid.play();
-                        if (playPromise !== undefined) {
-                            playPromise.then(function() {
-                                // Video is playing — now show slide
-                                newSlide.className = 'slide active';
-                            }).catch(function() {
-                                // Autoplay blocked or not loaded yet — show anyway
-                                newSlide.className = 'slide active';
-                            });
-                        } else {
-                            newSlide.className = 'slide active';
-                        }
+                        // Show slide immediately (poster covers loading gap)
+                        newSlide.className = 'slide active';
+                        newVid.play().catch(function() {});
                     } else {
                         newSlide.className = 'slide active';
                     }
                 }
 
-
-
+                // CRITICAL: nextSlide MUST always be called, never wait on video promise
                 nextSlide();
             }, duration * 1000);
         }
