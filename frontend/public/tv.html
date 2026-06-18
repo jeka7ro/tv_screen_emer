@@ -343,6 +343,13 @@
             function applyNewContent() {
                 window._lastItemsString = newItemsString;
                 if (slideTimer) clearTimeout(slideTimer);
+                // Cleanup canvas draw intervals from previous content
+                if (window._canvasDrawIntervals) {
+                    for (var ci = 0; ci < window._canvasDrawIntervals.length; ci++) {
+                        clearInterval(window._canvasDrawIntervals[ci]);
+                    }
+                }
+                window._canvasDrawIntervals = [];
                 container.innerHTML = '';
                 currentSlide = 0;
                 allSlides = items;
@@ -397,17 +404,50 @@
                         vid.setAttribute('playsinline', '');
                         vid.preload = 'auto';
                         if (s === 0) vid.autoplay = true;
-                        // Body rotation handles orientation — simple fill
-                        vid.style.width = '100%';
-                        vid.style.height = '100%';
-                        vid.style.objectFit = fitMode;
-                        // Thumbnail as CSS background — shows instantly while video buffers
+
+                        // Thumbnail as CSS background — visible instantly while video buffers
                         if (items[s].thumbnail_url) {
                             innerContainer.style.backgroundImage = 'url(' + items[s].thumbnail_url + ')';
                             innerContainer.style.backgroundSize = 'cover';
                             innerContainer.style.backgroundPosition = 'center';
                         }
-                        innerContainer.appendChild(vid);
+
+                        if (rotation !== 0) {
+                            // CANVAS RENDERER: LG WebOS renders video in a hardware overlay
+                            // that bypasses ALL CSS transforms on parent/wrapper elements.
+                            // Canvas draws in the normal CSS compositing layer and follows
+                            // transforms correctly. We hide the video and draw its frames.
+                            vid.style.position = 'absolute';
+                            vid.style.width = '1px';
+                            vid.style.height = '1px';
+                            vid.style.opacity = '0';
+                            vid.style.pointerEvents = 'none';
+                            innerContainer.appendChild(vid);
+
+                            var canvas = document.createElement('canvas');
+                            canvas.width = 1920;
+                            canvas.height = 1080;
+                            canvas.style.width = '100%';
+                            canvas.style.height = '100%';
+                            canvas.style.display = 'block';
+                            innerContainer.appendChild(canvas);
+
+                            // Draw video frames onto canvas at 25fps
+                            (function(v, cvs) {
+                                var ctx = cvs.getContext('2d');
+                                var drawId = setInterval(function() {
+                                    if (v.paused || v.readyState < 2) return;
+                                    ctx.drawImage(v, 0, 0, cvs.width, cvs.height);
+                                }, 40);
+                                window._canvasDrawIntervals.push(drawId);
+                            })(vid, canvas);
+                        } else {
+                            // No rotation — use video element directly (HW accelerated)
+                            vid.style.width = '100%';
+                            vid.style.height = '100%';
+                            vid.style.objectFit = fitMode;
+                            innerContainer.appendChild(vid);
+                        }
                     } else {
                         var img = document.createElement('img');
                         img.src = items[s].url;
