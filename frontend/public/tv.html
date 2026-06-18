@@ -374,9 +374,13 @@
                         if (fitMode === 'fit') fitMode = 'contain';
                     }
 
+                    var totalVideos = items.filter(function(it) { return it.type === 'video'; }).length;
                     if (items[s].type === 'video') {
                         var vid = document.createElement('video');
-                        vid.dataset.src = items[s].url; if(s === 0 || s === 1 || s === items.length - 1) { vid.src = items[s].url; }
+                        vid.dataset.src = items[s].url; 
+                        if(totalVideos <= 4 || s === 0 || s === 1 || s === items.length - 1) { 
+                            vid.src = items[s].url; 
+                        }
                         vid.muted = true;
                         vid.loop = true;
                         vid.setAttribute('playsinline', '');
@@ -528,7 +532,8 @@
                         if (oldVid) {
                             oldVid.pause();
                             // If it's not the current or next slide, flush its memory
-                            var keepPreloaded = (allSlides.length <= 3); // don't flush if tiny playlist
+                            var totalVids = allSlides.filter(function(s) { return s.type === 'video'; }).length;
+                            var keepPreloaded = (totalVids <= 4); // Keep up to 4 videos in RAM
                             if (!keepPreloaded) {
                                 oldVid.removeAttribute('src');
                                 oldVid.load(); // Forces TV decoder to drop memory
