@@ -55,17 +55,13 @@
             width: 100%;
             height: 100%;
             opacity: 0;
-            transition: opacity 5s ease-in-out;
-        }
-
-        .slide.prev {
-            opacity: 1;
-            z-index: 10;
+            transition: opacity 4s ease-in-out;
+            z-index: 1;
         }
 
         .slide.active {
             opacity: 1;
-            z-index: 20;
+            z-index: 2;
         }
 
         .slide img {
@@ -489,25 +485,14 @@
 
         function nextSlide() {
             var rawDuration = allSlides[currentSlide] && allSlides[currentSlide].duration;
-            var duration = Math.max(5, Number(rawDuration) || 10); // Minimum 5s — prevents instant black flash
+            var duration = Math.max(5, Number(rawDuration) || 10);
             slideTimer = setTimeout(function () {
                 var oldSlideIndex = currentSlide;
                 var oldSlide = document.getElementById('slide-' + oldSlideIndex);
-                if (oldSlide) oldSlide.className = 'slide prev'; // keep opacity 1, but lower z-index
-                
-                // Find any existing 'prev' slides and drop them to base 'slide' (opacity 0)
-                var allDivs = document.querySelectorAll('.slide');
-                for(var d=0; d<allDivs.length; d++) {
-                    if (allDivs[d].id !== 'slide-' + oldSlideIndex && allDivs[d].className.indexOf('active') === -1) {
-                        allDivs[d].className = 'slide';
-                    }
-                }
-
 
                 currentSlide = (currentSlide + 1) % allSlides.length;
 
-                // --- SLIDING WINDOW OPTIMIZATION FOR SMART TV RAM ---
-                // Preload the next video in the queue
+                // Preload next-next video
                 var nextNextIndex = (currentSlide + 1) % allSlides.length;
                 var nextNextSlide = document.getElementById('slide-' + nextNextIndex);
                 if (nextNextSlide) {
@@ -517,40 +502,45 @@
                         nextNextVid.load();
                     }
                 }
-                
-                // Flush the old video from RAM after it fades out (1.5s)
+
+                var newSlide = document.getElementById('slide-' + currentSlide);
+
+                // CROSSFADE: old fades OUT, new fades IN — simultaneously
+                // Fade OUT old slide
+                if (oldSlide) {
+                    oldSlide.className = 'slide';
+                }
+
+                // Fade IN new slide (use setTimeout to ensure reflow on wrap-around)
+                setTimeout(function() {
+                    if (newSlide) {
+                        newSlide.className = 'slide active';
+                        var newVid = newSlide.querySelector('video');
+                        if (newVid) {
+                            if (!newVid.getAttribute('src') && newVid.dataset.src) {
+                                newVid.src = newVid.dataset.src;
+                                newVid.load();
+                            }
+                            newVid.currentTime = 0;
+                            var p = newVid.play();
+                            if (p !== undefined) p.catch(function(){});
+                        }
+                    }
+                }, 50);
+
+                // Flush old video from RAM after fade completes
                 setTimeout(function() {
                     if (oldSlide) {
                         var oldVid = oldSlide.querySelector('video');
                         if (oldVid) {
                             oldVid.pause();
-                            // If it's not the current or next slide, flush its memory
-                            var keepPreloaded = (allSlides.length <= 3); // don't flush if tiny playlist
-                            if (!keepPreloaded) {
+                            if (allSlides.length > 3) {
                                 oldVid.removeAttribute('src');
-                                oldVid.load(); // Forces TV decoder to drop memory
+                                oldVid.load();
                             }
                         }
                     }
-                }, 5500);
-                // ----------------------------------------------------
-
-                var newSlide = document.getElementById('slide-' + currentSlide);
-
-                if (newSlide) {
-                    // Force reflow so browser sees current opacity:0 before transitioning to 1
-                    newSlide.className = 'slide';
-                    void newSlide.offsetWidth;
-                    newSlide.className = 'slide active';
-                    var newVid = newSlide.querySelector('video');
-                    if (newVid) {
-                        newVid.currentTime = 0;
-                        var p = newVid.play();
-                        if (p !== undefined) p.catch(function(){});
-                    }
-                }
-
-
+                }, 4500);
 
                 nextSlide();
             }, duration * 1000);
