@@ -415,13 +415,15 @@
                         if (rotation !== 0) {
                             // CANVAS RENDERER: LG WebOS renders video in a hardware overlay
                             // that bypasses ALL CSS transforms on parent/wrapper elements.
-                            // Canvas draws in the normal CSS compositing layer and follows
-                            // transforms correctly. We hide the video and draw its frames.
+                            // Keep video full-size (LG HW decoder needs visible element to play)
+                            // but put canvas ON TOP to display the properly-transformed frames.
                             vid.style.position = 'absolute';
-                            vid.style.width = '1px';
-                            vid.style.height = '1px';
-                            vid.style.opacity = '0';
-                            vid.style.pointerEvents = 'none';
+                            vid.style.width = '100%';
+                            vid.style.height = '100%';
+                            vid.style.top = '0';
+                            vid.style.left = '0';
+                            vid.style.zIndex = '1';
+                            vid.style.objectFit = 'cover';
                             innerContainer.appendChild(vid);
 
                             var canvas = document.createElement('canvas');
@@ -436,6 +438,10 @@
                             canvas.style.width = '100%';
                             canvas.style.height = '100%';
                             canvas.style.display = 'block';
+                            canvas.style.position = 'absolute';
+                            canvas.style.top = '0';
+                            canvas.style.left = '0';
+                            canvas.style.zIndex = '2';
                             innerContainer.appendChild(canvas);
 
                             // Draw video frames onto canvas at 25fps with cover-fit
