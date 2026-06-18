@@ -413,15 +413,16 @@
                         }
 
                         if (rotation !== 0) {
-                            // CANVAS RENDERER: LG WebOS hardware video overlay always renders
-                            // on top of all HTML/CSS content. Solution: position video OFF-SCREEN
-                            // so the HW overlay renders outside the viewport. Video stays full-size
-                            // so the decoder actually plays it. Canvas draws its frames on-screen.
-                            vid.style.position = 'fixed';
-                            vid.style.width = '1920px';
-                            vid.style.height = '1080px';
-                            vid.style.left = '-9999px';
-                            vid.style.top = '-9999px';
+                            // CANVAS RENDERER: LG WebOS HW video overlay always renders on top.
+                            // Off-screen/1px = decoder won't play. Full-size visible = overlay blocks canvas.
+                            // Solution: full-size + opacity:0 — decoder sees large element and plays,
+                            // HW overlay renders at 0% opacity (invisible). Canvas draws frames.
+                            vid.style.position = 'absolute';
+                            vid.style.width = '100%';
+                            vid.style.height = '100%';
+                            vid.style.top = '0';
+                            vid.style.left = '0';
+                            vid.style.opacity = '0';
                             vid.style.pointerEvents = 'none';
                             innerContainer.appendChild(vid);
 
