@@ -208,10 +208,29 @@
                 if (isNaN(rotation)) rotation = 0;
             }
 
-            // Apply rotation DIRECTLY to content elements (not wrapper)
-            // WebOS Smart TV hardware video decoder bypasses parent CSS transforms
-            // so wrapper rotation works for images but NOT for videos
-            // Direct element-level transforms work on ALL platforms
+            // Rotate the BODY element — works on LG WebOS where CSS transforms
+            // on individual video elements are ignored by the HW video decoder.
+            // Rotating body = rotating the entire browser surface, WebOS can't bypass this.
+            var iw = window.innerWidth || 1920;
+            var ih = window.innerHeight || 1080;
+
+            if (rotation === 90 || rotation === 270) {
+                document.body.style.position = 'fixed';
+                document.body.style.width = ih + 'px';       // 1080
+                document.body.style.height = iw + 'px';      // 1920
+                document.body.style.top = '50%';
+                document.body.style.left = '50%';
+                document.body.style.marginTop  = -(iw / 2) + 'px';  // -960
+                document.body.style.marginLeft = -(ih / 2) + 'px';  // -540
+                document.body.style.transform = 'rotate(' + rotation + 'deg)';
+                document.body.style.overflow = 'hidden';
+            } else if (rotation === 180) {
+                document.body.style.transform = 'rotate(180deg)';
+            } else {
+                document.body.style.transform = 'none';
+            }
+
+            // Wrapper fills body (no rotation on wrapper)
             wrapper.style.transform = 'none';
             wrapper.style.width = '100%';
             wrapper.style.height = '100%';
@@ -342,7 +361,7 @@
                         innerContainer.style.width = '100%';
                         innerContainer.style.height = '100%';
                         innerContainer.style.position = 'relative';
-                        innerContainer.style.overflow = 'hidden';
+                        // No overflow:hidden — body rotation clips at screen edge
                     }
 
                     var fitMode = 'cover';
@@ -355,9 +374,9 @@
 
                     if (items[s].type === 'video') {
                         var vid = document.createElement('video');
-                        vid.dataset.src = items[s].url; 
-                        if(s === 0 || s === 1 || s === items.length - 1) { 
-                            vid.src = items[s].url; 
+                        vid.dataset.src = items[s].url;
+                        if (s === 0 || s === 1 || s === items.length - 1) {
+                            vid.src = items[s].url;
                         }
                         if (items[s].thumbnail_url) {
                             vid.poster = items[s].thumbnail_url;
@@ -367,49 +386,25 @@
                         vid.setAttribute('playsinline', '');
                         vid.preload = 'auto';
                         if (s === 0) vid.autoplay = true;
-                        // Apply rotation DIRECTLY to video (WebOS bypasses parent transform)
-                        if (rotation === 90 || rotation === 270) {
-                            vid.style.position = 'absolute';
-                            vid.style.width = '100vh';
-                            vid.style.height = '100vw';
-                            vid.style.top = '50%';
-                            vid.style.left = '50%';
-                            vid.style.transform = 'translate(-50%, -50%) rotate(' + rotation + 'deg)';
-                            vid.style.objectFit = fitMode;
-                        } else if (rotation === 180) {
-                            vid.style.width = '100%';
-                            vid.style.height = '100%';
-                            vid.style.transform = 'rotate(180deg)';
-                            vid.style.objectFit = fitMode;
-                        } else {
-                            vid.style.width = '100%';
-                            vid.style.height = '100%';
-                            vid.style.objectFit = fitMode;
+                        // Body rotation handles orientation — simple fill
+                        vid.style.width = '100%';
+                        vid.style.height = '100%';
+                        vid.style.objectFit = fitMode;
+                        // Thumbnail as CSS background — shows instantly while video buffers
+                        if (items[s].thumbnail_url) {
+                            innerContainer.style.backgroundImage = 'url(' + items[s].thumbnail_url + ')';
+                            innerContainer.style.backgroundSize = 'cover';
+                            innerContainer.style.backgroundPosition = 'center';
                         }
                         innerContainer.appendChild(vid);
                     } else {
                         var img = document.createElement('img');
                         img.src = items[s].url;
                         img.alt = '';
-                        // Apply rotation DIRECTLY to image too (consistent with video approach)
-                        if (rotation === 90 || rotation === 270) {
-                            img.style.position = 'absolute';
-                            img.style.width = '100vh';
-                            img.style.height = '100vw';
-                            img.style.top = '50%';
-                            img.style.left = '50%';
-                            img.style.transform = 'translate(-50%, -50%) rotate(' + rotation + 'deg)';
-                            img.style.objectFit = fitMode;
-                        } else if (rotation === 180) {
-                            img.style.width = '100%';
-                            img.style.height = '100%';
-                            img.style.transform = 'rotate(180deg)';
-                            img.style.objectFit = fitMode;
-                        } else {
-                            img.style.width = '100%';
-                            img.style.height = '100%';
-                            img.style.objectFit = fitMode;
-                        }
+                        // Body rotation handles orientation — simple fill
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = fitMode;
                         innerContainer.appendChild(img);
                     }
                     
