@@ -144,17 +144,16 @@
                     try {
                         var data = JSON.parse(xhr.responseText);
                         renderScreen(data);
-                        // heartbeat
-                        if (data.screen && data.screen.id) {
+                        // heartbeat - only start once!
+                        if (!window._heartbeatStarted && data.screen && data.screen.id) {
+                            window._heartbeatStarted = true;
                             var screenId = data.screen.id;
                             function sendHeartbeat() {
                                 var hb = new XMLHttpRequest();
                                 hb.open('POST', API + '/screens/' + screenId + '/heartbeat');
                                 hb.send();
                             }
-                            // Send immediately
                             sendHeartbeat();
-                            // Then every 60 seconds to stay 'online' (server timeout is 2 min)
                             setInterval(sendHeartbeat, 60000);
                         }
                     } catch (e) {
@@ -194,11 +193,12 @@
         var allSlides = [];
 
         function renderScreen(data) {
-            if (slideTimer) clearTimeout(slideTimer);
             var wrapper = document.getElementById('rotation-wrapper');
             var container = document.getElementById('slides');
-            container.innerHTML = '';
-            currentSlide = 0;
+            // NOTE: Do NOT clear container here!
+            // The _lastItemsString cache check below may return early.
+            // Clearing here would cause a permanent black screen every 5 minutes.
+            // container.innerHTML and currentSlide=0 are inside applyNewContent()
             
             // TV Rotation Logic - Bulletproof Pixel Matrix
             var rawOrientation = data.screen && data.screen.orientation;
@@ -212,38 +212,15 @@
                 if (isNaN(rotation)) rotation = 0;
             }
 
-            if (rotation === 90) {
-                // Rotate 90 degrees right (Portrait hanging)
-                wrapper.style.transform = 'rotate(90deg)';
-                wrapper.style.transformOrigin = 'top left';
-                wrapper.style.width = '1080px';
-                wrapper.style.height = '1920px';
-                wrapper.style.top = '0px';
-                wrapper.style.left = '1920px'; // Shift back into view
-            } else if (rotation === 270 || rotation === -90) {
-                // Rotate 270 degrees left (Portrait reverse hanging)
-                wrapper.style.transform = 'rotate(270deg)';
-                wrapper.style.transformOrigin = 'top left';
-                wrapper.style.width = '1080px';
-                wrapper.style.height = '1920px';
-                wrapper.style.top = '1080px';
-                wrapper.style.left = '0px';
-            } else if (rotation === 180) {
-                // Upside down
-                wrapper.style.transform = 'rotate(180deg)';
-                wrapper.style.transformOrigin = 'center center';
-                wrapper.style.width = '1920px';
-                wrapper.style.height = '1080px';
-                wrapper.style.top = '0px';
-                wrapper.style.left = '0px';
-            } else {
-                // Normal Landscape
-                wrapper.style.transform = 'none';
-                wrapper.style.width = '100%';
-                wrapper.style.height = '100%';
-                wrapper.style.top = '0px';
-                wrapper.style.left = '0px';
-            }
+            // Apply rotation DIRECTLY to content elements (not wrapper)
+            // WebOS Smart TV hardware video decoder bypasses parent CSS transforms
+            // so wrapper rotation works for images but NOT for videos
+            // Direct element-level transforms work on ALL platforms
+            wrapper.style.transform = 'none';
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.top = '0px';
+            wrapper.style.left = '0px';
 
             var zones = data.zones_config || data.zones || [];
             var items = [];
@@ -326,10 +303,12 @@
 
             var newItemsString = JSON.stringify(items) + "_" + rotation;
             if (window._lastItemsString === newItemsString) {
-                // Content hasn't changed, just ensure intervals are setup
+                // Content hasn't changed — slideshow keeps running, do NOT touch DOM
                 setupIntervals();
                 return;
             }
+            // Content changed — stop current slideshow before rebuilding
+            if (slideTimer) clearTimeout(slideTimer);
 
             var imagesToLoad = items.filter(function(it) { return it.type === 'image'; });
             var loaded = 0;
@@ -366,6 +345,8 @@
                     } else {
                         innerContainer.style.width = '100%';
                         innerContainer.style.height = '100%';
+                        innerContainer.style.position = 'relative';
+                        innerContainer.style.overflow = 'hidden';
                     }
 
                     var fitMode = 'cover';
@@ -390,17 +371,49 @@
                         vid.setAttribute('playsinline', '');
                         vid.preload = 'auto';
                         if (s === 0) vid.autoplay = true;
-                        vid.style.width = '100%';
-                        vid.style.height = '100%';
-                        vid.style.objectFit = fitMode;
+                        // Apply rotation DIRECTLY to video (WebOS bypasses parent transform)
+                        if (rotation === 90 || rotation === 270) {
+                            vid.style.position = 'absolute';
+                            vid.style.width = '100vh';
+                            vid.style.height = '100vw';
+                            vid.style.top = '50%';
+                            vid.style.left = '50%';
+                            vid.style.transform = 'translate(-50%, -50%) rotate(' + rotation + 'deg)';
+                            vid.style.objectFit = fitMode;
+                        } else if (rotation === 180) {
+                            vid.style.width = '100%';
+                            vid.style.height = '100%';
+                            vid.style.transform = 'rotate(180deg)';
+                            vid.style.objectFit = fitMode;
+                        } else {
+                            vid.style.width = '100%';
+                            vid.style.height = '100%';
+                            vid.style.objectFit = fitMode;
+                        }
                         innerContainer.appendChild(vid);
                     } else {
                         var img = document.createElement('img');
                         img.src = items[s].url;
                         img.alt = '';
-                        img.style.width = '100%';
-                        img.style.height = '100%';
-                        img.style.objectFit = fitMode;
+                        // Apply rotation DIRECTLY to image too (consistent with video approach)
+                        if (rotation === 90 || rotation === 270) {
+                            img.style.position = 'absolute';
+                            img.style.width = '100vh';
+                            img.style.height = '100vw';
+                            img.style.top = '50%';
+                            img.style.left = '50%';
+                            img.style.transform = 'translate(-50%, -50%) rotate(' + rotation + 'deg)';
+                            img.style.objectFit = fitMode;
+                        } else if (rotation === 180) {
+                            img.style.width = '100%';
+                            img.style.height = '100%';
+                            img.style.transform = 'rotate(180deg)';
+                            img.style.objectFit = fitMode;
+                        } else {
+                            img.style.width = '100%';
+                            img.style.height = '100%';
+                            img.style.objectFit = fitMode;
+                        }
                         innerContainer.appendChild(img);
                     }
                     
