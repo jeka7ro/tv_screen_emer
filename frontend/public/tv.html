@@ -425,19 +425,33 @@
                             innerContainer.appendChild(vid);
 
                             var canvas = document.createElement('canvas');
-                            canvas.width = 1920;
-                            canvas.height = 1080;
+                            // Match canvas to wrapper dimensions (portrait = 1080x1920)
+                            if (rotation === 90 || rotation === 270) {
+                                canvas.width = 1080;
+                                canvas.height = 1920;
+                            } else {
+                                canvas.width = 1920;
+                                canvas.height = 1080;
+                            }
                             canvas.style.width = '100%';
                             canvas.style.height = '100%';
                             canvas.style.display = 'block';
                             innerContainer.appendChild(canvas);
 
-                            // Draw video frames onto canvas at 25fps
+                            // Draw video frames onto canvas at 25fps with cover-fit
                             (function(v, cvs) {
                                 var ctx = cvs.getContext('2d');
                                 var drawId = setInterval(function() {
                                     if (v.paused || v.readyState < 2) return;
-                                    ctx.drawImage(v, 0, 0, cvs.width, cvs.height);
+                                    var vw = v.videoWidth || 1920;
+                                    var vh = v.videoHeight || 1080;
+                                    // Cover-fit: scale video to fill canvas, crop overflow
+                                    var scale = Math.max(cvs.width / vw, cvs.height / vh);
+                                    var dw = vw * scale;
+                                    var dh = vh * scale;
+                                    var dx = (cvs.width - dw) / 2;
+                                    var dy = (cvs.height - dh) / 2;
+                                    ctx.drawImage(v, dx, dy, dw, dh);
                                 }, 40);
                                 window._canvasDrawIntervals.push(drawId);
                             })(vid, canvas);
