@@ -55,7 +55,7 @@
             width: 100%;
             height: 100%;
             opacity: 0;
-            transition: opacity 0.4s ease-in-out
+            transition: opacity 1.5s ease-in-out
         }
 
         .slide.prev {
@@ -528,21 +528,24 @@
                     }
                 }
                 
-                // Flush the old video from RAM after it fades out (1.5s)
+                // Flush the old video from RAM after crossfade completes (2s)
                 setTimeout(function() {
                     if (oldSlide) {
                         var oldVid = oldSlide.querySelector('video');
                         if (oldVid) {
                             oldVid.pause();
-                            // If it's not the current or next slide, flush its memory
-                            var keepPreloaded = (allSlides.length <= 3); // don't flush if tiny playlist
+                            var keepPreloaded = (allSlides.length <= 3);
                             if (!keepPreloaded) {
                                 oldVid.removeAttribute('src');
-                                oldVid.load(); // Forces TV decoder to drop memory
+                                oldVid.load();
                             }
                         }
                     }
-                }, 1500);
+                }, 2000);
+                // Drop prev opacity AFTER crossfade completes (not immediately)
+                setTimeout(function() {
+                    if (oldSlide) oldSlide.className = 'slide';
+                }, 1600);
                 // ----------------------------------------------------
 
                 var newSlide = document.getElementById('slide-' + currentSlide);
@@ -555,7 +558,7 @@
                             newVid.src = newVid.dataset.src;
                             newVid.load();
                         }
-                        newVid.currentTime = 0;
+                        // Do NOT reset currentTime — causes black seek frame
                         // Show slide immediately (poster covers loading gap)
                         newSlide.className = 'slide active';
                         newVid.play().catch(function() {});
