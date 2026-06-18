@@ -208,34 +208,45 @@
                 if (isNaN(rotation)) rotation = 0;
             }
 
-            // Rotate the BODY element — works on LG WebOS where CSS transforms
-            // on individual video elements are ignored by the HW video decoder.
-            // Rotating body = rotating the entire browser surface, WebOS can't bypass this.
-            var iw = window.innerWidth || 1920;
-            var ih = window.innerHeight || 1080;
-
-            if (rotation === 90 || rotation === 270) {
-                document.body.style.position = 'fixed';
-                document.body.style.width = ih + 'px';       // 1080
-                document.body.style.height = iw + 'px';      // 1920
-                document.body.style.top = '50%';
-                document.body.style.left = '50%';
-                document.body.style.marginTop  = -(iw / 2) + 'px';  // -960
-                document.body.style.marginLeft = -(ih / 2) + 'px';  // -540
-                document.body.style.transform = 'rotate(' + rotation + 'deg)';
-                document.body.style.overflow = 'hidden';
+            // Original wrapper rotation - pixel exact for 1920x1080
+            if (rotation === 90) {
+                wrapper.style.transform = 'rotate(90deg)';
+                wrapper.style.transformOrigin = 'top left';
+                wrapper.style.width = '1080px';
+                wrapper.style.height = '1920px';
+                wrapper.style.top = '0px';
+                wrapper.style.left = '1920px';
+            } else if (rotation === 270 || rotation === -90) {
+                wrapper.style.transform = 'rotate(270deg)';
+                wrapper.style.transformOrigin = 'top left';
+                wrapper.style.width = '1080px';
+                wrapper.style.height = '1920px';
+                wrapper.style.top = '1080px';
+                wrapper.style.left = '0px';
             } else if (rotation === 180) {
-                document.body.style.transform = 'rotate(180deg)';
+                wrapper.style.transform = 'rotate(180deg)';
+                wrapper.style.transformOrigin = 'center center';
+                wrapper.style.width = '1920px';
+                wrapper.style.height = '1080px';
+                wrapper.style.top = '0px';
+                wrapper.style.left = '0px';
             } else {
-                document.body.style.transform = 'none';
+                wrapper.style.transform = 'none';
+                wrapper.style.width = '100%';
+                wrapper.style.height = '100%';
+                wrapper.style.top = '0px';
+                wrapper.style.left = '0px';
             }
 
-            // Wrapper fills body (no rotation on wrapper)
-            wrapper.style.transform = 'none';
-            wrapper.style.width = '100%';
-            wrapper.style.height = '100%';
-            wrapper.style.top = '0px';
-            wrapper.style.left = '0px';
+            // Reset body to defaults (undo any previous body rotation)
+            document.body.style.position = '';
+            document.body.style.width = '';
+            document.body.style.height = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.marginTop = '';
+            document.body.style.marginLeft = '';
+            document.body.style.transform = '';
 
             var zones = data.zones_config || data.zones || [];
             var items = [];
