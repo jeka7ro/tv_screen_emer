@@ -55,8 +55,12 @@
             width: 100%;
             height: 100%;
             opacity: 0;
-            z-index: 1;
-            transition: opacity 1.5s ease-in-out
+            transition: opacity 0.4s ease-in-out
+        }
+
+        .slide.prev {
+            opacity: 1;
+            z-index: 10;
         }
 
         .slide.active {
@@ -140,16 +144,17 @@
                     try {
                         var data = JSON.parse(xhr.responseText);
                         renderScreen(data);
-                        // heartbeat - only start once!
-                        if (!window._heartbeatStarted && data.screen && data.screen.id) {
-                            window._heartbeatStarted = true;
+                        // heartbeat
+                        if (data.screen && data.screen.id) {
                             var screenId = data.screen.id;
                             function sendHeartbeat() {
                                 var hb = new XMLHttpRequest();
                                 hb.open('POST', API + '/screens/' + screenId + '/heartbeat');
                                 hb.send();
                             }
+                            // Send immediately
                             sendHeartbeat();
+                            // Then every 60 seconds to stay 'online' (server timeout is 2 min)
                             setInterval(sendHeartbeat, 60000);
                         }
                     } catch (e) {
@@ -189,12 +194,11 @@
         var allSlides = [];
 
         function renderScreen(data) {
+            if (slideTimer) clearTimeout(slideTimer);
             var wrapper = document.getElementById('rotation-wrapper');
             var container = document.getElementById('slides');
-            // NOTE: Do NOT clear container here!
-            // The _lastItemsString cache check below may return early.
-            // Clearing here would cause a permanent black screen every 5 minutes.
-            // container.innerHTML and currentSlide=0 are inside applyNewContent()
+            container.innerHTML = '';
+            currentSlide = 0;
             
             // TV Rotation Logic - Bulletproof Pixel Matrix
             var rawOrientation = data.screen && data.screen.orientation;
@@ -208,15 +212,16 @@
                 if (isNaN(rotation)) rotation = 0;
             }
 
-            // Original wrapper rotation - pixel exact for 1920x1080
             if (rotation === 90) {
+                // Rotate 90 degrees right (Portrait hanging)
                 wrapper.style.transform = 'rotate(90deg)';
                 wrapper.style.transformOrigin = 'top left';
                 wrapper.style.width = '1080px';
                 wrapper.style.height = '1920px';
                 wrapper.style.top = '0px';
-                wrapper.style.left = '1920px';
+                wrapper.style.left = '1920px'; // Shift back into view
             } else if (rotation === 270 || rotation === -90) {
+                // Rotate 270 degrees left (Portrait reverse hanging)
                 wrapper.style.transform = 'rotate(270deg)';
                 wrapper.style.transformOrigin = 'top left';
                 wrapper.style.width = '1080px';
@@ -224,6 +229,7 @@
                 wrapper.style.top = '1080px';
                 wrapper.style.left = '0px';
             } else if (rotation === 180) {
+                // Upside down
                 wrapper.style.transform = 'rotate(180deg)';
                 wrapper.style.transformOrigin = 'center center';
                 wrapper.style.width = '1920px';
@@ -231,22 +237,13 @@
                 wrapper.style.top = '0px';
                 wrapper.style.left = '0px';
             } else {
+                // Normal Landscape
                 wrapper.style.transform = 'none';
                 wrapper.style.width = '100%';
                 wrapper.style.height = '100%';
                 wrapper.style.top = '0px';
                 wrapper.style.left = '0px';
             }
-
-            // Reset body to defaults (undo any previous body rotation)
-            document.body.style.position = '';
-            document.body.style.width = '';
-            document.body.style.height = '';
-            document.body.style.top = '';
-            document.body.style.left = '';
-            document.body.style.marginTop = '';
-            document.body.style.marginLeft = '';
-            document.body.style.transform = '';
 
             var zones = data.zones_config || data.zones || [];
             var items = [];
@@ -329,12 +326,10 @@
 
             var newItemsString = JSON.stringify(items) + "_" + rotation;
             if (window._lastItemsString === newItemsString) {
-                // Content hasn't changed — slideshow keeps running, do NOT touch DOM
+                // Content hasn't changed, just ensure intervals are setup
                 setupIntervals();
                 return;
             }
-            // Content changed — stop current slideshow before rebuilding
-            if (slideTimer) clearTimeout(slideTimer);
 
             var imagesToLoad = items.filter(function(it) { return it.type === 'image'; });
             var loaded = 0;
@@ -371,8 +366,6 @@
                     } else {
                         innerContainer.style.width = '100%';
                         innerContainer.style.height = '100%';
-                        innerContainer.style.position = 'relative';
-                        // No overflow:hidden — body rotation clips at screen edge
                     }
 
                     var fitMode = 'cover';
@@ -385,9 +378,9 @@
 
                     if (items[s].type === 'video') {
                         var vid = document.createElement('video');
-                        vid.dataset.src = items[s].url;
-                        if (s === 0 || s === 1 || s === items.length - 1) {
-                            vid.src = items[s].url;
+                        vid.dataset.src = items[s].url; 
+                        if(s === 0 || s === 1 || s === items.length - 1) { 
+                            vid.src = items[s].url; 
                         }
                         if (items[s].thumbnail_url) {
                             vid.poster = items[s].thumbnail_url;
@@ -397,22 +390,14 @@
                         vid.setAttribute('playsinline', '');
                         vid.preload = 'auto';
                         if (s === 0) vid.autoplay = true;
-                        // Body rotation handles orientation — simple fill
                         vid.style.width = '100%';
                         vid.style.height = '100%';
                         vid.style.objectFit = fitMode;
-                        // Thumbnail as CSS background — shows instantly while video buffers
-                        if (items[s].thumbnail_url) {
-                            innerContainer.style.backgroundImage = 'url(' + items[s].thumbnail_url + ')';
-                            innerContainer.style.backgroundSize = 'cover';
-                            innerContainer.style.backgroundPosition = 'center';
-                        }
                         innerContainer.appendChild(vid);
                     } else {
                         var img = document.createElement('img');
                         img.src = items[s].url;
                         img.alt = '';
-                        // Body rotation handles orientation — simple fill
                         img.style.width = '100%';
                         img.style.height = '100%';
                         img.style.objectFit = fitMode;
@@ -518,10 +503,21 @@
             slideTimer = setTimeout(function () {
                 var oldSlideIndex = currentSlide;
                 var oldSlide = document.getElementById('slide-' + oldSlideIndex);
+                if (oldSlide) oldSlide.className = 'slide prev'; // keep opacity 1, but lower z-index
+                
+                // Find any existing 'prev' slides and drop them to base 'slide' (opacity 0)
+                var allDivs = document.querySelectorAll('.slide');
+                for(var d=0; d<allDivs.length; d++) {
+                    if (allDivs[d].id !== 'slide-' + oldSlideIndex && allDivs[d].className.indexOf('active') === -1) {
+                        allDivs[d].className = 'slide';
+                    }
+                }
+
 
                 currentSlide = (currentSlide + 1) % allSlides.length;
 
-                // Preload the next-next video
+                // --- SLIDING WINDOW OPTIMIZATION FOR SMART TV RAM ---
+                // Preload the next video in the queue
                 var nextNextIndex = (currentSlide + 1) % allSlides.length;
                 var nextNextSlide = document.getElementById('slide-' + nextNextIndex);
                 if (nextNextSlide) {
@@ -531,39 +527,44 @@
                         nextNextVid.load();
                     }
                 }
+                
+                // Flush the old video from RAM after it fades out (1.5s)
+                setTimeout(function() {
+                    if (oldSlide) {
+                        var oldVid = oldSlide.querySelector('video');
+                        if (oldVid) {
+                            oldVid.pause();
+                            // If it's not the current or next slide, flush its memory
+                            var keepPreloaded = (allSlides.length <= 3); // don't flush if tiny playlist
+                            if (!keepPreloaded) {
+                                oldVid.removeAttribute('src');
+                                oldVid.load(); // Forces TV decoder to drop memory
+                            }
+                        }
+                    }
+                }, 1500);
+                // ----------------------------------------------------
 
                 var newSlide = document.getElementById('slide-' + currentSlide);
 
-                // Show new slide (fades IN from opacity:0 to 1, z:20)
                 if (newSlide) {
-                    newSlide.className = 'slide active';
                     var newVid = newSlide.querySelector('video');
                     if (newVid) {
+                        // Load src if not yet loaded (lazy loading)
                         if (!newVid.getAttribute('src') && newVid.dataset.src) {
                             newVid.src = newVid.dataset.src;
                             newVid.load();
                         }
+                        newVid.currentTime = 0;
+                        // Show slide immediately (poster covers loading gap)
+                        newSlide.className = 'slide active';
                         newVid.play().catch(function() {});
+                    } else {
+                        newSlide.className = 'slide active';
                     }
                 }
 
-                // Fade OUT old slide SIMULTANEOUSLY (z:1, opacity:1→0 over 1.5s)
-                // Both transitions happen at same time — no "going back" effect
-                if (oldSlide) {
-                    oldSlide.className = 'slide'; // z:1, triggers opacity 1→0 transition
-                    // Release video memory after fade completes
-                    setTimeout(function() {
-                        var oldVid = oldSlide.querySelector('video');
-                        if (oldVid) {
-                            oldVid.pause();
-                            if (allSlides.length > 3) {
-                                oldVid.removeAttribute('src');
-                                oldVid.load();
-                            }
-                        }
-                    }, 2000);
-                }
-
+                // CRITICAL: nextSlide MUST always be called, never wait on video promise
                 nextSlide();
             }, duration * 1000);
         }
