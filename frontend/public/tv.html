@@ -55,7 +55,7 @@
             width: 100%;
             height: 100%;
             opacity: 0;
-            transition: opacity 3s ease-in-out
+            transition: opacity 5s ease-in-out;
         }
 
         .slide.prev {
@@ -532,12 +532,15 @@
                             }
                         }
                     }
-                }, 3500);
+                }, 5500);
                 // ----------------------------------------------------
 
                 var newSlide = document.getElementById('slide-' + currentSlide);
 
                 if (newSlide) {
+                    // Force reflow so browser sees current opacity:0 before transitioning to 1
+                    newSlide.className = 'slide';
+                    void newSlide.offsetWidth;
                     newSlide.className = 'slide active';
                     var newVid = newSlide.querySelector('video');
                     if (newVid) {
