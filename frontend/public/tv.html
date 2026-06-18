@@ -413,17 +413,16 @@
                         }
 
                         if (rotation !== 0) {
-                            // CANVAS RENDERER: LG WebOS renders video in a hardware overlay
-                            // that bypasses ALL CSS transforms on parent/wrapper elements.
-                            // Keep video full-size (LG HW decoder needs visible element to play)
-                            // but put canvas ON TOP to display the properly-transformed frames.
-                            vid.style.position = 'absolute';
-                            vid.style.width = '100%';
-                            vid.style.height = '100%';
-                            vid.style.top = '0';
-                            vid.style.left = '0';
-                            vid.style.zIndex = '1';
-                            vid.style.objectFit = 'cover';
+                            // CANVAS RENDERER: LG WebOS hardware video overlay always renders
+                            // on top of all HTML/CSS content. Solution: position video OFF-SCREEN
+                            // so the HW overlay renders outside the viewport. Video stays full-size
+                            // so the decoder actually plays it. Canvas draws its frames on-screen.
+                            vid.style.position = 'fixed';
+                            vid.style.width = '1920px';
+                            vid.style.height = '1080px';
+                            vid.style.left = '-9999px';
+                            vid.style.top = '-9999px';
+                            vid.style.pointerEvents = 'none';
                             innerContainer.appendChild(vid);
 
                             var canvas = document.createElement('canvas');
@@ -438,10 +437,6 @@
                             canvas.style.width = '100%';
                             canvas.style.height = '100%';
                             canvas.style.display = 'block';
-                            canvas.style.position = 'absolute';
-                            canvas.style.top = '0';
-                            canvas.style.left = '0';
-                            canvas.style.zIndex = '2';
                             innerContainer.appendChild(canvas);
 
                             // Draw video frames onto canvas at 25fps with cover-fit
