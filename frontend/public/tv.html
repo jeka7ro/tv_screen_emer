@@ -332,6 +332,13 @@
             function applyNewContent() {
                 window._lastItemsString = newItemsString;
                 if (slideTimer) clearTimeout(slideTimer);
+                // Clear any running canvas draw intervals from previous content
+                if (window._videoDrawIntervals) {
+                    for (var ci = 0; ci < window._videoDrawIntervals.length; ci++) {
+                        clearInterval(window._videoDrawIntervals[ci]);
+                    }
+                }
+                window._videoDrawIntervals = [];
                 container.innerHTML = '';
                 currentSlide = 0;
                 allSlides = items;
@@ -386,17 +393,72 @@
                         vid.setAttribute('playsinline', '');
                         vid.preload = 'auto';
                         if (s === 0) vid.autoplay = true;
-                        // Body rotation handles orientation — simple fill
-                        vid.style.width = '100%';
-                        vid.style.height = '100%';
-                        vid.style.objectFit = fitMode;
-                        // Thumbnail as CSS background — shows instantly while video buffers
-                        if (items[s].thumbnail_url) {
-                            innerContainer.style.backgroundImage = 'url(' + items[s].thumbnail_url + ')';
-                            innerContainer.style.backgroundSize = 'cover';
-                            innerContainer.style.backgroundPosition = 'center';
+
+                        if (rotation !== 0) {
+                            // --- CANVAS RENDERER for rotated screens ---
+                            // LG WebOS places video in a hardware overlay that bypasses
+                            // ALL CSS transforms (even body-level). Canvas draws in CSS
+                            // compositing layer and DOES follow transforms correctly.
+                            var canvas = document.createElement('canvas');
+                            // Physical canvas matches body physical size (portrait)
+                            canvas.width  = ih; // e.g. 1080
+                            canvas.height = iw; // e.g. 1920
+                            canvas.style.width  = '100%';
+                            canvas.style.height = '100%';
+                            canvas.style.display = 'block';
+
+                            // Show thumbnail as background while video buffering
+                            if (items[s].thumbnail_url) {
+                                innerContainer.style.backgroundImage = 'url(' + items[s].thumbnail_url + ')';
+                                innerContainer.style.backgroundSize  = 'cover';
+                                innerContainer.style.backgroundPosition = 'center';
+                            }
+
+                            vid.style.position = 'absolute';
+                            vid.style.width    = '1px';
+                            vid.style.height   = '1px';
+                            vid.style.opacity  = '0';
+                            vid.style.pointerEvents = 'none';
+                            innerContainer.appendChild(vid);
+                            innerContainer.appendChild(canvas);
+
+                            // Draw rotated video frames at 25fps
+                            (function(v, cvs, rot) {
+                                var ctx = cvs.getContext('2d');
+                                var radians = rot * Math.PI / 180;
+                                var intId = setInterval(function() {
+                                    if (v.paused) return; // skip draw when not playing (saves CPU)
+                                    if (v.readyState < 2) return;
+                                    var vw = v.videoWidth;
+                                    var vh = v.videoHeight;
+                                    if (!vw || !vh) return;
+                                    ctx.clearRect(0, 0, cvs.width, cvs.height);
+                                    ctx.save();
+                                    ctx.translate(cvs.width / 2, cvs.height / 2);
+                                    ctx.rotate(radians);
+                                    // Cover scale: after rotation fill the canvas
+                                    var scale = (rot === 90 || rot === 270)
+                                        ? Math.max(cvs.width / vh, cvs.height / vw)
+                                        : Math.max(cvs.width / vw, cvs.height / vh);
+                                    ctx.drawImage(v, -vw * scale / 2, -vh * scale / 2, vw * scale, vh * scale);
+                                    ctx.restore();
+                                }, 40); // 25fps
+                                window._videoDrawIntervals.push(intId);
+                            })(vid, canvas, rotation);
+
+                        } else {
+                            // No rotation — use video element directly
+                            vid.style.width = '100%';
+                            vid.style.height = '100%';
+                            vid.style.objectFit = fitMode;
+                            if (items[s].thumbnail_url) {
+                                innerContainer.style.backgroundImage = 'url(' + items[s].thumbnail_url + ')';
+                                innerContainer.style.backgroundSize  = 'cover';
+                                innerContainer.style.backgroundPosition = 'center';
+                            }
+                            innerContainer.appendChild(vid);
                         }
-                        innerContainer.appendChild(vid);
+
                     } else {
                         var img = document.createElement('img');
                         img.src = items[s].url;
@@ -413,6 +475,11 @@
                 }
 
                 function startSlideshow() {
+                    // Always try to play first video (canvas renderer uses hidden video)
+                    var firstVid = document.querySelector('#slide-0 video');
+                    if (firstVid && firstVid.paused) {
+                        firstVid.play().catch(function() {});
+                    }
                     if (items.length > 1) {
                         nextSlide();
                     } else if (items.length === 1 && items[0].type === 'image') {
