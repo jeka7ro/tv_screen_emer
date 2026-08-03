@@ -1836,6 +1836,7 @@ export const Content = () => {
           </DialogContent>
         </Dialog>
       </div >
+      <ConfirmDialog />
     </DashboardLayout >
   );
 };
