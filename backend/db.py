@@ -1346,17 +1346,33 @@ async def brand_delete(brand_id: str) -> bool:
     return True
 # ---------- activity logs ----------
 
-async def log_activity(user_id: Optional[str], user_name: Optional[str], action: str, entity_type: Optional[str] = None, entity_id: Optional[str] = None, level: str = 'INFO', details: Optional[Dict[str, Any]] = None) -> None:
+async def log_activity(
+    user_id: Optional[str], 
+    user_name: Optional[str], 
+    action: str, 
+    entity_type: Optional[str] = None, 
+    entity_id: Optional[str] = None, 
+    level: str = 'INFO', 
+    details: Optional[Dict[str, Any]] = None,
+    organization_id: Optional[str] = None
+) -> None:
     """Record a user or system action in the logs"""
     # Force string conversion for IDs to prevent asyncpg DataError (integer vs uuid/text)
     user_id_str = str(user_id) if user_id is not None else None
     entity_id_str = str(entity_id) if entity_id is not None else None
+    org_id = organization_id or (details.get("org_id") if details else None)
     
     async with pool.acquire() as conn:
+        if not org_id and user_id_str:
+            row = await conn.fetchrow("SELECT organization_id FROM users WHERE id = $1", user_id_str)
+            if row and row["organization_id"]:
+                org_id = row["organization_id"]
+        org_id = org_id or 'default_sushimaster'
+
         await conn.execute("""
-            INSERT INTO activity_logs (user_id, user_name, action, entity_type, entity_id, level, details)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-        """, user_id_str, user_name, action, entity_type, entity_id_str, level, json.dumps(details) if details else None)
+            INSERT INTO activity_logs (user_id, user_name, action, entity_type, entity_id, level, details, organization_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        """, user_id_str, user_name, action, entity_type, entity_id_str, level, json.dumps(details) if details else None, org_id)
 
 async def get_activity_logs(
     entity_type: Optional[str] = None, 
@@ -1364,17 +1380,24 @@ async def get_activity_logs(
     user_id: Optional[str] = None,
     location_id: Optional[str] = None,
     limit: int = 50, 
-    offset: int = 0
+    offset: int = 0,
+    org_id: Optional[str] = None
 ) -> List[Dict[str, Any]]:
-    """Fetch activity logs with filtering"""
+    """Fetch activity logs with multi-tenant filtering"""
     query = """
-        SELECT a.*, u.full_name as user_real_name, u.role as user_role, u.location_id as user_location_id
+        SELECT a.*, u.full_name as user_real_name, u.role as user_role, u.location_id as user_location_id,
+               o.name as organization_name
         FROM activity_logs a
         LEFT JOIN users u ON a.user_id = u.id
+        LEFT JOIN organizations o ON (COALESCE(a.organization_id, u.organization_id) = o.id)
     """
     conditions = []
     params = []
     
+    if org_id:
+        params.append(org_id)
+        conditions.append(f"(a.organization_id = ${len(params)} OR (a.organization_id IS NULL AND u.organization_id = ${len(params)}))")
+
     if entity_type:
         params.append(entity_type)
         conditions.append(f"a.entity_type = ${len(params)}")

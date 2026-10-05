@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Monitor, UserPlus, Lock, Mail, User, KeyRound, Shield, Eye, EyeOff } from 'lucide-react';
+import { Monitor, UserPlus, Lock, Mail, User, KeyRound, Shield, Eye, EyeOff, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../utils/api';
+import { getTenantSubdomain } from '../utils/tenant';
 
 export const Login = () => {
   const [searchParams] = useSearchParams();
@@ -21,8 +22,9 @@ export const Login = () => {
   const [inviteValid, setInviteValid] = useState(false);
   const [checkingInvite, setCheckingInvite] = useState(!!inviteCode);
   const [rememberMe, setRememberMe] = useState(false);
+  const [tenantOrg, setTenantOrg] = useState(null);
   
-  const { login, register } = useAuth();
+  const { login, register, logout } = useAuth();
   const navigate = useNavigate();
 
   // Load remembered credentials
@@ -47,6 +49,20 @@ export const Login = () => {
       }
     };
     checkRegistration();
+  }, []);
+
+  // Resolve tenant organization from subdomain if present (e.g. sushihan.smr.onl or ?org=sushihan)
+  useEffect(() => {
+    const sub = getTenantSubdomain();
+    if (sub) {
+      api.get(`/organizations/public/resolve?subdomain=${encodeURIComponent(sub)}`)
+        .then(res => {
+          if (res.data) {
+            setTenantOrg(res.data);
+          }
+        })
+        .catch(err => console.error('Could not resolve tenant organization', err));
+    }
   }, []);
 
   // Validate invitation code from URL
@@ -75,7 +91,17 @@ export const Login = () => {
 
     try {
       if (isLogin) {
-        await login(email, password);
+        const loggedUser = await login(email, password);
+
+        // If accessed via a specific tenant subdomain, check that the user belongs to this tenant or is super admin
+        if (tenantOrg && tenantOrg.id !== 'default_sushimaster' && !loggedUser.is_super_admin && loggedUser.organization_id !== tenantOrg.id) {
+          logout();
+          const msg = `Acest cont nu aparține organizației ${tenantOrg.name}.`;
+          toast.error(msg);
+          setLoginError(msg);
+          setLoading(false);
+          return;
+        }
         
         if (rememberMe) {
           localStorage.setItem('remember_email', email);
@@ -134,12 +160,26 @@ export const Login = () => {
 
       <div className="w-full max-w-md relative z-10 transition-transform hover:scale-[1.01] duration-500">
         <div className="bg-white/95 backdrop-blur-3xl border border-white/60 rounded-[2.5rem] p-8 shadow-2xl" style={{ boxShadow: '0 30px 60px rgba(0,0,0,0.12)' }}>
-          <div className="flex justify-center items-center pt-2 mb-8">
-            <img
-              src="/logo_smart_display.png"
-              alt="Logo"
-              className="h-16 object-contain"
-            />
+          <div className="flex flex-col justify-center items-center pt-2 mb-8">
+            {tenantOrg && tenantOrg.id !== 'default_sushimaster' ? (
+              <>
+                <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 font-bold text-2xl shadow-sm mb-3">
+                  {tenantOrg.name.slice(0, 2).toUpperCase()}
+                </div>
+                <h2 className="text-2xl font-black text-slate-800 tracking-tight">
+                  {tenantOrg.name}
+                </h2>
+                <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100 mt-1">
+                  Panou Client Dedicat
+                </span>
+              </>
+            ) : (
+              <img
+                src="/logo_smart_display.png"
+                alt="Logo"
+                className="h-16 object-contain"
+              />
+            )}
           </div>
 
           {/* Show badge for first user registration */}
@@ -191,7 +231,7 @@ export const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-50 text-slate-900 rounded-2xl px-4 py-3 border border-slate-200 focus:border-[#1e293b] focus:ring-1 focus:ring-[#1e293b] outline-none transition-all"
-                placeholder="admin@sushimaster.ro"
+                placeholder={tenantOrg && tenantOrg.id !== 'default_sushimaster' ? `utilizator@${tenantOrg.id}.ro` : "admin@sushimaster.ro"}
                 required
                 data-testid="email-input"
               />

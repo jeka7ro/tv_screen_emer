@@ -9,6 +9,7 @@ from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
 from pathlib import Path
+import re
 
 # Determine upload directory (Render uses /opt/render/project/src/backend/uploads usually, or absolute path)
 # We'll use absolute path relative to this file to be safe
@@ -984,6 +985,29 @@ async def list_organizations_endpoint(current_user: User = Depends(get_current_u
             return []
         return [org]
     return await organizations_list()
+
+@api_router.get("/organizations/public/resolve")
+async def resolve_public_organization(subdomain: str):
+    clean = re.sub(r'[^a-z0-9]', '', (subdomain or "").lower())
+    if not clean or clean in ("www", "api", "smr", "default"):
+        return {"id": "default_sushimaster", "name": "Sushi Master"}
+    
+    orgs = await organizations_list()
+    # 1. Exact match by ID or name
+    for o in orgs:
+        o_id = re.sub(r'[^a-z0-9]', '', (o.get("id") or "").lower())
+        o_name = re.sub(r'[^a-z0-9]', '', (o.get("name") or "").lower())
+        if clean == o_id or clean == o_name:
+            return {"id": o["id"], "name": o["name"]}
+    # 2. Substring match for non-default tenants
+    for o in orgs:
+        if o.get("id") == "default_sushimaster":
+            continue
+        o_id = re.sub(r'[^a-z0-9]', '', (o.get("id") or "").lower())
+        o_name = re.sub(r'[^a-z0-9]', '', (o.get("name") or "").lower())
+        if clean in o_name or clean in o_id:
+            return {"id": o["id"], "name": o["name"]}
+    return None
 
 @api_router.post("/organizations", response_model=OrganizationResponse)
 async def create_organization_endpoint(data: OrganizationCreate, current_user: User = Depends(get_current_user)):
@@ -2947,6 +2971,7 @@ async def delete_happy_hour(schedule_id: str, current_user: User = Depends(get_c
 
 @api_router.get("/activity-logs")
 async def get_logs(
+    request: Request,
     entity_type: Optional[str] = None, 
     level: Optional[str] = None, 
     user_id: Optional[str] = None,
@@ -2958,7 +2983,8 @@ async def get_logs(
     """Fetch activity logs (Super Admin and Admin only)"""
     if current_user.role not in ["super_admin", "admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
-    return await get_activity_logs(entity_type, level, user_id, location_id, limit, offset)
+    org_id = get_user_org_id(current_user, request)
+    return await get_activity_logs(entity_type, level, user_id, location_id, limit, offset, org_id=org_id)
 
 @api_router.post("/activity-logs/report")
 async def report_activity(data: dict, request: Request):

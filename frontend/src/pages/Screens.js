@@ -61,12 +61,11 @@ const ScreenThumbnail = ({ screen, thumbData, thumbLoading }) => {
 
 export const Screens = () => {
   const { confirm, ConfirmDialog } = useConfirm();
-  const { isAdmin, isSuperAdmin } = useAuth();
+  const { user, isAdmin, isSuperAdmin, selectedOrgId } = useAuth();
   const [screens, setScreens] = useState([]);
   const [locations, setLocations] = useState([]);
   const [brands, setBrands] = useState([]);
   const [organizations, setOrganizations] = useState([]);
-  const [orgFilter, setOrgFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [thumbnails, setThumbnails] = useState({});
   const [thumbnailsLoading, setThumbnailsLoading] = useState(true);
@@ -200,7 +199,7 @@ export const Screens = () => {
       orientation: '0',
       template_id: 'fullscreen',
       logo_brand_id: '',
-      organization_id: isSuperAdmin() && orgFilter !== 'all' ? orgFilter : 'default_sushimaster'
+      organization_id: isSuperAdmin() && selectedOrgId && selectedOrgId !== 'all' ? selectedOrgId : (user?.organization_id || 'default_sushimaster')
     });
     setFormCityFilter('all');
     setEditingScreen(null);
@@ -217,15 +216,12 @@ export const Screens = () => {
   // Get unique brands, cities, and locations for filters
   const cities = [...new Set(
     locations
-      .filter(l => !isSuperAdmin() || orgFilter === 'all' || l.organization_id === orgFilter)
       .map(l => l.city)
       .filter(Boolean)
   )].sort();
 
   const filteredLocations = locations.filter(l => {
-    const matchesOrg = !isSuperAdmin() || orgFilter === 'all' || l.organization_id === orgFilter;
-    const matchesCity = cityFilter === 'all' || l.city === cityFilter;
-    return matchesOrg && matchesCity;
+    return cityFilter === 'all' || l.city === cityFilter;
   });
 
   // Helper function to get brand name from ID
@@ -243,12 +239,11 @@ export const Screens = () => {
 
   const filteredScreens = screens.filter(screen => {
     const location = getLocation(screen.location_id);
-    const matchesOrg = !isSuperAdmin() || orgFilter === 'all' || screen.organization_id === orgFilter;
     const matchesBrand = brandFilter === 'all' || screen.logo_brand_id === brandFilter;
     const matchesCity = cityFilter === 'all' || location?.city === cityFilter;
     const matchesLocation = locationFilter === 'all' || screen.location_id === locationFilter;
     const matchesRotation = rotationFilter === 'all' || (screen.orientation || '0') === rotationFilter;
-    return matchesOrg && matchesBrand && matchesCity && matchesLocation && matchesRotation;
+    return matchesBrand && matchesCity && matchesLocation && matchesRotation;
   });
 
   // Group filtered screens by location
@@ -539,30 +534,6 @@ export const Screens = () => {
 
           {/* Filters Row */}
           <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
-            {isSuperAdmin() && (
-              <div className="flex items-center gap-2 border-r border-slate-100 dark:border-slate-800 pr-4">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5 ml-2">
-                  <Building2 className="w-4 h-4 text-brand-500" />
-                  Organizație:
-                </span>
-                <Select value={orgFilter} onValueChange={(val) => { setOrgFilter(val); setCityFilter('all'); setLocationFilter('all'); }}>
-                  <SelectTrigger className="w-[180px] h-9 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 rounded-full font-medium">
-                    <SelectValue placeholder="Toate organizațiile" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toate organizațiile ({screens.length})</SelectItem>
-                    {organizations.map(org => {
-                      const count = screens.filter(s => s.organization_id === org.id).length;
-                      return (
-                        <SelectItem key={org.id} value={org.id}>
-                          {org.name} ({count})
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 ml-2">Brand:</span>
               <div className="flex gap-2">

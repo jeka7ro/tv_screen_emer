@@ -20,6 +20,7 @@ import { useConfirm } from '../hooks/useConfirm';
 const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
 
 const AudioStreaming = () => {
+    const { confirm, ConfirmDialog } = useConfirm();
     const [playlists, setPlaylists] = useState([]);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState('list'); // list, detail

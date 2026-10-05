@@ -61,7 +61,7 @@ export const DashboardLayout = ({ children }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, isSuperAdmin, selectedOrgId, selectOrganization, organizations } = useAuth();
+  const { user, logout, isAdmin, isSuperAdmin, selectedOrgId, selectOrganization, organizations } = useAuth();
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -160,8 +160,8 @@ export const DashboardLayout = ({ children }) => {
             );
           })}
 
-          {/* Super Admin Menu Items */}
-          {isSuperAdmin() && (
+          {/* Admin Menu Items */}
+          {isAdmin() && (
             <>
               <div className="pt-4 pb-2">
                 <div className="flex items-center gap-2 px-3 text-xs font-semibold text-slate-400 uppercase">
@@ -169,22 +169,30 @@ export const DashboardLayout = ({ children }) => {
                   Admin
                 </div>
               </div>
-              {adminMenuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''} ${isSidebarCollapsed ? 'justify-center' : ''}`}
-                    data-testid={`nav-${item.path.substring(1)}`}
-                    title={isSidebarCollapsed ? item.label : ''}
-                  >
-                    <Icon className="w-5 h-5 shrink-0" />
-                    {!isSidebarCollapsed && <span className="animate-in fade-in slide-in-from-left-2 duration-300">{item.label}</span>}
-                  </Link>
-                );
-              })}
+              {adminMenuItems
+                .filter((item) => {
+                  // Only Super Admin can manage Organizations/Clients and Billing
+                  if (item.path === '/organizations' || item.path === '/billing') {
+                    return isSuperAdmin();
+                  }
+                  return true;
+                })
+                .map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''} ${isSidebarCollapsed ? 'justify-center' : ''}`}
+                      data-testid={`nav-${item.path.substring(1)}`}
+                      title={isSidebarCollapsed ? item.label : ''}
+                    >
+                      <Icon className="w-5 h-5 shrink-0" />
+                      {!isSidebarCollapsed && <span className="animate-in fade-in slide-in-from-left-2 duration-300">{item.label}</span>}
+                    </Link>
+                  );
+                })}
             </>
           )}
         </nav>
@@ -209,7 +217,13 @@ export const DashboardLayout = ({ children }) => {
               <p className="text-xs text-slate-400 truncate">{user?.email}</p>
               <div className="mt-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 truncate flex items-center gap-1">
                 <span>🏢</span>
-                <span className="truncate">{user?.organization_name || user?.organization_id || 'Sushi Master'}</span>
+                <span className="truncate">
+                  {isSuperAdmin()
+                    ? (selectedOrgId && selectedOrgId !== 'all'
+                        ? (organizations.find(o => o.id === selectedOrgId)?.name || selectedOrgId)
+                        : 'Toate Organizațiile')
+                    : (user?.organization_name || user?.organization_id || 'Client')}
+                </span>
               </div>
             </div>
           )}
@@ -240,6 +254,7 @@ export const DashboardLayout = ({ children }) => {
                     value={selectedOrgId || 'all'}
                     onChange={(e) => {
                       selectOrganization(e.target.value);
+                      window.location.reload();
                     }}
                     className="bg-transparent text-sm font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer pr-1"
                   >

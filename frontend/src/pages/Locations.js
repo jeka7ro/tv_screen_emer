@@ -15,10 +15,9 @@ import { useConfirm } from '../hooks/useConfirm';
 
 export const Locations = () => {
   const { confirm, ConfirmDialog } = useConfirm();
-  const { isAdmin, isSuperAdmin } = useAuth();
+  const { user, isAdmin, isSuperAdmin, selectedOrgId } = useAuth();
   const [locations, setLocations] = useState([]);
   const [organizations, setOrganizations] = useState([]);
-  const [orgFilter, setOrgFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
@@ -158,7 +157,8 @@ export const Locations = () => {
       city: '',
       security_code: '',
       iiko_organization_id: '',
-      status: 'active'
+      status: 'active',
+      organization_id: isSuperAdmin() && selectedOrgId && selectedOrgId !== 'all' ? selectedOrgId : (user?.organization_id || 'default_sushimaster')
     });
     setEditingLocation(null);
   };
@@ -167,26 +167,24 @@ export const Locations = () => {
   const cities = useMemo(() => {
     const uniqueCities = [...new Set(
       locations
-        .filter(loc => !isSuperAdmin() || orgFilter === 'all' || loc.organization_id === orgFilter)
         .map(loc => loc.city)
         .filter(Boolean)
     )];
     return uniqueCities.sort();
-  }, [locations, orgFilter, isSuperAdmin]);
+  }, [locations]);
 
   // Filter locations based on organization, search, and city
   const filteredLocations = useMemo(() => {
     return locations.filter(location => {
-      const matchesOrg = !isSuperAdmin() || orgFilter === 'all' || location.organization_id === orgFilter;
       const matchesSearch = searchQuery === '' ||
         location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         location.address.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCity = selectedCity === 'all' || location.city === selectedCity;
 
-      return matchesOrg && matchesSearch && matchesCity;
+      return matchesSearch && matchesCity;
     });
-  }, [locations, orgFilter, isSuperAdmin, searchQuery, selectedCity]);
+  }, [locations, searchQuery, selectedCity]);
 
   if (loading) {
     return (
@@ -359,27 +357,6 @@ export const Locations = () => {
               )}
             </div>
 
-            {/* Organization Filter */}
-            {isSuperAdmin() && (
-              <div className="sm:w-64">
-                <Select value={orgFilter} onValueChange={(val) => { setOrgFilter(val); setSelectedCity('all'); }}>
-                  <SelectTrigger className="w-full h-[40px] text-sm rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
-                    <SelectValue placeholder="Toate organizațiile" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toate organizațiile ({locations.length})</SelectItem>
-                    {organizations.map(org => {
-                      const count = locations.filter(l => l.organization_id === org.id).length;
-                      return (
-                        <SelectItem key={org.id} value={org.id}>
-                          {org.name} ({count})
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             {/* City Filter */}
             <div className="sm:w-64">

@@ -35,7 +35,6 @@ export const Users = () => {
   const { isAdmin, isSuperAdmin } = useAuth();
   const [users, setUsers] = useState([]);
   const [organizations, setOrganizations] = useState([]);
-  const [orgFilter, setOrgFilter] = useState('all');
   const [viewMode, setViewMode] = useViewMode('view_mode_users', 'grid');
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -294,11 +293,7 @@ export const Users = () => {
     );
   }
 
-  const filteredUsers = users.filter((u) => {
-    if (!isSuperAdmin()) return true;
-    if (orgFilter === 'all') return true;
-    return u.organization_id === orgFilter;
-  });
+  const filteredUsers = users;
 
   const superAdminCount = filteredUsers.filter((u) => u.is_super_admin).length;
 
@@ -327,41 +322,6 @@ export const Users = () => {
           </div>
         </div>
 
-        {/* Organization Filter (Super Admin only) */}
-        {isSuperAdmin() && (
-          <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm mb-6">
-            <Building2 className="w-4 h-4 text-brand-500 ml-2" />
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Filtru Organizație:
-            </span>
-            <Select value={orgFilter} onValueChange={setOrgFilter}>
-              <SelectTrigger className="w-[240px] h-9 text-sm rounded-full bg-slate-50 dark:bg-slate-800/50">
-                <SelectValue placeholder="Toate organizațiile" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toate organizațiile ({users.length})</SelectItem>
-                {organizations.map(org => {
-                  const count = users.filter(u => u.organization_id === org.id).length;
-                  return (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name} ({count})
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-            {orgFilter !== 'all' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setOrgFilter('all')}
-                className="text-xs text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-              >
-                Resetează filtru
-              </Button>
-            )}
-          </div>
-        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
