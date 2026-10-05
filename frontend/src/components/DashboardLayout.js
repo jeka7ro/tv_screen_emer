@@ -24,7 +24,8 @@ import {
   Calendar,
   DollarSign,
   Sun,
-  Moon
+  Moon,
+  Building2
 } from 'lucide-react';
 
 const menuItems = [
@@ -43,6 +44,7 @@ const menuItems = [
 ];
 
 const adminMenuItems = [
+  { path: '/organizations', icon: Building2, label: 'Organizații' },
   { path: '/users', icon: Users, label: 'Utilizatori' },
   { path: '/invitations', icon: UserPlus, label: 'Invitații' },
   { path: '/activity-logs', icon: Activity, label: 'Jurnale Activitate' },
@@ -59,7 +61,7 @@ export const DashboardLayout = ({ children }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, isSuperAdmin } = useAuth();
+  const { user, logout, isSuperAdmin, selectedOrgId, selectOrganization, organizations } = useAuth();
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -205,6 +207,10 @@ export const DashboardLayout = ({ children }) => {
               </div>
               <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{user?.full_name}</p>
               <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+              <div className="mt-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 truncate flex items-center gap-1">
+                <span>🏢</span>
+                <span className="truncate">{user?.organization_name || user?.organization_id || 'Sushi Master'}</span>
+              </div>
             </div>
           )}
           <button
@@ -223,9 +229,49 @@ export const DashboardLayout = ({ children }) => {
       <div className={`${isSidebarCollapsed ? 'ml-20' : 'ml-[17rem]'} flex-1 min-h-screen transition-all duration-300 ease-in-out flex flex-col`}>
         {/* Top Header Bar */}
         <header className="sticky top-0 z-40 px-8 h-[72px] flex items-center border-b border-slate-200/80 dark:border-slate-700/80 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
-          <div className="flex items-center justify-end gap-4 w-full">
-            {/* Date & Time */}
-            <div className="flex items-center gap-3 text-right">
+          <div className="flex items-center justify-between gap-4 w-full">
+            {/* Organization Switcher */}
+            {isSuperAdmin() ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm">
+                  <Building2 className="w-4 h-4 text-indigo-500 shrink-0" />
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 hidden sm:inline">Client:</span>
+                  <select
+                    value={selectedOrgId || 'all'}
+                    onChange={(e) => {
+                      selectOrganization(e.target.value);
+                    }}
+                    className="bg-transparent text-sm font-bold text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer pr-1"
+                  >
+                    <option value="all">🌐 Toate Organizațiile</option>
+                    {organizations.map((org) => (
+                      <option key={org.id} value={org.id}>
+                        🏢 {org.name} ({org.screens_count || 0} ecrane)
+                      </option>
+                    ))}
+                  </select>
+                  <Link
+                    to="/organizations"
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold ml-1 hidden md:inline border-l border-slate-200 dark:border-slate-700 pl-2"
+                    title="Gestionează organizațiile"
+                  >
+                    Setări
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm">
+                <Building2 className="w-4 h-4 text-indigo-500 shrink-0" />
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Organizație:</span>
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  {user?.organization_name || 'Sushi Master'}
+                </span>
+              </div>
+            )}
+
+            <div className="flex items-center gap-4">
+              {/* Date & Time */}
+              <div className="flex items-center gap-3 text-right">
               <div>
                 <div className="flex items-center gap-1.5 text-xs text-slate-400">
                   <Calendar className="w-3 h-3" />
@@ -306,6 +352,7 @@ export const DashboardLayout = ({ children }) => {
                   {getInitials(user?.full_name)}
                 </div>
               )}
+            </div>
             </div>
           </div>
         </header>

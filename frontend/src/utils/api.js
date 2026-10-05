@@ -7,11 +7,15 @@ const api = axios.create({
   baseURL: API,
 });
 
-// Add token to requests
+// Add token and organization to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  const selectedOrg = localStorage.getItem('selected_organization_id');
+  if (selectedOrg) {
+    config.headers['X-Organization-Id'] = selectedOrg;
   }
   return config;
 });

@@ -32,6 +32,11 @@ from PIL import Image
 from db import (
     init_db,
     close_db,
+    organizations_list,
+    organization_get,
+    organization_create,
+    organization_update,
+    organization_delete,
     user_get_by_email,
     user_insert,
     user_update_last_login,
@@ -331,6 +336,7 @@ class InvitationLink(BaseModel):
     role: str = "admin"
     location_id: Optional[str] = None
     is_active: bool = True
+    organization_id: str = "default_sushimaster"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class InvitationCreate(BaseModel):
@@ -338,12 +344,36 @@ class InvitationCreate(BaseModel):
     max_uses: int = 1
     role: str = "admin"
     location_id: Optional[str] = None
+    organization_id: Optional[str] = None
+
+class OrganizationCreate(BaseModel):
+    name: str
+    id: Optional[str] = None
+
+class OrganizationUpdate(BaseModel):
+    name: str
+
+class OrganizationResponse(BaseModel):
+    id: str
+    name: str
+    created_at: datetime
+    users_count: Optional[int] = 0
+    screens_count: Optional[int] = 0
+    locations_count: Optional[int] = 0
 
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
     full_name: str
     invitation_code: Optional[str] = None
+
+class AdminUserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    full_name: str
+    role: str = "admin"
+    organization_id: Optional[str] = None
+    location_id: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -359,7 +389,9 @@ class UserResponse(BaseModel):
     status: str = "active"
     avatar_url: Optional[str] = None
     organization_id: str = "default_sushimaster"
+    organization_name: Optional[str] = None
     last_login: Optional[datetime] = None
+    created_at: Optional[datetime] = None
 
 class UserStatusUpdate(BaseModel):
     status: str
@@ -388,6 +420,7 @@ class Location(BaseModel):
     timezone: str = "Europe/Bucharest"
     security_code: Optional[str] = None
     iiko_organization_id: Optional[str] = None
+    organization_id: Optional[str] = "default_sushimaster"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class LocationCreate(BaseModel):
@@ -398,6 +431,7 @@ class LocationCreate(BaseModel):
     timezone: Optional[str] = "Europe/Bucharest"
     security_code: Optional[str] = None
     iiko_organization_id: Optional[str] = None
+    organization_id: Optional[str] = None
 
 class Brand(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -405,12 +439,14 @@ class Brand(BaseModel):
     name: str
     address: Optional[str] = None
     logo_url: Optional[str] = None
+    organization_id: Optional[str] = "default_sushimaster"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class BrandCreate(BaseModel):
     name: str
     address: Optional[str] = None
     logo_url: Optional[str] = None
+    organization_id: Optional[str] = None
 
 class Screen(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -444,6 +480,7 @@ class Screen(BaseModel):
     custom_text_color: Optional[str] = "#FFFFFF"
     custom_text_has_background: Optional[bool] = False
     custom_text_bg_color: Optional[str] = "#000000"
+    organization_id: Optional[str] = "default_sushimaster"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     # Extra fields from JOINs
@@ -483,6 +520,7 @@ class ScreenCreate(BaseModel):
     custom_text_color: Optional[str] = "#FFFFFF"
     custom_text_has_background: Optional[bool] = False
     custom_text_bg_color: Optional[str] = "#000000"
+    organization_id: Optional[str] = None
 
 class ScreenTemplate(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -510,6 +548,7 @@ class Content(BaseModel):
     playlist_urls: List[str] = []
     folder_id: Optional[str] = None
     brand: List[str] = []
+    organization_id: Optional[str] = "default_sushimaster"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_by_name: Optional[str] = None
 
@@ -526,6 +565,7 @@ class ContentCreate(BaseModel):
     playlist_urls: Optional[List[str]] = []
     folder_id: Optional[str] = None
     brand: Optional[List[str]] = []
+    organization_id: Optional[str] = None
 
 
 class ContentFolder(BaseModel):
@@ -535,6 +575,7 @@ class ContentFolder(BaseModel):
     description: Optional[str] = None
     color: str = "#6366f1"
     icon: str = "folder"
+    organization_id: Optional[str] = "default_sushimaster"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = None
 
@@ -544,6 +585,7 @@ class ContentFolderCreate(BaseModel):
     description: Optional[str] = None
     color: Optional[str] = "#6366f1"
     icon: Optional[str] = "folder"
+    organization_id: Optional[str] = None
 
 
 class ContentFolderUpdate(BaseModel):
@@ -578,6 +620,7 @@ class Playlist(BaseModel):
     end_at: Optional[datetime] = None
     screen_ids: List[str] = []
     color: str = "#4F46E5"
+    organization_id: Optional[str] = "default_sushimaster"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class PlaylistCreate(BaseModel):
@@ -594,6 +637,7 @@ class PlaylistCreate(BaseModel):
     end_at: Optional[datetime] = None
     screen_ids: Optional[List[str]] = []
     color: Optional[str] = "#4F46E5"
+    organization_id: Optional[str] = None
     model_config = ConfigDict(extra="ignore")
 
 class Product(BaseModel):
@@ -610,6 +654,7 @@ class Product(BaseModel):
     order_index: int = 0
     location_id: str
     iiko_id: Optional[str] = None
+    organization_id: Optional[str] = "default_sushimaster"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ProductCreate(BaseModel):
@@ -624,6 +669,7 @@ class ProductCreate(BaseModel):
     order_index: Optional[int] = 0
     location_id: str
     iiko_id: Optional[str] = None
+    organization_id: Optional[str] = None
 
 class MenuTemplate(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -653,6 +699,7 @@ class DigitalMenu(BaseModel):
     auto_rotate: bool = True
     background_image_url: Optional[str] = None
     status: str = "active"  # active, draft
+    organization_id: Optional[str] = "default_sushimaster"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class DigitalMenuCreate(BaseModel):
@@ -668,6 +715,7 @@ class DigitalMenuCreate(BaseModel):
     auto_rotate: Optional[bool] = True
     background_image_url: Optional[str] = None
     status: Optional[str] = "active"
+    organization_id: Optional[str] = None
 
 class ScreenZoneContent(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -744,6 +792,26 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         user_doc["created_at"] = datetime.fromisoformat(user_doc["created_at"])
     return User(**user_doc)
 
+def get_user_org_id(current_user: User, request: Optional[Request] = None, org_id: Optional[str] = None) -> Optional[str]:
+    """Resolve target organization for multi-tenant querying"""
+    header_org = request.headers.get("X-Organization-Id") if request else None
+    chosen = org_id or header_org
+    if current_user.is_super_admin:
+        if chosen == "all":
+            return None
+        if chosen:
+            return chosen
+        return getattr(current_user, "organization_id", "default_sushimaster") or "default_sushimaster"
+    return getattr(current_user, "organization_id", "default_sushimaster") or "default_sushimaster"
+
+def get_user_create_org_id(current_user: User, request: Optional[Request] = None, item_org_id: Optional[str] = None) -> str:
+    """Resolve target organization when creating resources"""
+    header_org = request.headers.get("X-Organization-Id") if request else None
+    chosen = item_org_id or header_org
+    if current_user.is_super_admin and chosen and chosen != "all":
+        return chosen
+    return getattr(current_user, "organization_id", "default_sushimaster") or "default_sushimaster"
+
 # ============ AUTH ROUTES ============
 
 @api_router.post("/auth/register", response_model=Token)
@@ -767,14 +835,16 @@ async def register(user_data: UserCreate):
         if invitation.get("uses", 0) >= invitation.get("max_uses", 1):
             raise HTTPException(status_code=403, detail="Codul de invitație a atins limita maximă de utilizări")
         
-        # User inherits role and location from invitation
+        # User inherits role, location, and organization from invitation
         invite_role = invitation.get("role", "admin")
         invite_location = invitation.get("location_id")
+        invite_org = invitation.get("organization_id") or "default_sushimaster"
         await invitation_increment_uses(user_data.invitation_code)
     else:
         # First user is super admin
         invite_role = "admin"
         invite_location = None
+        invite_org = "default_sushimaster"
 
     user = User(
         email=user_data.email,
@@ -782,7 +852,8 @@ async def register(user_data: UserCreate):
         hashed_password=get_password_hash(user_data.password),
         is_super_admin=is_first_user,
         role=invite_role,
-        location_id=invite_location
+        location_id=invite_location,
+        organization_id=invite_org
     )
     
     user_dict = user.model_dump()
@@ -822,7 +893,8 @@ async def register(user_data: UserCreate):
             full_name=user.full_name, 
             is_super_admin=user.is_super_admin,
             role=user.role,
-            location_id=user.location_id
+            location_id=user.location_id,
+            organization_id=getattr(user, "organization_id", "default_sushimaster")
         ),
     )
 
@@ -862,6 +934,10 @@ async def login(credentials: UserLogin):
     # Log successful login
     await log_activity(user.id, user.full_name, "login", "user", user.id, "INFO", {"email": user.email})
     
+    user_org_id = getattr(user, "organization_id", "default_sushimaster") or "default_sushimaster"
+    user_org = await organization_get(user_org_id)
+    org_name = user_org.get("name") if user_org else "Sushi Master"
+    
     return Token(
         access_token=access_token,
         token_type="bearer",
@@ -874,12 +950,17 @@ async def login(credentials: UserLogin):
             location_id=user.location_id,
             status=user.status,
             avatar_url=user.avatar_url,
+            organization_id=user_org_id,
+            organization_name=org_name,
             last_login=datetime.now(timezone.utc)
         ),
     )
 
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
+    user_org_id = getattr(current_user, "organization_id", "default_sushimaster") or "default_sushimaster"
+    user_org = await organization_get(user_org_id)
+    org_name = user_org.get("name") if user_org else "Sushi Master"
     return UserResponse(
         id=current_user.id, 
         email=current_user.email, 
@@ -887,9 +968,71 @@ async def get_me(current_user: User = Depends(get_current_user)):
         is_super_admin=current_user.is_super_admin,
         role=current_user.role,
         location_id=current_user.location_id,
+        status=current_user.status,
         avatar_url=current_user.avatar_url,
+        organization_id=user_org_id,
+        organization_name=org_name,
         last_login=current_user.last_login
     )
+
+# ============ ORGANIZATIONS ROUTES ============
+
+@api_router.get("/organizations", response_model=List[OrganizationResponse])
+async def list_organizations_endpoint(current_user: User = Depends(get_current_user)):
+    if not current_user.is_super_admin:
+        org = await organization_get(getattr(current_user, "organization_id", "default_sushimaster"))
+        if not org:
+            return []
+        return [org]
+    return await organizations_list()
+
+@api_router.post("/organizations", response_model=OrganizationResponse)
+async def create_organization_endpoint(data: OrganizationCreate, current_user: User = Depends(get_current_user)):
+    if not current_user.is_super_admin:
+        raise HTTPException(status_code=403, detail="Doar super-adminul poate crea organizații")
+    raw_id = data.id or re.sub(r'[^a-z0-9_-]', '', data.name.lower().replace(' ', '_'))
+    org_id = raw_id.strip() if raw_id else str(uuid.uuid4())[:8]
+    existing = await organization_get(org_id)
+    if existing:
+        raise HTTPException(status_code=400, detail="O organizație cu acest ID există deja")
+    new_org = {
+        "id": org_id,
+        "name": data.name.strip(),
+        "created_at": datetime.now(timezone.utc),
+        "users_count": 0,
+        "screens_count": 0,
+        "locations_count": 0
+    }
+    await organization_create(new_org)
+    await log_activity(current_user.id, current_user.full_name, "create", "organization", org_id, "INFO", {"name": data.name})
+    return new_org
+
+@api_router.put("/organizations/{org_id}")
+async def update_organization_endpoint(org_id: str, data: OrganizationUpdate, current_user: User = Depends(get_current_user)):
+    if not current_user.is_super_admin:
+        raise HTTPException(status_code=403, detail="Doar super-adminul poate modifica organizații")
+    existing = await organization_get(org_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Organizația nu a fost găsită")
+    await organization_update(org_id, data.name.strip())
+    await log_activity(current_user.id, current_user.full_name, "update", "organization", org_id, "INFO", {"name": data.name})
+    return {"message": "Organizație actualizată cu succes"}
+
+@api_router.delete("/organizations/{org_id}")
+async def delete_organization_endpoint(org_id: str, current_user: User = Depends(get_current_user)):
+    if not current_user.is_super_admin:
+        raise HTTPException(status_code=403, detail="Doar super-adminul poate șterge organizații")
+    if org_id == "default_sushimaster":
+        raise HTTPException(status_code=400, detail="Organizația implicită nu poate fi ștearsă")
+    existing = await organization_get(org_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Organizația nu a fost găsită")
+    screens = await screens_list(org_id=org_id)
+    if screens:
+        raise HTTPException(status_code=400, detail=f"Organizația are {len(screens)} ecrane active. Ștergeți-le mai întâi.")
+    await organization_delete(org_id)
+    await log_activity(current_user.id, current_user.full_name, "delete", "organization", org_id, "WARNING", {"name": existing["name"]})
+    return {"message": "Organizație ștearsă cu succes"}
 
 # ============ INVITATION ROUTES ============
 
@@ -906,13 +1049,15 @@ async def require_admin(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 @api_router.post("/invitations")
-async def create_invitation(invitation_data: InvitationCreate, current_user: User = Depends(get_super_admin)):
+async def create_invitation(invitation_data: InvitationCreate, request: Request, current_user: User = Depends(get_super_admin)):
+    target_org = get_user_create_org_id(current_user, request, invitation_data.organization_id)
     invitation = InvitationLink(
         created_by=current_user.id,
         expires_at=datetime.now(timezone.utc) + timedelta(days=invitation_data.expires_in_days),
         max_uses=invitation_data.max_uses,
         role=invitation_data.role,
         location_id=invitation_data.location_id,
+        organization_id=target_org,
     )
     inv_dict = invitation.model_dump()
     await invitation_insert(inv_dict)
@@ -923,11 +1068,13 @@ async def create_invitation(invitation_data: InvitationCreate, current_user: Use
         "max_uses": invitation.max_uses,
         "uses": invitation.uses,
         "is_active": invitation.is_active,
+        "organization_id": invitation.organization_id,
     }
 
 @api_router.get("/invitations")
-async def get_invitations(current_user: User = Depends(get_super_admin)):
-    return await invitations_list()
+async def get_invitations(request: Request, current_user: User = Depends(get_super_admin)):
+    org_id = get_user_org_id(current_user, request)
+    return await invitations_list(org_id=org_id)
 
 @api_router.delete("/invitations/{invitation_id}")
 async def delete_invitation(invitation_id: str, current_user: User = Depends(get_super_admin)):
@@ -937,8 +1084,40 @@ async def delete_invitation(invitation_id: str, current_user: User = Depends(get
     return {"message": "Invitație dezactivată"}
 
 @api_router.get("/users")
-async def get_users(current_user: User = Depends(get_super_admin)):
-    return await users_list(exclude_password=True)
+async def get_users(request: Request, current_user: User = Depends(get_super_admin)):
+    org_id = get_user_org_id(current_user, request)
+    return await users_list(exclude_password=True, org_id=org_id)
+
+@api_router.post("/users", response_model=UserResponse)
+async def create_user_endpoint(data: AdminUserCreate, request: Request, current_user: User = Depends(get_super_admin)):
+    existing = await user_get_by_email(data.email)
+    if existing:
+        raise HTTPException(status_code=400, detail="Email deja existent")
+    target_org = get_user_create_org_id(current_user, request, data.organization_id)
+    user = User(
+        email=data.email,
+        full_name=data.full_name,
+        hashed_password=get_password_hash(data.password),
+        is_super_admin=False,
+        role=data.role,
+        location_id=data.location_id,
+        organization_id=target_org
+    )
+    user_dict = user.model_dump()
+    await user_insert(user_dict)
+    await log_activity(current_user.id, current_user.full_name, "create", "user", user.id, "INFO", {"email": user.email, "org_id": target_org})
+    org = await organization_get(target_org)
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        role=user.role,
+        is_super_admin=user.is_super_admin,
+        location_id=user.location_id,
+        organization_id=user.organization_id,
+        organization_name=org["name"] if org else target_org,
+        created_at=user.created_at
+    )
 
 @api_router.delete("/users/{user_id}")
 async def delete_user_endpoint(user_id: str, current_user: User = Depends(get_super_admin)):
@@ -1026,15 +1205,18 @@ async def check_registration_open():
 # ============ LOCATIONS ROUTES ============
 
 @api_router.get("/locations", response_model=List[Location])
-async def get_locations(current_user: User = Depends(get_current_user)):
-    all_locations = await locations_list()
+async def get_locations(request: Request, current_user: User = Depends(get_current_user)):
+    org_id = get_user_org_id(current_user, request)
+    all_locations = await locations_list(org_id=org_id)
     if current_user.role == "manager" and current_user.location_id:
         return [l for l in all_locations if l["id"] == current_user.location_id]
     return all_locations
 
 @api_router.post("/locations", response_model=Location)
-async def create_location(location_data: LocationCreate, current_user: User = Depends(require_admin)):
-    location = Location(**location_data.model_dump())
+async def create_location(location_data: LocationCreate, request: Request, current_user: User = Depends(require_admin)):
+    loc_dict = location_data.model_dump()
+    loc_dict["organization_id"] = get_user_create_org_id(current_user, request, loc_dict.get("organization_id"))
+    location = Location(**loc_dict)
     await location_insert(location.model_dump())
     await log_activity(current_user.id, current_user.full_name, "create", "location", location.id, "INFO", {"name": location.name})
     return location
@@ -1113,30 +1295,34 @@ async def delete_location(location_id: str, current_user: User = Depends(require
 # ============ SCREENS ROUTES ============
 
 @api_router.get("/screens", response_model=List[Screen])
-async def get_screens(current_user: User = Depends(get_current_user)):
-    all_screens = await screens_list()
+async def get_screens(request: Request, current_user: User = Depends(get_current_user)):
+    org_id = get_user_org_id(current_user, request)
+    all_screens = await screens_list(org_id=org_id)
     if current_user.role == "manager" and current_user.location_id:
         return [s for s in all_screens if s["location_id"] == current_user.location_id]
     return all_screens
 
 @api_router.post("/screens", response_model=Screen)
-async def create_screen(screen_data: ScreenCreate, current_user: User = Depends(require_admin)):
+async def create_screen(screen_data: ScreenCreate, request: Request, current_user: User = Depends(require_admin)):
     if await screen_exists_by_slug(screen_data.slug):
         raise HTTPException(status_code=400, detail="Slug already exists")
-    screen = Screen(**screen_data.model_dump())
-    screen_dict = screen.model_dump()
+    screen_dict = screen_data.model_dump()
+    screen_dict["organization_id"] = get_user_create_org_id(current_user, request, screen_dict.get("organization_id"))
+    screen = Screen(**screen_dict)
+    insert_dict = screen.model_dump()
     # Ensure brand field exists for db insert (legacy column)
-    if "brand" not in screen_dict:
-        screen_dict["brand"] = None
-    await screen_insert(screen_dict)
+    if "brand" not in insert_dict:
+        insert_dict["brand"] = None
+    await screen_insert(insert_dict)
     await log_activity(current_user.id, current_user.full_name, "create", "screen", screen.id, "INFO", {"name": screen.name, "location_id": screen.location_id})
     return screen
 
 # MUST be BEFORE /screens/{screen_id} to avoid route conflict
 @api_router.get("/screens/thumbnails")
-async def get_screens_thumbnails(current_user: User = Depends(get_current_user)):
+async def get_screens_thumbnails(request: Request, current_user: User = Depends(get_current_user)):
     """Return thumbnail URLs for ALL screens in a single lightweight request."""
-    all_screens = await screens_list()
+    org_id = get_user_org_id(current_user, request)
+    all_screens = await screens_list(org_id=org_id)
     result = {}
     for screen in all_screens:
         slug = screen.get("slug")
@@ -1498,10 +1684,11 @@ async def get_screen_templates(current_user: User = Depends(get_current_user)):
 # ========== CONTENT FOLDERS ENDPOINTS ==========
 
 @api_router.get("/content/folders")
-async def list_folders(current_user: User = Depends(get_current_user)):
+async def list_folders(request: Request, current_user: User = Depends(get_current_user)):
     try:
         logger.info("FETCHING FOLDERS...")
-        folders = await folder_list()
+        org_id = get_user_org_id(current_user, request)
+        folders = await folder_list(org_id=org_id)
         return folders
     except Exception as e:
         tb = traceback.format_exc()
@@ -1509,16 +1696,18 @@ async def list_folders(current_user: User = Depends(get_current_user)):
         return JSONResponse(status_code=500, content={"error": str(e), "traceback": tb})
 
 @api_router.post("/content/folders")
-async def create_folder(folder_data: ContentFolderCreate, current_user: User = Depends(require_admin)):
+async def create_folder(folder_data: ContentFolderCreate, request: Request, current_user: User = Depends(require_admin)):
     try:
         logger.info(f"CREATING FOLDER: {folder_data.name}")
         folder_id = str(uuid.uuid4())
+        org_id = get_user_create_org_id(current_user, request, getattr(folder_data, "organization_id", None))
         f_dict = {
             "id": folder_id,
             "name": folder_data.name,
             "description": folder_data.description,
             "color": folder_data.color or "#6366f1",
             "icon": folder_data.icon or "folder",
+            "organization_id": org_id,
             "created_at": datetime.now(timezone.utc)
         }
         await folder_insert(f_dict)
@@ -1611,8 +1800,9 @@ async def upload_folder_icon(
 # ============ CONTENT ROUTES ============
 
 @api_router.get("/content", response_model=List[Content])
-async def get_content(current_user: User = Depends(get_current_user)):
-    return await content_list()
+async def get_content(request: Request, current_user: User = Depends(get_current_user)):
+    org_id = get_user_org_id(current_user, request)
+    return await content_list(org_id=org_id)
 
 @api_router.get("/content/{content_id}", response_model=Content)
 async def get_content_item(content_id: str, current_user: User = Depends(get_current_user)):
@@ -1630,8 +1820,10 @@ async def create_content(
     folder_id: Optional[str] = Form(None),
     brand: Optional[str] = Form(None), # This will be a comma-separated string from the form
     thumbnail: Optional[UploadFile] = File(None),
+    request: Request = None,
     current_user: User = Depends(require_admin)
 ):
+    target_org = get_user_create_org_id(current_user, request)
     # Parse brands if provided as string
     brand_list = []
     if brand:
@@ -1643,8 +1835,7 @@ async def create_content(
         try:
             thumb_bytes = await thumbnail.read()
             thumb_ext = Path(thumbnail.filename).suffix.lower() or '.jpg'
-            org_id = getattr(current_user, "organization_id", "default_sushimaster")
-            thumb_filename = f"{org_id}/thumbnails/{uuid.uuid4()}{thumb_ext}"
+            thumb_filename = f"{target_org}/thumbnails/{uuid.uuid4()}{thumb_ext}"
             thumbnail_url_shared = await upload_to_supabase(thumb_bytes, thumb_filename, thumbnail.content_type or "image/jpeg")
         except Exception as e:
             logger.warning(f"Thumbnail upload failed: {e}")
@@ -1685,8 +1876,7 @@ async def create_content(
                 raise HTTPException(status_code=400, detail="Imaginea depășește limita maximă de 20MB.")
             
             # Upload to Supabase Storage
-            org_id = getattr(current_user, "organization_id", "default_sushimaster")
-            supabase_path = f"{org_id}/{file_type_folder}/{unique_filename}"
+            supabase_path = f"{target_org}/{file_type_folder}/{unique_filename}"
             file_url = await upload_to_supabase(file_bytes, supabase_path, file.content_type)
             
             # Create content record - Title from filename
@@ -1716,6 +1906,7 @@ async def create_content(
                 "autoplay": True,
                 "loop": True,
                 "playlist_urls": [],
+                "organization_id": target_org,
                 "created_at": datetime.now(timezone.utc),
                 "created_by": current_user.id,
                 "created_by_name": current_user.full_name
@@ -1736,8 +1927,10 @@ async def create_content(
 
 
 @api_router.post("/content/external", response_model=Content)
-async def create_external_content(content_data: ContentCreate, current_user: User = Depends(require_admin)):
-    content = Content(**content_data.model_dump())
+async def create_external_content(content_data: ContentCreate, request: Request, current_user: User = Depends(require_admin)):
+    c_dict = content_data.model_dump()
+    c_dict["organization_id"] = get_user_create_org_id(current_user, request, getattr(content_data, "organization_id", None))
+    content = Content(**c_dict)
     content.created_by_name = current_user.full_name
     await content_insert(content.model_dump())
     return content
@@ -1807,12 +2000,15 @@ async def serve_upload(file_type: str, filename: str):
 # ============ PLAYLISTS ROUTES ============
 
 @api_router.get("/playlists", response_model=List[Playlist])
-async def get_playlists(current_user: User = Depends(get_current_user)):
-    return await playlists_list()
+async def get_playlists(request: Request, current_user: User = Depends(get_current_user)):
+    org_id = get_user_org_id(current_user, request)
+    return await playlists_list(org_id=org_id)
+
 @api_router.post("/playlists", response_model=Playlist)
-async def create_playlist(playlist_data: PlaylistCreate, current_user: User = Depends(require_admin)):
+async def create_playlist(playlist_data: PlaylistCreate, request: Request, current_user: User = Depends(require_admin)):
     playlist_dict = playlist_data.model_dump()
     playlist_dict["created_by"] = current_user.id
+    playlist_dict["organization_id"] = get_user_create_org_id(current_user, request, playlist_dict.get("organization_id"))
     playlist = Playlist(**playlist_dict)
     await playlist_insert(playlist.model_dump())
     
@@ -1858,15 +2054,18 @@ async def delete_playlist(playlist_id: str, current_user: User = Depends(require
 # ============ PRODUCTS ROUTES ============
 
 @api_router.get("/products", response_model=List[Product])
-async def get_products(location_id: Optional[str] = None, current_user: User = Depends(get_current_user)):
-    all_products = await products_list()
+async def get_products(request: Request, location_id: Optional[str] = None, current_user: User = Depends(get_current_user)):
+    org_id = get_user_org_id(current_user, request)
+    all_products = await products_list(org_id=org_id)
     if location_id:
         return [p for p in all_products if p.get("location_id") == location_id]
     return all_products
 
 @api_router.post("/products", response_model=Product)
-async def create_product(product_data: ProductCreate, current_user: User = Depends(require_admin)):
-    product = Product(**product_data.model_dump())
+async def create_product(product_data: ProductCreate, request: Request, current_user: User = Depends(require_admin)):
+    prod_dict = product_data.model_dump()
+    prod_dict["organization_id"] = get_user_create_org_id(current_user, request, prod_dict.get("organization_id"))
+    product = Product(**prod_dict)
     await product_insert(product.model_dump())
     return product
 
@@ -1888,11 +2087,15 @@ async def update_product(product_id: str, product_data: ProductCreate, current_u
 @api_router.post("/products/import-batch", response_model=List[Product])
 async def import_products_batch(
     products_data: List[ProductCreate],
+    request: Request,
     current_user: User = Depends(require_admin),
 ):
     imported = []
+    org_id = get_user_create_org_id(current_user, request)
     for d in products_data:
-        p = Product(**d.model_dump())
+        p_dict = d.model_dump()
+        p_dict["organization_id"] = org_id
+        p = Product(**p_dict)
         await product_upsert_by_name(p.model_dump())
         imported.append(p)
     return imported
@@ -1967,12 +2170,15 @@ async def get_menu_templates(current_user: User = Depends(get_current_user)):
 # ============ DIGITAL MENUS ROUTES ============
 
 @api_router.get("/digital-menus", response_model=List[DigitalMenu])
-async def get_digital_menus(current_user: User = Depends(get_current_user)):
-    return await digital_menus_list()
+async def get_digital_menus(request: Request, current_user: User = Depends(get_current_user)):
+    org_id = get_user_org_id(current_user, request)
+    return await digital_menus_list(org_id=org_id)
 
 @api_router.post("/digital-menus", response_model=DigitalMenu)
-async def create_digital_menu(menu_data: DigitalMenuCreate, current_user: User = Depends(require_admin)):
-    menu = DigitalMenu(**menu_data.model_dump())
+async def create_digital_menu(menu_data: DigitalMenuCreate, request: Request, current_user: User = Depends(require_admin)):
+    menu_dict = menu_data.model_dump()
+    menu_dict["organization_id"] = get_user_create_org_id(current_user, request, menu_dict.get("organization_id"))
+    menu = DigitalMenu(**menu_dict)
     await digital_menu_insert(menu.model_dump())
     return menu
 
@@ -2115,15 +2321,11 @@ async def sync_screens(sync_data: ScreenSync, current_user: User = Depends(requi
     return {"message": f"Screens synchronized with group {sync_group}", "sync_group": sync_group}
 
 @api_router.get("/screen-sync/groups")
-async def get_sync_groups(current_user: User = Depends(get_current_user)):
-    groups = await sync_groups_list()
+async def get_sync_groups(request: Request, current_user: User = Depends(get_current_user)):
+    org_id = get_user_org_id(current_user, request)
+    groups = await sync_groups_list(org_id=org_id)
     if current_user.role == "manager" and current_user.location_id:
-        # A bit more complex: filter groups where all screens belong to the manager's location
-        # or at least the manager has access to them.
-        # For simplicity, filtering by group screens if we could know their location.
-        # But groups usually have screen_names or screen_ids.
-        # Let's fetch screens to check locations.
-        all_screens = await screens_list()
+        all_screens = await screens_list(org_id=org_id)
         manager_screen_ids = [s["id"] for s in all_screens if s["location_id"] == current_user.location_id]
         
         filtered_groups = []
@@ -2453,15 +2655,16 @@ async def get_display_data(slug: str, security_code: Optional[str] = None):
 
 
 @api_router.get("/dashboard/stats")
-async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
+async def get_dashboard_stats(request: Request, current_user: User = Depends(get_current_user)):
+    org_id = get_user_org_id(current_user, request)
     location_id = current_user.location_id if current_user.role == "manager" else None
     
     return {
-        "locations": await locations_count(location_id),
-        "screens": await screens_count(location_id),
-        "online_screens": await screens_count_online(location_id),
-        "products": await products_count(),
-        "content": await content_count(),
+        "locations": await locations_count(location_id, org_id=org_id),
+        "screens": await screens_count(location_id, org_id=org_id),
+        "online_screens": await screens_count_online(location_id, org_id=org_id),
+        "products": await products_count(org_id=org_id),
+        "content": await content_count(org_id=org_id),
     }
 
 # ============ AUDIO HELPERS ============
@@ -2620,9 +2823,10 @@ async def get_public_player_data(playlist_id: str):
 # Happy Hour API Endpoints
 
 @api_router.get("/happy-hours")
-async def get_happy_hours(current_user: dict = Depends(get_current_user)):
+async def get_happy_hours(request: Request, current_user: dict = Depends(get_current_user)):
     """Get all happy hour schedules"""
-    schedules = await happy_hour_list()
+    org_id = get_user_org_id(current_user, request)
+    schedules = await happy_hour_list(org_id=org_id)
     return schedules
 
 @api_router.get("/happy-hours/active")
@@ -2640,12 +2844,13 @@ async def get_happy_hour(schedule_id: str, current_user: dict = Depends(get_curr
     return schedule
 
 @api_router.post("/happy-hours")
-async def create_happy_hour(data: dict, current_user: User = Depends(get_current_user)):
+async def create_happy_hour(data: dict, request: Request, current_user: User = Depends(get_current_user)):
     """Create a new happy hour schedule"""
     if current_user.role not in ["super_admin", "admin"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     data['created_by'] = current_user.id
+    data['organization_id'] = get_user_create_org_id(current_user, request, data.get("organization_id"))
     schedule = await happy_hour_insert(data)
     
     # Log action
@@ -2719,12 +2924,15 @@ async def report_activity(data: dict, request: Request):
 # ============ BRANDS ROUTES ============
 
 @api_router.get("/brands", response_model=List[Brand])
-async def get_brands(current_user: User = Depends(get_current_user)):
-    return await brands_list()
+async def get_brands(request: Request, current_user: User = Depends(get_current_user)):
+    org_id = get_user_org_id(current_user, request)
+    return await brands_list(org_id=org_id)
 
 @api_router.post("/brands", response_model=Brand)
-async def create_brand(brand_data: BrandCreate, current_user: User = Depends(require_admin)):
-    brand = Brand(**brand_data.model_dump())
+async def create_brand(brand_data: BrandCreate, request: Request, current_user: User = Depends(require_admin)):
+    b_dict = brand_data.model_dump()
+    b_dict["organization_id"] = get_user_create_org_id(current_user, request, b_dict.get("organization_id"))
+    brand = Brand(**b_dict)
     await brand_insert(brand.model_dump())
     return brand
 

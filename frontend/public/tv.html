@@ -129,8 +129,9 @@
         function loadScreen(slug) {
             document.getElementById('loader').style.display = 'block';
 
-            // API URL - use the same backend
-            var API = 'https://tv-screen-emer.onrender.com/api';
+            // API URL - local backend if running on localhost, otherwise Render
+            var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            var API = isLocal ? 'http://localhost:8002/api' : 'https://tv-screen-emer.onrender.com/api';
 
             var xhr = new XMLHttpRequest();
             xhr.open('GET', API + '/display/' + slug);
@@ -179,6 +180,14 @@
         var SUPA_PREFIX = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/content/';
         function proxyUrl(url) {
             if (!url) return '';
+            var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocal) {
+                if (url.startsWith('/api/uploads') || url.startsWith('/uploads')) {
+                    var clean = url.startsWith('/api') ? url : '/api' + url;
+                    return 'http://localhost:8002' + clean;
+                }
+                return url;
+            }
             if (url.indexOf(SUPA_PREFIX) === 0) {
                 return '/supabase-media/' + url.substring(SUPA_PREFIX.length);
             }

@@ -6,18 +6,50 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [organizations, setOrganizations] = useState([]);
+  const [selectedOrgId, setSelectedOrgIdState] = useState(() => {
+    return localStorage.getItem('selected_organization_id') || 'all';
+  });
+
+  const refreshOrganizations = async () => {
+    try {
+      const res = await api.get('/organizations');
+      setOrganizations(res.data);
+      return res.data;
+    } catch (e) {
+      console.error('Failed to load organizations', e);
+      return [];
+    }
+  };
+
+  const selectOrganization = (orgId) => {
+    setSelectedOrgIdState(orgId);
+    if (orgId) {
+      localStorage.setItem('selected_organization_id', orgId);
+    } else {
+      localStorage.removeItem('selected_organization_id');
+    }
+    window.dispatchEvent(new CustomEvent('organization_changed', { detail: orgId }));
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
 
     if (token && savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
       // Verify token is still valid
       api.get('/auth/me')
         .then(response => {
-          setUser(response.data);
-          localStorage.setItem('user', JSON.stringify(response.data));
+          const freshUser = response.data;
+          setUser(freshUser);
+          localStorage.setItem('user', JSON.stringify(freshUser));
+          if (freshUser.is_super_admin) {
+            refreshOrganizations();
+          } else {
+            selectOrganization(freshUser.organization_id || 'default_sushimaster');
+          }
         })
         .catch(() => {
           logout();
@@ -34,6 +66,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', access_token);
     localStorage.setItem('user', JSON.stringify(user));
     setUser(user);
+    if (user.is_super_admin) {
+      refreshOrganizations();
+    } else {
+      selectOrganization(user.organization_id || 'default_sushimaster');
+    }
     return user;
   };
 
@@ -43,12 +80,18 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', access_token);
     localStorage.setItem('user', JSON.stringify(user));
     setUser(user);
+    if (user.is_super_admin) {
+      refreshOrganizations();
+    } else {
+      selectOrganization(user.organization_id || 'default_sushimaster');
+    }
     return user;
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('selected_organization_id');
     setUser(null);
   };
 
@@ -56,7 +99,19 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = () => user?.role === 'admin' || isSuperAdmin();
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isSuperAdmin, isAdmin }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      login,
+      register,
+      logout,
+      isSuperAdmin,
+      isAdmin,
+      organizations,
+      selectedOrgId,
+      selectOrganization,
+      refreshOrganizations
+    }}>
       {children}
     </AuthContext.Provider>
   );

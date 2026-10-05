@@ -204,9 +204,10 @@ async def init_db() -> None:
     """)
 
     # Add organization_id column to existing tables
-    for table in ["content", "users", "screens", "locations", "playlists", "folders"]:
+    for table in ["content", "users", "screens", "locations", "playlists", "content_folders", "products", "digital_menus", "brands", "audio_playlists", "invitations"]:
         try:
             await pool.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS organization_id TEXT REFERENCES organizations(id) DEFAULT 'default_sushimaster'")
+            await pool.execute(f"CREATE INDEX IF NOT EXISTS idx_{table}_org_id ON {table}(organization_id)")
         except Exception:
             pass
 
@@ -312,6 +313,36 @@ async def _execute_many(q: str, *a: Any) -> str:
     return await pool.execute(q, *a)
 
 
+# ---------- organizations ----------
+
+async def organizations_list() -> List[Dict[str, Any]]:
+    return await _fetch_all("""
+        SELECT o.*,
+               (SELECT count(*)::int FROM users u WHERE u.organization_id = o.id) as users_count,
+               (SELECT count(*)::int FROM screens s WHERE s.organization_id = o.id) as screens_count,
+               (SELECT count(*)::int FROM locations l WHERE l.organization_id = o.id) as locations_count
+        FROM organizations o
+        ORDER BY o.created_at ASC
+    """)
+
+async def organization_get(org_id: str) -> Optional[Dict[str, Any]]:
+    return await _fetch_one("SELECT * FROM organizations WHERE id = $1", org_id)
+
+async def organization_create(row: Dict[str, Any]) -> None:
+    await _execute(
+        "INSERT INTO organizations (id, name, created_at) VALUES ($1, $2, $3)",
+        row["id"], row["name"], row.get("created_at") or datetime.now(timezone.utc)
+    )
+
+async def organization_update(org_id: str, name: str) -> None:
+    await _execute("UPDATE organizations SET name = $2 WHERE id = $1", org_id, name)
+
+async def organization_delete(org_id: str) -> None:
+    if org_id == "default_sushimaster":
+        raise ValueError("Nu se poate șterge organizația implicită")
+    await _execute("DELETE FROM organizations WHERE id = $1", org_id)
+
+
 # ---------- users ----------
 
 async def user_get_by_email(email: str) -> Optional[Dict[str, Any]]:
@@ -320,7 +351,7 @@ async def user_get_by_email(email: str) -> Optional[Dict[str, Any]]:
 
 async def user_get_by_email_no_password(email: str) -> Optional[Dict[str, Any]]:
     return await _fetch_one(
-        "SELECT id, email, full_name, is_super_admin, role, location_id, status, created_at, last_login FROM users WHERE email = $1",
+        "SELECT id, email, full_name, is_super_admin, role, location_id, status, organization_id, created_at, last_login FROM users WHERE email = $1",
         email,
     )
 
@@ -333,21 +364,27 @@ async def user_get_email_by_id(user_id: str) -> Optional[str]:
 
 async def user_insert(row: Dict[str, Any]) -> None:
     await _execute(
-        """INSERT INTO users (id, email, full_name, hashed_password, is_super_admin, role, location_id, status, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)""",
+        """INSERT INTO users (id, email, full_name, hashed_password, is_super_admin, role, location_id, status, created_at, organization_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)""",
         row["id"], row["email"], row["full_name"], row["hashed_password"],
         row.get("is_super_admin", False), row.get("role", "admin"), row.get("location_id"), 
         row.get("status", "active"), row["created_at"],
+        row.get("organization_id", "default_sushimaster")
     )
 
 
-async def users_count() -> int:
-    r = await _fetch_one("SELECT count(*)::int AS c FROM users")
+async def users_count(org_id: Optional[str] = None) -> int:
+    if org_id:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM users WHERE organization_id = $1", org_id)
+    else:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM users")
     return r["c"] if r else 0
 
 
-async def users_list(exclude_password: bool = True) -> List[Dict[str, Any]]:
-    cols = "id, email, full_name, is_super_admin, role, location_id, status, avatar_url, created_at, last_login" if exclude_password else "*"
+async def users_list(exclude_password: bool = True, org_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    cols = "id, email, full_name, is_super_admin, role, location_id, status, avatar_url, organization_id, created_at, last_login" if exclude_password else "*"
+    if org_id:
+        return await _fetch_all(f"SELECT {cols} FROM users WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 500", org_id)
     return await _fetch_all(f"SELECT {cols} FROM users ORDER BY created_at DESC LIMIT 500")
 
 
@@ -395,11 +432,12 @@ async def invitation_get_by_code(code: str) -> Optional[Dict[str, Any]]:
 
 async def invitation_insert(row: Dict[str, Any]) -> None:
     await _execute(
-        """INSERT INTO invitations (id, code, created_by, expires_at, max_uses, uses, is_active, role, location_id, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)""",
+        """INSERT INTO invitations (id, code, created_by, expires_at, max_uses, uses, is_active, role, location_id, created_at, organization_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)""",
         row["id"], row["code"], row["created_by"], row["expires_at"],
         row.get("max_uses", 1), row.get("uses", 0), row.get("is_active", True),
         row.get("role", "admin"), row.get("location_id"), row["created_at"],
+        row.get("organization_id", "default_sushimaster")
     )
 
 
@@ -409,7 +447,11 @@ async def invitation_increment_uses(code: str) -> None:
     )
 
 
-async def invitations_list() -> List[Dict[str, Any]]:
+async def invitations_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    if org_id:
+        return await _fetch_all(
+            "SELECT * FROM invitations WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 100", org_id
+        )
     return await _fetch_all(
         "SELECT * FROM invitations ORDER BY created_at DESC LIMIT 100"
     )
@@ -426,17 +468,20 @@ async def location_get(id: str) -> Optional[Dict[str, Any]]:
     return await _fetch_one("SELECT * FROM locations WHERE id = $1", id)
 
 
-async def locations_list() -> List[Dict[str, Any]]:
-    return await _fetch_all("SELECT * FROM locations LIMIT 1000")
+async def locations_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    if org_id:
+        return await _fetch_all("SELECT * FROM locations WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1000", org_id)
+    return await _fetch_all("SELECT * FROM locations ORDER BY created_at DESC LIMIT 1000")
 
 
 async def location_insert(row: Dict[str, Any]) -> None:
     await _execute(
-        """INSERT INTO locations (id, name, address, city, status, timezone, security_code, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)""",
+        """INSERT INTO locations (id, name, address, city, status, timezone, security_code, created_at, organization_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)""",
         row["id"], row["name"], row["address"], row["city"],
         row.get("status", "active"), row.get("timezone", "Europe/Bucharest"),
         row.get("security_code"), row["created_at"],
+        row.get("organization_id", "default_sushimaster")
     )
 
 
@@ -466,11 +511,13 @@ async def screen_get_by_slug(slug: str) -> Optional[Dict[str, Any]]:
 
 
 
-async def screens_list() -> List[Dict[str, Any]]:
+async def screens_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:
     # Compute online/offline status dynamically from last_active timestamp.
     # No destructive UPDATE — status is derived at read time.
     # Screen is 'online' if heartbeat received within last 20 minutes.
-    return await _fetch_all("""
+    where_clause = "WHERE s.organization_id = $1" if org_id else ""
+    params = [org_id] if org_id else []
+    return await _fetch_all(f"""
         SELECT 
             s.*,
             CASE 
@@ -487,17 +534,20 @@ async def screens_list() -> List[Dict[str, Any]]:
         LEFT JOIN locations l ON s.location_id = l.id
         LEFT JOIN screen_zones sz ON s.id = sz.screen_id AND sz.zone_id = 'zone1'
         LEFT JOIN content c ON sz.content_id = c.id
+        {where_clause}
         ORDER BY l.city ASC, l.name ASC, s.name ASC
         LIMIT 1000
-    """)
+    """, *params)
 
 
 async def screens_by_sync_group(sync_group: str) -> List[Dict[str, Any]]:
     return await _fetch_all("SELECT * FROM screens WHERE sync_group = $1 ORDER BY cascade_offset ASC", sync_group)
 
 
-async def sync_groups_list() -> List[Dict[str, Any]]:
-    return await _fetch_all("""
+async def sync_groups_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    where_clause = "WHERE sync_group IS NOT NULL AND organization_id = $1" if org_id else "WHERE sync_group IS NOT NULL"
+    params = [org_id] if org_id else []
+    return await _fetch_all(f"""
         WITH GroupData AS (
             SELECT 
                 sync_group,
@@ -510,7 +560,7 @@ async def sync_groups_list() -> List[Dict[str, Any]]:
                 array_agg(id ORDER BY cascade_offset ASC) as ids,
                 count(id) as counts
             FROM screens
-            WHERE sync_group IS NOT NULL
+            {where_clause}
             GROUP BY sync_group, sync_type
         )
         SELECT 
@@ -525,7 +575,7 @@ async def sync_groups_list() -> List[Dict[str, Any]]:
             gd.counts as screen_count,
             (SELECT content_id FROM screen_zones WHERE screen_id = gd.ids[1] AND zone_id = 'main' LIMIT 1) as current_content_id
         FROM GroupData gd
-    """)
+    """, *params)
 
 
 async def sync_group_delete(sync_group_id: str) -> None:
@@ -545,9 +595,9 @@ async def screen_insert(row: Dict[str, Any]) -> None:
         """INSERT INTO screens (id, location_id, name, slug, resolution, orientation, template_id,
            sync_group, cascade_offset, status, last_active, sync_type, created_at, sync_group_name, sync_fit_mode, brand,
            parallax_enabled, steam_enabled, logo_enabled, logo_brand_id, logo_position, logo_size,
-           sakura_enabled, sakura_intensity)
+           sakura_enabled, sakura_intensity, organization_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-                   $17, $18, $19, $20, $21, $22, $23, $24)""",
+                   $17, $18, $19, $20, $21, $22, $23, $24, $25)""",
         row["id"], row["location_id"], row["name"], row["slug"],
         row.get("resolution", "1920x1080"), row.get("orientation", "0"),
         row.get("template_id"), row.get("sync_group"), row.get("cascade_offset", 0),
@@ -557,7 +607,8 @@ async def screen_insert(row: Dict[str, Any]) -> None:
         row.get("parallax_enabled", False), row.get("steam_enabled", False),
         row.get("logo_enabled", False), row.get("logo_brand_id"),
         row.get("logo_position", "top-right"), row.get("logo_size", "md"),
-        row.get("sakura_enabled", False), row.get("sakura_intensity", "medium")
+        row.get("sakura_enabled", False), row.get("sakura_intensity", "medium"),
+        row.get("organization_id", "default_sushimaster")
     )
 
 
@@ -611,8 +662,10 @@ async def content_get(id: str) -> Optional[Dict[str, Any]]:
     return await _fetch_one("SELECT * FROM content WHERE id = $1", id)
 
 
-async def content_list() -> List[Dict[str, Any]]:
-    return await _fetch_all("SELECT * FROM content LIMIT 1000")
+async def content_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    if org_id:
+        return await _fetch_all("SELECT * FROM content WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1000", org_id)
+    return await _fetch_all("SELECT * FROM content ORDER BY created_at DESC LIMIT 1000")
 
 
 async def content_insert(row: Dict[str, Any]) -> None:
@@ -620,13 +673,14 @@ async def content_insert(row: Dict[str, Any]) -> None:
     playlist_urls = json.dumps(row.get("playlist_urls") or [])
     await _execute(
         """INSERT INTO content (id, title, type, file_url, duration, category, tags, thumbnail_url,
-           autoplay, loop, playlist_urls, created_at, source_type, file_size, folder_id, brand, created_by_name)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)""",
+           autoplay, loop, playlist_urls, created_at, source_type, file_size, folder_id, brand, created_by_name, organization_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)""",
         row["id"], row["title"], row["type"], row["file_url"], row.get("duration", 10),
         row.get("category", "other"), tags, row.get("thumbnail_url"),
         row.get("autoplay", True), row.get("loop", True), playlist_urls, row["created_at"],
         row.get("source_type", "file"), row.get("file_size", 0), row.get("folder_id"),
-        json.dumps(row.get("brand") or []), row.get("created_by_name")
+        json.dumps(row.get("brand") or []), row.get("created_by_name"),
+        row.get("organization_id", "default_sushimaster")
     )
 
 
@@ -698,8 +752,11 @@ async def content_clear_from_screen_zones(content_id: str) -> None:
     await _execute("UPDATE screen_zones SET content_id = NULL WHERE content_id = $1", content_id)
 
 
-async def content_count() -> int:
-    r = await _fetch_one("SELECT count(*)::int AS c FROM content")
+async def content_count(org_id: Optional[str] = None) -> int:
+    if org_id:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM content WHERE organization_id = $1", org_id)
+    else:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM content")
     return r["c"] if r else 0
 
 
@@ -707,13 +764,16 @@ async def content_update_title(content_id: str, title: str) -> None:
     """Update content title (rename)"""
     await _execute("UPDATE content SET title = $1 WHERE id = $2", title, content_id)
 
+
 async def content_update_brand(content_id: str, brand: List[str]) -> None:
     await _execute("UPDATE content SET brand = $1 WHERE id = $2", json.dumps(brand), content_id)
 
 
 # ========== CONTENT FOLDERS ==========
 
-async def folder_list() -> List[Dict[str, Any]]:
+async def folder_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    if org_id:
+        return await _fetch_all("SELECT * FROM content_folders WHERE organization_id = $1 ORDER BY created_at DESC", org_id)
     return await _fetch_all("SELECT * FROM content_folders ORDER BY created_at DESC")
 
 
@@ -723,10 +783,11 @@ async def folder_get_by_id(folder_id: str) -> Optional[Dict[str, Any]]:
 
 async def folder_insert(row: Dict[str, Any]) -> str:
     res = await _fetch_one(
-        """INSERT INTO content_folders (id, name, description, color, icon, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id""",
+        """INSERT INTO content_folders (id, name, description, color, icon, created_at, updated_at, organization_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id""",
         row["id"], row["name"], row.get("description"), row.get("color", "#6366f1"),
-        row.get("icon", "folder"), row["created_at"], row.get("updated_at")
+        row.get("icon", "folder"), row["created_at"], row.get("updated_at"),
+        row.get("organization_id", "default_sushimaster")
     )
     return res["id"]
 
@@ -793,19 +854,22 @@ async def playlist_get(id: str) -> Optional[Dict[str, Any]]:
     return await _fetch_one("SELECT * FROM playlists WHERE id = $1", id)
 
 
-async def playlists_list() -> List[Dict[str, Any]]:
-    return await _fetch_all("SELECT * FROM playlists LIMIT 1000")
+async def playlists_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    if org_id:
+        return await _fetch_all("SELECT * FROM playlists WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1000", org_id)
+    return await _fetch_all("SELECT * FROM playlists ORDER BY created_at DESC LIMIT 1000")
 
 
 async def playlist_insert(row: Dict[str, Any]) -> None:
     items = json.dumps(row.get("items") or [])
     await _execute(
-        """INSERT INTO playlists (id, name, description, items, autoplay, loop, status, created_at, brand, created_by, is_scheduled, start_at, end_at, screen_ids, color)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)""",
+        """INSERT INTO playlists (id, name, description, items, autoplay, loop, status, created_at, brand, created_by, is_scheduled, start_at, end_at, screen_ids, color, organization_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)""",
         row["id"], row["name"], row.get("description"), json.dumps(row.get("items") or []),
         row.get("autoplay", True), row.get("loop", True), row.get("status", "active"), row["created_at"],
         json.dumps(row.get("brand") or []), row.get("created_by"), row.get("is_scheduled", False),
-        row.get("start_at"), row.get("end_at"), json.dumps(row.get("screen_ids") or []), row.get("color", "#4F46E5")
+        row.get("start_at"), row.get("end_at"), json.dumps(row.get("screen_ids") or []), row.get("color", "#4F46E5"),
+        row.get("organization_id", "default_sushimaster")
     )
 
 
@@ -837,13 +901,19 @@ async def product_get_by_name(name: str) -> Optional[Dict[str, Any]]:
     return await _fetch_one("SELECT * FROM products WHERE name = $1", name)
 
 
-async def products_list() -> List[Dict[str, Any]]:
+async def products_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    if org_id:
+        return await _fetch_all("SELECT * FROM products WHERE organization_id = $1 ORDER BY order_index ASC, created_at ASC LIMIT 1000", org_id)
     return await _fetch_all("SELECT * FROM products ORDER BY order_index ASC, created_at ASC LIMIT 1000")
 
 
-async def products_by_category(categories: List[str]) -> List[Dict[str, Any]]:
+async def products_by_category(categories: List[str], org_id: Optional[str] = None) -> List[Dict[str, Any]]:
     if not categories:
         return []
+    if org_id:
+        return await _fetch_all(
+            "SELECT * FROM products WHERE category = ANY($1::text[]) AND organization_id = $2 LIMIT 1000", categories, org_id
+        )
     return await _fetch_all(
         "SELECT * FROM products WHERE category = ANY($1::text[]) LIMIT 1000", categories
     )
@@ -852,11 +922,12 @@ async def products_by_category(categories: List[str]) -> List[Dict[str, Any]]:
 async def product_insert(row: Dict[str, Any]) -> None:
     await _execute(
         """INSERT INTO products (id, name, description, price, currency, category, image_url,
-           available, featured, order_index, created_at, location_id, iiko_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)""",
+           available, featured, order_index, created_at, location_id, iiko_id, organization_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)""",
         row["id"], row["name"], row.get("description"), row["price"], row.get("currency", "RON"),
         row["category"], row.get("image_url"), row.get("available", True), row.get("featured", False),
-        row.get("order_index", 0), row.get("created_at"), row.get("location_id"), row.get("iiko_id")
+        row.get("order_index", 0), row.get("created_at"), row.get("location_id"), row.get("iiko_id"),
+        row.get("organization_id", "default_sushimaster")
     )
 
 
@@ -884,8 +955,11 @@ async def product_delete(id: str) -> bool:
     return "DELETE 1" in res
 
 
-async def products_count() -> int:
-    r = await _fetch_one("SELECT count(*)::int AS c FROM products")
+async def products_count(org_id: Optional[str] = None) -> int:
+    if org_id:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM products WHERE organization_id = $1", org_id)
+    else:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM products")
     return r["c"] if r else 0
 
 
@@ -895,7 +969,9 @@ async def digital_menu_get(id: str) -> Optional[Dict[str, Any]]:
     return await _fetch_one("SELECT * FROM digital_menus WHERE id = $1", id)
 
 
-async def digital_menus_list() -> List[Dict[str, Any]]:
+async def digital_menus_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    if org_id:
+        return await _fetch_all("SELECT * FROM digital_menus WHERE organization_id = $1 LIMIT 1000", org_id)
     return await _fetch_all("SELECT * FROM digital_menus LIMIT 1000")
 
 
@@ -906,12 +982,13 @@ async def digital_menu_insert(row: Dict[str, Any]) -> None:
     await _execute(
         """INSERT INTO digital_menus (id, name, template_id, selected_products, selected_categories,
            promo_products, show_promo_slides, promo_slide_duration, products_per_page, page_duration,
-           auto_rotate, background_image_url, status, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)""",
+           auto_rotate, background_image_url, status, created_at, organization_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)""",
         row["id"], row["name"], row.get("template_id"), sp, sc, pp,
         row.get("show_promo_slides", False), row.get("promo_slide_duration", 8),
         row.get("products_per_page", 6), row.get("page_duration", 10),
         row.get("auto_rotate", True), row.get("background_image_url"), row.get("status", "active"), row["created_at"],
+        row.get("organization_id", "default_sushimaster")
     )
 
 
@@ -968,23 +1045,27 @@ async def screen_zones_delete_by_screen(screen_id: str) -> None:
 
 # ---------- dashboard ----------
 
-async def locations_count(location_id: Optional[str] = None) -> int:
+async def locations_count(location_id: Optional[str] = None, org_id: Optional[str] = None) -> int:
     if location_id:
         return 1
-    r = await _fetch_one("SELECT count(*)::int AS c FROM locations")
+    if org_id:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM locations WHERE organization_id = $1", org_id)
+    else:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM locations")
     return r["c"] if r else 0
 
 
-async def screens_count(location_id: Optional[str] = None) -> int:
+async def screens_count(location_id: Optional[str] = None, org_id: Optional[str] = None) -> int:
     if location_id:
         r = await _fetch_one("SELECT count(*)::int AS c FROM screens WHERE location_id = $1", location_id)
+    elif org_id:
+        r = await _fetch_one("SELECT count(*)::int AS c FROM screens WHERE organization_id = $1", org_id)
     else:
         r = await _fetch_one("SELECT count(*)::int AS c FROM screens")
     return r["c"] if r else 0
 
 
-
-async def screens_count_online(location_id: Optional[str] = None) -> int:
+async def screens_count_online(location_id: Optional[str] = None, org_id: Optional[str] = None) -> int:
     # Count screens that have active heartbeat (within last 20 minutes)
     if location_id:
         r = await _fetch_one("""
@@ -993,6 +1074,13 @@ async def screens_count_online(location_id: Optional[str] = None) -> int:
             WHERE last_active >= NOW() - INTERVAL '20 minutes'
             AND location_id = $1
         """, location_id)
+    elif org_id:
+        r = await _fetch_one("""
+            SELECT count(*)::int AS c 
+            FROM screens 
+            WHERE last_active >= NOW() - INTERVAL '20 minutes'
+            AND organization_id = $1
+        """, org_id)
     else:
         r = await _fetch_one("""
             SELECT count(*)::int AS c 
@@ -1031,19 +1119,23 @@ async def user_update_password(email: str, hashed_password: str) -> None:
 
 async def audio_playlist_create(row: Dict[str, Any]) -> None:
     await _execute(
-        """INSERT INTO audio_playlists (id, name, location_id, ad_frequency, description, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6)""",
-        row["id"], row["name"], row.get("location_id"), row.get("ad_frequency", 3), row.get("description"), row["created_at"]
+        """INSERT INTO audio_playlists (id, name, location_id, ad_frequency, description, created_at, organization_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)""",
+        row["id"], row["name"], row.get("location_id"), row.get("ad_frequency", 3), row.get("description"), row["created_at"],
+        row.get("organization_id", "default_sushimaster")
     )
 
 
-async def audio_playlists_list() -> List[Dict[str, Any]]:
-    return await _fetch_all("""
+async def audio_playlists_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    where_clause = "WHERE ap.organization_id = $1" if org_id else ""
+    params = [org_id] if org_id else []
+    return await _fetch_all(f"""
         SELECT ap.*, l.name as location_name 
         FROM audio_playlists ap 
         LEFT JOIN locations l ON ap.location_id = l.id 
+        {where_clause}
         ORDER BY ap.created_at DESC
-    """)
+    """, *params)
 
 
 async def audio_playlist_get(id: str) -> Optional[Dict[str, Any]]:
@@ -1085,13 +1177,20 @@ async def audio_track_delete(id: str) -> bool:
 # HAPPY HOUR SCHEDULES
 # ============================================================================
 
-async def happy_hour_list():
-    """Get all happy hour schedules"""
+async def happy_hour_list(org_id: Optional[str] = None):
+    """Get happy hour schedules"""
     async with pool.acquire() as conn:
-        rows = await conn.fetch("""
-            SELECT * FROM happy_hour_schedules
-            ORDER BY created_at DESC
-        """)
+        if org_id:
+            rows = await conn.fetch("""
+                SELECT * FROM happy_hour_schedules
+                WHERE organization_id = $1
+                ORDER BY created_at DESC
+            """, org_id)
+        else:
+            rows = await conn.fetch("""
+                SELECT * FROM happy_hour_schedules
+                ORDER BY created_at DESC
+            """)
         return [dict(r) for r in rows]
 
 async def happy_hour_get(schedule_id: str):
@@ -1128,8 +1227,8 @@ async def happy_hour_insert(data: dict):
         row = await conn.fetchrow("""
             INSERT INTO happy_hour_schedules (
                 name, city, screen_ids, start_time, end_time,
-                content_type, content_id, playlist_id, active, days_of_week, created_by, location_ids
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                content_type, content_id, playlist_id, active, days_of_week, created_by, location_ids, organization_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING *
         """,
             data.get('name'),
@@ -1143,7 +1242,8 @@ async def happy_hour_insert(data: dict):
             data.get('active', True),
             data.get('days_of_week', [1, 2, 3, 4, 5, 6, 7]),
             data.get('created_by'),
-            data.get('location_ids', [])
+            data.get('location_ids', []),
+            data.get('organization_id', 'default_sushimaster')
         )
         return dict(row) if row else None
 
@@ -1207,12 +1307,15 @@ async def happy_hour_delete(schedule_id: str):
 
 async def brand_insert(row: Dict[str, Any]) -> None:
     await _execute(
-        """INSERT INTO brands (id, name, address, logo_url, created_at)
-           VALUES ($1, $2, $3, $4, $5)""",
-        row["id"], row["name"], row.get("address"), row.get("logo_url"), row["created_at"]
+        """INSERT INTO brands (id, name, address, logo_url, created_at, organization_id)
+           VALUES ($1, $2, $3, $4, $5, $6)""",
+        row["id"], row["name"], row.get("address"), row.get("logo_url"), row["created_at"],
+        row.get("organization_id", "default_sushimaster")
     )
 
-async def brands_list() -> List[Dict[str, Any]]:
+async def brands_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    if org_id:
+        return await _fetch_all("SELECT * FROM brands WHERE organization_id = $1 ORDER BY name ASC", org_id)
     return await _fetch_all("SELECT * FROM brands ORDER BY name ASC")
 
 async def brand_get(brand_id: str) -> Optional[Dict[str, Any]]:

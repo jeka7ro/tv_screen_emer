@@ -96,7 +96,7 @@ export const Login = () => {
         await register(email, password, fullName, invitationCode || null);
         toast.success(isOpenRegistration ? 'Cont Super Admin creat cu succes!' : 'Cont creat cu succes!');
       }
-      navigate('/dashboard');
+      window.location.href = '/dashboard';
     } catch (error) {
       const msg = error.response?.data?.detail || 'A apărut o eroare';
       setLoginError(msg);

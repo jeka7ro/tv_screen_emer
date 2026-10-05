@@ -29,6 +29,7 @@ import { ShortLinkRedirect } from './components/ShortLinkRedirect';
 import { HappyHour } from './pages/HappyHour';
 import { Brands } from './pages/Brands';
 import { Billing } from './pages/Billing';
+import { Organizations } from './pages/Organizations';
 
 function App() {
   return (
@@ -146,6 +147,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Billing />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/organizations"
+            element={
+              <ProtectedRoute>
+                <Organizations />
               </ProtectedRoute>
             }
           />
