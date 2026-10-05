@@ -114,12 +114,15 @@
     <div id="loader">⏳</div>
     <div id="err"></div>
     <script>
-        // Parse slug from URL: /tv/SLUG or /display/SLUG
+        // Parse slug from URL: /tv/SLUG, /display/SLUG, /SLUG or ?slug=SLUG
+        var params = new URLSearchParams(window.location.search);
+        var querySlug = params.get('slug') || params.get('s');
         var path = window.location.pathname;
-        var parts = path.split('/');
-        var slug = parts[parts.length - 1] || parts[parts.length - 2];
+        var parts = path.split('/').filter(Boolean);
+        var pathSlug = parts.length > 0 ? parts[parts.length - 1] : '';
+        var slug = querySlug || pathSlug;
 
-        if (!slug || slug === 'tv' || slug === 'display') {
+        if (!slug || slug === 'tv' || slug === 'display' || slug === 'tv.html') {
             document.getElementById('err').style.display = 'block';
             document.getElementById('err').textContent = 'No screen slug in URL';
         } else {
@@ -130,7 +133,9 @@
             document.getElementById('loader').style.display = 'block';
 
             // API URL - local backend if running on localhost, otherwise Render
-            var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            var isLocal = window.location.hostname === 'localhost' || 
+                          window.location.hostname === '127.0.0.1' || 
+                          window.location.hostname.indexOf('localhost') !== -1;
             var API = isLocal ? 'http://localhost:8002/api' : 'https://tv-screen-emer.onrender.com/api';
 
             var xhr = new XMLHttpRequest();

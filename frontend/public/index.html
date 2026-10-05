@@ -21,6 +21,56 @@
         Learn how to configure a non-root public URL by running `npm run build`.
         -->
     <title>Screen Media</title>
+    <script>
+        // Direct short TV URL redirect for tenant subdomains (e.g. sushihan.smr.onl/pl1 -> /tv/pl1)
+        // Runs immediately in <head> before React parses or loads, ensuring instant TV playback
+        (function() {
+            try {
+                var host = window.location.hostname.toLowerCase();
+                var parts = host.split('.');
+                var isTenant = false;
+                
+                // Allow ?org=tenant query param for local testing
+                var search = window.location.search || '';
+                if (search.indexOf('org=') !== -1) {
+                    var match = search.match(/[?&]org=([^&]+)/);
+                    if (match && match[1] && match[1] !== 'sushimaster' && match[1] !== 'sm') {
+                        isTenant = true;
+                    }
+                }
+
+                if (!isTenant) {
+                    // Production tenant subdomain: [tenant].smr.onl
+                    if (parts.length >= 3 && parts[parts.length - 2] === 'smr' && parts[parts.length - 1] === 'onl') {
+                        var sub = parts[0];
+                        if (sub !== 'www' && sub !== 'api') isTenant = true;
+                    // Local development subdomain: [tenant].localhost
+                    } else if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
+                        var sub = parts[0];
+                        if (sub !== 'www' && sub !== 'api') isTenant = true;
+                    }
+                }
+
+                if (isTenant) {
+                    var path = window.location.pathname;
+                    var cleanPath = path.replace(/^\/+|\/+$/g, '');
+                    var knownRoutes = [
+                        '', 'login', 'dashboard', 'locations', 'screens', 'content', 'products',
+                        'digital-menus', 'playlists', 'audio', 'play-audio', 'happy-hour',
+                        'brands', 'billing', 'organizations', 'screen-sync', 'invitations',
+                        'users', 'activity-logs', 'live-preview', 'forgot-password', 'reset-password',
+                        'display', 'tv', 's'
+                    ];
+                    // Only redirect if single path segment (screen slug), no dot (not static asset)
+                    if (cleanPath && cleanPath.indexOf('/') === -1 && cleanPath.indexOf('.') === -1) {
+                        if (knownRoutes.indexOf(cleanPath) === -1) {
+                            window.location.replace('/tv/' + cleanPath + window.location.search);
+                        }
+                    }
+                }
+            } catch (e) {}
+        })();
+    </script>
     <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
     <!--
         These two scripts have been added for the Visual Edits, please do not edit or remove them

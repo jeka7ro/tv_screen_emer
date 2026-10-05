@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Plus, Edit, Trash2, Tv, ExternalLink, Settings, Link as LinkIcon, QrCode, LayoutGrid, List as ListIcon, Monitor, RotateCw, MapPin, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
+import { isTenantPortalMode } from '../utils/tenant';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
@@ -27,7 +28,7 @@ const ScreenThumbnail = ({ screen, thumbData, thumbLoading }) => {
     <div
       className={`relative bg-slate-900 rounded-xl overflow-hidden mb-2 group cursor-pointer ${isVertical ? 'mx-auto' : ''}`}
       style={{ aspectRatio: isVertical ? '9/16' : '16/9', width: isVertical ? '56.25%' : '100%' }}
-      onClick={() => window.open(`/display/${screen.slug}`, '_blank')}
+      onClick={() => window.open(isTenantPortalMode() ? `/${screen.slug}` : `/display/${screen.slug}`, '_blank')}
     >
       {thumbLoading ? (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -289,6 +290,9 @@ export const Screens = () => {
   };
 
   const getScreenUrl = (slug) => {
+    if (isTenantPortalMode()) {
+      return `${displayUrl}/${slug}`;
+    }
     return `${displayUrl}/display/${slug}`;
   };
 

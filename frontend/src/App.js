@@ -30,6 +30,14 @@ import { HappyHour } from './pages/HappyHour';
 import { Brands } from './pages/Brands';
 import { Billing } from './pages/Billing';
 import { Organizations } from './pages/Organizations';
+import { isTenantPortalMode } from './utils/tenant';
+
+const TenantScreenFallback = () => {
+  if (isTenantPortalMode()) {
+    return <DisplayScreen />;
+  }
+  return <Navigate to="/dashboard" replace />;
+};
 
 function App() {
   return (
@@ -190,6 +198,9 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Direct tenant screen route e.g. /:slug on tenant subdomains */}
+          <Route path="/:slug" element={<TenantScreenFallback />} />
 
           {/* Redirect root to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
