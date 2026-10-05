@@ -1,21 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Edit2, Trash2, MapPin, Search, X, RefreshCw } from 'lucide-react';
+import { Plus, Edit2, Trash2, MapPin, Search, X, RefreshCw, Building2 } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useViewMode } from '../hooks/useViewMode';
 import { ViewToggle } from '../components/ViewToggle';
 import { useConfirm } from '../hooks/useConfirm';
 
 export const Locations = () => {
-    const { confirm, ConfirmDialog } = useConfirm();
-  const { isAdmin } = useAuth();
+  const { confirm, ConfirmDialog } = useConfirm();
+  const { isAdmin, isSuperAdmin } = useAuth();
   const [locations, setLocations] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
+  const [orgFilter, setOrgFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
@@ -27,6 +30,7 @@ export const Locations = () => {
     city: '',
     security_code: '',
     iiko_organization_id: '',
+    organization_id: 'default_sushimaster',
     status: 'active'
   });
   const [selectedItems, setSelectedItems] = useState(new Set());
@@ -35,7 +39,19 @@ export const Locations = () => {
 
   useEffect(() => {
     loadLocations();
+    if (isSuperAdmin()) {
+      loadOrganizations();
+    }
   }, []);
+
+  const loadOrganizations = async () => {
+    try {
+      const res = await api.get('/organizations');
+      setOrganizations(res.data);
+    } catch (e) {
+      console.error('Failed to load organizations', e);
+    }
+  };
 
   const loadLocations = async () => {
     try {
@@ -149,22 +165,28 @@ export const Locations = () => {
 
   // Get unique cities for filter
   const cities = useMemo(() => {
-    const uniqueCities = [...new Set(locations.map(loc => loc.city).filter(Boolean))];
+    const uniqueCities = [...new Set(
+      locations
+        .filter(loc => !isSuperAdmin() || orgFilter === 'all' || loc.organization_id === orgFilter)
+        .map(loc => loc.city)
+        .filter(Boolean)
+    )];
     return uniqueCities.sort();
-  }, [locations]);
+  }, [locations, orgFilter, isSuperAdmin]);
 
-  // Filter locations based on search and city
+  // Filter locations based on organization, search, and city
   const filteredLocations = useMemo(() => {
     return locations.filter(location => {
+      const matchesOrg = !isSuperAdmin() || orgFilter === 'all' || location.organization_id === orgFilter;
       const matchesSearch = searchQuery === '' ||
         location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         location.address.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCity = selectedCity === 'all' || location.city === selectedCity;
 
-      return matchesSearch && matchesCity;
+      return matchesOrg && matchesSearch && matchesCity;
     });
-  }, [locations, searchQuery, selectedCity]);
+  }, [locations, orgFilter, isSuperAdmin, searchQuery, selectedCity]);
 
   if (loading) {
     return (
@@ -219,6 +241,27 @@ export const Locations = () => {
                   </DialogHeader>
                   <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
                     <form onSubmit={handleSubmit} className="space-y-4">
+                      {isSuperAdmin() && (
+                        <div>
+                          <Label className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
+                            <Building2 className="w-4 h-4 text-brand-500" />
+                            Organizație (Tenant)
+                          </Label>
+                          <Select
+                            value={formData.organization_id || 'default_sushimaster'}
+                            onValueChange={(value) => setFormData({ ...formData, organization_id: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selectează organizația" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {organizations.map(org => (
+                                <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                       <div>
                         <Label>Nume locație</Label>
                         <Input
@@ -315,6 +358,28 @@ export const Locations = () => {
                 </button>
               )}
             </div>
+
+            {/* Organization Filter */}
+            {isSuperAdmin() && (
+              <div className="sm:w-64">
+                <Select value={orgFilter} onValueChange={(val) => { setOrgFilter(val); setSelectedCity('all'); }}>
+                  <SelectTrigger className="w-full h-[40px] text-sm rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+                    <SelectValue placeholder="Toate organizațiile" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toate organizațiile ({locations.length})</SelectItem>
+                    {organizations.map(org => {
+                      const count = locations.filter(l => l.organization_id === org.id).length;
+                      return (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name} ({count})
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* City Filter */}
             <div className="sm:w-64">

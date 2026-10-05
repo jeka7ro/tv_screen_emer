@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Plus, Edit, Trash2, Tv, ExternalLink, Settings, Link as LinkIcon, QrCode, LayoutGrid, List as ListIcon, Monitor, RotateCw, MapPin } from 'lucide-react';
+import { Plus, Edit, Trash2, Tv, ExternalLink, Settings, Link as LinkIcon, QrCode, LayoutGrid, List as ListIcon, Monitor, RotateCw, MapPin, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { toast } from 'sonner';
@@ -60,11 +60,13 @@ const ScreenThumbnail = ({ screen, thumbData, thumbLoading }) => {
 };
 
 export const Screens = () => {
-    const { confirm, ConfirmDialog } = useConfirm();
-  const { isAdmin } = useAuth();
+  const { confirm, ConfirmDialog } = useConfirm();
+  const { isAdmin, isSuperAdmin } = useAuth();
   const [screens, setScreens] = useState([]);
   const [locations, setLocations] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
+  const [orgFilter, setOrgFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [thumbnails, setThumbnails] = useState({});
   const [thumbnailsLoading, setThumbnailsLoading] = useState(true);
@@ -89,7 +91,8 @@ export const Screens = () => {
     resolution: '1920x1080',
     orientation: '0',
     template_id: 'fullscreen',
-    logo_brand_id: ''  // Changed from 'brand' to 'logo_brand_id'
+    logo_brand_id: '',
+    organization_id: 'default_sushimaster'
   });
 
   useEffect(() => {
@@ -105,16 +108,23 @@ export const Screens = () => {
 
   const loadData = async () => {
     try {
-      const [screensRes, locationsRes, brandsRes] = await Promise.all([
+      const promises = [
         api.get('/screens'),
         api.get('/locations'),
         api.get('/brands')
-      ]);
+      ];
+      if (isSuperAdmin()) {
+        promises.push(api.get('/organizations'));
+      }
+      const [screensRes, locationsRes, brandsRes, orgsRes] = await Promise.all(promises);
       setScreens(screensRes.data.sort((a, b) =>
         (a.name || '').localeCompare(b.name || '', undefined, { numeric: true })
       ));
       setLocations(locationsRes.data);
       setBrands(brandsRes.data);
+      if (orgsRes?.data) {
+        setOrganizations(orgsRes.data);
+      }
 
       // Fetch all thumbnails in a single batch request (replaces 25 individual calls)
       api.get('/screens/thumbnails')
@@ -164,7 +174,8 @@ export const Screens = () => {
       resolution: screen.resolution,
       orientation: screen.orientation || '0',
       template_id: screen.template_id || 'fullscreen',
-      logo_brand_id: screen.logo_brand_id || ''
+      logo_brand_id: screen.logo_brand_id || '',
+      organization_id: screen.organization_id || 'default_sushimaster'
     });
     setShowDialog(true);
   };
@@ -188,7 +199,8 @@ export const Screens = () => {
       resolution: '1920x1080',
       orientation: '0',
       template_id: 'fullscreen',
-      logo_brand_id: ''
+      logo_brand_id: '',
+      organization_id: isSuperAdmin() && orgFilter !== 'all' ? orgFilter : 'default_sushimaster'
     });
     setFormCityFilter('all');
     setEditingScreen(null);
@@ -203,8 +215,18 @@ export const Screens = () => {
   };
 
   // Get unique brands, cities, and locations for filters
-  const cities = [...new Set(locations.map(l => l.city))].sort();
-  const filteredLocations = cityFilter === 'all' ? locations : locations.filter(l => l.city === cityFilter);
+  const cities = [...new Set(
+    locations
+      .filter(l => !isSuperAdmin() || orgFilter === 'all' || l.organization_id === orgFilter)
+      .map(l => l.city)
+      .filter(Boolean)
+  )].sort();
+
+  const filteredLocations = locations.filter(l => {
+    const matchesOrg = !isSuperAdmin() || orgFilter === 'all' || l.organization_id === orgFilter;
+    const matchesCity = cityFilter === 'all' || l.city === cityFilter;
+    return matchesOrg && matchesCity;
+  });
 
   // Helper function to get brand name from ID
   const getBrandName = (brandId) => {
@@ -221,11 +243,12 @@ export const Screens = () => {
 
   const filteredScreens = screens.filter(screen => {
     const location = getLocation(screen.location_id);
+    const matchesOrg = !isSuperAdmin() || orgFilter === 'all' || screen.organization_id === orgFilter;
     const matchesBrand = brandFilter === 'all' || screen.logo_brand_id === brandFilter;
     const matchesCity = cityFilter === 'all' || location?.city === cityFilter;
     const matchesLocation = locationFilter === 'all' || screen.location_id === locationFilter;
     const matchesRotation = rotationFilter === 'all' || (screen.orientation || '0') === rotationFilter;
-    return matchesBrand && matchesCity && matchesLocation && matchesRotation;
+    return matchesOrg && matchesBrand && matchesCity && matchesLocation && matchesRotation;
   });
 
   // Group filtered screens by location
@@ -362,6 +385,30 @@ export const Screens = () => {
                   </DialogHeader>
                   <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
                     <form onSubmit={handleSubmit} className="space-y-4">
+                      {isSuperAdmin() && (
+                        <div>
+                          <Label className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
+                            <Building2 className="w-4 h-4 text-brand-500" />
+                            Organizație (Tenant)
+                          </Label>
+                          <Select
+                            value={formData.organization_id || 'default_sushimaster'}
+                            onValueChange={(value) => {
+                              setFormData({ ...formData, organization_id: value, location_id: '' });
+                              setFormCityFilter('all');
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selectează organizația" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {organizations.map(org => (
+                                <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                       <div>
                         <Label>Brand</Label>
                         <BrandSelector
@@ -386,7 +433,7 @@ export const Screens = () => {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">Toate orașele</SelectItem>
-                            {[...new Set(locations.map(l => l.city).filter(Boolean))].sort().map(city => (
+                            {[...new Set(locations.filter(l => !isSuperAdmin() || !formData.organization_id || l.organization_id === formData.organization_id).map(l => l.city).filter(Boolean))].sort().map(city => (
                               <SelectItem key={city} value={city}>{city}</SelectItem>
                             ))}
                           </SelectContent>
@@ -404,7 +451,7 @@ export const Screens = () => {
                           </SelectTrigger>
                           <SelectContent>
                             {locations
-                              .filter(l => formCityFilter === 'all' || l.city === formCityFilter)
+                              .filter(l => (!isSuperAdmin() || !formData.organization_id || l.organization_id === formData.organization_id) && (formCityFilter === 'all' || l.city === formCityFilter))
                               .map(location => (
                                 <SelectItem key={location.id} value={location.id}>
                                   {location.city} - {location.name}
@@ -492,6 +539,30 @@ export const Screens = () => {
 
           {/* Filters Row */}
           <div className="flex flex-wrap items-center gap-4 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+            {isSuperAdmin() && (
+              <div className="flex items-center gap-2 border-r border-slate-100 dark:border-slate-800 pr-4">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5 ml-2">
+                  <Building2 className="w-4 h-4 text-brand-500" />
+                  Organizație:
+                </span>
+                <Select value={orgFilter} onValueChange={(val) => { setOrgFilter(val); setCityFilter('all'); setLocationFilter('all'); }}>
+                  <SelectTrigger className="w-[180px] h-9 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 rounded-full font-medium">
+                    <SelectValue placeholder="Toate organizațiile" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toate organizațiile ({screens.length})</SelectItem>
+                    {organizations.map(org => {
+                      const count = screens.filter(s => s.organization_id === org.id).length;
+                      return (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name} ({count})
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex items-center gap-3">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 ml-2">Brand:</span>
               <div className="flex gap-2">

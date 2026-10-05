@@ -382,10 +382,21 @@ async def users_count(org_id: Optional[str] = None) -> int:
 
 
 async def users_list(exclude_password: bool = True, org_id: Optional[str] = None) -> List[Dict[str, Any]]:
-    cols = "id, email, full_name, is_super_admin, role, location_id, status, avatar_url, organization_id, created_at, last_login" if exclude_password else "*"
+    cols = "u.id, u.email, u.full_name, u.is_super_admin, u.role, u.location_id, u.status, u.avatar_url, u.organization_id, u.created_at, u.last_login, o.name as organization_name, l.name as location_name" if exclude_password else "u.*, o.name as organization_name, l.name as location_name"
     if org_id:
-        return await _fetch_all(f"SELECT {cols} FROM users WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 500", org_id)
-    return await _fetch_all(f"SELECT {cols} FROM users ORDER BY created_at DESC LIMIT 500")
+        return await _fetch_all(f"""
+            SELECT {cols} FROM users u
+            LEFT JOIN organizations o ON u.organization_id = o.id
+            LEFT JOIN locations l ON u.location_id = l.id
+            WHERE u.organization_id = $1
+            ORDER BY u.created_at DESC LIMIT 500
+        """, org_id)
+    return await _fetch_all(f"""
+        SELECT {cols} FROM users u
+        LEFT JOIN organizations o ON u.organization_id = o.id
+        LEFT JOIN locations l ON u.location_id = l.id
+        ORDER BY u.created_at DESC LIMIT 500
+    """)
 
 
 async def user_get_by_id(user_id: str) -> Optional[Dict[str, Any]]:

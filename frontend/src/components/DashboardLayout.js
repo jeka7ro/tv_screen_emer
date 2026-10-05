@@ -44,7 +44,7 @@ const menuItems = [
 ];
 
 const adminMenuItems = [
-  { path: '/organizations', icon: Building2, label: 'Organizații' },
+  { path: '/organizations', icon: Building2, label: 'Clienți' },
   { path: '/users', icon: Users, label: 'Utilizatori' },
   { path: '/invitations', icon: UserPlus, label: 'Invitații' },
   { path: '/activity-logs', icon: Activity, label: 'Jurnale Activitate' },

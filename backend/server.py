@@ -409,6 +409,7 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     location_id: Optional[str] = None
     avatar_url: Optional[str] = None
+    organization_id: Optional[str] = None
 
 class Location(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -797,11 +798,9 @@ def get_user_org_id(current_user: User, request: Optional[Request] = None, org_i
     header_org = request.headers.get("X-Organization-Id") if request else None
     chosen = org_id or header_org
     if current_user.is_super_admin:
-        if chosen == "all":
+        if not chosen or chosen == "all":
             return None
-        if chosen:
-            return chosen
-        return getattr(current_user, "organization_id", "default_sushimaster") or "default_sushimaster"
+        return chosen
     return getattr(current_user, "organization_id", "default_sushimaster") or "default_sushimaster"
 
 def get_user_create_org_id(current_user: User, request: Optional[Request] = None, item_org_id: Optional[str] = None) -> str:
@@ -1084,12 +1083,12 @@ async def delete_invitation(invitation_id: str, current_user: User = Depends(get
     return {"message": "Invitație dezactivată"}
 
 @api_router.get("/users")
-async def get_users(request: Request, current_user: User = Depends(get_super_admin)):
+async def get_users(request: Request, current_user: User = Depends(require_admin)):
     org_id = get_user_org_id(current_user, request)
     return await users_list(exclude_password=True, org_id=org_id)
 
 @api_router.post("/users", response_model=UserResponse)
-async def create_user_endpoint(data: AdminUserCreate, request: Request, current_user: User = Depends(get_super_admin)):
+async def create_user_endpoint(data: AdminUserCreate, request: Request, current_user: User = Depends(require_admin)):
     existing = await user_get_by_email(data.email)
     if existing:
         raise HTTPException(status_code=400, detail="Email deja existent")
@@ -1120,9 +1119,14 @@ async def create_user_endpoint(data: AdminUserCreate, request: Request, current_
     )
 
 @api_router.delete("/users/{user_id}")
-async def delete_user_endpoint(user_id: str, current_user: User = Depends(get_super_admin)):
+async def delete_user_endpoint(user_id: str, current_user: User = Depends(require_admin)):
     if user_id == current_user.id:
         raise HTTPException(status_code=400, detail="Nu te poți șterge pe tine însuți")
+    target_user = await user_get_by_id(user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utilizator negăsit")
+    if not current_user.is_super_admin and target_user.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la utilizatorul altei organizații")
     ok = await user_delete(user_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Utilizator negăsit")
@@ -1130,26 +1134,45 @@ async def delete_user_endpoint(user_id: str, current_user: User = Depends(get_su
     return {"message": "Utilizator șters"}
 
 @api_router.patch("/users/{user_id}/status")
-async def update_user_status_endpoint(user_id: str, data: UserStatusUpdate, current_user: User = Depends(get_super_admin)):
+async def update_user_status_endpoint(user_id: str, data: UserStatusUpdate, current_user: User = Depends(require_admin)):
     if user_id == current_user.id:
         raise HTTPException(status_code=400, detail="Nu poți schimba propriul status")
+    target_user = await user_get_by_id(user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utilizator negăsit")
+    if not current_user.is_super_admin and target_user.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la utilizatorul altei organizații")
     await user_update_status(user_id, data.status)
     await log_activity(current_user.id, current_user.full_name, "update_status", "user", user_id, "INFO", {"new_status": data.status})
     return {"message": f"Status actualizat la {data.status}"}
 
 @api_router.post("/users/{user_id}/reset-password")
-async def reset_user_password_endpoint(user_id: str, data: UserResetPassword, current_user: User = Depends(get_super_admin)):
+async def reset_user_password_endpoint(user_id: str, data: UserResetPassword, current_user: User = Depends(require_admin)):
+    target_user = await user_get_by_id(user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utilizator negăsit")
+    if not current_user.is_super_admin and target_user.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la utilizatorul altei organizații")
     hashed = get_password_hash(data.new_password)
     await user_update_password_by_id(user_id, hashed)
     await log_activity(current_user.id, current_user.full_name, "reset_password", "user", user_id, "WARNING", {"target_user_id": user_id})
     return {"message": "Parolă resetată cu succes"}
 
 @api_router.patch("/users/{user_id}")
-async def update_user_endpoint(user_id: str, data: UserUpdate, current_user: User = Depends(get_super_admin)):
+async def update_user_endpoint(user_id: str, data: UserUpdate, current_user: User = Depends(require_admin)):
+    target_user = await user_get_by_id(user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Utilizator negăsit")
+    if not current_user.is_super_admin and target_user.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la utilizatorul altei organizații")
     update_data = data.model_dump(exclude_unset=True)
     if not update_data:
         raise HTTPException(status_code=400, detail="Nu există date de actualizat")
     
+    # Only super admin can change organization_id
+    if not current_user.is_super_admin:
+        update_data.pop("organization_id", None)
+        update_data.pop("is_super_admin", None)
     
     await user_update(user_id, update_data)
     await log_activity(current_user.id, current_user.full_name, "update", "user", user_id, "INFO", update_data)
@@ -1271,6 +1294,8 @@ async def get_location(location_id: str, current_user: User = Depends(get_curren
     location = await location_get(location_id)
     if not location:
         raise HTTPException(status_code=404, detail="Location not found")
+    if not current_user.is_super_admin and location.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la locația altei organizații")
     return location
 
 @api_router.put("/locations/{location_id}", response_model=Location)
@@ -1278,7 +1303,11 @@ async def update_location(location_id: str, location_data: LocationCreate, curre
     existing = await location_get(location_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Location not found")
+    if not current_user.is_super_admin and existing.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la locația altei organizații")
     update_data = location_data.model_dump()
+    if not current_user.is_super_admin:
+        update_data["organization_id"] = current_user.organization_id
     await location_update(location_id, update_data)
     updated = await location_get(location_id)
     await log_activity(current_user.id, current_user.full_name, "update", "location", location_id, "INFO", update_data)
@@ -1286,6 +1315,11 @@ async def update_location(location_id: str, location_data: LocationCreate, curre
 
 @api_router.delete("/locations/{location_id}")
 async def delete_location(location_id: str, current_user: User = Depends(require_admin)):
+    existing = await location_get(location_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Location not found")
+    if not current_user.is_super_admin and existing.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la locația altei organizații")
     ok = await location_delete(location_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Location not found")
@@ -1363,6 +1397,8 @@ async def get_screen(screen_id: str, current_user: User = Depends(get_current_us
     screen = await screen_get(screen_id)
     if not screen:
         raise HTTPException(status_code=404, detail="Screen not found")
+    if not current_user.is_super_admin and screen.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la ecranul altei organizații")
     return screen
 
 @api_router.put("/screens/{screen_id}", response_model=Screen)
@@ -1370,13 +1406,23 @@ async def update_screen(screen_id: str, screen_data: ScreenCreate, current_user:
     existing = await screen_get(screen_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Screen not found")
-    await screen_update(screen_id, screen_data.model_dump())
+    if not current_user.is_super_admin and existing.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la ecranul altei organizații")
+    data_dict = screen_data.model_dump()
+    if not current_user.is_super_admin:
+        data_dict["organization_id"] = current_user.organization_id
+    await screen_update(screen_id, data_dict)
     updated = await screen_get(screen_id)
-    await log_activity(current_user.id, current_user.full_name, "update", "screen", screen_id, "INFO", screen_data.model_dump())
+    await log_activity(current_user.id, current_user.full_name, "update", "screen", screen_id, "INFO", data_dict)
     return updated
 
 @api_router.delete("/screens/{screen_id}")
 async def delete_screen(screen_id: str, current_user: User = Depends(require_admin)):
+    existing = await screen_get(screen_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Screen not found")
+    if not current_user.is_super_admin and existing.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la ecranul altei organizații")
     ok = await screen_delete(screen_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Screen not found")
@@ -2022,6 +2068,8 @@ async def get_playlist(playlist_id: str, current_user: User = Depends(get_curren
     playlist = await playlist_get(playlist_id)
     if not playlist:
         raise HTTPException(status_code=404, detail="Playlist not found")
+    if not current_user.is_super_admin and playlist.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la playlist-ul altei organizații")
     return playlist
 
 @api_router.put("/playlists/{playlist_id}", response_model=Playlist)
@@ -2029,7 +2077,12 @@ async def update_playlist(playlist_id: str, playlist_data: PlaylistCreate, curre
     existing = await playlist_get(playlist_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Playlist not found")
-    await playlist_update(playlist_id, playlist_data.model_dump())
+    if not current_user.is_super_admin and existing.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la playlist-ul altei organizații")
+    update_data = playlist_data.model_dump()
+    if not current_user.is_super_admin:
+        update_data["organization_id"] = current_user.organization_id
+    await playlist_update(playlist_id, update_data)
     updated = await playlist_get(playlist_id)
     
     # Log action
@@ -2040,6 +2093,10 @@ async def update_playlist(playlist_id: str, playlist_data: PlaylistCreate, curre
 @api_router.delete("/playlists/{playlist_id}")
 async def delete_playlist(playlist_id: str, current_user: User = Depends(require_admin)):
     playlist = await playlist_get(playlist_id)
+    if not playlist:
+        raise HTTPException(status_code=404, detail="Playlist not found")
+    if not current_user.is_super_admin and playlist.get("organization_id") != current_user.organization_id:
+        raise HTTPException(status_code=403, detail="Acces interzis la playlist-ul altei organizații")
     ok = await playlist_delete(playlist_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Playlist not found")

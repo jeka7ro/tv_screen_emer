@@ -16,6 +16,8 @@ import {
   CheckCircle,
   Edit,
   Camera,
+  Building2,
+  MapPin,
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
@@ -29,10 +31,12 @@ import { ViewToggle } from '../components/ViewToggle';
 import { useConfirm } from '../hooks/useConfirm';
 
 export const Users = () => {
-    const { confirm, ConfirmDialog } = useConfirm();
-  const { isSuperAdmin } = useAuth();
+  const { confirm, ConfirmDialog } = useConfirm();
+  const { isAdmin, isSuperAdmin } = useAuth();
   const [users, setUsers] = useState([]);
-  const [viewMode, setViewMode] = useViewMode('view_mode_users', 'list');
+  const [organizations, setOrganizations] = useState([]);
+  const [orgFilter, setOrgFilter] = useState('all');
+  const [viewMode, setViewMode] = useViewMode('view_mode_users', 'grid');
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
   const [newPassword, setNewPassword] = useState('');
@@ -47,13 +51,26 @@ export const Users = () => {
   const [editFormData, setEditFormData] = useState({
     full_name: '',
     role: 'admin',
-    location_id: ''
+    location_id: '',
+    organization_id: 'default_sushimaster'
   });
 
   useEffect(() => {
     loadUsers();
     loadLocations();
+    if (isSuperAdmin()) {
+      loadOrganizations();
+    }
   }, []);
+
+  const loadOrganizations = async () => {
+    try {
+      const response = await api.get('/organizations');
+      setOrganizations(response.data);
+    } catch (error) {
+      console.error('Error loading organizations', error);
+    }
+  };
 
   const loadLocations = async () => {
     try {
@@ -123,7 +140,8 @@ export const Users = () => {
     setEditFormData({
       full_name: user.full_name || '',
       role: user.role || 'admin',
-      location_id: user.location_id || ''
+      location_id: user.location_id || 'none',
+      organization_id: user.organization_id || 'default_sushimaster'
     });
     setShowEditDialog(true);
   };
@@ -241,16 +259,16 @@ export const Users = () => {
     );
   };
 
-  if (!isSuperAdmin()) {
+  if (!isAdmin()) {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center h-96 text-center">
           <XCircle className="w-16 h-16 text-brand-400 mb-4" />
           <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">Acces restricționat</h2>
-          <p className="text-slate-500 dark:text-slate-400">Doar Super Admin-ul poate vedea utilizatorii.</p>
+          <p className="text-slate-500 dark:text-slate-400">Doar administratorii pot vedea utilizatorii.</p>
         </div>
-          <ConfirmDialog />
-        </DashboardLayout>
+        <ConfirmDialog />
+      </DashboardLayout>
     );
   }
 
@@ -271,12 +289,18 @@ export const Users = () => {
         <div className="flex items-center justify-center h-96">
           <div className="spinner"></div>
         </div>
-          <ConfirmDialog />
-        </DashboardLayout>
+        <ConfirmDialog />
+      </DashboardLayout>
     );
   }
 
-  const superAdminCount = users.filter((u) => u.is_super_admin).length;
+  const filteredUsers = users.filter((u) => {
+    if (!isSuperAdmin()) return true;
+    if (orgFilter === 'all') return true;
+    return u.organization_id === orgFilter;
+  });
+
+  const superAdminCount = filteredUsers.filter((u) => u.is_super_admin).length;
 
   return (
     <DashboardLayout>
@@ -303,6 +327,42 @@ export const Users = () => {
           </div>
         </div>
 
+        {/* Organization Filter (Super Admin only) */}
+        {isSuperAdmin() && (
+          <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm mb-6">
+            <Building2 className="w-4 h-4 text-brand-500 ml-2" />
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Filtru Organizație:
+            </span>
+            <Select value={orgFilter} onValueChange={setOrgFilter}>
+              <SelectTrigger className="w-[240px] h-9 text-sm rounded-full bg-slate-50 dark:bg-slate-800/50">
+                <SelectValue placeholder="Toate organizațiile" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toate organizațiile ({users.length})</SelectItem>
+                {organizations.map(org => {
+                  const count = users.filter(u => u.organization_id === org.id).length;
+                  return (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name} ({count})
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            {orgFilter !== 'all' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setOrgFilter('all')}
+                className="text-xs text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              >
+                Resetează filtru
+              </Button>
+            )}
+          </div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <div className="glass-card p-4">
@@ -312,7 +372,7 @@ export const Users = () => {
               </div>
               <div>
                 <p className="text-sm text-slate-500 dark:text-slate-400">Total utilizatori</p>
-                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{users.length}</p>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-200">{filteredUsers.length}</p>
               </div>
             </div>
           </div>
@@ -330,7 +390,7 @@ export const Users = () => {
         </div>
 
         {/* Users List */}
-        {users.length === 0 ? (
+        {filteredUsers.length === 0 ? (
           <div className="glass-card p-12 text-center">
             <UsersIcon className="w-16 h-16 text-slate-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">Niciun utilizator</h3>
@@ -348,10 +408,16 @@ export const Users = () => {
                       Utilizator
                     </th>
                     <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Organizație
+                    </th>
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Email
                     </th>
                     <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Rol
+                    </th>
+                    <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                      Locație
                     </th>
                     <th className="text-left py-4 px-5 text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       Înregistrat
@@ -365,7 +431,7 @@ export const Users = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((u) => (
+                  {filteredUsers.map((u) => (
                     <tr
                       key={u.id}
                       className="border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50/50 transition-colors"
@@ -376,6 +442,12 @@ export const Users = () => {
                           {renderAvatar(u, 'md')}
                           <span className="font-medium text-slate-800 dark:text-slate-200">{u.full_name || '—'}</span>
                         </div>
+                      </td>
+                      <td className="py-4 px-5">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-50 text-brand-700 text-xs font-semibold rounded-full border border-brand-200">
+                          <Building2 className="w-3 h-3 text-brand-500" />
+                          {u.organization_name || (organizations.find(o => o.id === u.organization_id)?.name || u.organization_id || 'Sushi Master')}
+                        </span>
                       </td>
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
@@ -402,6 +474,11 @@ export const Users = () => {
                         ) : (
                           <span className="text-slate-400 text-sm">Utilizator</span>
                         )}
+                      </td>
+                      <td className="py-4 px-5">
+                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                          {u.location_name || (locations.find(l => l.id === u.location_id)?.name || 'Toate')}
+                        </span>
                       </td>
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
@@ -475,7 +552,7 @@ export const Users = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {users.map((u) => (
+            {filteredUsers.map((u) => (
               <div key={u.id} className="glass-card p-6 flex flex-col items-center text-center" data-testid={`user-card-${u.email}`}>
                 <div className="mb-4">
                   {renderAvatar(u, 'lg')}
@@ -485,35 +562,48 @@ export const Users = () => {
                   {u.full_name || '—'}
                 </h3>
 
-                <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 mb-4">
+                <div className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 mb-3">
                   <Mail className="w-3.5 h-3.5" />
                   {u.email}
                 </div>
 
-                <div className="mb-6">
+                <div className="flex flex-wrap items-center justify-center gap-1.5 mb-5">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-brand-50 text-brand-700 text-xs font-semibold rounded-full border border-brand-200">
+                    <Building2 className="w-3 h-3 text-brand-500" />
+                    {u.organization_name || (organizations.find(o => o.id === u.organization_id)?.name || u.organization_id || 'Sushi Master')}
+                  </span>
                   {u.is_super_admin ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-700 text-sm font-medium rounded-full border border-amber-200">
-                      <Shield className="w-3.5 h-3.5" />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-100 text-amber-700 text-xs font-medium rounded-full border border-amber-200">
+                      <Shield className="w-3 h-3" />
                       Super Admin
                     </span>
                   ) : u.role === 'admin' ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-100 text-indigo-700 text-sm font-medium rounded-full border border-indigo-200">
-                      <Shield className="w-3.5 h-3.5" />
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-medium rounded-full border border-indigo-200">
+                      <Shield className="w-3 h-3" />
                       Admin
                     </span>
                   ) : u.role === 'manager' ? (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 text-sm font-medium rounded-full border border-blue-200">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full border border-blue-200">
                       <User className="w-3.5 h-3.5" />
                       Manager
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-sm font-medium rounded-full border border-slate-200 dark:border-slate-700">
+                    <span className="inline-flex items-center px-2.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-medium rounded-full border border-slate-200 dark:border-slate-700">
                       Utilizator
                     </span>
                   )}
                 </div>
 
                 <div className="w-full space-y-3 border-t border-slate-100 dark:border-slate-800 pt-4">
+                  <div className="flex justify-between items-center text-sm">
+                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                      <MapPin className="w-4 h-4" />
+                      <span>Locație</span>
+                    </div>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                      {u.location_name || (locations.find(l => l.id === u.location_id)?.name || 'Toate locațiile')}
+                    </span>
+                  </div>
                   <div className="flex justify-between items-center text-sm">
                     <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                       <Calendar className="w-4 h-4" />
@@ -620,6 +710,28 @@ export const Users = () => {
                   />
                 </div>
 
+                {isSuperAdmin() && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
+                      <Building2 className="w-4 h-4 text-brand-500" />
+                      Organizație (Tenant)
+                    </Label>
+                    <Select
+                      value={editFormData.organization_id}
+                      onValueChange={(value) => setEditFormData({ ...editFormData, organization_id: value, location_id: 'none' })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selectează organizația" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {organizations.map(org => (
+                          <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label>Rol</Label>
                   <Select
@@ -630,7 +742,7 @@ export const Users = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="admin">Admin (Toate locațiile)</SelectItem>
+                      <SelectItem value="admin">Admin (Toate locațiile din organizație)</SelectItem>
                       <SelectItem value="manager">Manager (Locație specifică)</SelectItem>
                     </SelectContent>
                   </Select>
@@ -646,16 +758,18 @@ export const Users = () => {
                       <SelectValue placeholder="Selectează locația" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Nicio locație</SelectItem>
-                      {locations.map(loc => (
-                        <SelectItem key={loc.id} value={loc.id}>
-                          {loc.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="none">Nicio locație (Toate locațiile)</SelectItem>
+                      {locations
+                        .filter(loc => !editFormData.organization_id || loc.organization_id === editFormData.organization_id)
+                        .map(loc => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            {loc.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Managerii pot vedea doar ecranele din locația atribuită.
+                    Sunt afișate doar locațiile din organizația selectată. Managerii pot vedea doar ecranele din locația atribuită.
                   </p>
                 </div>
 
