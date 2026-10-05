@@ -61,7 +61,7 @@ export const DashboardLayout = ({ children }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, isAdmin, isSuperAdmin, selectedOrgId, selectOrganization, organizations } = useAuth();
+  const { user, logout, isAdmin, isSuperAdmin, selectedOrgId, selectOrganization, organizations, isTenantPortal, tenantOrgId } = useAuth();
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -171,9 +171,9 @@ export const DashboardLayout = ({ children }) => {
               </div>
               {adminMenuItems
                 .filter((item) => {
-                  // Only Super Admin can manage Organizations/Clients and Billing
+                  // Only Super Admin on central platform can manage Organizations/Clients and Billing
                   if (item.path === '/organizations' || item.path === '/billing') {
-                    return isSuperAdmin();
+                    return isSuperAdmin() && !isTenantPortal;
                   }
                   return true;
                 })
@@ -218,11 +218,13 @@ export const DashboardLayout = ({ children }) => {
               <div className="mt-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 truncate flex items-center gap-1">
                 <span>🏢</span>
                 <span className="truncate">
-                  {isSuperAdmin()
-                    ? (selectedOrgId && selectedOrgId !== 'all'
-                        ? (organizations.find(o => o.id === selectedOrgId)?.name || selectedOrgId)
-                        : 'Toate Organizațiile')
-                    : (user?.organization_name || user?.organization_id || 'Client')}
+                  {isTenantPortal
+                    ? (organizations.find(o => o.id === tenantOrgId)?.name || 'Sushi Han')
+                    : isSuperAdmin()
+                      ? (selectedOrgId && selectedOrgId !== 'all'
+                          ? (organizations.find(o => o.id === selectedOrgId)?.name || selectedOrgId)
+                          : 'Toate Organizațiile')
+                      : (user?.organization_name || user?.organization_id || 'Sushi Master')}
                 </span>
               </div>
             </div>
@@ -245,7 +247,29 @@ export const DashboardLayout = ({ children }) => {
         <header className="sticky top-0 z-40 px-8 h-[72px] flex items-center border-b border-slate-200/80 dark:border-slate-700/80 shrink-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
           <div className="flex items-center justify-between gap-4 w-full">
             {/* Organization Switcher */}
-            {isSuperAdmin() ? (
+            {isTenantPortal ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-1.5 shadow-sm">
+                  <Building2 className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 hidden sm:inline">Portal Client:</span>
+                  <span className="text-sm font-bold text-amber-700 dark:text-amber-300">
+                    {organizations.find(o => o.id === tenantOrgId)?.name || 'Sushi Han'}
+                  </span>
+                  <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/60 px-2 py-0.5 rounded-full uppercase">
+                    Dedicat
+                  </span>
+                  {isSuperAdmin() && (
+                    <a
+                      href="https://smr.onl"
+                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold ml-2 border-l border-amber-300 dark:border-amber-700 pl-2 hidden md:inline"
+                      title="Mergi la panoul central Super Admin cu toate organizațiile"
+                    >
+                      Panou Central (Toate) ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : isSuperAdmin() ? (
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700 rounded-xl px-3 py-1.5 shadow-sm">
                   <Building2 className="w-4 h-4 text-indigo-500 shrink-0" />

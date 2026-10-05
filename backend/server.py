@@ -10,6 +10,7 @@ import os
 import logging
 from pathlib import Path
 import re
+from urllib.parse import urlparse
 
 # Determine upload directory (Render uses /opt/render/project/src/backend/uploads usually, or absolute path)
 # We'll use absolute path relative to this file to be safe
@@ -794,18 +795,74 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         user_doc["created_at"] = datetime.fromisoformat(user_doc["created_at"])
     return User(**user_doc)
 
+def resolve_subdomain_from_request(request: Optional[Request]) -> Optional[str]:
+    """Extract tenant subdomain from request headers (custom header, Origin, or Referer)"""
+    if not request:
+        return None
+    # 1. Custom tenant header from frontend
+    sub_header = request.headers.get("X-Tenant-Subdomain")
+    if sub_header:
+        clean = re.sub(r'[^a-z0-9]', '', sub_header.lower())
+        if clean and clean not in ("www", "api", "smr", "default"):
+            return clean
+
+    # 2. Check Origin or Referer header
+    for h in ("origin", "referer"):
+        val = request.headers.get(h)
+        if val:
+            try:
+                host = (urlparse(val).hostname or "").lower()
+                parts = host.split(".")
+                # Check [subdomain].smr.onl
+                if len(parts) >= 3 and parts[-2] == "smr" and parts[-1] == "onl":
+                    sub = parts[0]
+                    if sub not in ("www", "api"):
+                        return sub
+                # Check [subdomain].localhost
+                if len(parts) >= 2 and parts[-1] == "localhost":
+                    sub = parts[0]
+                    if sub not in ("www", "api"):
+                        return sub
+            except Exception:
+                pass
+    return None
+
 def get_user_org_id(current_user: User, request: Optional[Request] = None, org_id: Optional[str] = None) -> Optional[str]:
     """Resolve target organization for multi-tenant querying"""
+    # 1. If request originates from a dedicated tenant subdomain, THAT TENANT IS ABSOLUTE LAW!
+    sub = resolve_subdomain_from_request(request)
+    if sub:
+        clean = re.sub(r'[^a-z0-9]', '', sub)
+        if clean in ("sh", "sushihan"):
+            return "sh"
+        if clean in ("default", "sushimaster", "sm"):
+            return "default_sushimaster"
+        return clean
+
+    # 2. Main platform domain (smr.onl or localhost)
     header_org = request.headers.get("X-Organization-Id") if request else None
     chosen = org_id or header_org
-    if current_user.is_super_admin:
-        if not chosen or chosen == "all":
-            return None
-        return chosen
-    return getattr(current_user, "organization_id", "default_sushimaster") or "default_sushimaster"
+
+    # Non-super-admin is always restricted to their assigned organization
+    if not current_user.is_super_admin:
+        return getattr(current_user, "organization_id", "default_sushimaster") or "default_sushimaster"
+
+    # Super admin on main platform domain:
+    if not chosen or chosen == "all":
+        return None
+    return chosen
 
 def get_user_create_org_id(current_user: User, request: Optional[Request] = None, item_org_id: Optional[str] = None) -> str:
     """Resolve target organization when creating resources"""
+    sub = resolve_subdomain_from_request(request)
+    if sub:
+        clean = re.sub(r'[^a-z0-9]', '', sub)
+        if clean in ("sh", "sushihan"):
+            return "sh"
+        if clean in ("default", "sushimaster", "sm"):
+            return "default_sushimaster"
+        return clean
+
     header_org = request.headers.get("X-Organization-Id") if request else None
     chosen = item_org_id or header_org
     if current_user.is_super_admin and chosen and chosen != "all":

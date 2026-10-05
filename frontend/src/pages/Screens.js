@@ -61,7 +61,7 @@ const ScreenThumbnail = ({ screen, thumbData, thumbLoading }) => {
 
 export const Screens = () => {
   const { confirm, ConfirmDialog } = useConfirm();
-  const { user, isAdmin, isSuperAdmin, selectedOrgId } = useAuth();
+  const { user, isAdmin, isSuperAdmin, selectedOrgId, isTenantPortal, tenantOrgId } = useAuth();
   const [screens, setScreens] = useState([]);
   const [locations, setLocations] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -103,7 +103,7 @@ export const Screens = () => {
     }, 10000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedOrgId]);
 
   const loadData = async () => {
     try {
@@ -199,7 +199,7 @@ export const Screens = () => {
       orientation: '0',
       template_id: 'fullscreen',
       logo_brand_id: '',
-      organization_id: isSuperAdmin() && selectedOrgId && selectedOrgId !== 'all' ? selectedOrgId : (user?.organization_id || 'default_sushimaster')
+      organization_id: isTenantPortal ? (tenantOrgId || 'sh') : (isSuperAdmin() && selectedOrgId && selectedOrgId !== 'all' ? selectedOrgId : (user?.organization_id || 'default_sushimaster'))
     });
     setFormCityFilter('all');
     setEditingScreen(null);

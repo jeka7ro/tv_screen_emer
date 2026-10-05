@@ -32,7 +32,7 @@ import { useConfirm } from '../hooks/useConfirm';
 
 export const Users = () => {
   const { confirm, ConfirmDialog } = useConfirm();
-  const { isAdmin, isSuperAdmin } = useAuth();
+  const { isAdmin, isSuperAdmin, selectedOrgId, isTenantPortal, tenantOrgId } = useAuth();
   const [users, setUsers] = useState([]);
   const [organizations, setOrganizations] = useState([]);
   const [viewMode, setViewMode] = useViewMode('view_mode_users', 'grid');
@@ -60,7 +60,7 @@ export const Users = () => {
     if (isSuperAdmin()) {
       loadOrganizations();
     }
-  }, []);
+  }, [selectedOrgId]);
 
   const loadOrganizations = async () => {
     try {

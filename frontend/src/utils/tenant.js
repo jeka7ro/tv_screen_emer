@@ -2,7 +2,7 @@
  * Multi-tenant subdomain resolution utility
  */
 
-export const getTenantSubdomain = (hostname = window.location.hostname) => {
+export const getTenantSubdomain = (hostname = typeof window !== 'undefined' ? window.location.hostname : '') => {
   if (!hostname) return null;
 
   // Check URL query param first (for easy local testing without DNS, e.g. ?org=sushihan or ?org=sh)
@@ -24,11 +24,29 @@ export const getTenantSubdomain = (hostname = window.location.hostname) => {
   // Local development: [subdomain].localhost (e.g. sushihan.localhost:3004)
   if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
     const sub = parts[0];
-    if (sub !== 'www') return sub;
+    if (sub !== 'www' && sub !== 'api') return sub;
     return null;
   }
 
   return null;
+};
+
+export const getTenantOrgId = () => {
+  const sub = getTenantSubdomain();
+  if (!sub) return null;
+  const clean = sub.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (clean === 'sushihan' || clean === 'sh') return 'sh';
+  if (clean === 'sushimaster' || clean === 'sm') return 'default_sushimaster';
+  try {
+    const cached = localStorage.getItem(`tenant_org_id_${clean}`);
+    if (cached) return cached;
+  } catch (e) {}
+  return clean;
+};
+
+export const isTenantPortalMode = () => {
+  const orgId = getTenantOrgId();
+  return Boolean(orgId && orgId !== 'default_sushimaster');
 };
 
 /**

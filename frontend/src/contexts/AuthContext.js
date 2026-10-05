@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import api from '../utils/api';
+import { getTenantOrgId, isTenantPortalMode } from '../utils/tenant';
 
 const AuthContext = createContext(null);
 
@@ -7,7 +8,14 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [organizations, setOrganizations] = useState([]);
+  
+  const isTenantPortal = isTenantPortalMode();
+  const tenantOrgId = getTenantOrgId();
+
   const [selectedOrgId, setSelectedOrgIdState] = useState(() => {
+    if (isTenantPortal) {
+      return tenantOrgId;
+    }
     return localStorage.getItem('selected_organization_id') || 'all';
   });
 
@@ -23,6 +31,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const selectOrganization = (orgId) => {
+    if (isTenantPortal) {
+      setSelectedOrgIdState(tenantOrgId);
+      return;
+    }
     setSelectedOrgIdState(orgId);
     if (orgId) {
       localStorage.setItem('selected_organization_id', orgId);
@@ -46,7 +58,11 @@ export const AuthProvider = ({ children }) => {
           setUser(freshUser);
           localStorage.setItem('user', JSON.stringify(freshUser));
           if (freshUser.is_super_admin) {
-            refreshOrganizations();
+            if (isTenantPortal) {
+              selectOrganization(tenantOrgId);
+            } else {
+              refreshOrganizations();
+            }
           } else {
             selectOrganization(freshUser.organization_id || 'default_sushimaster');
           }
@@ -67,7 +83,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(user));
     setUser(user);
     if (user.is_super_admin) {
-      refreshOrganizations();
+      if (isTenantPortal) {
+        selectOrganization(tenantOrgId);
+      } else {
+        refreshOrganizations();
+      }
     } else {
       selectOrganization(user.organization_id || 'default_sushimaster');
     }
@@ -81,7 +101,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(user));
     setUser(user);
     if (user.is_super_admin) {
-      refreshOrganizations();
+      if (isTenantPortal) {
+        selectOrganization(tenantOrgId);
+      } else {
+        refreshOrganizations();
+      }
     } else {
       selectOrganization(user.organization_id || 'default_sushimaster');
     }
@@ -108,9 +132,11 @@ export const AuthProvider = ({ children }) => {
       isSuperAdmin,
       isAdmin,
       organizations,
-      selectedOrgId,
+      selectedOrgId: isTenantPortal ? tenantOrgId : selectedOrgId,
       selectOrganization,
-      refreshOrganizations
+      refreshOrganizations,
+      isTenantPortal,
+      tenantOrgId
     }}>
       {children}
     </AuthContext.Provider>

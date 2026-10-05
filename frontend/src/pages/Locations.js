@@ -15,7 +15,7 @@ import { useConfirm } from '../hooks/useConfirm';
 
 export const Locations = () => {
   const { confirm, ConfirmDialog } = useConfirm();
-  const { user, isAdmin, isSuperAdmin, selectedOrgId } = useAuth();
+  const { user, isAdmin, isSuperAdmin, selectedOrgId, isTenantPortal, tenantOrgId } = useAuth();
   const [locations, setLocations] = useState([]);
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +41,7 @@ export const Locations = () => {
     if (isSuperAdmin()) {
       loadOrganizations();
     }
-  }, []);
+  }, [selectedOrgId]);
 
   const loadOrganizations = async () => {
     try {

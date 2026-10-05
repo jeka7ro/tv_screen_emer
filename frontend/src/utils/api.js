@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getTenantSubdomain, getTenantOrgId, isTenantPortalMode } from './tenant';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -13,9 +14,22 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  const selectedOrg = localStorage.getItem('selected_organization_id');
-  if (selectedOrg) {
-    config.headers['X-Organization-Id'] = selectedOrg;
+
+  const tenantSub = getTenantSubdomain();
+  if (tenantSub) {
+    config.headers['X-Tenant-Subdomain'] = tenantSub;
+  }
+
+  if (isTenantPortalMode()) {
+    // Dedicated tenant portal: strictly lock X-Organization-Id to tenant ID
+    const tenantOrgId = getTenantOrgId();
+    config.headers['X-Organization-Id'] = tenantOrgId;
+  } else {
+    // Platform management (smr.onl / localhost)
+    const selectedOrg = localStorage.getItem('selected_organization_id');
+    if (selectedOrg) {
+      config.headers['X-Organization-Id'] = selectedOrg;
+    }
   }
   return config;
 });
