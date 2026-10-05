@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -18,6 +19,9 @@ import {
   Camera,
   Building2,
   MapPin,
+  UserPlus,
+  Link2,
+  Plus
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
@@ -41,6 +45,8 @@ export const Users = () => {
   const [newPassword, setNewPassword] = useState('');
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [locations, setLocations] = useState([]);
@@ -53,6 +59,58 @@ export const Users = () => {
     location_id: '',
     organization_id: 'default_sushimaster'
   });
+  const [createFormData, setCreateFormData] = useState({
+    full_name: '',
+    email: '',
+    password: '',
+    role: 'admin',
+    location_id: 'none',
+    organization_id: isTenantPortal ? (tenantOrgId || 'sh') : (selectedOrgId && selectedOrgId !== 'all' ? selectedOrgId : 'default_sushimaster')
+  });
+
+  const resetCreateForm = () => {
+    setCreateFormData({
+      full_name: '',
+      email: '',
+      password: '',
+      role: 'admin',
+      location_id: 'none',
+      organization_id: isTenantPortal ? (tenantOrgId || 'sh') : (selectedOrgId && selectedOrgId !== 'all' ? selectedOrgId : 'default_sushimaster')
+    });
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    if (!createFormData.email || !createFormData.password || !createFormData.full_name) {
+      toast.error('Completați toate câmpurile obligatorii');
+      return;
+    }
+    if (createFormData.password.length < 6) {
+      toast.error('Parola trebuie să aibă minim 6 caractere');
+      return;
+    }
+    setCreating(true);
+    try {
+      const payload = {
+        full_name: createFormData.full_name,
+        email: createFormData.email,
+        password: createFormData.password,
+        role: createFormData.role,
+        location_id: createFormData.location_id === 'none' ? null : createFormData.location_id,
+        organization_id: isTenantPortal ? (tenantOrgId || 'sh') : (isSuperAdmin() && createFormData.organization_id ? createFormData.organization_id : (selectedOrgId && selectedOrgId !== 'all' ? selectedOrgId : 'default_sushimaster'))
+      };
+      await api.post('/users', payload);
+      toast.success('Utilizator adăugat cu succes!');
+      setShowCreateDialog(false);
+      resetCreateForm();
+      loadUsers();
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast.error(error.response?.data?.detail || 'Eroare la adăugarea utilizatorului');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   useEffect(() => {
     loadUsers();
@@ -309,7 +367,22 @@ export const Users = () => {
             </p>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              onClick={() => {
+                resetCreateForm();
+                setShowCreateDialog(true);
+              }}
+              className="btn-primary flex items-center gap-2"
+              data-testid="add-user-btn"
+            >
+              <UserPlus className="w-4 h-4" />
+              Adaugă Utilizator
+            </Button>
+            <Link to="/invitations" className="btn-secondary flex items-center gap-2">
+              <Link2 className="w-4 h-4" />
+              Invitații
+            </Link>
             <button
               onClick={loadUsers}
               className="btn-secondary flex items-center gap-2"
@@ -621,6 +694,134 @@ export const Users = () => {
             ))}
           </div>
         )}
+
+        {/* Create User Dialog */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent className="glass-panel max-h-[90vh] overflow-hidden flex flex-col sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+                <UserPlus className="w-5 h-5 text-indigo-600" />
+                Adaugă Utilizator Nou
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto pr-1" style={{ maxHeight: 'calc(90vh - 120px)' }}>
+              <form onSubmit={handleCreateUser} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="create-full-name">Nume Complet *</Label>
+                  <Input
+                    id="create-full-name"
+                    value={createFormData.full_name}
+                    onChange={(e) => setCreateFormData({ ...createFormData, full_name: e.target.value })}
+                    placeholder="ex: Alex Popescu"
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="create-email">Adresă Email *</Label>
+                  <Input
+                    id="create-email"
+                    type="email"
+                    value={createFormData.email}
+                    onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
+                    placeholder={isTenantPortal ? "alex@sushihan.ro" : "utilizator@email.ro"}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="create-password">Parolă Inițială *</Label>
+                  <Input
+                    id="create-password"
+                    type="password"
+                    value={createFormData.password}
+                    onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
+                    placeholder="Minim 6 caractere"
+                    required
+                  />
+                  <p className="text-xs text-slate-400">
+                    Utilizatorul se va putea autentifica cu această adresă de email și parolă.
+                  </p>
+                </div>
+
+                {isSuperAdmin() && !isTenantPortal && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-300">
+                      <Building2 className="w-4 h-4 text-brand-500" />
+                      Organizație
+                    </Label>
+                    <Select
+                      value={createFormData.organization_id}
+                      onValueChange={(value) => setCreateFormData({ ...createFormData, organization_id: value, location_id: 'none' })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selectează organizația" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {organizations.map(org => (
+                          <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label>Rol Utilizator</Label>
+                  <Select
+                    value={createFormData.role}
+                    onValueChange={(value) => setCreateFormData({ ...createFormData, role: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin (Acces complet la gestionarea organizației)</SelectItem>
+                      <SelectItem value="manager">Manager (Limitat la o locație specifică)</SelectItem>
+                      <SelectItem value="editor">Editor (Poate adăuga și edita conținut)</SelectItem>
+                      <SelectItem value="viewer">Viewer (Doar vizualizare)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Locație Atribuită</Label>
+                  <Select
+                    value={createFormData.location_id || 'none'}
+                    onValueChange={(value) => setCreateFormData({ ...createFormData, location_id: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selectează locația" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Toate locațiile</SelectItem>
+                      {locations
+                        .filter(loc => !createFormData.organization_id || loc.organization_id === createFormData.organization_id)
+                        .map(loc => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            {loc.name} {loc.city ? `(${loc.city})` : ''}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Obligatoriu pentru manageri; opțional pentru administratori.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-3">
+                  <Button type="submit" disabled={creating} className="flex-1 btn-primary">
+                    {creating ? 'Se creează...' : 'Adaugă Utilizator'}
+                  </Button>
+                  <Button type="button" onClick={() => setShowCreateDialog(false)} variant="outline">
+                    Anulează
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
           <DialogContent className="glass-panel max-h-[90vh] overflow-hidden flex flex-col">
