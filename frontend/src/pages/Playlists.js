@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
-import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Folder, FolderOpen, Monitor, MapPin, Filter, Airplay, Eye } from 'lucide-react';
+import { List as ListIcon, Plus, Edit, Trash2, ArrowUp, ArrowDown, LayoutGrid, Film, ImageIcon, Clock, Copy, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Folder, FolderOpen, Monitor, MapPin, Filter, Airplay, Eye, Play, Pause, ZoomIn, X } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../components/ui/dialog';
@@ -18,87 +18,496 @@ import { PlaylistSimulation } from '../components/PlaylistSimulation';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '../components/ui/hover-card';
 import { useConfirm } from '../hooks/useConfirm';
 
-const MediaHoverPreview = ({ item, className, onError }) => {
-  const [open, setOpen] = useState(false);
+export const resolveMediaUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+  const backend = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8002';
+  return `${backend.replace(/\/$/, '')}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
+export const getYouTubeEmbedUrl = (url) => {
+  if (!url) return '';
+  const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+  return match ? `https://www.youtube.com/embed/${match[1]}?autoplay=1` : url;
+};
+
+export const calculateTotalDuration = (items) => {
+  if (!items || !Array.isArray(items)) return 0;
+  return items.reduce((total, item) => {
+    const itemDuration = parseInt(item.duration) || 10;
+    return total + itemDuration;
+  }, 0);
+};
+
+export const formatDuration = (seconds) => {
+  if (!seconds) return '00:00';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+
+  if (h > 0) {
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+};
+
+const MediaLightboxModal = ({ item, onClose }) => {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  if (!item) return null;
+  const resolvedUrl = resolveMediaUrl(item.file_url);
+
+  return (
+    <div 
+      className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div 
+        className="relative max-w-5xl w-full bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-slate-900/80">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-brand-500/10 text-brand-400">
+              {item.type === 'video' ? <Film className="w-5 h-5" /> : <ImageIcon className="w-5 h-5" />}
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white line-clamp-1">{item.title}</h3>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span className="uppercase font-bold tracking-wider text-brand-400">{item.type}</span>
+                {item.duration ? <span>• {item.duration}s durată</span> : null}
+                {item.category ? <span>• {item.category}</span> : null}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            title="Închide (Esc)"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Media View */}
+        <div className="relative flex-1 min-h-[350px] max-h-[calc(90vh-140px)] bg-black flex items-center justify-center p-3 overflow-hidden">
+          {item.type === 'video' ? (
+            <video
+              src={resolvedUrl}
+              controls
+              autoPlay
+              playsInline
+              className="w-full h-full max-h-[70vh] object-contain rounded-xl"
+            />
+          ) : item.type === 'youtube' ? (
+            <iframe
+              src={getYouTubeEmbedUrl(item.file_url)}
+              title={item.title}
+              className="w-full aspect-video max-h-[70vh] rounded-xl border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : item.type === 'web' ? (
+            <iframe
+              src={item.file_url}
+              title={item.title}
+              className="w-full h-[65vh] rounded-xl border-0 bg-white"
+            />
+          ) : (
+            <img
+              src={resolvedUrl}
+              alt={item.title}
+              className="w-full h-full max-h-[70vh] object-contain rounded-xl"
+            />
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-3 border-t border-slate-800/80 bg-slate-900/60 flex items-center justify-between text-xs text-slate-400">
+          <span className="truncate max-w-[60%]">{item.file_name || item.title}</span>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={onClose}
+            className="h-8 text-xs font-semibold"
+          >
+            Închide Previzualizarea
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PlaylistSlideshowModal = ({ playlist, content, onClose, onPreviewItem, onSwitchToScreenSim }) => {
+  const items = playlist?.items || [];
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight') {
+        setCurrentIndex(idx => (idx + 1) % Math.max(1, items.length));
+        setProgress(0);
+      }
+      if (e.key === 'ArrowLeft') {
+        setCurrentIndex(idx => (idx - 1 + items.length) % Math.max(1, items.length));
+        setProgress(0);
+      }
+      if (e.key === ' ') {
+        e.preventDefault();
+        setIsPlaying(p => !p);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [items.length, onClose]);
+
+  const currentPlayItem = items[currentIndex];
+  const currentContent = content.find(c => c.id === currentPlayItem?.content_id);
+  const slideDuration = parseInt(currentPlayItem?.duration) || 10;
+
+  useEffect(() => {
+    if (!isPlaying || items.length === 0) return;
+
+    setProgress(0);
+    const intervalMs = 100;
+    const totalMs = Math.max(slideDuration, 1) * 1000;
+    const step = (intervalMs / totalMs) * 100;
+
+    const timer = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          setCurrentIndex(idx => (idx + 1) % items.length);
+          return 0;
+        }
+        return prev + step;
+      });
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [currentIndex, isPlaying, slideDuration, items.length]);
+
+  if (!playlist) return null;
+  const currentUrl = currentContent ? resolveMediaUrl(currentContent.file_url) : '';
+
+  return (
+    <div 
+      className="fixed inset-0 z-[99990] bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 md:p-6 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      {/* Top Bar */}
+      <div 
+        className="flex items-center justify-between bg-slate-900/90 border border-slate-800 rounded-2xl px-6 py-3 shadow-xl backdrop-blur-md"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-brand-500/10 text-brand-400">
+            <Airplay className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              {playlist.name}
+              <span className="text-xs bg-brand-500/20 text-brand-300 font-bold px-2 py-0.5 rounded-full border border-brand-500/30">
+                Slide {items.length > 0 ? currentIndex + 1 : 0} din {items.length}
+              </span>
+            </h3>
+            <p className="text-xs text-slate-400">
+              Durată acest slide: <strong className="text-white">{slideDuration} secunde</strong> • Total playlist: {formatDuration(calculateTotalDuration(items))}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {onSwitchToScreenSim && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onSwitchToScreenSim}
+              className="text-xs font-semibold text-slate-300 border-slate-700 hover:bg-slate-800 gap-1.5"
+            >
+              <Monitor className="w-4 h-4 text-brand-400" />
+              Simulare Ecrane TV
+            </Button>
+          )}
+
+          {currentContent && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => onPreviewItem(currentContent)}
+              className="text-xs font-semibold gap-1.5"
+            >
+              <ZoomIn className="w-4 h-4" />
+              Vizualizare Mărită Fișier
+            </Button>
+          )}
+
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            title="Închide (Esc)"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Display Area (16:9 TV Screen Frame) */}
+      <div 
+        className="flex-1 flex items-center justify-center my-3 relative min-h-0"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="relative w-full max-w-5xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-800/80 flex items-center justify-center">
+          {items.length === 0 ? (
+            <div className="text-center text-slate-500 p-8">
+              <Film className="w-16 h-16 mx-auto mb-3 opacity-20" />
+              <p className="text-lg font-bold">Playlist-ul nu conține elemente</p>
+            </div>
+          ) : !currentContent ? (
+            <div className="text-center text-rose-400 p-8">
+              <p className="text-sm font-bold">Fișier media negăsit sau șters</p>
+            </div>
+          ) : currentContent.type === 'video' ? (
+            <video
+              key={currentUrl}
+              src={currentUrl}
+              className="w-full h-full object-contain"
+              autoPlay
+              muted
+              playsInline
+              loop
+            />
+          ) : currentContent.type === 'youtube' ? (
+            <iframe
+              key={currentUrl}
+              src={getYouTubeEmbedUrl(currentContent.file_url)}
+              title={currentContent.title}
+              className="w-full h-full border-0"
+              allow="autoplay; encrypted-media"
+            />
+          ) : currentContent.type === 'web' ? (
+            <iframe
+              key={currentUrl}
+              src={currentContent.file_url}
+              title={currentContent.title}
+              className="w-full h-full border-0 bg-white"
+            />
+          ) : (
+            <img
+              key={currentUrl}
+              src={currentUrl}
+              alt={currentContent.title}
+              className="w-full h-full object-contain animate-in fade-in duration-300"
+            />
+          )}
+
+          {/* Countdown Progress Bar at top of screen */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-white/10 z-20">
+            <div 
+              className="h-full bg-gradient-to-r from-brand-500 to-amber-500 transition-all ease-linear"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          {/* Floating Slide Badge */}
+          {currentContent && (
+            <div className="absolute bottom-4 left-4 z-20 bg-black/70 backdrop-blur-md border border-white/10 rounded-xl px-3 py-1.5 text-white flex items-center gap-2 shadow-lg">
+              <span className="text-xs font-bold truncate max-w-[250px]">{currentContent.title}</span>
+              <span className="text-[10px] text-brand-300 uppercase font-bold">{currentContent.type}</span>
+              <span className="text-[10px] text-slate-400">• {slideDuration}s</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Controls & Filmstrip */}
+      <div 
+        className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 shadow-xl backdrop-blur-md flex flex-col gap-2.5 max-w-5xl mx-auto w-full"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Controls row */}
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setCurrentIndex(idx => (idx - 1 + items.length) % items.length);
+                setProgress(0);
+              }}
+              disabled={items.length <= 1}
+              className="p-2 rounded-xl hover:bg-slate-800 text-slate-300 disabled:opacity-30 transition-colors"
+              title="Slide Anterior"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={() => setIsPlaying(!isPlaying)}
+              className="p-2 px-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+              title={isPlaying ? "Pauză" : "Pornește"}
+            >
+              {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white" />}
+              <span>{isPlaying ? 'Pauză' : 'Play'}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setCurrentIndex(idx => (idx + 1) % items.length);
+                setProgress(0);
+              }}
+              disabled={items.length <= 1}
+              className="p-2 rounded-xl hover:bg-slate-800 text-slate-300 disabled:opacity-30 transition-colors"
+              title="Slide Următor"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="text-xs text-slate-400">
+            Slide <strong className="text-white">{items.length > 0 ? currentIndex + 1 : 0}</strong> din <strong className="text-white">{items.length}</strong>
+          </div>
+        </div>
+
+        {/* Filmstrip thumbnails */}
+        {items.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-1 px-1 scrollbar-thin">
+            {items.map((item, idx) => {
+              const ci = content.find(c => c.id === item.content_id);
+              const isActive = idx === currentIndex;
+              const thumbUrl = ci ? resolveMediaUrl(ci.thumbnail_url || ci.file_url) : '';
+              return (
+                <div
+                  key={idx}
+                  onClick={() => {
+                    setCurrentIndex(idx);
+                    setProgress(0);
+                  }}
+                  className={`relative shrink-0 w-20 h-12 rounded-xl overflow-hidden bg-black cursor-pointer border-2 transition-all ${
+                    isActive ? 'border-brand-500 ring-2 ring-brand-500/50 scale-105' : 'border-slate-800 opacity-60 hover:opacity-100 hover:border-slate-700'
+                  }`}
+                  title={`${ci?.title || 'Slide ' + (idx + 1)} — ${item.duration || 10}s`}
+                >
+                  {ci?.type === 'video' ? (
+                    <video src={thumbUrl} className="w-full h-full object-cover" muted preload="metadata" />
+                  ) : (
+                    <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
+                  )}
+                  <div className="absolute bottom-0 inset-x-0 bg-black/80 px-1 py-0.5 flex items-center justify-between text-[8px] font-bold text-white">
+                    <span>#{idx + 1}</span>
+                    <span>{item.duration || 10}s</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const MediaHoverPreview = ({ item, className, onPreview, onError }) => {
   const [hasError, setHasError] = useState(false);
 
   if (!item) return null;
+
+  const resolvedUrl = resolveMediaUrl(item.file_url);
+  const resolvedThumb = resolveMediaUrl(item.thumbnail_url || item.file_url);
+
+  const handleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onPreview) {
+      onPreview(item);
+    }
+  };
+
   return (
-    <>
-      <HoverCard>
-        <HoverCardTrigger asChild>
-          <div 
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(true); }}
-            className={`rounded border border-slate-100 dark:border-slate-800 overflow-hidden shrink-0 bg-black flex items-center justify-center relative shadow-sm cursor-pointer group/vid ${className || 'w-10 h-10'}`}
-          >
-            {hasError ? (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-brand-900/80 p-0.5">
-                <span className="text-[7px] font-black text-white text-center leading-tight">FIȘIER<br/>LIPSĂ</span>
-              </div>
-            ) : item.type === 'video' ? (
-              <>
-                <video 
-                  src={item.file_url} 
-                  className="w-full h-full object-cover"
-                  autoPlay 
-                  muted 
-                  loop 
-                  playsInline
-                  onError={(e) => { setHasError(true); if (onError) onError(item.id); }}
-                />
-                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/vid:opacity-100 transition-opacity">
-                  <Eye className="w-4 h-4 text-white" />
-                </div>
-              </>
-            ) : (
-              <img 
-                src={item.thumbnail_url || item.file_url} 
-                alt="" 
-                className="w-full h-full object-cover group-hover/vid:scale-110 transition-transform" 
-                onError={(e) => { setHasError(true); if (onError) onError(item.id); }}
-              />
-            )}
-          </div>
-        </HoverCardTrigger>
-        <HoverCardContent side="right" sideOffset={10} className="w-64 p-2 bg-slate-900 border-slate-800 shadow-2xl z-[100] rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
-          {item.type === 'video' ? (
-            <div className="rounded-lg overflow-hidden bg-black aspect-video flex items-center justify-center">
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <div 
+          onClick={handleClick}
+          className={`rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden shrink-0 bg-slate-900 flex items-center justify-center relative shadow-xs cursor-pointer group/vid ${className || 'w-10 h-10'}`}
+          title="Click pentru previzualizare mărită"
+        >
+          {hasError ? (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-rose-950/80 p-0.5">
+              <span className="text-[7px] font-black text-rose-300 text-center leading-tight">FIȘIER<br/>LIPSĂ</span>
+            </div>
+          ) : item.type === 'video' ? (
+            <>
               <video 
-                src={item.file_url} 
-                className="w-full h-full object-contain"
+                src={resolvedUrl} 
+                className="w-full h-full object-cover"
                 autoPlay 
                 muted 
                 loop 
                 playsInline
+                onError={() => { setHasError(true); if (onError) onError(item.id); }}
               />
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover/vid:opacity-100 transition-opacity">
+                <Eye className="w-3.5 h-3.5 text-white drop-shadow" />
+              </div>
+            </>
+          ) : item.type === 'youtube' ? (
+            <div className="w-full h-full bg-red-900/40 flex items-center justify-center text-red-500">
+              <Film className="w-4 h-4" />
             </div>
           ) : (
-            <div className="rounded-lg overflow-hidden bg-black flex items-center justify-center">
-              <img src={item.file_url} alt="" className="w-full h-auto max-h-[250px] object-contain" />
-            </div>
-          )}
-        </HoverCardContent>
-      </HoverCard>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-4xl p-0 bg-black border-slate-800 shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-          <DialogTitle className="sr-only">Vizualizare Media</DialogTitle>
-          <div className="relative w-full h-[80vh] min-h-[300px] flex items-center justify-center bg-black">
-            {item.type === 'video' ? (
-              <video 
-                src={item.file_url} 
-                className="w-full h-full object-contain"
-                autoPlay 
-                controls 
-                playsInline
+            <>
+              <img 
+                src={resolvedThumb} 
+                alt="" 
+                className="w-full h-full object-cover group-hover/vid:scale-105 transition-transform" 
+                onError={() => { setHasError(true); if (onError) onError(item.id); }}
               />
-            ) : (
-              <img src={item.file_url} alt="" className="w-full h-full object-contain" />
-            )}
+              <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover/vid:opacity-100 transition-opacity">
+                <Eye className="w-3.5 h-3.5 text-white drop-shadow" />
+              </div>
+            </>
+          )}
+        </div>
+      </HoverCardTrigger>
+      <HoverCardContent side="right" sideOffset={10} className="w-64 p-2 bg-slate-900 border-slate-800 shadow-2xl z-[100] rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
+        {item.type === 'video' ? (
+          <div className="rounded-lg overflow-hidden bg-black aspect-video flex items-center justify-center">
+            <video 
+              src={resolvedUrl} 
+              className="w-full h-full object-contain"
+              autoPlay 
+              muted 
+              loop 
+              playsInline
+            />
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        ) : item.type === 'youtube' ? (
+          <div className="p-3 text-center text-xs text-slate-300">
+            <Film className="w-8 h-8 text-red-500 mx-auto mb-1" />
+            <p className="font-bold truncate">{item.title}</p>
+            <p className="text-[10px] text-slate-400">YouTube Video</p>
+          </div>
+        ) : (
+          <div className="rounded-lg overflow-hidden bg-black flex items-center justify-center">
+            <img src={resolvedUrl} alt="" className="w-full h-auto max-h-[250px] object-contain" />
+          </div>
+        )}
+        <div className="mt-1 px-1 flex items-center justify-between text-[10px] text-slate-400">
+          <span className="truncate max-w-[150px]">{item.title}</span>
+          <span className="text-brand-400 font-bold">Click pt. preview</span>
+        </div>
+      </HoverCardContent>
+    </HoverCard>
   );
 };
 
@@ -130,6 +539,9 @@ export const Playlists = () => {
   const [viewMode, setViewMode] = useViewMode('view_mode_playlists', 'grid');
 
   const [editingPlaylist, setEditingPlaylist] = useState(null);
+  const [generalDuration, setGeneralDuration] = useState(10);
+  const [previewMediaItem, setPreviewMediaItem] = useState(null);
+  const [slideshowPlaylist, setSlideshowPlaylist] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [calendarView, setCalendarView] = useState('week');
   // Fix: Add missing state for selectedPlaylists
@@ -217,13 +629,14 @@ export const Playlists = () => {
     try {
       const dataToSend = {
         ...formData,
+        default_duration: parseInt(generalDuration) || 10,
         brand: formData.brand ? [formData.brand] : [],
         start_at: (formData.is_scheduled && formData.start_at) ? formData.start_at : null,
         end_at: (formData.is_scheduled && formData.end_at) ? formData.end_at : null,
         items: playlistItems.map((item, index) => ({
           content_id: item.content_id,
           order: index,
-          duration: item.duration || 10
+          duration: parseInt(item.duration) || parseInt(generalDuration) || 10
         })),
         screen_ids: formData.is_scheduled ? formData.screen_ids : []
       };
@@ -338,6 +751,8 @@ export const Playlists = () => {
       end_at: playlist.end_at || '',
       screen_ids: screenIdsFromZones
     });
+    const initialGeneral = playlist.default_duration || (playlist.items && playlist.items[0]?.duration) || 10;
+    setGeneralDuration(initialGeneral);
     setPlaylistItems(playlist.items || []);
     setShowDialog(true);
   };
@@ -360,6 +775,7 @@ export const Playlists = () => {
         autoplay: playlist.autoplay,
         loop: playlist.loop,
         brand: playlist.brand || [],
+        default_duration: playlist.default_duration || 10,
         items: (playlist.items || []).map((item, index) => ({
           content_id: item.content_id,
           order: index,
@@ -390,8 +806,10 @@ export const Playlists = () => {
 
   const addContentToPlaylist = (contentId) => {
     const contentItem = getContentById(contentId);
-    // Auto-detect duration from content metadata if available
-    const defaultDuration = contentItem?.duration || 10;
+    // Use video intrinsic duration if available, else generalDuration
+    const defaultDuration = (contentItem?.type === 'video' && contentItem?.duration)
+      ? contentItem.duration
+      : (parseInt(generalDuration) || 10);
 
     setPlaylistItems([...playlistItems, {
       content_id: contentId,
@@ -435,6 +853,7 @@ export const Playlists = () => {
       screen_ids: []
     });
     setPlaylistItems([]);
+    setGeneralDuration(10);
     setEditingPlaylist(null);
     setLocationSearch('');
   };
@@ -1089,21 +1508,31 @@ export const Playlists = () => {
                                           className="flex items-center justify-between p-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-brand-200 hover:shadow-sm transition-all group"
                                         >
                                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <MediaHoverPreview item={item} className="w-10 h-10" />
-                                            <div>
-                                              <p className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{item.title}</p>
+                                            <MediaHoverPreview item={item} className="w-10 h-10" onPreview={setPreviewMediaItem} />
+                                            <div className="cursor-pointer" onClick={() => setPreviewMediaItem(item)}>
+                                              <p className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-1 hover:text-brand-600 transition-colors">{item.title}</p>
                                               <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">
                                                 {item.type} {item.type === 'video' && item.duration ? `• ${item.duration}s` : ''}
                                               </p>
                                             </div>
                                           </div>
-                                          <Button
-                                            type="button"
-                                            onClick={() => addContentToPlaylist(item.id)}
-                                            className="bg-brand-50 hover:bg-brand-600 text-brand-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-full border-none shadow-none"
-                                          >
-                                            Adaugă
-                                          </Button>
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            <button
+                                              type="button"
+                                              onClick={() => setPreviewMediaItem(item)}
+                                              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-brand-600 transition-colors"
+                                              title="Previzualizează fișierul (foto/video)"
+                                            >
+                                              <Eye className="w-3.5 h-3.5" />
+                                            </button>
+                                            <Button
+                                              type="button"
+                                              onClick={() => addContentToPlaylist(item.id)}
+                                              className="bg-brand-50 hover:bg-brand-600 text-brand-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-full border-none shadow-none"
+                                            >
+                                              Adaugă
+                                            </Button>
+                                          </div>
                                         </div>
                                       ))}
                                     </div>
@@ -1132,21 +1561,31 @@ export const Playlists = () => {
                                           className="flex items-center justify-between p-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-brand-200 hover:shadow-sm transition-all group"
                                         >
                                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                                            <MediaHoverPreview item={item} className="w-10 h-10" />
-                                            <div>
-                                              <p className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-1">{item.title}</p>
+                                            <MediaHoverPreview item={item} className="w-10 h-10" onPreview={setPreviewMediaItem} />
+                                            <div className="cursor-pointer" onClick={() => setPreviewMediaItem(item)}>
+                                              <p className="text-sm font-bold text-slate-800 dark:text-slate-200 line-clamp-1 hover:text-brand-600 transition-colors">{item.title}</p>
                                               <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">
                                                 {item.type} {item.type === 'video' && item.duration ? `• ${item.duration}s` : ''}
                                               </p>
                                             </div>
                                           </div>
-                                          <Button
-                                            type="button"
-                                            onClick={() => addContentToPlaylist(item.id)}
-                                            className="bg-brand-50 hover:bg-brand-600 text-brand-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-full border-none shadow-none"
-                                          >
-                                            Adaugă
-                                          </Button>
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            <button
+                                              type="button"
+                                              onClick={() => setPreviewMediaItem(item)}
+                                              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-brand-600 transition-colors"
+                                              title="Previzualizează fișierul (foto/video)"
+                                            >
+                                              <Eye className="w-3.5 h-3.5" />
+                                            </button>
+                                            <Button
+                                              type="button"
+                                              onClick={() => addContentToPlaylist(item.id)}
+                                              className="bg-brand-50 hover:bg-brand-600 text-brand-600 hover:text-white transition-all text-xs font-bold px-3 py-1.5 h-7 rounded-full border-none shadow-none"
+                                            >
+                                              Adaugă
+                                            </Button>
+                                          </div>
                                         </div>
                                       ))}
                                     </div>
@@ -1205,6 +1644,61 @@ export const Playlists = () => {
                               );
                             })()}
 
+                            {/* ── SETARE GENERALĂ DE TIMP & APLICARE GLOBALĂ ── */}
+                            <div className="bg-gradient-to-r from-slate-50 to-brand-50/40 dark:from-slate-800/80 dark:to-brand-950/30 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-brand-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                  <Clock className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-100">Setare Timp General</span>
+                                    <span className="text-[10px] bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300 font-bold px-2 py-0.5 rounded-full border border-brand-200/60 dark:border-brand-800/60">
+                                      Global
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                    Timpul aplicat automat pe slide-urile adăugate sau peste toate existente
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 ml-auto">
+                                <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1 shadow-xs">
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max="3600"
+                                    value={generalDuration}
+                                    onChange={(e) => {
+                                      const val = Math.max(1, parseInt(e.target.value) || 1);
+                                      setGeneralDuration(val);
+                                    }}
+                                    className="w-12 text-xs font-bold text-slate-800 dark:text-slate-100 bg-transparent text-center focus:outline-none"
+                                  />
+                                  <span className="text-[11px] font-bold text-slate-400">sec</span>
+                                </div>
+
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  onClick={() => {
+                                    const val = Math.max(1, parseInt(generalDuration) || 10);
+                                    if (playlistItems.length === 0) {
+                                      toast.info(`Durata generală setată la ${val}s. Slide-urile adăugate vor avea ${val}s.`);
+                                      return;
+                                    }
+                                    setPlaylistItems(playlistItems.map(item => ({ ...item, duration: val })));
+                                    toast.success(`Toate cele ${playlistItems.length} slide-uri au fost setate la ${val} secunde!`);
+                                  }}
+                                  className="bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold px-3 py-1.5 h-8 rounded-xl shadow-xs gap-1.5 transition-all"
+                                >
+                                  <Clock className="w-3.5 h-3.5" />
+                                  Aplică la toate ({generalDuration}s)
+                                </Button>
+                              </div>
+                            </div>
+
                             <div className="max-h-[500px] overflow-y-auto space-y-3 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/50 shadow-inner">
                               {playlistItems.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-20 text-slate-400">
@@ -1239,10 +1733,11 @@ export const Playlists = () => {
                                         </button>
                                       </div>
 
-                                      {/* Thumbnail */}
+                                      {/* Thumbnail with preview */}
                                       <MediaHoverPreview 
                                         item={contentItem} 
                                         className="w-12 h-8" 
+                                        onPreview={setPreviewMediaItem}
                                         onError={(brokenContentId) => {
                                           setPlaylistItems(prev => {
                                             const filtered = prev.filter(i => i.content_id !== brokenContentId);
@@ -1260,7 +1755,13 @@ export const Playlists = () => {
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                           <span className="text-[10px] font-black text-brand-500">#{index + 1}</span>
-                                          <p className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">{contentItem?.title || 'Unknown'}</p>
+                                          <p 
+                                            onClick={() => contentItem && setPreviewMediaItem(contentItem)}
+                                            className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate cursor-pointer hover:text-brand-600 transition-colors"
+                                            title="Click pentru previzualizare fișier"
+                                          >
+                                            {contentItem?.title || 'Unknown'}
+                                          </p>
                                         </div>
                                         <div className="flex items-center gap-1 mt-0.5">
                                           <Clock className="w-2.5 h-2.5 text-slate-400" />
@@ -1269,21 +1770,33 @@ export const Playlists = () => {
                                             min="1"
                                             value={item.duration || 10}
                                             onChange={(e) => updateItemDuration(index, e.target.value)}
-                                            className="h-5 w-12 px-1 text-[10px] font-bold text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 border-none rounded focus:ring-1 focus:ring-brand-500"
+                                            className="h-5 w-12 px-1 text-[10px] font-bold text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded focus:ring-1 focus:ring-brand-500"
                                           />
                                           <span className="text-[9px] text-slate-400 uppercase">sec</span>
                                         </div>
                                       </div>
 
-                                      {/* Delete button */}
-                                      <button
-                                        type="button"
-                                        onClick={() => removeFromPlaylist(index)}
-                                        className="p-1.5 hover:bg-rose-50 text-slate-300 hover:text-rose-500 rounded-md transition-colors"
-                                        title="Șterge"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </button>
+                                      {/* Actions: Preview & Delete */}
+                                      <div className="flex items-center gap-0.5">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (contentItem) setPreviewMediaItem(contentItem);
+                                          }}
+                                          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-600 rounded-lg transition-colors"
+                                          title="Previzualizează fișier (foto/video)"
+                                        >
+                                          <Eye className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => removeFromPlaylist(index)}
+                                          className="p-1.5 hover:bg-rose-50 text-slate-300 hover:text-rose-500 rounded-lg transition-colors"
+                                          title="Șterge"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
                                     </div>
                                   );
                                 })
@@ -1632,6 +2145,13 @@ export const Playlists = () => {
                                   </button>
                                 </div>
                                 <button
+                                  onClick={() => setSlideshowPlaylist(playlist)}
+                                  className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-transparent hover:border-blue-100 dark:border-blue-800 rounded-full transition-all text-slate-400 hover:text-blue-600 shadow-sm hover:shadow"
+                                  title="Previzualizează Playlist (Slideshow)"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </button>
+                                <button
                                   onClick={() => handleToggleStatus(playlist)}
                                   className={`p-2 hover:bg-white dark:bg-slate-900 border border-transparent hover:border-slate-200 dark:border-slate-700 rounded-full transition-all shadow-sm hover:shadow ${playlist.status === 'active' ? 'text-rose-500 hover:text-rose-600' : 'text-emerald-500 hover:text-emerald-600'}`}
                                   title={playlist.status === 'active' ? 'Oprește' : 'Activează'}
@@ -1773,44 +2293,9 @@ export const Playlists = () => {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50"
-                                      onClick={async () => {
-                                        try {
-                                          const screensRes = await api.get('/screens');
-                                          const allScreens = screensRes.data;
-
-                                          let hasScreens = false;
-                                          for (const screen of allScreens) {
-                                            try {
-                                              const zonesRes = await api.get(`/screen-zones/${screen.id}`);
-                                              const hasPlaylist = zonesRes.data.some(zone =>
-                                                (zone.playlist_id && zone.playlist_id === playlist.id) ||
-                                                (zone.content_type === 'playlist' && zone.content_id === playlist.id)
-                                              );
-                                              if (hasPlaylist) {
-                                                hasScreens = true;
-                                                break;
-                                              }
-                                            } catch (e) {
-                                              // Skip screen
-                                            }
-                                          }
-
-                                          if (!hasScreens) {
-                                            toast.warning(`Playlist-ul "${playlist.name}" nu are niciun ecran atribuit`, {
-                                              description: 'Atribuie acest playlist la un ecran pentru a vedea simularea'
-                                            });
-                                            return;
-                                          }
-
-                                          setSelectedPlaylists([playlist.id]);
-                                          setShowSimulation(true);
-                                        } catch (error) {
-                                          console.error('Error checking screens:', error);
-                                          toast.error('Eroare la verificarea ecranelor');
-                                        }
-                                      }}
-                                      title="Previzualizare"
+                                      className="h-7 w-7 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                                      onClick={() => setSlideshowPlaylist(playlist)}
+                                      title="Previzualizează Playlist (Slideshow)"
                                     >
                                       <Eye className="w-3.5 h-3.5" />
                                     </Button>
@@ -1822,29 +2307,37 @@ export const Playlists = () => {
                                     </Button>
                                   </div>
                                 </div>
-                                {/* Content Previews - Restored */}
+                                {/* Content Previews - Clickable Lightbox */}
                                 <div className="grid grid-cols-4 gap-1 mb-3 h-12">
                                   {playlist.items?.slice(0, 4).map((playItem, idx) => {
                                     const contentItem = content.find(c => c.id === playItem.content_id);
                                     if (!contentItem) return <div key={idx} className="bg-slate-50 dark:bg-slate-800/50 rounded"></div>;
-                                    const resolveUrl = (url) => {
-                                      if (!url) return '';
-                                      if (url.startsWith('/api/uploads')) return `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000'}${url}`;
-                                      return url;
-                                    };
+                                    const mediaThumb = resolveMediaUrl(contentItem.thumbnail_url || contentItem.file_url);
+                                    const mediaFile = resolveMediaUrl(contentItem.file_url);
                                     return (
-                                      <div key={idx} className="relative rounded overflow-hidden bg-black h-full border border-slate-100 dark:border-slate-800">
+                                      <div
+                                        key={idx}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setPreviewMediaItem(contentItem);
+                                        }}
+                                        className="relative rounded overflow-hidden bg-black h-full border border-slate-100 dark:border-slate-800 cursor-pointer group/cardthumb transition-all hover:ring-2 hover:ring-brand-500 shadow-xs"
+                                        title={`Click pentru mărire: ${contentItem.title || 'Fișier'}`}
+                                      >
                                         {contentItem.type === 'video' ? (
                                           contentItem.thumbnail_url ? (
-                                            <img src={resolveUrl(contentItem.thumbnail_url)} alt="" className="w-full h-full object-cover opacity-80" />
+                                            <img src={mediaThumb} alt="" className="w-full h-full object-cover opacity-80 group-hover/cardthumb:scale-105 transition-transform" />
                                           ) : (
-                                            <video src={resolveUrl(contentItem.file_url)} className="w-full h-full object-cover opacity-80" muted autoPlay loop playsInline preload="metadata" />
+                                            <video src={mediaFile} className="w-full h-full object-cover opacity-80" muted autoPlay loop playsInline preload="metadata" />
                                           )
                                         ) : (
-                                          <img src={resolveUrl(contentItem.thumbnail_url || contentItem.file_url)} alt="" className="w-full h-full object-cover opacity-80" />
+                                          <img src={mediaThumb} alt="" className="w-full h-full object-cover opacity-80 group-hover/cardthumb:scale-105 transition-transform" />
                                         )}
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/cardthumb:opacity-100 flex items-center justify-center transition-opacity">
+                                          <Eye className="w-3.5 h-3.5 text-white drop-shadow" />
+                                        </div>
                                       </div>
-                                    )
+                                    );
                                   })}
                                   {[...Array(Math.max(0, 4 - (playlist.items?.length || 0)))].map((_, idx) => (
                                     <div key={`empty-${idx}`} className="bg-slate-50 dark:bg-slate-800/50 rounded border border-slate-100/50 dark:border-slate-800/50"></div>
@@ -2008,6 +2501,29 @@ export const Playlists = () => {
           </Dialog>
         )
       }
+
+      {/* Media Lightbox Modal for Photo, Video, YouTube, Web */}
+      {previewMediaItem && (
+        <MediaLightboxModal 
+          item={previewMediaItem} 
+          onClose={() => setPreviewMediaItem(null)} 
+        />
+      )}
+
+      {/* Interactive 16:9 Playlist Slideshow Player */}
+      {slideshowPlaylist && (
+        <PlaylistSlideshowModal
+          playlist={slideshowPlaylist}
+          content={content}
+          onClose={() => setSlideshowPlaylist(null)}
+          onPreviewItem={(item) => setPreviewMediaItem(item)}
+          onSwitchToScreenSim={() => {
+            setSelectedPlaylists([slideshowPlaylist.id]);
+            setShowSimulation(true);
+            setSlideshowPlaylist(null);
+          }}
+        />
+      )}
     </>
   );
 };

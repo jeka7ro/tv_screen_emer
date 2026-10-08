@@ -3,6 +3,8 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/effects.css';
 import { ValentineHearts } from '../components/ValentineHearts';
+import { AutumnLeaves } from '../components/AutumnLeaves';
+import { HalloweenEffect } from '../components/HalloweenEffect';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -797,6 +799,18 @@ export const DisplayScreen = () => {
       <ValentineHearts
         enabled={!!displayData?.screen?.valentine_hearts_enabled}
         intensity={displayData?.screen?.valentine_hearts_intensity || 'medium'}
+      />
+
+      {/* Autumn Leaves Effect */}
+      <AutumnLeaves
+        enabled={!!displayData?.screen?.autumn_leaves_enabled}
+        intensity={displayData?.screen?.autumn_leaves_intensity || 'medium'}
+      />
+
+      {/* Halloween Effect */}
+      <HalloweenEffect
+        enabled={!!displayData?.screen?.halloween_enabled}
+        intensity={displayData?.screen?.halloween_intensity || 'medium'}
       />
 
       {/* Custom Text Overlay — reads from API screen data */}

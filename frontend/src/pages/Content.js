@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { FolderSidebar } from '../components/FolderSidebar';
 import { FolderDialog } from '../components/FolderDialog';
-import { Upload, Link as LinkIcon, FileImage, Film, Trash2, Plus, LayoutGrid, List as ListIcon, Eye, Folder, FolderPlus, Edit2, FolderOpen, Search } from 'lucide-react';
+import { 
+  Upload, Link as LinkIcon, FileImage, Film, Trash2, Plus, LayoutGrid, 
+  List as ListIcon, Eye, Folder, FolderPlus, Edit2, FolderOpen, Search, 
+  X, Loader2, Clock, Zap, CheckCircle2, FileUp, ChevronLeft, ChevronRight,
+  Download, ExternalLink, Copy, Check, ZoomIn, Play, Pause, Image as ImageIcon
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 import { toast } from 'sonner';
@@ -14,6 +19,381 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { SlideshowConfigDialog } from '../components/SlideshowConfigDialog';
 import { Switch } from '../components/ui/switch';
 import { useConfirm } from '../hooks/useConfirm';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '../components/ui/hover-card';
+
+export const getFileUrl = (fileUrl) => {
+  if (!fileUrl) return '';
+  const SUPABASE_CONTENT = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/content/';
+  const SUPABASE_AUDIO = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/audio/';
+  const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  if (!isLocal) {
+    if (fileUrl.startsWith(SUPABASE_CONTENT)) return '/supabase-media/' + fileUrl.substring(SUPABASE_CONTENT.length);
+    if (fileUrl.startsWith(SUPABASE_AUDIO)) return '/supabase-audio/' + fileUrl.substring(SUPABASE_AUDIO.length);
+  }
+  const backend = process.env.REACT_APP_BACKEND_URL || (isLocal ? 'http://localhost:8002' : '');
+  if (fileUrl.startsWith('/api/uploads') || fileUrl.startsWith('/uploads')) {
+    return `${backend}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`;
+  }
+  if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://') || fileUrl.startsWith('data:')) {
+    return fileUrl;
+  }
+  return `${backend}${fileUrl.startsWith('/') ? '' : '/'}${fileUrl}`;
+};
+
+export const getYouTubeEmbedUrl = (url) => {
+  if (!url) return '';
+  if (url.includes('youtube.com/embed/')) return url;
+  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|youtube\.com\/shorts\/)([^"&?\/\s]{11})/;
+  const match = url.match(regExp);
+  return match && match[1] ? `https://www.youtube.com/embed/${match[1]}?autoplay=1&enablejsapi=1` : url;
+};
+
+const ContentHoverPreview = ({ item, onClick, videoAutoplay = false }) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (!item) return null;
+  const resolvedUrl = getFileUrl(item.file_url);
+  const resolvedThumb = getFileUrl(item.thumbnail_url || item.file_url);
+
+  return (
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <div
+          onClick={onClick}
+          className="w-16 h-10 rounded-xl overflow-hidden bg-slate-900 cursor-pointer flex items-center justify-center border border-slate-200 dark:border-slate-800 shadow-xs transition-all hover:scale-105 hover:ring-2 hover:ring-brand-500 group/thumb relative"
+          title="Click pentru previzualizare mărită"
+        >
+          {hasError ? (
+            <div className="w-full h-full flex items-center justify-center bg-rose-950/80 text-[8px] font-bold text-rose-300">
+              EROARE
+            </div>
+          ) : item.type === 'youtube' ? (
+            <div className="w-full h-full bg-red-950 flex items-center justify-center text-red-400 font-bold text-[10px]">
+              <Film className="w-4 h-4 mr-0.5" /> YT
+            </div>
+          ) : item.type === 'web' ? (
+            <div className="w-full h-full bg-blue-950 flex items-center justify-center text-blue-400 font-bold text-[10px]">
+              <LayoutGrid className="w-4 h-4 mr-0.5" /> WEB
+            </div>
+          ) : item.type === 'image' ? (
+            <>
+              <img
+                src={resolvedUrl}
+                alt=""
+                className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform"
+                onError={() => setHasError(true)}
+              />
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
+                <Eye className="w-3.5 h-3.5 text-white drop-shadow" />
+              </div>
+            </>
+          ) : (
+            <>
+              {item.thumbnail_url ? (
+                <img
+                  src={resolvedThumb}
+                  alt=""
+                  className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform"
+                  onError={() => setHasError(true)}
+                />
+              ) : (
+                <video
+                  src={resolvedUrl}
+                  className="w-full h-full object-cover"
+                  muted
+                  playsInline
+                  preload="metadata"
+                  onError={() => setHasError(true)}
+                />
+              )}
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <div className="bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm rounded-full p-0.5 group-hover/thumb:scale-110 transition-transform">
+                  <Film className="w-3 h-3 text-white" />
+                </div>
+              </div>
+              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-opacity">
+                <Eye className="w-3.5 h-3.5 text-white drop-shadow" />
+              </div>
+            </>
+          )}
+        </div>
+      </HoverCardTrigger>
+
+      <HoverCardContent side="right" sideOffset={12} className="w-72 p-2 bg-slate-950 border border-slate-800 shadow-2xl z-[100] rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 pointer-events-none text-slate-100">
+        {item.type === 'video' ? (
+          <div className="rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center relative">
+            <video
+              src={resolvedUrl}
+              className="w-full h-full object-contain"
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+            {item.duration && (
+              <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                {item.duration}s
+              </span>
+            )}
+          </div>
+        ) : item.type === 'youtube' ? (
+          <div className="p-3 text-center text-xs text-slate-300">
+            <Film className="w-8 h-8 text-red-500 mx-auto mb-1" />
+            <p className="font-bold truncate">{item.title}</p>
+            <p className="text-[10px] text-slate-400">YouTube Video</p>
+          </div>
+        ) : (
+          <div className="rounded-xl overflow-hidden bg-black flex items-center justify-center">
+            <img src={resolvedUrl} alt="" className="w-full h-auto max-h-[240px] object-contain" />
+          </div>
+        )}
+        <div className="mt-2 px-1 flex items-center justify-between text-[10px] text-slate-400">
+          <span className="truncate max-w-[170px] font-medium text-slate-300">{item.title}</span>
+          <span className="text-brand-400 font-bold uppercase tracking-wider">Click pt. mărire</span>
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
+};
+
+const ContentLightboxModal = ({ item, items = [], folders = [], onClose, onNavigate, onEdit }) => {
+  const [copied, setCopied] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
+
+  // Find index in current item list
+  const currentIndex = items.findIndex(i => i.id === item?.id);
+  const totalCount = items.length;
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex < totalCount - 1 && currentIndex >= 0;
+
+  const handlePrev = useCallback(() => {
+    if (hasPrev) {
+      setIsZoomed(false);
+      onNavigate(items[currentIndex - 1]);
+    }
+  }, [hasPrev, currentIndex, items, onNavigate]);
+
+  const handleNext = useCallback(() => {
+    if (hasNext) {
+      setIsZoomed(false);
+      onNavigate(items[currentIndex + 1]);
+    }
+  }, [hasNext, currentIndex, items, onNavigate]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (e.key === 'ArrowLeft') {
+        handlePrev();
+      } else if (e.key === 'ArrowRight') {
+        handleNext();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, handlePrev, handleNext]);
+
+  if (!item) return null;
+
+  const resolvedUrl = getFileUrl(item.file_url);
+  const itemFolder = folders.find(f => String(f.id) === String(item.folder_id));
+  const fileSizeMb = item.file_size ? (item.file_size / (1024 * 1024)).toFixed(1) : null;
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(resolvedUrl);
+    setCopied(true);
+    toast.success('Link-ul a fost copiat în clipboard!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-200 select-none"
+      onClick={onClose}
+    >
+      <div 
+        className="relative max-w-6xl w-full bg-slate-950/95 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[96vh] text-slate-100"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header Bar */}
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-800/80 bg-slate-900/90 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 rounded-xl bg-brand-500/10 text-brand-400 shrink-0">
+              {item.type === 'video' ? (
+                <Film className="w-5 h-5 text-brand-400" />
+              ) : item.type === 'youtube' ? (
+                <Film className="w-5 h-5 text-red-500" />
+              ) : item.type === 'web' ? (
+                <LayoutGrid className="w-5 h-5 text-blue-400" />
+              ) : (
+                <ImageIcon className="w-5 h-5 text-brand-400" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-bold text-white truncate" title={item.title}>
+                  {item.title}
+                </h3>
+                {totalCount > 1 && currentIndex >= 0 && (
+                  <span className="text-[11px] bg-slate-800 text-slate-300 font-semibold px-2 py-0.5 rounded-full border border-slate-700 shrink-0">
+                    {currentIndex + 1} / {totalCount}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap mt-0.5">
+                <span className="uppercase font-bold tracking-wider text-brand-400 text-[10px] bg-brand-500/10 px-1.5 py-0.5 rounded">
+                  {item.type}
+                </span>
+                {item.duration ? <span>• {item.duration}s durată</span> : null}
+                {item.category ? <span className="capitalize">• {item.category}</span> : null}
+                {itemFolder ? (
+                  <span className="flex items-center gap-1 text-slate-300">
+                    • <Folder className="w-3 h-3 inline text-indigo-400" /> {itemFolder.name}
+                  </span>
+                ) : null}
+                {fileSizeMb ? <span>• {fileSizeMb} MB</span> : null}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {onEdit && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onEdit(item)}
+                className="h-8 px-2.5 text-xs text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl hidden sm:flex items-center gap-1.5"
+                title="Editează titlu / brand"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+                Editează
+              </Button>
+            )}
+
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              title="Închide (Esc)"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Center Media Area with Floating Prev/Next Buttons */}
+        <div className="relative flex-1 min-h-[380px] max-h-[calc(92vh-130px)] bg-black/80 flex items-center justify-center p-2 sm:p-4 overflow-hidden group/stage">
+          {/* Previous Button */}
+          {hasPrev && (
+            <button
+              onClick={handlePrev}
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-30 p-2.5 sm:p-3 rounded-full bg-slate-900/80 hover:bg-brand-600 text-white border border-slate-700/80 shadow-2xl transition-all opacity-70 group-hover/stage:opacity-100 hover:scale-110 active:scale-95"
+              title="Anteriorul (Săgeată Stânga ←)"
+            >
+              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          )}
+
+          {/* Next Button */}
+          {hasNext && (
+            <button
+              onClick={handleNext}
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-30 p-2.5 sm:p-3 rounded-full bg-slate-900/80 hover:bg-brand-600 text-white border border-slate-700/80 shadow-2xl transition-all opacity-70 group-hover/stage:opacity-100 hover:scale-110 active:scale-95"
+              title="Următorul (Săgeată Dreapta →)"
+            >
+              <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          )}
+
+          {/* Actual Media Content */}
+          <div className="w-full h-full flex items-center justify-center">
+            {item.type === 'video' ? (
+              <video
+                key={item.id}
+                src={resolvedUrl}
+                controls
+                autoPlay
+                playsInline
+                loop
+                preload="metadata"
+                className="w-full h-full max-h-[72vh] object-contain rounded-2xl shadow-2xl"
+              >
+                Browserul nu suportă redarea acestui fișier video.
+              </video>
+            ) : item.type === 'youtube' ? (
+              <iframe
+                key={item.id}
+                src={getYouTubeEmbedUrl(item.file_url)}
+                title={item.title}
+                className="w-full aspect-video max-h-[72vh] rounded-2xl border-0 shadow-2xl"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : item.type === 'web' ? (
+              <iframe
+                key={item.id}
+                src={item.file_url}
+                title={item.title}
+                className="w-full h-[65vh] rounded-2xl border-0 bg-white shadow-2xl"
+              />
+            ) : (
+              <img
+                key={item.id}
+                src={resolvedUrl}
+                alt={item.title}
+                onClick={() => setIsZoomed(!isZoomed)}
+                className={`max-w-full max-h-[72vh] object-contain rounded-2xl shadow-2xl transition-transform duration-300 cursor-zoom-in ${isZoomed ? 'scale-125 cursor-zoom-out' : 'scale-100'}`}
+                title="Click pentru zoom"
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Footer Bar with Details & Actions */}
+        <div className="px-4 sm:px-6 py-3 border-t border-slate-800/80 bg-slate-900/80 shrink-0 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+          <div className="flex items-center gap-3 truncate max-w-[50%]">
+            <span className="truncate font-mono text-[11px] text-slate-400" title={resolvedUrl}>
+              {item.file_url?.split('/').pop() || item.title}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 ml-auto">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleCopyLink}
+              className="h-8 px-3 text-xs font-semibold rounded-xl border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 gap-1.5"
+              title="Copiază link-ul direct către fișier"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied ? 'Copiat!' : 'Copiază Link'}
+            </Button>
+
+            <a
+              href={resolvedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 transition-colors"
+              title="Deschide în tab nou"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Tab Nou
+            </a>
+
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onClose}
+              className="h-8 px-4 text-xs font-bold rounded-xl bg-brand-600 hover:bg-brand-500 text-white"
+            >
+              Închide
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const Content = () => {
     const { confirm, ConfirmDialog } = useConfirm();
@@ -43,6 +423,26 @@ export const Content = () => {
     icon: 'folder'
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isPageDragging, setIsPageDragging] = useState(false);
+  const modalDragCounter = useRef(0);
+  const pageDragCounter = useRef(0);
+  const fileInputRef = useRef(null);
+  const [uploadProgress, setUploadProgress] = useState({
+    currentFileIndex: 0,
+    totalFiles: 0,
+    currentFileName: '',
+    currentFileSize: 0,
+    currentFileLoaded: 0,
+    filePercent: 0,
+    totalBatchBytes: 0,
+    totalLoadedBytes: 0,
+    overallPercent: 0,
+    speedBytesPerSec: 0,
+    remainingSeconds: 0,
+    remainingFiles: 0,
+    statusText: ''
+  });
   const [previewItem, setPreviewItem] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [viewMode, setViewMode] = useState('list');
@@ -363,38 +763,258 @@ export const Content = () => {
     });
   };
 
-  const handleFileUpload = async (e) => {
-    e.preventDefault();
-    if (uploadMethod === 'file' && selectedFiles.length === 0) {
-      toast.error('Selectează cel puțin un fișier');
+  const formatFileSize = (bytes) => {
+    if (!bytes || isNaN(bytes) || bytes <= 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  };
+
+  const formatEta = (seconds) => {
+    if (!seconds || isNaN(seconds) || seconds <= 0) return 'câteva secunde';
+    if (seconds < 5) return 'sub 5 secunde';
+    if (seconds < 60) return `~${seconds} sec`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (secs === 0) return `~${mins} min`;
+    return `~${mins}m ${secs}s`;
+  };
+
+  const formatSpeed = (bytesPerSec) => {
+    if (!bytesPerSec || isNaN(bytesPerSec) || bytesPerSec < 1024) return 'Calculare...';
+    if (bytesPerSec < 1024 * 1024) return `${(bytesPerSec / 1024).toFixed(0)} KB/s`;
+    return `${(bytesPerSec / (1024 * 1024)).toFixed(1)} MB/s`;
+  };
+
+  const processIncomingFiles = (incomingFiles) => {
+    const fileList = Array.from(incomingFiles || []);
+    const validFiles = fileList.filter(file => {
+      return (
+        file.type.startsWith('image/') ||
+        file.type.startsWith('video/') ||
+        /\.(jpe?g|png|webp|gif|svg|mp4|webm|mov|mkv)$/i.test(file.name)
+      );
+    });
+
+    if (validFiles.length === 0) {
+      toast.error('Selectează doar imagini (JPG, PNG, WEBP, GIF) sau fișiere video (MP4, WEBM, MOV)');
       return;
     }
 
-    setUploading(true);
-    try {
-      if (uploadMethod === 'file') {
-        for (let i = 0; i < selectedFiles.length; i++) {
-          const file = selectedFiles[i];
-          const type = file.type.startsWith('video') ? 'video' : 'image';
-          
+    setSelectedFiles(prev => {
+      const existing = Array.isArray(prev) ? prev : Array.from(prev || []);
+      const existingKeys = new Set(existing.map(f => `${f.name}_${f.size}`));
+      const newFiles = validFiles.filter(f => !existingKeys.has(`${f.name}_${f.size}`));
+
+      if (newFiles.length < validFiles.length && existing.length > 0) {
+        toast.info('Fișierele duplicate au fost omise');
+      }
+
+      const combined = [...existing, ...newFiles];
+
+      if (combined.length > 0) {
+        const first = combined[0];
+        const isVid = first.type.startsWith('video') || /\.(mp4|webm|mov|mkv)$/i.test(first.name);
+        setFormData(f => ({
+          ...f,
+          type: isVid ? 'video' : 'image',
+          title: combined.length === 1 ? (f.title || first.name) : f.title
+        }));
+
+        if (isVid) {
+          getVideoDuration(first).then(duration => {
+            if (duration && duration > 0) {
+              setFormData(f => ({ ...f, duration: duration.toString() }));
+            }
+          });
+        }
+      }
+
+      return combined;
+    });
+  };
+
+  const handleRemoveFile = (indexToRemove) => {
+    setSelectedFiles(prev => {
+      const current = Array.isArray(prev) ? prev : Array.from(prev || []);
+      const updated = current.filter((_, idx) => idx !== indexToRemove);
+      if (updated.length === 1) {
+        setFormData(p => ({ ...p, title: updated[0].name }));
+      }
+      return updated;
+    });
+  };
+
+  const handleModalDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    modalDragCounter.current++;
+    if (e.dataTransfer && e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleModalDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+    if (!isDragging) setIsDragging(true);
+  };
+
+  const handleModalDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    modalDragCounter.current--;
+    if (modalDragCounter.current <= 0) {
+      setIsDragging(false);
+      modalDragCounter.current = 0;
+    }
+  };
+
+  const handleModalDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    modalDragCounter.current = 0;
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processIncomingFiles(e.dataTransfer.files);
+    }
+  };
+
+  // Window-level drag & drop for dropping files anywhere on Content page
+  useEffect(() => {
+    if (!isAdmin()) return;
+
+    const handleWindowDragEnter = (e) => {
+      if (showDialog) return;
+      if (e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files')) {
+        e.preventDefault();
+        pageDragCounter.current++;
+        if (pageDragCounter.current === 1) {
+          setIsPageDragging(true);
+        }
+      }
+    };
+
+    const handleWindowDragOver = (e) => {
+      if (showDialog) return;
+      if (e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files')) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+      }
+    };
+
+    const handleWindowDragLeave = (e) => {
+      if (showDialog) return;
+      if (e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files')) {
+        e.preventDefault();
+        pageDragCounter.current--;
+        if (pageDragCounter.current <= 0) {
+          setIsPageDragging(false);
+          pageDragCounter.current = 0;
+        }
+      }
+    };
+
+    const handleWindowDrop = (e) => {
+      if (showDialog) return;
+      if (e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files')) {
+        e.preventDefault();
+        setIsPageDragging(false);
+        pageDragCounter.current = 0;
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          processIncomingFiles(e.dataTransfer.files);
+          setShowDialog(true);
+        }
+      }
+    };
+
+    window.addEventListener('dragenter', handleWindowDragEnter);
+    window.addEventListener('dragover', handleWindowDragOver);
+    window.addEventListener('dragleave', handleWindowDragLeave);
+    window.addEventListener('drop', handleWindowDrop);
+
+    return () => {
+      window.removeEventListener('dragenter', handleWindowDragEnter);
+      window.removeEventListener('dragover', handleWindowDragOver);
+      window.removeEventListener('dragleave', handleWindowDragLeave);
+      window.removeEventListener('drop', handleWindowDrop);
+    };
+  }, [showDialog, selectedFolder, isAdmin]);
+
+  const handleFileUpload = async (e) => {
+    e.preventDefault();
+    if (uploadMethod === 'file') {
+      const filesArray = Array.from(selectedFiles || []);
+      if (filesArray.length === 0) {
+        toast.error('Selectează sau trage cel puțin un fișier');
+        return;
+      }
+
+      setUploading(true);
+      const totalFiles = filesArray.length;
+      const totalBatchBytes = filesArray.reduce((acc, f) => acc + (f.size || 0), 0);
+      let completedFilesBytes = 0;
+      const batchStartTime = Date.now();
+      let smoothedSpeed = 0;
+
+      // Initialize progress
+      setUploadProgress({
+        currentFileIndex: 0,
+        totalFiles,
+        currentFileName: filesArray[0].name,
+        currentFileSize: filesArray[0].size || 0,
+        currentFileLoaded: 0,
+        filePercent: 0,
+        totalBatchBytes,
+        totalLoadedBytes: 0,
+        overallPercent: 0,
+        speedBytesPerSec: 0,
+        remainingSeconds: 0,
+        remainingFiles: totalFiles,
+        statusText: 'Pregătire încărcare...'
+      });
+
+      try {
+        for (let i = 0; i < totalFiles; i++) {
+          const file = filesArray[i];
+          const isVid = file.type.startsWith('video') || /\.(mp4|webm|mov|mkv)$/i.test(file.name);
+          const type = isVid ? 'video' : 'image';
+          const remainingFilesCount = totalFiles - (i + 1);
+
+          setUploadProgress(prev => ({
+            ...prev,
+            currentFileIndex: i,
+            totalFiles,
+            currentFileName: file.name,
+            currentFileSize: file.size || 0,
+            currentFileLoaded: 0,
+            filePercent: 0,
+            remainingFiles: remainingFilesCount,
+            statusText: isVid ? 'Generare previzualizare video...' : 'Se pregătește...'
+          }));
+
           const formDataToSend = new FormData();
           formDataToSend.append('files', file);
-          
-          const itemTitle = (selectedFiles.length === 1 && formData.title) ? formData.title : file.name;
+
+          const itemTitle = (totalFiles === 1 && formData.title) ? formData.title : file.name;
           formDataToSend.append('title', itemTitle);
           formDataToSend.append('type', type);
-          formDataToSend.append('category', formData.category);
-          
+          formDataToSend.append('category', formData.category || 'other');
+
           if (type === 'video') {
             const dur = await getVideoDuration(file);
             formDataToSend.append('duration', dur);
-            
+
             const thumbBlob = await generateVideoThumbnail(file);
             if (thumbBlob) {
               formDataToSend.append('thumbnail', thumbBlob, 'thumbnail.jpg');
             }
           } else {
-            formDataToSend.append('duration', formData.duration);
+            formDataToSend.append('duration', formData.duration || '10');
           }
 
           if (formData.folder_id && formData.folder_id !== 'none') {
@@ -404,12 +1024,79 @@ export const Content = () => {
             formDataToSend.append('brand', formData.brand.join(','));
           }
 
+          setUploadProgress(prev => ({
+            ...prev,
+            statusText: 'Se transferă fișierul...'
+          }));
+
           await api.post('/content', formDataToSend, {
             headers: { 'Content-Type': 'multipart/form-data' },
-            timeout: 300000
+            timeout: 600000,
+            onUploadProgress: (progressEvent) => {
+              const fileLoaded = progressEvent.loaded || 0;
+              const fileTotal = progressEvent.total || file.size || 1;
+              const filePercent = Math.min(100, Math.round((fileLoaded * 100) / fileTotal));
+
+              const totalLoaded = completedFilesBytes + fileLoaded;
+              const overallPercent = Math.min(99, Math.round((totalLoaded * 100) / Math.max(totalBatchBytes, 1)));
+
+              const now = Date.now();
+              const elapsedSec = (now - batchStartTime) / 1000;
+
+              let currentSpeed = smoothedSpeed;
+              if (elapsedSec > 0.3 && totalLoaded > 0) {
+                const instantSpeed = totalLoaded / elapsedSec;
+                currentSpeed = smoothedSpeed === 0 ? instantSpeed : (smoothedSpeed * 0.7 + instantSpeed * 0.3);
+                smoothedSpeed = currentSpeed;
+              }
+
+              const remainingBytes = Math.max(0, totalBatchBytes - totalLoaded);
+              const remainingSec = currentSpeed > 0 ? Math.ceil(remainingBytes / currentSpeed) : 0;
+
+              setUploadProgress(prev => ({
+                ...prev,
+                currentFileIndex: i,
+                totalFiles,
+                currentFileName: file.name,
+                currentFileSize: file.size || 0,
+                currentFileLoaded: fileLoaded,
+                filePercent,
+                totalBatchBytes,
+                totalLoadedBytes: totalLoaded,
+                overallPercent,
+                speedBytesPerSec: currentSpeed,
+                remainingSeconds: remainingSec,
+                remainingFiles: remainingFilesCount,
+                statusText: filePercent >= 100 ? 'Procesare pe server...' : 'Se transferă...'
+              }));
+            }
           });
+
+          completedFilesBytes += (file.size || 0);
         }
-      } else {
+
+        setUploadProgress(prev => ({
+          ...prev,
+          overallPercent: 100,
+          filePercent: 100,
+          remainingFiles: 0,
+          remainingSeconds: 0,
+          statusText: 'Finalizat cu succes!'
+        }));
+
+        toast.success(totalFiles === 1 ? 'Conținut adăugat!' : `Toate cele ${totalFiles} fișiere au fost adăugate!`);
+        setShowDialog(false);
+        resetForm();
+        loadContent();
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.error(error.response?.data?.detail || 'Eroare la upload. Pentru fișiere foarte mari (>200MB), folosește "Link Extern"');
+      } finally {
+        setUploading(false);
+      }
+    } else {
+      setUploading(true);
+      try {
         await api.post('/content/external', {
           title: formData.title,
           type: formData.type,
@@ -420,16 +1107,16 @@ export const Content = () => {
           folder_id: formData.folder_id === 'none' ? null : formData.folder_id,
           brand: Array.isArray(formData.brand) ? formData.brand : []
         });
+        toast.success('Conținut adăugat!');
+        setShowDialog(false);
+        resetForm();
+        loadContent();
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.error(error.response?.data?.detail || 'Eroare la adăugarea link-ului extern');
+      } finally {
+        setUploading(false);
       }
-      toast.success('Conținut adăugat!');
-      setShowDialog(false);
-      resetForm();
-      loadContent();
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast.error(error.response?.data?.detail || 'Eroare la upload. Pentru fișiere >200MB, folosește "Link Extern"');
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -477,10 +1164,44 @@ export const Content = () => {
       brand: []
     });
     setSelectedFiles([]);
+    setIsDragging(false);
+    modalDragCounter.current = 0;
+    setUploadProgress({
+      currentFileIndex: 0,
+      totalFiles: 0,
+      currentFileName: '',
+      currentFileSize: 0,
+      currentFileLoaded: 0,
+      filePercent: 0,
+      totalBatchBytes: 0,
+      totalLoadedBytes: 0,
+      overallPercent: 0,
+      speedBytesPerSec: 0,
+      remainingSeconds: 0,
+      remainingFiles: 0,
+      statusText: ''
+    });
   };
 
   const openUploadDialogWithFolder = (folder) => {
     setSelectedFiles([]);
+    setIsDragging(false);
+    modalDragCounter.current = 0;
+    setUploadProgress({
+      currentFileIndex: 0,
+      totalFiles: 0,
+      currentFileName: '',
+      currentFileSize: 0,
+      currentFileLoaded: 0,
+      filePercent: 0,
+      totalBatchBytes: 0,
+      totalLoadedBytes: 0,
+      overallPercent: 0,
+      speedBytesPerSec: 0,
+      remainingSeconds: 0,
+      remainingFiles: 0,
+      statusText: ''
+    });
     setFormData({
       title: '',
       type: 'image',
@@ -582,24 +1303,6 @@ export const Content = () => {
     } finally {
       setPendingSlideshowScreen(null);
     }
-  };
-
-  const getFileUrl = (fileUrl) => {
-    if (!fileUrl) return '';
-    // Proxy Supabase Storage through CDN to reduce egress (only in production)
-    const SUPABASE_CONTENT = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/content/';
-    const SUPABASE_AUDIO = 'https://isdzbwxjtfrykyoeevmy.supabase.co/storage/v1/object/public/audio/';
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (!isLocal) {
-      if (fileUrl.startsWith(SUPABASE_CONTENT)) return '/supabase-media/' + fileUrl.substring(SUPABASE_CONTENT.length);
-      if (fileUrl.startsWith(SUPABASE_AUDIO)) return '/supabase-audio/' + fileUrl.substring(SUPABASE_AUDIO.length);
-    }
-    // If it's a relative URL (starts with /api/uploads), prepend backend URL
-    if (fileUrl.startsWith('/api/uploads')) {
-      return `${process.env.REACT_APP_BACKEND_URL}${fileUrl}`;
-    }
-    // Otherwise it's an external URL (or direct Supabase on localhost)
-    return fileUrl;
   };
 
 
@@ -785,54 +1488,20 @@ export const Content = () => {
                       />
                     </td>
                     <td className="p-4 w-24">
-                      <div
-                        className="w-16 h-10 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 cursor-pointer flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-sm transition-transform hover:scale-105"
+                      <ContentHoverPreview
+                        item={item}
+                        videoAutoplay={videoAutoplay}
                         onClick={() => handlePreview(item)}
-                      >
-                        {item.type === 'youtube' ? (
-                          <div className="w-full h-full bg-brand-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
-                            <Film className="w-4 h-4 mr-0.5" /> YT
-                          </div>
-                        ) : item.type === 'web' ? (
-                          <div className="w-full h-full bg-brand-600 flex items-center justify-center text-white font-bold text-[10px] shadow-inner">
-                            <LayoutGrid className="w-4 h-4 mr-0.5" /> WEB
-                          </div>
-                        ) : item.type === 'image' ? (
-                          <img src={getFileUrl(item.file_url)} className="w-full h-full object-cover" alt="" />
-                        ) : (videoAutoplay ? (
-                          <video
-                            key={`v-${item.id}-${videoAutoplay}`}
-                            src={getFileUrl(item.file_url)}
-                            className="w-full h-full object-cover"
-                            muted
-                            autoPlay
-                            loop
-                            playsInline
-                            preload="metadata"
-                          />
-                        ) : item.thumbnail_url ? (
-                          <div className="relative w-full h-full">
-                            <img src={getFileUrl(item.thumbnail_url)} className="w-full h-full object-cover" alt="" />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                              <div className="bg-white/30 dark:bg-slate-900/30 backdrop-blur-sm rounded-full p-0.5">
-                                <Film className="w-3 h-3 text-white" />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <video
-                            key={`v-${item.id}-${videoAutoplay}`}
-                            src={getFileUrl(item.file_url)}
-                            className="w-full h-full object-cover"
-                            muted
-                            playsInline
-                            preload="metadata"
-                          />
-                        ))}
-                      </div>
+                      />
                     </td>
                     <td className="p-4">
-                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">{item.title}</div>
+                      <div 
+                        className="text-sm font-semibold text-slate-800 dark:text-slate-200 cursor-pointer hover:text-brand-600 transition-colors"
+                        onClick={() => handlePreview(item)}
+                        title="Click pentru previzualizare fișier"
+                      >
+                        {item.title}
+                      </div>
                       {(() => {
                         const itemPlaylists = getPlaylistsForContent(item.id);
                         if (itemPlaylists.length > 0) {
@@ -909,8 +1578,14 @@ export const Content = () => {
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800" onClick={() => handlePreview(item)}>
-                          <Eye className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 hover:bg-brand-50 dark:hover:bg-brand-950/40 text-slate-400 hover:text-brand-600 rounded-lg transition-colors" 
+                          onClick={() => handlePreview(item)}
+                          title="Previzualizează (Foto/Video)"
+                        >
+                          <Eye className="w-4 h-4" />
                         </Button>
                         {isAdmin() && (
                           <>
@@ -1009,17 +1684,18 @@ export const Content = () => {
             </div>
 
             {/* Media Area - Aspect Video */}
-            <div className="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden mb-5 border border-slate-200 dark:border-slate-700 shadow-inner group-inner">
+            <div 
+              onClick={(e) => { e.stopPropagation(); handlePreview(item); }}
+              className="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden mb-5 border border-slate-200 dark:border-slate-700 shadow-inner group-inner cursor-pointer"
+            >
               {item.type === 'youtube' ? (
                 <div className="w-full h-full bg-brand-900 flex items-center justify-center">
                   <Film className="w-16 h-16 text-white/80" />
-                  <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}></div>
                   <div className="absolute top-3 right-3 z-20 bg-brand-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest shadow-sm">YOUTUBE</div>
                 </div>
               ) : item.type === 'web' ? (
                 <div className="w-full h-full bg-brand-900 flex items-center justify-center">
                   <LayoutGrid className="w-16 h-16 text-white/80" />
-                  <div className="absolute inset-0 bg-transparent z-10 cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}></div>
                   <div className="absolute top-3 right-3 z-20 bg-brand-600 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest shadow-sm">WEB</div>
                 </div>
               ) : item.type === 'image' ? (
@@ -1029,7 +1705,6 @@ export const Content = () => {
                     alt={item.title}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}></div>
                   <div className="absolute top-3 right-3 z-20 flex flex-col gap-1 items-end">
                     <div className="bg-slate-900/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest border border-white/10">
                       {item.duration}s
@@ -1049,7 +1724,7 @@ export const Content = () => {
                       <Film className="w-12 h-12 text-slate-500 dark:text-slate-400" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center cursor-pointer" onClick={(e) => { e.stopPropagation(); handlePreview(item); }}>
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                     <div className="bg-white/20 dark:bg-slate-900/20 backdrop-blur-sm rounded-full p-3 border border-white/30 group-hover:scale-110 transition-transform">
                       <Film className="w-6 h-6 text-white" />
                     </div>
@@ -1062,6 +1737,14 @@ export const Content = () => {
                   </div>
                 </>
               )}
+
+              {/* Hover Overlay with Preview Icon */}
+              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-20 pointer-events-none">
+                <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 text-white shadow-xl flex items-center gap-1.5 transform group-hover:scale-105 transition-transform">
+                  <Eye className="w-4 h-4 text-brand-400" />
+                  <span className="text-xs font-bold">Mărește</span>
+                </div>
+              </div>
 
               {/* Playlist Badge overlay for Grid View */}
               {(() => {
@@ -1326,6 +2009,7 @@ export const Content = () => {
               {/* Add Content Button & Dialog */}
               {isAdmin() && (
                 <Dialog open={showDialog} onOpenChange={(open) => {
+                  if (uploading) return;
                   setShowDialog(open);
                   if (!open) resetForm();
                 }}>
@@ -1335,7 +2019,11 @@ export const Content = () => {
                       Adăugă conținut
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="glass-panel">
+                  <DialogContent
+                    className="glass-panel max-w-xl max-h-[90vh] overflow-y-auto"
+                    onPointerDownOutside={(e) => { if (uploading) e.preventDefault(); }}
+                    onEscapeKeyDown={(e) => { if (uploading) e.preventDefault(); }}
+                  >
                     <DialogHeader>
                       <DialogTitle>Adăugă conținut nou</DialogTitle>
                     </DialogHeader>
@@ -1343,6 +2031,7 @@ export const Content = () => {
                       <div className="space-y-2">
                         <Label className="text-sm font-semibold">Folder Destinație</Label>
                         <Select
+                          disabled={uploading}
                           value={formData.folder_id || 'none'}
                           onValueChange={(val) => setFormData({ ...formData, folder_id: val })}
                         >
@@ -1371,20 +2060,21 @@ export const Content = () => {
 
                       <div className="space-y-2">
                         <Label className="text-sm font-semibold">Branduri (Clienți)</Label>
-                        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl max-h-40 overflow-y-auto">
+                        <div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl max-h-36 overflow-y-auto">
                           {brands.length === 0 ? (
                             <p className="text-xs text-slate-400 italic">Niciun brand creat încă.</p>
                           ) : (
                             brands.map(brand => (
                               <label
                                 key={brand.id}
-                                className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border cursor-pointer transition-all ${formData.brand?.includes(brand.name)
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border cursor-pointer transition-all ${uploading ? 'opacity-50 pointer-events-none' : ''} ${formData.brand?.includes(brand.name)
                                   ? 'bg-brand-50 border-brand-200 text-brand-700 shadow-sm'
                                   : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:border-slate-600'
                                   }`}
                               >
                                 <input
                                   type="checkbox"
+                                  disabled={uploading}
                                   className="hidden"
                                   checked={formData.brand?.includes(brand.name)}
                                   onChange={() => {
@@ -1412,71 +2102,149 @@ export const Content = () => {
                         )}
                       </div>
 
-                      <Tabs value={uploadMethod} onValueChange={setUploadMethod}>
+                      <Tabs value={uploadMethod} onValueChange={(val) => { if (!uploading) setUploadMethod(val); }}>
                         <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="file">Upload Fișier</TabsTrigger>
-                          <TabsTrigger value="external">Link Extern</TabsTrigger>
+                          <TabsTrigger value="file" disabled={uploading}>Upload Fișiere</TabsTrigger>
+                          <TabsTrigger value="external" disabled={uploading}>Link Extern</TabsTrigger>
                         </TabsList>
+
                         <TabsContent value="file" className="space-y-4 mt-4">
                           <div>
-                            <Label className="text-base font-semibold">Selectează fișier(e)</Label>
-                            <div className="mt-3 border-2 border-dashed border-brand-300 rounded-2xl p-6 bg-gradient-to-br from-brand-50/50 to-brand-50/30 hover:from-brand-50 hover:to-brand-50 transition-all">
-                              <div className="flex flex-col items-center mb-4">
-                                <div className="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mb-3">
-                                  <Upload className="w-8 h-8 text-brand-600" />
+                            <Label className="text-base font-semibold">Selectează sau trage fișiere</Label>
+                            
+                            {/* Interactive Drag & Drop Area */}
+                            <div
+                              onDragEnter={handleModalDragEnter}
+                              onDragOver={handleModalDragOver}
+                              onDragLeave={handleModalDragLeave}
+                              onDrop={handleModalDrop}
+                              onClick={() => !uploading && fileInputRef.current?.click()}
+                              className={`mt-2 border-2 border-dashed rounded-2xl p-6 transition-all text-center cursor-pointer select-none relative overflow-hidden ${
+                                isDragging
+                                  ? 'border-brand-500 bg-brand-100/70 dark:bg-brand-950/60 ring-4 ring-brand-400/40 scale-[1.01]'
+                                  : 'border-brand-300/80 dark:border-brand-700/60 bg-gradient-to-br from-brand-50/50 via-white to-brand-50/30 dark:from-slate-800/80 dark:via-slate-800/50 dark:to-slate-900/80 hover:from-brand-50/80 hover:to-brand-50/60 hover:border-brand-400 shadow-xs hover:shadow-sm'
+                              } ${uploading ? 'pointer-events-none opacity-60' : ''}`}
+                            >
+                              <div className="flex flex-col items-center">
+                                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-3 transition-transform ${
+                                  isDragging ? 'bg-brand-500 text-white scale-110 shadow-lg animate-bounce' : 'bg-brand-100 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400'
+                                }`}>
+                                  {isDragging ? <FileUp className="w-8 h-8" /> : <Upload className="w-8 h-8" />}
                                 </div>
-                                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">Click pentru a selecta fișiere</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">sau drag & drop aici</p>
+                                
+                                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
+                                  {isDragging ? 'Dă drumul fișierelor aici!' : 'Trage fișierele aici sau apasă pentru a alege'}
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                                  Suportă imagini (JPG, PNG, WEBP, GIF) și video (MP4, WEBM, MOV)
+                                </p>
+                                
+                                <button
+                                  type="button"
+                                  disabled={uploading}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    fileInputRef.current?.click();
+                                  }}
+                                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-full shadow-md hover:shadow-lg transition-all active:scale-95"
+                                >
+                                  <Upload className="w-4 h-4" />
+                                  Alege fișiere din calculator
+                                </button>
                               </div>
-                              <Label
-                                htmlFor="file-upload-input"
-                                className="inline-block px-6 py-3 bg-brand-600 text-white font-bold rounded-full cursor-pointer hover:bg-brand-700 transition-colors shadow-md hover:shadow-lg mb-4"
-                              >
-                                Alege fișierele
-                              </Label>
-                              <Input
+
+                              <input
+                                ref={fileInputRef}
                                 id="file-upload-input"
                                 type="file"
-                                accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+                                accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,video/mp4,video/webm,video/quicktime"
                                 multiple
                                 onChange={(e) => {
-                                  const files = e.target.files;
-                                  setSelectedFiles(files);
-                                  if (files.length > 0) {
-                                    const file = files[0];
-                                    const type = file.type.startsWith('video') ? 'video' : 'image';
-                                    setFormData(prev => ({ ...prev, type, title: prev.title || file.name }));
-                                    
-                                    if (type === 'video') {
-                                      const video = document.createElement('video');
-                                      video.preload = 'metadata';
-                                      video.onloadedmetadata = () => {
-                                        window.URL.revokeObjectURL(video.src);
-                                        const duration = Math.ceil(video.duration);
-                                        if (duration > 0 && isFinite(duration)) {
-                                          setFormData(prev => ({ ...prev, duration: duration.toString() }));
-                                        }
-                                      };
-                                      video.src = URL.createObjectURL(file);
-                                    }
+                                  if (e.target.files && e.target.files.length > 0) {
+                                    processIncomingFiles(e.target.files);
+                                    e.target.value = '';
                                   }
                                 }}
                                 className="hidden"
                               />
-                              {selectedFiles.length > 0 && (
-                                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-2xl">
-                                  <p className="text-sm text-green-700 font-semibold flex items-center gap-2">
-                                    <span className="text-green-600">✓</span> {selectedFiles.length} fișier(e) selectat(e)
-                                  </p>
-                                </div>
-                              )}
                             </div>
+
+                            {/* Staged files list & counter */}
+                            {selectedFiles.length > 0 && (
+                              <div className="mt-3 space-y-2">
+                                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 px-1">
+                                  <span className="flex items-center gap-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    {selectedFiles.length} {selectedFiles.length === 1 ? 'fișier pregătit' : 'fișiere pregătite'}
+                                  </span>
+                                  <span className="text-slate-500 font-mono text-[11px]">
+                                    Total: {formatFileSize(Array.from(selectedFiles).reduce((sum, f) => sum + (f.size || 0), 0))}
+                                  </span>
+                                </div>
+
+                                <div className="max-h-40 overflow-y-auto space-y-1.5 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 divide-y divide-slate-100 dark:divide-slate-800">
+                                  {Array.from(selectedFiles).map((file, idx) => {
+                                    const isVid = file.type.startsWith('video') || /\.(mp4|webm|mov|mkv)$/i.test(file.name);
+                                    return (
+                                      <div
+                                        key={`${file.name}_${file.size}_${idx}`}
+                                        className="flex items-center justify-between gap-2 p-1.5 pt-2 first:pt-1.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800/60 shadow-2xs hover:border-brand-200 transition-all text-xs"
+                                      >
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                                            isVid
+                                              ? 'bg-purple-100 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400'
+                                              : 'bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400'
+                                          }`}>
+                                            {isVid ? <Film className="w-4 h-4" /> : <FileImage className="w-4 h-4" />}
+                                          </div>
+                                          <div className="min-w-0 flex-1">
+                                            <p className="truncate font-medium text-slate-800 dark:text-slate-200" title={file.name}>
+                                              {file.name}
+                                            </p>
+                                            <p className="text-[10px] text-slate-400">
+                                              {isVid ? 'Video' : 'Imagine'} • {formatFileSize(file.size)}
+                                            </p>
+                                          </div>
+                                        </div>
+
+                                        {!uploading && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRemoveFile(idx)}
+                                            className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
+                                            title="Șterge fișierul"
+                                          >
+                                            <X className="w-3.5 h-3.5" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Single file title edit */}
+                            {selectedFiles.length === 1 && !uploading && (
+                              <div className="mt-3 space-y-1.5">
+                                <Label className="text-xs font-semibold">Titlu afișare</Label>
+                                <Input
+                                  value={formData.title}
+                                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                  placeholder="ex: Meniu Săptămânal"
+                                  className="h-9 text-xs"
+                                />
+                              </div>
+                            )}
                           </div>
                         </TabsContent>
+
                         <TabsContent value="external" className="space-y-4 mt-4">
                           <div>
                             <Label>Tip Conținut Extern</Label>
                             <Select
+                              disabled={uploading}
                               value={formData.type}
                               onValueChange={(value) => setFormData({ ...formData, type: value })}
                             >
@@ -1494,6 +2262,7 @@ export const Content = () => {
                           <div>
                             <Label>URL conținut</Label>
                             <Input
+                              disabled={uploading}
                               value={formData.file_url}
                               onChange={(e) => setFormData({ ...formData, file_url: e.target.value })}
                               placeholder={formData.type === 'youtube' ? "https://youtube.com/watch?v=..." : "https://..."}
@@ -1502,11 +2271,116 @@ export const Content = () => {
                         </TabsContent>
                       </Tabs>
 
-                      <div className="flex gap-3 pt-4">
-                        <Button type="submit" disabled={uploading} className="btn-primary flex-1">
-                          {uploading ? 'Se încarcă...' : 'Adăugă'}
+                      {/* Progress Bar & ETA block when uploading */}
+                      {uploading && (
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-brand-50/40 dark:from-slate-800 dark:to-slate-800/90 border border-brand-200 dark:border-brand-700 shadow-md space-y-3 animate-in fade-in duration-200">
+                          {/* Top Header: File index, remaining count and total percentage */}
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-full bg-brand-500 text-white flex items-center justify-center shrink-0 shadow-sm animate-pulse">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-xs font-extrabold uppercase tracking-wider text-brand-700 dark:text-brand-300">
+                                    Fișierul {uploadProgress.currentFileIndex + 1} din {uploadProgress.totalFiles}
+                                  </span>
+                                  <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-brand-100 text-brand-800 dark:bg-brand-900/60 dark:text-brand-200 border border-brand-200/60 dark:border-brand-700/60">
+                                    {uploadProgress.remainingFiles > 0
+                                      ? `Mai sunt ${uploadProgress.remainingFiles} ${uploadProgress.remainingFiles === 1 ? 'fișier' : 'fișiere'}`
+                                      : 'Ultimul fișier!'}
+                                  </span>
+                                </div>
+                                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[280px] mt-0.5" title={uploadProgress.currentFileName}>
+                                  {uploadProgress.currentFileName || 'Se transferă datele...'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="text-right shrink-0">
+                              <span className="text-2xl font-black bg-gradient-to-r from-brand-600 via-rose-500 to-amber-500 bg-clip-text text-transparent">
+                                {uploadProgress.overallPercent}%
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Visual Progress Bar */}
+                          <div className="space-y-1">
+                            <div className="h-3.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden p-0.5 shadow-inner">
+                              <div
+                                className="h-full bg-gradient-to-r from-brand-500 via-rose-500 to-amber-500 rounded-full transition-all duration-300 ease-out relative"
+                                style={{ width: `${Math.max(3, uploadProgress.overallPercent)}%` }}
+                              >
+                                <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse" />
+                              </div>
+                            </div>
+
+                            {uploadProgress.totalFiles > 1 && (
+                              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 px-0.5">
+                                <span>Progres fișier curent: {uploadProgress.filePercent}%</span>
+                                <span className="font-medium text-brand-600 dark:text-brand-400">{uploadProgress.statusText}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Metric Cards: Viteză, Transferat, Timp Rămas */}
+                          <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-center">
+                            <div className="p-2 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                              <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">
+                                <Zap className="w-3 h-3 text-amber-500" />
+                                <span>Viteză</span>
+                              </div>
+                              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                {formatSpeed(uploadProgress.speedBytesPerSec)}
+                              </div>
+                            </div>
+
+                            <div className="p-2 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                              <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">
+                                <Upload className="w-3 h-3 text-brand-500" />
+                                <span>Transferat</span>
+                              </div>
+                              <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                                {formatFileSize(uploadProgress.totalLoadedBytes)} / {formatFileSize(uploadProgress.totalBatchBytes)}
+                              </div>
+                            </div>
+
+                            <div className="p-2 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                              <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 mb-0.5">
+                                <Clock className="w-3 h-3 text-blue-500" />
+                                <span>Timp rămas</span>
+                              </div>
+                              <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                                {formatEta(uploadProgress.remainingSeconds)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex gap-3 pt-3">
+                        <Button
+                          type="submit"
+                          disabled={uploading || (uploadMethod === 'file' && selectedFiles.length === 0)}
+                          className="btn-primary flex-1 h-11 text-sm font-bold shadow-md hover:shadow-lg transition-all"
+                        >
+                          {uploading ? (
+                            <span className="flex items-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Se încarcă ({uploadProgress.overallPercent}%)
+                            </span>
+                          ) : (
+                            uploadMethod === 'file' && selectedFiles.length > 1
+                              ? `Încarcă ${selectedFiles.length} fișiere`
+                              : 'Adaugă'
+                          )}
                         </Button>
-                        <Button type="button" onClick={() => setShowDialog(false)} className="btn-secondary">
+                        <Button
+                          type="button"
+                          disabled={uploading}
+                          onClick={() => setShowDialog(false)}
+                          className="btn-secondary h-11"
+                        >
                           Anulează
                         </Button>
                       </div>
@@ -1614,79 +2488,27 @@ export const Content = () => {
             </div>
           </div>
 
-        {/* Preview Modal */}
-        < Dialog open={showPreview} onOpenChange={setShowPreview} >
-          <DialogContent className="glass-panel max-w-5xl max-h-[90vh] overflow-hidden">
-            <DialogHeader>
-              <DialogTitle>{previewItem?.title}</DialogTitle>
-            </DialogHeader>
-            {previewItem && (
-              <div className="space-y-4">
-                <div className="bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center relative" style={{ minHeight: '400px', maxHeight: '600px' }}>
-                  {previewItem.type === 'youtube' ? (
-                    <div className="w-full aspect-video">
-                      <iframe
-                        src={`https://www.youtube.com/embed/${(previewItem.file_url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/) || [])[1]}`}
-                        className="w-full h-full border-0"
-                        allow="autoplay; encrypted-media"
-                        allowFullScreen
-                      />
-                    </div>
-                  ) : previewItem.type === 'web' ? (
-                    <iframe
-                      src={previewItem.file_url}
-                      className="w-full h-[500px] border-0 bg-white dark:bg-slate-900"
-                    />
-                  ) : previewItem.type === 'image' ? (
-                    <img
-                      src={getFileUrl(previewItem.file_url)}
-                      alt={previewItem.title}
-                      className="max-w-full max-h-full object-contain"
-                      data-testid="preview-image"
-                    />
-                  ) : (
-                    <video
-                      src={getFileUrl(previewItem.file_url)}
-                      controls
-                      autoPlay
-                      className="max-w-full max-h-full"
-                      data-testid="preview-video"
-                    >
-                      Browser-ul tău nu suportă redarea video.
-                    </video>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 p-4 bg-white/40 dark:bg-slate-900/40 rounded-2xl">
-                  <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Tip</p>
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 capitalize">{previewItem.type}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Categorie</p>
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200 capitalize">{previewItem.category}</p>
-                  </div>
-                  {previewItem.type === 'image' && (
-                    <div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Durată afișare</p>
-                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{previewItem.duration} secunde</p>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">URL fișier</p>
-                    <a
-                      href={getFileUrl(previewItem.file_url)}
-                      rel="noopener noreferrer"
-                      className="text-sm text-brand-600 hover:text-brand-700 truncate block"
-                    >
-                      Deschide în tab nou →
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog >
+        {/* Fullscreen Media Lightbox Modal */}
+        {previewItem && (
+          <ContentLightboxModal
+            item={previewItem}
+            items={sortedContent}
+            folders={folders}
+            onClose={() => {
+              setPreviewItem(null);
+              setShowPreview(false);
+            }}
+            onNavigate={(newItem) => setPreviewItem(newItem)}
+            onEdit={isAdmin() ? (itemToEdit) => {
+              setPreviewItem(null);
+              setShowPreview(false);
+              setRenamingItem(itemToEdit);
+              setNewTitle(itemToEdit.title);
+              setEditBrands(Array.isArray(itemToEdit.brand) ? itemToEdit.brand : []);
+              setShowRenameDialog(true);
+            } : null}
+          />
+        )}
 
         {/* Rename Dialog */}
         < Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog} >
@@ -1835,8 +2657,49 @@ export const Content = () => {
             </div>
           </DialogContent>
         </Dialog>
-      </div >
+      </div>
       <ConfirmDialog />
-    </DashboardLayout >
+
+      {/* Fullscreen Page Drag Overlay */}
+      {isPageDragging && (
+        <div
+          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            pageDragCounter.current--;
+            if (pageDragCounter.current <= 0) {
+              setIsPageDragging(false);
+              pageDragCounter.current = 0;
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsPageDragging(false);
+            pageDragCounter.current = 0;
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+              processIncomingFiles(e.dataTransfer.files);
+              setShowDialog(true);
+            }
+          }}
+          className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-md p-8 flex items-center justify-center animate-in fade-in duration-150"
+        >
+          <div className="w-full max-w-lg border-3 border-dashed border-white bg-white/95 dark:bg-slate-900/95 rounded-3xl p-10 text-center shadow-2xl flex flex-col items-center scale-100 animate-in zoom-in-95 duration-150">
+            <div className="w-24 h-24 bg-brand-100 dark:bg-brand-950/80 rounded-full flex items-center justify-center mb-5 ring-12 ring-brand-500/20 shadow-inner">
+              <Upload className="w-12 h-12 text-brand-600 dark:text-brand-400 animate-bounce" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2">
+              Plasează fișierele aici
+            </h3>
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-300 max-w-sm">
+              Dă drumul fișierelor pentru a le încărca direct în{' '}
+              <span className="font-bold text-brand-600 dark:text-brand-400">
+                {selectedFolder ? `folderul „${selectedFolder.name}”` : 'directorul Root (Toate fișierele)'}
+              </span>
+            </p>
+          </div>
+        </div>
+      )}
+    </DashboardLayout>
   );
 };

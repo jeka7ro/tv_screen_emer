@@ -221,6 +221,21 @@ async def init_db() -> None:
         ("logo_size", "TEXT", "'md'"),
         ("sakura_enabled", "BOOLEAN", "FALSE"),
         ("sakura_intensity", "TEXT", "'medium'"),
+        ("valentine_hearts_enabled", "BOOLEAN", "FALSE"),
+        ("valentine_hearts_intensity", "TEXT", "'medium'"),
+        ("autumn_leaves_enabled", "BOOLEAN", "FALSE"),
+        ("autumn_leaves_intensity", "TEXT", "'medium'"),
+        ("halloween_enabled", "BOOLEAN", "FALSE"),
+        ("halloween_intensity", "TEXT", "'medium'"),
+        ("snow_enabled", "BOOLEAN", "FALSE"),
+        ("snow_intensity", "TEXT", "'medium'"),
+        ("custom_text_enabled", "BOOLEAN", "FALSE"),
+        ("custom_text_content", "TEXT", "NULL"),
+        ("custom_text_position", "TEXT", "'bottom-center'"),
+        ("custom_text_size", "TEXT", "'md'"),
+        ("custom_text_color", "TEXT", "'#FFFFFF'"),
+        ("custom_text_has_background", "BOOLEAN", "FALSE"),
+        ("custom_text_bg_color", "TEXT", "'#000000'"),
         ("sync_created_by", "TEXT", "NULL"),
         ("sync_created_at", "TIMESTAMPTZ", "NULL"),
     ]:
@@ -517,7 +532,15 @@ async def screen_get(id: str) -> Optional[Dict[str, Any]]:
 
 
 async def screen_get_by_slug(slug: str) -> Optional[Dict[str, Any]]:
-    return await _fetch_one("SELECT * FROM screens WHERE slug = $1", slug)
+    res = await _fetch_one("SELECT * FROM screens WHERE slug = $1", slug)
+    if not res:
+        try:
+            import uuid
+            uuid.UUID(slug)
+            res = await _fetch_one("SELECT * FROM screens WHERE id = $1", slug)
+        except Exception:
+            pass
+    return res
 
 
 
@@ -606,9 +629,13 @@ async def screen_insert(row: Dict[str, Any]) -> None:
         """INSERT INTO screens (id, location_id, name, slug, resolution, orientation, template_id,
            sync_group, cascade_offset, status, last_active, sync_type, created_at, sync_group_name, sync_fit_mode, brand,
            parallax_enabled, steam_enabled, logo_enabled, logo_brand_id, logo_position, logo_size,
-           sakura_enabled, sakura_intensity, organization_id)
+           sakura_enabled, sakura_intensity, valentine_hearts_enabled, valentine_hearts_intensity,
+           autumn_leaves_enabled, autumn_leaves_intensity, halloween_enabled, halloween_intensity,
+           snow_enabled, snow_intensity, custom_text_enabled, custom_text_content, custom_text_position,
+           custom_text_size, custom_text_color, custom_text_has_background, custom_text_bg_color, organization_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
-                   $17, $18, $19, $20, $21, $22, $23, $24, $25)""",
+                   $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
+                   $31, $32, $33, $34, $35, $36, $37, $38, $39, $40)""",
         row["id"], row["location_id"], row["name"], row["slug"],
         row.get("resolution", "1920x1080"), row.get("orientation", "0"),
         row.get("template_id"), row.get("sync_group"), row.get("cascade_offset", 0),
@@ -619,6 +646,14 @@ async def screen_insert(row: Dict[str, Any]) -> None:
         row.get("logo_enabled", False), row.get("logo_brand_id"),
         row.get("logo_position", "top-right"), row.get("logo_size", "md"),
         row.get("sakura_enabled", False), row.get("sakura_intensity", "medium"),
+        row.get("valentine_hearts_enabled", False), row.get("valentine_hearts_intensity", "medium"),
+        row.get("autumn_leaves_enabled", False), row.get("autumn_leaves_intensity", "medium"),
+        row.get("halloween_enabled", False), row.get("halloween_intensity", "medium"),
+        row.get("snow_enabled", False), row.get("snow_intensity", "medium"),
+        row.get("custom_text_enabled", False), row.get("custom_text_content"),
+        row.get("custom_text_position", "bottom-center"), row.get("custom_text_size", "md"),
+        row.get("custom_text_color", "#FFFFFF"), row.get("custom_text_has_background", False),
+        row.get("custom_text_bg_color", "#000000"),
         row.get("organization_id", "default_sushimaster")
     )
 
@@ -630,7 +665,16 @@ async def screen_update(id: str, data: Dict[str, Any]) -> None:
            sync_type = $9, sync_group_name = $10, sync_fit_mode = $11, brand = $12,
            parallax_enabled = $13, steam_enabled = $14, logo_enabled = $15, 
            logo_brand_id = $16, logo_position = $17, logo_size = $18,
-           sakura_enabled = $19, sakura_intensity = $20 WHERE id = $21""",
+           sakura_enabled = $19, sakura_intensity = $20,
+           valentine_hearts_enabled = $21, valentine_hearts_intensity = $22,
+           autumn_leaves_enabled = $23, autumn_leaves_intensity = $24,
+           halloween_enabled = $25, halloween_intensity = $26,
+           snow_enabled = $27, snow_intensity = $28,
+           custom_text_enabled = $29, custom_text_content = $30,
+           custom_text_position = $31, custom_text_size = $32,
+           custom_text_color = $33, custom_text_has_background = $34,
+           custom_text_bg_color = $35
+           WHERE id = $36""",
         data["location_id"], data["name"], data["slug"],
         data.get("resolution", "1920x1080"), data.get("orientation", "0"),
         data.get("template_id"), data.get("sync_group"), data.get("cascade_offset", 0),
@@ -641,6 +685,14 @@ async def screen_update(id: str, data: Dict[str, Any]) -> None:
         data.get("logo_enabled", False), data.get("logo_brand_id"),
         data.get("logo_position", "top-right"), data.get("logo_size", "md"),
         data.get("sakura_enabled", False), data.get("sakura_intensity", "medium"),
+        data.get("valentine_hearts_enabled", False), data.get("valentine_hearts_intensity", "medium"),
+        data.get("autumn_leaves_enabled", False), data.get("autumn_leaves_intensity", "medium"),
+        data.get("halloween_enabled", False), data.get("halloween_intensity", "medium"),
+        data.get("snow_enabled", False), data.get("snow_intensity", "medium"),
+        data.get("custom_text_enabled", False), data.get("custom_text_content"),
+        data.get("custom_text_position", "bottom-center"), data.get("custom_text_size", "md"),
+        data.get("custom_text_color", "#FFFFFF"), data.get("custom_text_has_background", False),
+        data.get("custom_text_bg_color", "#000000"),
         id,
     )
 

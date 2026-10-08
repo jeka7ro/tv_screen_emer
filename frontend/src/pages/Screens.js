@@ -905,7 +905,7 @@ export const Screens = () => {
 
       {/* Link Dialog */}
       <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-hide">
           <DialogHeader>
             <DialogTitle>Link pentru TV - {selectedScreenForLink?.name}</DialogTitle>
           </DialogHeader>

@@ -116,13 +116,15 @@ self.addEventListener('message', (event) => {
         caches.open(CACHE_NAME).then(async (cache) => {
             for (const url of urls) {
                 try {
-                    const response = await fetch(url);
-                    if (response.ok) {
+                    const isCrossOrigin = !url.startsWith(self.location.origin) && !url.startsWith('/');
+                    const fetchOptions = isCrossOrigin ? { mode: 'no-cors' } : {};
+                    const response = await fetch(url, fetchOptions);
+                    if (response && (response.ok || response.type === 'opaque')) {
                         await cache.put(url, response);
                         console.log('[MediaCacheSW] Pre-cached:', url.substring(0, 80));
                     }
                 } catch (e) {
-                    console.warn('[MediaCacheSW] Pre-cache failed for:', url);
+                    console.warn('[MediaCacheSW] Pre-cache skipped for:', url);
                 }
             }
             event.ports[0]?.postMessage({ status: 'cached', count: urls.length });

@@ -51,6 +51,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/display/:slug" element={<DisplayScreen />} />
           <Route path="/tv/:slug" element={<DisplayScreen />} />
+          <Route path="/player/:slug" element={<DisplayScreen />} />
           <Route path="/play-audio/:playlistId" element={<AudioPlayer />} />
 
           {/* Protected routes */}

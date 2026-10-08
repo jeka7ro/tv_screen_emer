@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '../contexts/AuthContext';
-import { Save, ArrowLeft, Eye, Check, Sparkles, Layers, Wind, Image, Monitor, List as ListIcon, Heart, Type, Clock, Flower2, Snowflake, Maximize, Minimize, RotateCw } from 'lucide-react';
+import { Save, ArrowLeft, Eye, Check, Sparkles, Layers, Wind, Image, Monitor, List as ListIcon, Heart, Type, Clock, Flower2, Snowflake, Leaf, Ghost, Maximize, Minimize, RotateCw } from 'lucide-react';
 import api from '../utils/api';
 import { toast } from 'sonner';
 import '../styles/effects.css';
+import { ValentineHearts } from '../components/ValentineHearts';
+import { AutumnLeaves } from '../components/AutumnLeaves';
+import { HalloweenEffect } from '../components/HalloweenEffect';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
@@ -121,6 +124,10 @@ export const ScreenDesigner = () => {
   const [sakuraIntensity, setSakuraIntensity] = useState('medium');
   const [enableSnow, setEnableSnow] = useState(false);
   const [snowIntensity, setSnowIntensity] = useState('medium');
+  const [enableAutumnLeaves, setEnableAutumnLeaves] = useState(false);
+  const [autumnLeavesIntensity, setAutumnLeavesIntensity] = useState('medium');
+  const [enableHalloween, setEnableHalloween] = useState(false);
+  const [halloweenIntensity, setHalloweenIntensity] = useState('medium');
 
   // Track which effect config is currently visible
   const [activeEffectConfig, setActiveEffectConfig] = useState(null);
@@ -332,6 +339,36 @@ export const ScreenDesigner = () => {
       setEnableSakura(!!screenRes.data.sakura_enabled);
       setSakuraIntensity(screenRes.data.sakura_intensity || 'medium');
 
+      // Load autumn leaves settings from backend (with localStorage fallback)
+      if (screenRes.data.autumn_leaves_enabled !== undefined) {
+        setEnableAutumnLeaves(!!screenRes.data.autumn_leaves_enabled);
+        setAutumnLeavesIntensity(screenRes.data.autumn_leaves_intensity || 'medium');
+      } else {
+        const savedAutumn = localStorage.getItem(`autumn_leaves_${screenId}`);
+        if (savedAutumn) {
+          try {
+            const a = JSON.parse(savedAutumn);
+            setEnableAutumnLeaves(!!a.enabled);
+            setAutumnLeavesIntensity(a.intensity || 'medium');
+          } catch (e) {}
+        }
+      }
+
+      // Load halloween settings from backend (with localStorage fallback)
+      if (screenRes.data.halloween_enabled !== undefined) {
+        setEnableHalloween(!!screenRes.data.halloween_enabled);
+        setHalloweenIntensity(screenRes.data.halloween_intensity || 'medium');
+      } else {
+        const savedHalloween = localStorage.getItem(`halloween_${screenId}`);
+        if (savedHalloween) {
+          try {
+            const h = JSON.parse(savedHalloween);
+            setEnableHalloween(!!h.enabled);
+            setHalloweenIntensity(h.intensity || 'medium');
+          } catch (e) {}
+        }
+      }
+
       // Load happy hour timer settings from localStorage
       const savedTimer = localStorage.getItem(`happy_hour_timer_${screenId}`);
       if (savedTimer) {
@@ -410,6 +447,10 @@ export const ScreenDesigner = () => {
         valentine_hearts_intensity: valentineHeartsIntensity,
         snow_enabled: enableSnow,
         snow_intensity: snowIntensity,
+        autumn_leaves_enabled: enableAutumnLeaves,
+        autumn_leaves_intensity: autumnLeavesIntensity,
+        halloween_enabled: enableHalloween,
+        halloween_intensity: halloweenIntensity,
         custom_text_enabled: enableCustomText,
         custom_text_content: customTextContent,
         custom_text_position: customTextPosition,
@@ -425,6 +466,12 @@ export const ScreenDesigner = () => {
       }));
       localStorage.setItem(`snow_effect_${screenId}`, JSON.stringify({
         enabled: enableSnow, intensity: snowIntensity
+      }));
+      localStorage.setItem(`autumn_leaves_${screenId}`, JSON.stringify({
+        enabled: enableAutumnLeaves, intensity: autumnLeavesIntensity
+      }));
+      localStorage.setItem(`halloween_${screenId}`, JSON.stringify({
+        enabled: enableHalloween, intensity: halloweenIntensity
       }));
       localStorage.setItem(`custom_text_${screenId}`, JSON.stringify({
         enabled: enableCustomText,
@@ -625,7 +672,7 @@ export const ScreenDesigner = () => {
               <Sparkles className="w-4 h-4 text-amber-500" />
               Efecte Vizuale
             </h2>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-5 gap-1.5">
               <button onClick={() => setEnableParallax(!enableParallax)} title="Parallax" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableParallax ? 'border-indigo-400 bg-indigo-50 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-indigo-200 hover:bg-indigo-50/30'}`}>
                 <Layers className={`w-4 h-4 ${enableParallax ? 'text-indigo-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableParallax ? 'text-indigo-600' : 'text-slate-400'}`}>Parallax</span>
@@ -657,6 +704,14 @@ export const ScreenDesigner = () => {
               <button onClick={() => { if (!enableSnow) { setEnableSnow(true); setActiveEffectConfig('snow'); } else if (activeEffectConfig === 'snow') { setEnableSnow(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('snow'); } }} title="Snow Effect" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableSnow ? 'border-sky-400 bg-sky-50 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-sky-200 hover:bg-sky-50/30'}`}>
                 <Snowflake className={`w-4 h-4 ${enableSnow ? 'text-sky-500' : 'text-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${enableSnow ? 'text-sky-600' : 'text-slate-400'}`}>Zăpadă</span>
+              </button>
+              <button onClick={() => { if (!enableAutumnLeaves) { setEnableAutumnLeaves(true); setActiveEffectConfig('autumn'); } else if (activeEffectConfig === 'autumn') { setEnableAutumnLeaves(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('autumn'); } }} title="Efect Frunze Toamnă" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableAutumnLeaves ? 'border-amber-500 bg-amber-50 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-amber-300 hover:bg-amber-50/30'}`}>
+                <Leaf className={`w-4 h-4 ${enableAutumnLeaves ? 'text-amber-600' : 'text-slate-400'}`} />
+                <span className={`text-[9px] font-bold ${enableAutumnLeaves ? 'text-amber-700' : 'text-slate-400'}`}>Toamnă</span>
+              </button>
+              <button onClick={() => { if (!enableHalloween) { setEnableHalloween(true); setActiveEffectConfig('halloween'); } else if (activeEffectConfig === 'halloween') { setEnableHalloween(false); setActiveEffectConfig(null); } else { setActiveEffectConfig('halloween'); } }} title="Efect Halloween" className={`flex flex-col items-center gap-0.5 p-2 rounded-2xl border-2 transition-all ${enableHalloween ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-orange-300 hover:bg-orange-50/30'}`}>
+                <Ghost className={`w-4 h-4 ${enableHalloween ? 'text-orange-500' : 'text-slate-400'}`} />
+                <span className={`text-[9px] font-bold ${enableHalloween ? 'text-orange-600' : 'text-slate-400'}`}>Halloween</span>
               </button>
             </div>
             {enableLogo && activeEffectConfig === 'logo' && (
@@ -782,6 +837,26 @@ export const ScreenDesigner = () => {
                 <div className="flex gap-0.5">
                   {[{ k: 'low', l: 'Puțin' }, { k: 'medium', l: 'Mediu' }, { k: 'high', l: 'Mult' }].map(s => (
                     <button key={s.k} onClick={() => setSnowIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${snowIntensity === s.k ? 'bg-sky-400 text-white border-sky-500' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-sky-50'}`}>{s.l}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {enableAutumnLeaves && activeEffectConfig === 'autumn' && (
+              <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
+                <div className="text-[9px] font-semibold text-amber-600 mb-1">Intensitate Frunze de Toamnă</div>
+                <div className="flex gap-0.5">
+                  {[{ k: 'low', l: 'Puțin' }, { k: 'medium', l: 'Mediu' }, { k: 'high', l: 'Mult' }].map(s => (
+                    <button key={s.k} onClick={() => setAutumnLeavesIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${autumnLeavesIntensity === s.k ? 'bg-amber-500 text-white border-amber-600' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-amber-50'}`}>{s.l}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {enableHalloween && activeEffectConfig === 'halloween' && (
+              <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
+                <div className="text-[9px] font-semibold text-orange-600 mb-1">Intensitate Halloween</div>
+                <div className="flex gap-0.5">
+                  {[{ k: 'low', l: 'Puțin' }, { k: 'medium', l: 'Mediu' }, { k: 'high', l: 'Mult' }].map(s => (
+                    <button key={s.k} onClick={() => setHalloweenIntensity(s.k)} className={`flex-1 py-1 px-2 rounded text-[9px] font-bold border transition-all ${halloweenIntensity === s.k ? 'bg-orange-500 text-white border-orange-600' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-orange-50'}`}>{s.l}</button>
                   ))}
                 </div>
               </div>
@@ -1006,6 +1081,24 @@ export const ScreenDesigner = () => {
                     ))}
                   </div>
                 )}
+
+                {/* Valentine Hearts Effect */}
+                <ValentineHearts
+                  enabled={enableValentineHearts}
+                  intensity={valentineHeartsIntensity}
+                />
+
+                {/* Autumn Leaves Effect */}
+                <AutumnLeaves
+                  enabled={enableAutumnLeaves}
+                  intensity={autumnLeavesIntensity}
+                />
+
+                {/* Halloween Effect */}
+                <HalloweenEffect
+                  enabled={enableHalloween}
+                  intensity={halloweenIntensity}
+                />
               </div>
             </div>
           </div>

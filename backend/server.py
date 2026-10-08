@@ -474,6 +474,10 @@ class Screen(BaseModel):
     logo_size: Optional[str] = "md"
     valentine_hearts_enabled: Optional[bool] = False
     valentine_hearts_intensity: Optional[str] = "medium"  # low, medium, high
+    autumn_leaves_enabled: Optional[bool] = False
+    autumn_leaves_intensity: Optional[str] = "medium"  # low, medium, high
+    halloween_enabled: Optional[bool] = False
+    halloween_intensity: Optional[str] = "medium"  # low, medium, high
     snow_enabled: Optional[bool] = False
     snow_intensity: Optional[str] = "medium"
     custom_text_enabled: Optional[bool] = False
@@ -512,6 +516,10 @@ class ScreenCreate(BaseModel):
     logo_size: Optional[str] = "md"
     valentine_hearts_enabled: Optional[bool] = False
     valentine_hearts_intensity: Optional[str] = "medium"
+    autumn_leaves_enabled: Optional[bool] = False
+    autumn_leaves_intensity: Optional[str] = "medium"
+    halloween_enabled: Optional[bool] = False
+    halloween_intensity: Optional[str] = "medium"
     sakura_enabled: Optional[bool] = False
     sakura_intensity: Optional[str] = "medium"
     snow_enabled: Optional[bool] = False
