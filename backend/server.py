@@ -478,6 +478,8 @@ class Screen(BaseModel):
     autumn_leaves_intensity: Optional[str] = "medium"  # low, medium, high
     halloween_enabled: Optional[bool] = False
     halloween_intensity: Optional[str] = "medium"  # low, medium, high
+    sakura_enabled: Optional[bool] = False
+    sakura_intensity: Optional[str] = "medium"
     snow_enabled: Optional[bool] = False
     snow_intensity: Optional[str] = "medium"
     custom_text_enabled: Optional[bool] = False

@@ -26,6 +26,15 @@
         // Runs immediately in <head> before React parses or loads, ensuring instant TV playback
         (function() {
             try {
+                // Fallback for local dev server or cached SW when accessing /tv2/slug
+                if (window.location.pathname.indexOf('/tv2/') === 0) {
+                    var tv2Slug = window.location.pathname.replace(/^\/tv2\/+/, '').replace(/\/+$/, '');
+                    if (tv2Slug) {
+                        var sep = window.location.search ? (window.location.search + '&') : '?';
+                        window.location.replace('/tv2.html' + sep + 'slug=' + encodeURIComponent(tv2Slug));
+                        return;
+                    }
+                }
                 var host = window.location.hostname.toLowerCase();
                 var parts = host.split('.');
                 var isTenant = false;

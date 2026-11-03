@@ -48,6 +48,11 @@
 
 # Standalone TV display page (no React, works on any TV browser)
 [[redirects]]
+  from = "/tv2/*"
+  to = "/tv2.html"
+  status = 200
+
+[[redirects]]
   from = "/tv/*"
   to = "/tv.html"
   status = 200
@@ -60,6 +65,20 @@
 # No-cache headers for TV pages — LG TVs must always get the latest version
 [[headers]]
   for = "/display/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
+[[headers]]
+  for = "/tv2/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
+[[headers]]
+  for = "/tv2.html"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
     Pragma = "no-cache"
