@@ -2141,9 +2141,19 @@ async def get_playlists(request: Request, current_user: User = Depends(get_curre
     org_id = get_user_org_id(current_user, request)
     return await playlists_list(org_id=org_id)
 
+def _normalize_ro_datetime(dt: Optional[datetime]) -> Optional[datetime]:
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        from zoneinfo import ZoneInfo
+        return dt.replace(tzinfo=ZoneInfo("Europe/Bucharest")).astimezone(timezone.utc)
+    return dt
+
 @api_router.post("/playlists", response_model=Playlist)
 async def create_playlist(playlist_data: PlaylistCreate, request: Request, current_user: User = Depends(require_admin)):
     playlist_dict = playlist_data.model_dump()
+    playlist_dict["start_at"] = _normalize_ro_datetime(playlist_dict.get("start_at"))
+    playlist_dict["end_at"] = _normalize_ro_datetime(playlist_dict.get("end_at"))
     playlist_dict["created_by"] = current_user.id
     playlist_dict["organization_id"] = get_user_create_org_id(current_user, request, playlist_dict.get("organization_id"))
     playlist = Playlist(**playlist_dict)
@@ -2171,6 +2181,8 @@ async def update_playlist(playlist_id: str, playlist_data: PlaylistCreate, curre
     if not current_user.is_super_admin and existing.get("organization_id") != current_user.organization_id:
         raise HTTPException(status_code=403, detail="Acces interzis la playlist-ul altei organizații")
     update_data = playlist_data.model_dump()
+    update_data["start_at"] = _normalize_ro_datetime(update_data.get("start_at"))
+    update_data["end_at"] = _normalize_ro_datetime(update_data.get("end_at"))
     if not current_user.is_super_admin:
         update_data["organization_id"] = current_user.organization_id
     await playlist_update(playlist_id, update_data)
