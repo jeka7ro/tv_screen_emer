@@ -627,12 +627,18 @@ export const Playlists = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const toUtcIso = (val) => {
+        if (!val) return null;
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? val : d.toISOString();
+      };
+
       const dataToSend = {
         ...formData,
         default_duration: parseInt(generalDuration) || 10,
         brand: formData.brand ? [formData.brand] : [],
-        start_at: (formData.is_scheduled && formData.start_at) ? formData.start_at : null,
-        end_at: (formData.is_scheduled && formData.end_at) ? formData.end_at : null,
+        start_at: (formData.is_scheduled && formData.start_at) ? toUtcIso(formData.start_at) : null,
+        end_at: (formData.is_scheduled && formData.end_at) ? toUtcIso(formData.end_at) : null,
         items: playlistItems.map((item, index) => ({
           content_id: item.content_id,
           order: index,
@@ -740,6 +746,14 @@ export const Playlists = () => {
       }
     }
 
+    const toLocalInput = (val) => {
+      if (!val) return '';
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return String(val).slice(0, 16);
+      const offsetMs = d.getTimezoneOffset() * 60000;
+      return new Date(d.getTime() - offsetMs).toISOString().slice(0, 16);
+    };
+
     setFormData({
       name: playlist.name,
       autoplay: playlist.autoplay,
@@ -747,8 +761,8 @@ export const Playlists = () => {
       brand: (Array.isArray(playlist.brand) ? playlist.brand[0] : playlist.brand) || '',
       color: playlist.color || '#EF4444',
       is_scheduled: playlist.is_scheduled || false,
-      start_at: playlist.start_at || '',
-      end_at: playlist.end_at || '',
+      start_at: toLocalInput(playlist.start_at),
+      end_at: toLocalInput(playlist.end_at),
       screen_ids: screenIdsFromZones
     });
     const initialGeneral = playlist.default_duration || (playlist.items && playlist.items[0]?.duration) || 10;

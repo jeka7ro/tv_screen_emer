@@ -1018,6 +1018,7 @@ export const Screens = () => {
           </DialogContent>
         </Dialog>
       )}
+      <ConfirmDialog />
     </DashboardLayout >
   );
 };

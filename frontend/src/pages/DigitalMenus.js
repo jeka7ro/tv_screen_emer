@@ -405,6 +405,7 @@ export const DigitalMenus = () => {
           </div>
         )}
       </div>
+      <ConfirmDialog />
     </DashboardLayout >
   );
 };
