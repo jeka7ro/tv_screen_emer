@@ -2144,10 +2144,11 @@ async def get_playlists(request: Request, current_user: User = Depends(get_curre
 def _normalize_ro_datetime(dt: Optional[datetime]) -> Optional[datetime]:
     if dt is None:
         return None
+    from zoneinfo import ZoneInfo
+    ro_tz = ZoneInfo("Europe/Bucharest")
     if dt.tzinfo is None:
-        from zoneinfo import ZoneInfo
-        return dt.replace(tzinfo=ZoneInfo("Europe/Bucharest")).astimezone(timezone.utc)
-    return dt
+        return dt.replace(tzinfo=ro_tz)
+    return dt.astimezone(ro_tz)
 
 @api_router.post("/playlists", response_model=Playlist)
 async def create_playlist(playlist_data: PlaylistCreate, request: Request, current_user: User = Depends(require_admin)):

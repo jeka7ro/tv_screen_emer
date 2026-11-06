@@ -285,6 +285,10 @@ def _row(r: Optional[asyncpg.Record]) -> Optional[Dict[str, Any]]:
     d = dict(r)
     for k, v in list(d.items()):
         if hasattr(v, "isoformat"):  # datetime
+            if k in ("start_at", "end_at"):
+                from zoneinfo import ZoneInfo
+                ro_tz = ZoneInfo("Europe/Bucharest")
+                v = v.replace(tzinfo=ro_tz) if v.tzinfo is None else v.astimezone(ro_tz)
             d[k] = v.isoformat()
         
         # Ensure list/dict fields are correctly parsed or defaulted
