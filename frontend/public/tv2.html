@@ -1913,6 +1913,8 @@
         var currentScreenId = null;
         var hasLoadedOnce = false;
         var enginesStarted = false;
+        var serverClockOffsetMs = 0;
+        var currentSyncInfo = null;
 
         if (!slug || (parts.length <= 1 && !querySlug && (slug === 'tv' || slug === 'tv2' || slug === 'display')) || slug === 'tv.html' || slug === 'tv2.html') {
             showError('Lipsă slug ecran în URL (ex: /tv2/nume-ecran)');
@@ -1967,6 +1969,9 @@
                     try {
                         var data = JSON.parse(xhr.responseText);
                         hideError();
+                        if (data.server_time_ms) {
+                            serverClockOffsetMs = Number(data.server_time_ms) - Date.now();
+                        }
                         if (data.screen && data.screen.id) {
                             currentScreenId = data.screen.id;
                         }
@@ -2075,7 +2080,10 @@
                 txt_size: s.custom_text_size || 'md',
                 txt_color: s.custom_text_color || '#FFFFFF',
                 txt_has_bg: !!s.custom_text_has_background,
-                txt_bg: s.custom_text_bg_color || '#000000'
+                txt_bg: s.custom_text_bg_color || '#000000',
+                hh_timer_en: !!s.happy_hour_timer_enabled,
+                hh_timer_end: s.happy_hour_timer_end || '',
+                hh_timer_pos: s.happy_hour_timer_position || 'top-center'
             });
         }
 
@@ -2167,13 +2175,16 @@
             }
 
             allSlides = items;
+            currentSyncInfo = data.sync_info || null;
 
             var syncInfo = data.sync_info;
             var isMatrix = syncInfo && syncInfo.sync_type && syncInfo.sync_type.indexOf('matrix') === 0;
+            var initialSyncState = getSyncedSlideState();
+            currentSlide = initialSyncState.index;
 
             for (var s = 0; s < items.length; s++) {
                 var div = document.createElement('div');
-                div.className = 'slide' + (s === 0 ? ' active' : '');
+                div.className = 'slide' + (s === currentSlide ? ' active' : '');
                 div.id = 'slide-' + s;
 
                 var innerContainer = document.createElement('div');
@@ -2207,7 +2218,9 @@
                 if (items[s].type === 'video') {
                     var vid = document.createElement('video');
                     vid.dataset.src = items[s].url;
-                    if (s === 0 || s === 1 || s === items.length - 1) {
+                    var isNextSync = s === (currentSlide + 1) % items.length;
+                    var isPrevSync = s === (currentSlide - 1 + items.length) % items.length;
+                    if (s === currentSlide || isNextSync || isPrevSync) {
                         vid.src = items[s].url;
                     }
                     if (items[s].thumbnail_url) {
@@ -2221,7 +2234,7 @@
                     vid.setAttribute('playsinline', '');
                     vid.setAttribute('webkit-playsinline', '');
                     vid.preload = 'auto';
-                    if (s === 0) vid.autoplay = true;
+                    if (s === currentSlide) vid.autoplay = true;
                     vid.style.width = '100%';
                     vid.style.height = '100%';
                     vid.style.objectFit = fitMode;
@@ -2250,6 +2263,11 @@
                 if (started) return;
                 started = true;
                 if (items.length > 1) {
+                    // Align immediately to the active slide for the current server wall-clock second
+                    var syncState = getSyncedSlideState();
+                    if (syncState.index !== currentSlide) {
+                        transitionToSlide(syncState.index);
+                    }
                     scheduleNextSlide();
                 } else if (items.length === 1) {
                     var firstEl = document.getElementById('slide-0');
@@ -2280,74 +2298,135 @@
             }
         }
 
+        /* =========================================================
+           SERVER WALL-CLOCK SYNCHRONIZATION FOR MULTI-TV LOCATIONS
+           Ensures all 3-4-5 TVs in the same location switch slides
+           at the exact same millisecond regardless of power-on time.
+           ========================================================= */
+        function getSyncedSlideState() {
+            if (!allSlides || allSlides.length <= 1) {
+                return { index: 0, remainingMs: 10000 };
+            }
+            var durationsMs = [];
+            var totalCycleMs = 0;
+            for (var i = 0; i < allSlides.length; i++) {
+                var rawDur = allSlides[i] && allSlides[i].duration;
+                var dMs = Math.max(4, Number(rawDur) || 10) * 1000;
+                durationsMs.push(dMs);
+                totalCycleMs += dMs;
+            }
+            if (totalCycleMs <= 0) {
+                return { index: 0, remainingMs: 10000 };
+            }
+
+            var nowMs = Date.now() + serverClockOffsetMs;
+            // Optional cascade wave offset if screen is in cascade mode
+            if (currentSyncInfo && currentSyncInfo.sync_type === 'cascade' && currentSyncInfo.my_index > 0) {
+                nowMs -= (Number(currentSyncInfo.my_index) * 500);
+            }
+
+            var posMs = ((nowMs % totalCycleMs) + totalCycleMs) % totalCycleMs;
+            var acc = 0;
+            for (var j = 0; j < durationsMs.length; j++) {
+                var nextAcc = acc + durationsMs[j];
+                if (posMs < nextAcc) {
+                    var rem = nextAcc - posMs;
+                    return {
+                        index: j,
+                        remainingMs: Math.max(250, rem)
+                    };
+                }
+                acc = nextAcc;
+            }
+            return { index: 0, remainingMs: durationsMs[0] };
+        }
+
+        function transitionToSlide(targetIndex) {
+            if (allSlides.length <= 1) return;
+            targetIndex = ((targetIndex % allSlides.length) + allSlides.length) % allSlides.length;
+            if (targetIndex === currentSlide) return;
+
+            var oldSlideIndex = currentSlide;
+            var oldSlide = document.getElementById('slide-' + oldSlideIndex);
+
+            currentSlide = targetIndex;
+
+            // Preload next-next video
+            var nextNextIndex = (currentSlide + 1) % allSlides.length;
+            var nextNextSlide = document.getElementById('slide-' + nextNextIndex);
+            if (nextNextSlide) {
+                var nextNextVid = nextNextSlide.querySelector('video');
+                if (nextNextVid && !nextNextVid.getAttribute('src') && nextNextVid.dataset.src) {
+                    nextNextVid.src = nextNextVid.dataset.src;
+                    nextNextVid.load();
+                }
+            }
+
+            // Clear any older '.prev' classes
+            for (var i = 0; i < allSlides.length; i++) {
+                if (i !== oldSlideIndex && i !== currentSlide) {
+                    var el = document.getElementById('slide-' + i);
+                    if (el) el.className = 'slide';
+                }
+            }
+
+            // Keep old slide visible underneath (prev) while new slide fades in on top (active)
+            if (oldSlide) {
+                oldSlide.className = 'slide prev';
+            }
+
+            var newSlide = document.getElementById('slide-' + currentSlide);
+            if (newSlide) {
+                var newVid = newSlide.querySelector('video');
+                if (newVid) {
+                    if (!newVid.getAttribute('src') && newVid.dataset.src) {
+                        newVid.src = newVid.dataset.src;
+                        newVid.load();
+                    }
+                    try { newVid.currentTime = 0; } catch (e) { }
+                    var p = newVid.play();
+                    if (p !== undefined) p.catch(function () { });
+                }
+                newSlide.className = 'slide active';
+            }
+
+            // Flush old video from RAM after crossfade completes (2s)
+            setTimeout(function () {
+                if (oldSlide && oldSlideIndex !== currentSlide) {
+                    oldSlide.className = 'slide';
+                    var oldVid = oldSlide.querySelector('video');
+                    if (oldVid) {
+                        oldVid.pause();
+                        if (allSlides.length > 3) {
+                            oldVid.removeAttribute('src');
+                            oldVid.load();
+                        }
+                    }
+                }
+            }, 2000);
+        }
+
         function scheduleNextSlide() {
-            var rawDuration = allSlides[currentSlide] && allSlides[currentSlide].duration;
-            var duration = Math.max(4, Number(rawDuration) || 10);
+            if (slideTimer) {
+                clearTimeout(slideTimer);
+                slideTimer = null;
+            }
+            if (allSlides.length <= 1) return;
+
+            var syncState = getSyncedSlideState();
+            if (syncState.index !== currentSlide) {
+                transitionToSlide(syncState.index);
+            }
 
             slideTimer = setTimeout(function () {
                 if (allSlides.length <= 1) return;
-
-                var oldSlideIndex = currentSlide;
-                var oldSlide = document.getElementById('slide-' + oldSlideIndex);
-
-                currentSlide = (currentSlide + 1) % allSlides.length;
-
-                // Preload next-next video
-                var nextNextIndex = (currentSlide + 1) % allSlides.length;
-                var nextNextSlide = document.getElementById('slide-' + nextNextIndex);
-                if (nextNextSlide) {
-                    var nextNextVid = nextNextSlide.querySelector('video');
-                    if (nextNextVid && !nextNextVid.getAttribute('src') && nextNextVid.dataset.src) {
-                        nextNextVid.src = nextNextVid.dataset.src;
-                        nextNextVid.load();
-                    }
-                }
-
-                // Clear any older '.prev' classes
-                for (var i = 0; i < allSlides.length; i++) {
-                    if (i !== oldSlideIndex && i !== currentSlide) {
-                        var el = document.getElementById('slide-' + i);
-                        if (el) el.className = 'slide';
-                    }
-                }
-
-                // Keep old slide visible underneath (prev) while new slide fades in on top (active)
-                if (oldSlide) {
-                    oldSlide.className = 'slide prev';
-                }
-
-                var newSlide = document.getElementById('slide-' + currentSlide);
-                if (newSlide) {
-                    var newVid = newSlide.querySelector('video');
-                    if (newVid) {
-                        if (!newVid.getAttribute('src') && newVid.dataset.src) {
-                            newVid.src = newVid.dataset.src;
-                            newVid.load();
-                        }
-                        try { newVid.currentTime = 0; } catch (e) { }
-                        var p = newVid.play();
-                        if (p !== undefined) p.catch(function () { });
-                    }
-                    newSlide.className = 'slide active';
-                }
-
-                // Flush old video from RAM after crossfade completes (2s)
-                setTimeout(function () {
-                    if (oldSlide && oldSlideIndex !== currentSlide) {
-                        oldSlide.className = 'slide';
-                        var oldVid = oldSlide.querySelector('video');
-                        if (oldVid) {
-                            oldVid.pause();
-                            if (allSlides.length > 3) {
-                                oldVid.removeAttribute('src');
-                                oldVid.load();
-                            }
-                        }
-                    }
-                }, 2000);
-
+                var nextState = getSyncedSlideState();
+                var nextIdx = nextState.index !== currentSlide
+                    ? nextState.index
+                    : (currentSlide + 1) % allSlides.length;
+                transitionToSlide(nextIdx);
                 scheduleNextSlide();
-            }, duration * 1000);
+            }, syncState.remainingMs);
         }
 
         /* =========================================================
@@ -2494,6 +2573,68 @@
                 textBox.textContent = screen.custom_text_content;
                 textWrap.appendChild(textBox);
                 overlaysLayer.appendChild(textWrap);
+            }
+
+            // 9. Happy Hour Timer Overlay
+            if (window.__hhTimerInterval) {
+                clearInterval(window.__hhTimerInterval);
+                window.__hhTimerInterval = null;
+            }
+            if (screen.happy_hour_timer_enabled && screen.happy_hour_timer_end) {
+                var endTs = parseInt(screen.happy_hour_timer_end, 10);
+                var nowSynced = Date.now() + serverClockOffsetMs;
+                if (!isNaN(endTs) && endTs > nowSynced) {
+                    var timerWrap = document.createElement('div');
+                    timerWrap.style.position = 'absolute';
+                    timerWrap.style.zIndex = '50';
+                    timerWrap.style.pointerEvents = 'none';
+                    applyPositionStyles(timerWrap, screen.happy_hour_timer_position || 'top-center', '16px');
+
+                    var timerCard = document.createElement('div');
+                    timerCard.style.background = 'linear-gradient(90deg, #9333ea, #db2777)';
+                    timerCard.style.color = '#ffffff';
+                    timerCard.style.padding = '12px 24px';
+                    timerCard.style.borderRadius = '16px';
+                    timerCard.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+                    timerCard.style.textAlign = 'center';
+
+                    var timerLabel = document.createElement('div');
+                    timerLabel.style.fontSize = '0.75rem';
+                    timerLabel.style.fontWeight = '600';
+                    timerLabel.style.textTransform = 'uppercase';
+                    timerLabel.style.letterSpacing = '0.05em';
+                    timerLabel.style.marginBottom = '4px';
+                    timerLabel.textContent = 'Happy Hour se termină în';
+
+                    var timerVal = document.createElement('div');
+                    timerVal.style.fontSize = '1.875rem';
+                    timerVal.style.fontWeight = '700';
+                    timerVal.style.fontVariantNumeric = 'tabular-nums';
+
+                    function updateTimerText() {
+                        var remSec = Math.max(0, Math.floor((endTs - (Date.now() + serverClockOffsetMs)) / 1000));
+                        if (remSec <= 0) {
+                            if (timerWrap.parentNode) timerWrap.parentNode.removeChild(timerWrap);
+                            if (window.__hhTimerInterval) {
+                                clearInterval(window.__hhTimerInterval);
+                                window.__hhTimerInterval = null;
+                            }
+                            return;
+                        }
+                        var hh = String(Math.floor(remSec / 3600)).padStart(2, '0');
+                        var mm = String(Math.floor((remSec % 3600) / 60)).padStart(2, '0');
+                        var ss = String(remSec % 60).padStart(2, '0');
+                        timerVal.textContent = hh + ':' + mm + ':' + ss;
+                    }
+
+                    updateTimerText();
+                    timerCard.appendChild(timerLabel);
+                    timerCard.appendChild(timerVal);
+                    timerWrap.appendChild(timerCard);
+                    overlaysLayer.appendChild(timerWrap);
+
+                    window.__hhTimerInterval = setInterval(updateTimerText, 1000);
+                }
             }
         }
 

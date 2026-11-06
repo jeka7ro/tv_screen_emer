@@ -71,6 +71,7 @@ from db import (
     screens_count,
     screens_count_online,
     screen_zones_list,
+    screen_zones_for_screens,
     screen_zones_delete_by_screen_and_zone,
     screen_zone_insert,
     screen_zone_delete,
@@ -83,6 +84,7 @@ from db import (
     content_count,
     content_update_title,
     playlist_get,
+    playlists_get_many,
     playlists_scheduled_active,
     playlists_list,
     playlist_insert,
@@ -492,6 +494,10 @@ class Screen(BaseModel):
     custom_text_color: Optional[str] = "#FFFFFF"
     custom_text_has_background: Optional[bool] = False
     custom_text_bg_color: Optional[str] = "#000000"
+    happy_hour_timer_enabled: Optional[bool] = False
+    happy_hour_timer_end: Optional[str] = None
+    happy_hour_timer_duration: Optional[str] = None
+    happy_hour_timer_position: Optional[str] = "top-center"
     organization_id: Optional[str] = "default_sushimaster"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
@@ -536,6 +542,10 @@ class ScreenCreate(BaseModel):
     custom_text_color: Optional[str] = "#FFFFFF"
     custom_text_has_background: Optional[bool] = False
     custom_text_bg_color: Optional[str] = "#000000"
+    happy_hour_timer_enabled: Optional[bool] = False
+    happy_hour_timer_end: Optional[str] = None
+    happy_hour_timer_duration: Optional[str] = None
+    happy_hour_timer_position: Optional[str] = "top-center"
     organization_id: Optional[str] = None
 
 class ScreenTemplate(BaseModel):
@@ -1448,9 +1458,33 @@ async def create_screen(screen_data: ScreenCreate, request: Request, current_use
 # MUST be BEFORE /screens/{screen_id} to avoid route conflict
 @api_router.get("/screens/thumbnails")
 async def get_screens_thumbnails(request: Request, current_user: User = Depends(get_current_user)):
-    """Return thumbnail URLs for ALL screens in a single lightweight request."""
+    """Return thumbnail URLs for ALL screens in a single lightweight batch request."""
     org_id = get_user_org_id(current_user, request)
     all_screens = await screens_list(org_id=org_id)
+    if not all_screens:
+        return {}
+
+    screen_ids = [s["id"] for s in all_screens if s.get("id")]
+    zones_by_screen = await screen_zones_for_screens(screen_ids)
+
+    playlist_ids = set()
+    content_ids = set()
+    for zones in zones_by_screen.values():
+        for zc in zones:
+            if zc.get("content_type") == "playlist" and zc.get("playlist_id"):
+                playlist_ids.add(zc["playlist_id"])
+            elif zc.get("content_type") == "single_content" and zc.get("content_id"):
+                content_ids.add(zc["content_id"])
+
+    playlists_map = await playlists_get_many(list(playlist_ids)) if playlist_ids else {}
+    for pl in playlists_map.values():
+        if pl and pl.get("items"):
+            first_item = pl["items"][0]
+            if first_item.get("content_id"):
+                content_ids.add(first_item["content_id"])
+
+    content_map = await content_get_many(list(content_ids)) if content_ids else {}
+
     result = {}
     for screen in all_screens:
         slug = screen.get("slug")
@@ -1458,13 +1492,13 @@ async def get_screens_thumbnails(request: Request, current_user: User = Depends(
             continue
         thumb_info = None
         try:
-            zones = await screen_zones_list(screen["id"])
+            zones = zones_by_screen.get(screen["id"], [])
             for zc in zones:
                 if zc.get("content_type") == "playlist" and zc.get("playlist_id"):
-                    playlist = await playlist_get(zc["playlist_id"])
+                    playlist = playlists_map.get(zc["playlist_id"])
                     if playlist and playlist.get("items"):
                         first_item = playlist["items"][0]
-                        content = await content_get(first_item["content_id"])
+                        content = content_map.get(first_item.get("content_id"))
                         if content:
                             thumb_url = content.get("thumbnail_url")
                             thumb_info = {
@@ -1473,7 +1507,7 @@ async def get_screens_thumbnails(request: Request, current_user: User = Depends(
                             }
                             break
                 elif zc.get("content_type") == "single_content" and zc.get("content_id"):
-                    content = await content_get(zc["content_id"])
+                    content = content_map.get(zc["content_id"])
                     if content:
                         thumb_url = content.get("thumbnail_url")
                         thumb_info = {
@@ -2902,7 +2936,8 @@ async def get_display_data(slug: str, security_code: Optional[str] = None):
         "template": template, 
         "zones_config": zones_config, 
         "sync_info": sync_info,
-        "happy_hour_active": happy_hour_override
+        "happy_hour_active": happy_hour_override,
+        "server_time_ms": int(datetime.now(timezone.utc).timestamp() * 1000)
     }
 
 

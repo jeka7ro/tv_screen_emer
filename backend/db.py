@@ -236,6 +236,10 @@ async def init_db() -> None:
         ("custom_text_color", "TEXT", "'#FFFFFF'"),
         ("custom_text_has_background", "BOOLEAN", "FALSE"),
         ("custom_text_bg_color", "TEXT", "'#000000'"),
+        ("happy_hour_timer_enabled", "BOOLEAN", "FALSE"),
+        ("happy_hour_timer_end", "TEXT", "NULL"),
+        ("happy_hour_timer_duration", "TEXT", "NULL"),
+        ("happy_hour_timer_position", "TEXT", "'top-center'"),
         ("sync_created_by", "TEXT", "NULL"),
         ("sync_created_at", "TIMESTAMPTZ", "NULL"),
     ]:
@@ -636,10 +640,12 @@ async def screen_insert(row: Dict[str, Any]) -> None:
            sakura_enabled, sakura_intensity, valentine_hearts_enabled, valentine_hearts_intensity,
            autumn_leaves_enabled, autumn_leaves_intensity, halloween_enabled, halloween_intensity,
            snow_enabled, snow_intensity, custom_text_enabled, custom_text_content, custom_text_position,
-           custom_text_size, custom_text_color, custom_text_has_background, custom_text_bg_color, organization_id)
+           custom_text_size, custom_text_color, custom_text_has_background, custom_text_bg_color,
+           happy_hour_timer_enabled, happy_hour_timer_end, happy_hour_timer_duration, happy_hour_timer_position,
+           organization_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
                    $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
-                   $31, $32, $33, $34, $35, $36, $37, $38, $39, $40)""",
+                   $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44)""",
         row["id"], row["location_id"], row["name"], row["slug"],
         row.get("resolution", "1920x1080"), row.get("orientation", "0"),
         row.get("template_id"), row.get("sync_group"), row.get("cascade_offset", 0),
@@ -658,6 +664,8 @@ async def screen_insert(row: Dict[str, Any]) -> None:
         row.get("custom_text_position", "bottom-center"), row.get("custom_text_size", "md"),
         row.get("custom_text_color", "#FFFFFF"), row.get("custom_text_has_background", False),
         row.get("custom_text_bg_color", "#000000"),
+        row.get("happy_hour_timer_enabled", False), row.get("happy_hour_timer_end"),
+        row.get("happy_hour_timer_duration"), row.get("happy_hour_timer_position", "top-center"),
         row.get("organization_id", "default_sushimaster")
     )
 
@@ -677,8 +685,10 @@ async def screen_update(id: str, data: Dict[str, Any]) -> None:
            custom_text_enabled = $29, custom_text_content = $30,
            custom_text_position = $31, custom_text_size = $32,
            custom_text_color = $33, custom_text_has_background = $34,
-           custom_text_bg_color = $35
-           WHERE id = $36""",
+           custom_text_bg_color = $35,
+           happy_hour_timer_enabled = $36, happy_hour_timer_end = $37,
+           happy_hour_timer_duration = $38, happy_hour_timer_position = $39
+           WHERE id = $40""",
         data["location_id"], data["name"], data["slug"],
         data.get("resolution", "1920x1080"), data.get("orientation", "0"),
         data.get("template_id"), data.get("sync_group"), data.get("cascade_offset", 0),
@@ -697,6 +707,8 @@ async def screen_update(id: str, data: Dict[str, Any]) -> None:
         data.get("custom_text_position", "bottom-center"), data.get("custom_text_size", "md"),
         data.get("custom_text_color", "#FFFFFF"), data.get("custom_text_has_background", False),
         data.get("custom_text_bg_color", "#000000"),
+        data.get("happy_hour_timer_enabled", False), data.get("happy_hour_timer_end"),
+        data.get("happy_hour_timer_duration"), data.get("happy_hour_timer_position", "top-center"),
         id,
     )
 
@@ -931,6 +943,16 @@ async def playlist_get(id: str) -> Optional[Dict[str, Any]]:
     return await _fetch_one("SELECT * FROM playlists WHERE id = $1", id)
 
 
+async def playlists_get_many(ids: List[str]) -> Dict[str, Dict[str, Any]]:
+    if not ids:
+        return {}
+    unique_ids = list({str(i) for i in ids if i})
+    if not unique_ids:
+        return {}
+    rows = await _fetch_all("SELECT * FROM playlists WHERE id = ANY($1::text[])", unique_ids)
+    return {r["id"]: r for r in rows}
+
+
 async def playlists_scheduled_active() -> List[Dict[str, Any]]:
     return await _fetch_all("SELECT * FROM playlists WHERE status = 'active' AND is_scheduled = TRUE ORDER BY created_at DESC")
 
@@ -1098,6 +1120,20 @@ async def digital_menu_delete(id: str) -> bool:
 
 async def screen_zones_list(screen_id: str) -> List[Dict[str, Any]]:
     return await _fetch_all("SELECT * FROM screen_zones WHERE screen_id = $1", screen_id)
+
+
+async def screen_zones_for_screens(screen_ids: List[str]) -> Dict[str, List[Dict[str, Any]]]:
+    if not screen_ids:
+        return {}
+    unique_ids = list({str(i) for i in screen_ids if i})
+    if not unique_ids:
+        return {}
+    rows = await _fetch_all("SELECT * FROM screen_zones WHERE screen_id = ANY($1::text[])", unique_ids)
+    out: Dict[str, List[Dict[str, Any]]] = {}
+    for r in rows:
+        sid = r["screen_id"]
+        out.setdefault(sid, []).append(r)
+    return out
 
 
 async def screen_zones_delete_by_screen_and_zone(screen_id: str, zone_id: str) -> None:

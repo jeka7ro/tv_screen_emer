@@ -369,16 +369,33 @@ export const ScreenDesigner = () => {
         }
       }
 
-      // Load happy hour timer settings from localStorage
-      const savedTimer = localStorage.getItem(`happy_hour_timer_${screenId}`);
-      if (savedTimer) {
-        try {
-          const timerSettings = JSON.parse(savedTimer);
-          setEnableHappyHourTimer(!!timerSettings.enabled);
-          setHappyHourEndTime(sanitizeTimerValue(timerSettings.endTime || ''));
-          setHappyHourTimerPosition(timerSettings.position || 'top-center');
-        } catch (e) {
-          console.error('Error loading timer settings:', e);
+      // Load happy hour timer settings from DB (primary) with localStorage fallback
+      if (screenRes.data.happy_hour_timer_enabled !== undefined) {
+        setEnableHappyHourTimer(!!screenRes.data.happy_hour_timer_enabled);
+        setHappyHourEndTime(sanitizeTimerValue(screenRes.data.happy_hour_timer_duration || ''));
+        setHappyHourTimerPosition(screenRes.data.happy_hour_timer_position || 'top-center');
+        if (screenRes.data.happy_hour_timer_enabled && screenRes.data.happy_hour_timer_end) {
+          const endTs = parseInt(screenRes.data.happy_hour_timer_end, 10);
+          if (!isNaN(endTs) && endTs > Date.now()) {
+            const remSec = Math.floor((endTs - Date.now()) / 1000);
+            const h = String(Math.floor(remSec / 3600)).padStart(2, '0');
+            const m = String(Math.floor((remSec % 3600) / 60)).padStart(2, '0');
+            const s = String(remSec % 60).padStart(2, '0');
+            setHappyHourEndTime(`${h}:${m}:${s}`);
+            setTimerTrigger(prev => prev + 1);
+          }
+        }
+      } else {
+        const savedTimer = localStorage.getItem(`happy_hour_timer_${screenId}`);
+        if (savedTimer) {
+          try {
+            const timerSettings = JSON.parse(savedTimer);
+            setEnableHappyHourTimer(!!timerSettings.enabled);
+            setHappyHourEndTime(sanitizeTimerValue(timerSettings.duration || timerSettings.endTime || ''));
+            setHappyHourTimerPosition(timerSettings.position || 'top-center');
+          } catch (e) {
+            console.error('Error loading timer settings:', e);
+          }
         }
       }
 
@@ -431,6 +448,16 @@ export const ScreenDesigner = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      let computedEndTimestamp = null;
+      if (enableHappyHourTimer && happyHourEndTime) {
+        const parts = happyHourEndTime.split(':');
+        const hours = parseInt(parts[0] || 0);
+        const minutes = parseInt(parts[1] || 0);
+        const seconds = parseInt(parts[2] || 0);
+        const durationMs = (hours * 3600 + minutes * 60 + seconds) * 1000;
+        computedEndTimestamp = Date.now() + durationMs;
+      }
+
       // Update screen template + effects (all saved to DB now)
       await api.put(`/screens/${screenId}`, {
         ...screen,
@@ -458,6 +485,10 @@ export const ScreenDesigner = () => {
         custom_text_color: customTextColor,
         custom_text_has_background: customTextHasBackground,
         custom_text_bg_color: customTextBgColor,
+        happy_hour_timer_enabled: !!(enableHappyHourTimer && happyHourEndTime),
+        happy_hour_timer_end: computedEndTimestamp ? String(computedEndTimestamp) : null,
+        happy_hour_timer_duration: happyHourEndTime || null,
+        happy_hour_timer_position: happyHourTimerPosition || 'top-center',
       });
 
       // Keep localStorage as fallback for existing TVs for backwards compat, but DB is primary
@@ -483,18 +514,11 @@ export const ScreenDesigner = () => {
         bgColor: customTextBgColor
       }));
 
-      // Save happy hour timer settings to localStorage
-      // Store absolute end timestamp so timer persists across refreshes
-      if (enableHappyHourTimer && happyHourEndTime) {
-        const parts = happyHourEndTime.split(':');
-        const hours = parseInt(parts[0] || 0);
-        const minutes = parseInt(parts[1] || 0);
-        const seconds = parseInt(parts[2] || 0);
-        const durationMs = (hours * 3600 + minutes * 60 + seconds) * 1000;
-        const endTimestamp = Date.now() + durationMs;
+      // Save happy hour timer settings to localStorage as fallback
+      if (enableHappyHourTimer && happyHourEndTime && computedEndTimestamp) {
         localStorage.setItem(`happy_hour_timer_${screenId}`, JSON.stringify({
           enabled: true,
-          endTimestamp: endTimestamp,
+          endTimestamp: computedEndTimestamp,
           duration: happyHourEndTime,
           position: happyHourTimerPosition
         }));

@@ -362,66 +362,74 @@ export const DisplayScreen = () => {
     return () => clearInterval(pollInterval);
   }, [slug, securityCode, displayData, isPreview]);
 
-  // Happy Hour Timer Countdown - uses absolute endTimestamp for persistence
+  // Happy Hour Timer Countdown - uses DB fields (primary) with localStorage fallback
   useEffect(() => {
-    if (!displayData?.screen?.id) return;
+    const scr = displayData?.screen;
+    if (!scr?.id) return;
 
-    const savedTimer = localStorage.getItem(`happy_hour_timer_${displayData.screen.id}`);
-    if (!savedTimer) {
+    let enabled = false;
+    let endTimestamp = null;
+    let legacyEndTime = null;
+
+    if (scr.happy_hour_timer_enabled !== undefined) {
+      enabled = !!scr.happy_hour_timer_enabled;
+      endTimestamp = scr.happy_hour_timer_end ? parseInt(scr.happy_hour_timer_end, 10) : null;
+      legacyEndTime = scr.happy_hour_timer_duration || null;
+    } else {
+      const savedTimer = localStorage.getItem(`happy_hour_timer_${scr.id}`);
+      if (savedTimer) {
+        try {
+          const timerSettings = JSON.parse(savedTimer);
+          enabled = !!timerSettings.enabled;
+          endTimestamp = timerSettings.endTimestamp || null;
+          legacyEndTime = timerSettings.duration || timerSettings.endTime || null;
+        } catch (e) {}
+      }
+    }
+
+    if (!enabled) {
       setTimerSeconds(null);
       return;
     }
 
-    try {
-      const timerSettings = JSON.parse(savedTimer);
-      if (!timerSettings.enabled) {
-        setTimerSeconds(null);
+    if (endTimestamp && !isNaN(endTimestamp)) {
+      const remaining = Math.max(0, Math.floor((endTimestamp - Date.now()) / 1000));
+      if (remaining <= 0) {
+        setTimerSeconds(0);
         return;
       }
-
-      // Use absolute endTimestamp for persistence across refreshes
-      const endTimestamp = timerSettings.endTimestamp;
-      if (!endTimestamp) {
-        // Fallback: parse duration if no endTimestamp (legacy format)
-        const parts = (timerSettings.endTime || '0:0:0').split(':');
-        const hours = parseInt(parts[0] || 0);
-        const minutes = parseInt(parts[1] || 0);
-        const seconds = parseInt(parts[2] || 0);
-        setTimerSeconds(hours * 3600 + minutes * 60 + seconds);
-      } else {
-        // Compute remaining seconds from absolute timestamp
-        const remaining = Math.max(0, Math.floor((endTimestamp - Date.now()) / 1000));
-        if (remaining <= 0) {
-          setTimerSeconds(0);
-          return;
-        }
-        setTimerSeconds(remaining);
-      }
-
-      // Countdown every second using endTimestamp for accuracy
-      const countdownInterval = setInterval(() => {
-        if (endTimestamp) {
-          const remaining = Math.max(0, Math.floor((endTimestamp - Date.now()) / 1000));
-          setTimerSeconds(remaining);
-          if (remaining <= 0) {
-            clearInterval(countdownInterval);
-          }
-        } else {
-          setTimerSeconds(prev => {
-            if (prev === null || prev <= 0) {
-              clearInterval(countdownInterval);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }
-      }, 1000);
-
-      return () => clearInterval(countdownInterval);
-    } catch (e) {
+      setTimerSeconds(remaining);
+    } else if (legacyEndTime) {
+      const parts = legacyEndTime.split(':');
+      const hours = parseInt(parts[0] || 0);
+      const minutes = parseInt(parts[1] || 0);
+      const seconds = parseInt(parts[2] || 0);
+      setTimerSeconds(hours * 3600 + minutes * 60 + seconds);
+    } else {
       setTimerSeconds(null);
+      return;
     }
-  }, [displayData?.screen?.id]);
+
+    const countdownInterval = setInterval(() => {
+      if (endTimestamp && !isNaN(endTimestamp)) {
+        const remaining = Math.max(0, Math.floor((endTimestamp - Date.now()) / 1000));
+        setTimerSeconds(remaining);
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+        }
+      } else {
+        setTimerSeconds(prev => {
+          if (prev === null || prev <= 0) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }
+    }, 1000);
+
+    return () => clearInterval(countdownInterval);
+  }, [displayData?.screen?.id, displayData?.screen?.happy_hour_timer_enabled, displayData?.screen?.happy_hour_timer_end]);
 
   // Dedicated heartbeat — runs every 60s regardless of polling/content status
   // Keeps the TV marked as 'online' in the admin panel even when content polling fails
@@ -848,46 +856,54 @@ export const DisplayScreen = () => {
 
       {/* Happy Hour Timer */}
       {(() => {
-        if (timerSeconds === null) return null;
+        if (timerSeconds === null || timerSeconds <= 0) return null;
 
-        const savedTimer = localStorage.getItem(`happy_hour_timer_${displayData?.screen?.id}`);
-        if (!savedTimer) return null;
+        const scr = displayData?.screen;
+        let enabled = false;
+        let position = 'top-center';
 
-        try {
-          const timerSettings = JSON.parse(savedTimer);
-          if (!timerSettings.enabled) return null;
+        if (scr?.happy_hour_timer_enabled !== undefined) {
+          enabled = !!scr.happy_hour_timer_enabled;
+          position = scr.happy_hour_timer_position || 'top-center';
+        } else {
+          const savedTimer = localStorage.getItem(`happy_hour_timer_${scr?.id}`);
+          if (savedTimer) {
+            try {
+              const timerSettings = JSON.parse(savedTimer);
+              enabled = !!timerSettings.enabled;
+              position = timerSettings.position || 'top-center';
+            } catch (e) {}
+          }
+        }
 
-          // Convert timerSeconds back to hh:mm:ss
-          const hoursLeft = Math.floor(timerSeconds / 3600);
-          const minutesLeft = Math.floor((timerSeconds % 3600) / 60);
-          const secondsLeft = timerSeconds % 60;
+        if (!enabled) return null;
 
-          const position = timerSettings.position || 'top-center';
-          const posStyles = {
-            'top-left': { top: '16px', left: '16px' },
-            'top-center': { top: '16px', left: '50%', transform: 'translateX(-50%)' },
-            'top-right': { top: '16px', right: '16px' },
-            'center-left': { top: '50%', left: '16px', transform: 'translateY(-50%)' },
-            'center': { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
-            'center-right': { top: '50%', right: '16px', transform: 'translateY(-50%)' },
-            'bottom-left': { bottom: '16px', left: '16px' },
-            'bottom-center': { bottom: '16px', left: '50%', transform: 'translateX(-50%)' },
-            'bottom-right': { bottom: '16px', right: '16px' },
-          };
+        const hoursLeft = Math.floor(timerSeconds / 3600);
+        const minutesLeft = Math.floor((timerSeconds % 3600) / 60);
+        const secondsLeft = timerSeconds % 60;
 
-          return (
-            <div className="absolute z-40 pointer-events-none" style={posStyles[position]}>
-              <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-2xl shadow-2xl">
-                <div className="text-xs font-semibold uppercase tracking-wider mb-1 text-center">Happy Hour se termină în</div>
-                <div className="text-3xl font-bold text-center tabular-nums">
-                  {String(hoursLeft).padStart(2, '0')}:{String(minutesLeft).padStart(2, '0')}:{String(secondsLeft).padStart(2, '0')}
-                </div>
+        const posStyles = {
+          'top-left': { top: '16px', left: '16px' },
+          'top-center': { top: '16px', left: '50%', transform: 'translateX(-50%)' },
+          'top-right': { top: '16px', right: '16px' },
+          'center-left': { top: '50%', left: '16px', transform: 'translateY(-50%)' },
+          'center': { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' },
+          'center-right': { top: '50%', right: '16px', transform: 'translateY(-50%)' },
+          'bottom-left': { bottom: '16px', left: '16px' },
+          'bottom-center': { bottom: '16px', left: '50%', transform: 'translateX(-50%)' },
+          'bottom-right': { bottom: '16px', right: '16px' },
+        };
+
+        return (
+          <div className="absolute z-40 pointer-events-none" style={posStyles[position]}>
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-2xl shadow-2xl">
+              <div className="text-xs font-semibold uppercase tracking-wider mb-1 text-center">Happy Hour se termină în</div>
+              <div className="text-3xl font-bold text-center tabular-nums">
+                {String(hoursLeft).padStart(2, '0')}:{String(minutesLeft).padStart(2, '0')}:{String(secondsLeft).padStart(2, '0')}
               </div>
             </div>
-          );
-        } catch (e) {
-          return null;
-        }
+          </div>
+        );
       })()}
 
       {/* Sakura Effect */}

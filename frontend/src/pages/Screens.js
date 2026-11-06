@@ -98,10 +98,17 @@ export const Screens = () => {
   useEffect(() => {
     loadData();
 
-    // Poll for updates every 10 seconds
+    // Poll only screen online/offline status every 15 seconds (when tab is visible)
     const interval = setInterval(() => {
-      loadData();
-    }, 10000);
+      if (document.hidden) return;
+      api.get('/screens')
+        .then(screensRes => {
+          setScreens(screensRes.data.sort((a, b) =>
+            (a.name || '').localeCompare(b.name || '', undefined, { numeric: true })
+          ));
+        })
+        .catch(() => {});
+    }, 15000);
 
     return () => clearInterval(interval);
   }, [selectedOrgId]);
