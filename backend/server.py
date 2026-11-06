@@ -2715,7 +2715,8 @@ async def get_display_data(slug: str, security_code: Optional[str] = None):
                 for it in playlist.get("items") or []:
                     c = await content_get(it["content_id"])
                     if c:
-                        items.append({**c, "duration_override": it.get("duration_override")})
+                        item_dur = it.get("duration") or it.get("duration_override") or c.get("duration") or 10
+                        items.append({**c, "duration": item_dur, "duration_override": item_dur})
                 playlist = {**playlist, "content_items": items}
                 zc["playlist"] = playlist
         elif zc.get("content_type") == "single_content" and zc.get("content_id"):
@@ -2763,7 +2764,8 @@ async def get_display_data(slug: str, security_code: Optional[str] = None):
                         for it in playlist.get("items") or []:
                             c = await content_get(it["content_id"])
                             if c:
-                                items.append({**c, "duration_override": it.get("duration_override")})
+                                item_dur = it.get("duration") or it.get("duration_override") or c.get("duration") or 10
+                                items.append({**c, "duration": item_dur, "duration_override": item_dur})
                         playlist = {**playlist, "content_items": items}
                         override_zones.append({
                             "zone_id": "zone1",
