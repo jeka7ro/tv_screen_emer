@@ -664,18 +664,31 @@ export const Playlists = () => {
       console.log('Selected screen IDs:', selectedScreenIds);
 
       // For each screen, check if it should have this playlist assigned
+      // NOTE: If this playlist is scheduled with a future start_at or an end_at window
+      // and the screen ALREADY has a base playlist in screen_zones, we preserve the base
+      // playlist in screen_zones so the backend can automatically override during [start_at, end_at]
+      // and revert back to the base playlist when end_at expires!
+      const isTemporarySchedule = Boolean(
+        formData.is_scheduled && (
+          formData.end_at ||
+          (formData.start_at && new Date(formData.start_at) > new Date())
+        )
+      );
+
       for (const screen of screens) {
         const screenIdStr = String(screen.id);
         const zones = screenZones[screen.id] || [];
         const existingZone = zones.find(z => z.content_type === 'playlist' && z.playlist_id === playlistId);
+        const hasOtherBasePlaylist = zones.some(z => z.content_type === 'playlist' && z.playlist_id && z.playlist_id !== playlistId);
         const shouldBeAssigned = selectedScreenIds.includes(screenIdStr);
 
-        console.log(`Screen ${screen.name} (${screenIdStr}): shouldBeAssigned=${shouldBeAssigned}, existingZone=${!!existingZone}`);
-
         if (shouldBeAssigned && !existingZone) {
+          if (isTemporarySchedule && hasOtherBasePlaylist) {
+            // Keep existing base playlist in screen_zones; backend will override during [start_at, end_at] via playlist.screen_ids
+            continue;
+          }
           // Add zone
           try {
-            console.log(`Adding zone for screen ${screen.name}`);
             await api.post('/screen-zones', {
               screen_id: screen.id,
               zone_id: 'zone1',
@@ -688,7 +701,6 @@ export const Playlists = () => {
         } else if (!shouldBeAssigned && existingZone) {
           // Remove zone
           try {
-            console.log(`Removing zone ${existingZone.id} for screen ${screen.name}`);
             await api.delete(`/screen-zones/${existingZone.id}`);
           } catch (e) {
             console.error('Error removing zone:', e);
@@ -723,24 +735,21 @@ export const Playlists = () => {
   const handleEdit = (playlist) => {
     setEditingPlaylist(playlist);
 
-    // Load screen IDs from screen zones instead of playlist.screen_ids
-    // This ensures consistency with the Airplay dialog
+    // Load screen IDs from both screen zones and playlist.screen_ids (for scheduled playlists)
     const screenIdsFromZones = screens
       .filter(screen => {
         const zones = screenZones[screen.id] || [];
         return zones.some(z => z.content_type === 'playlist' && z.playlist_id === playlist.id);
       })
-      .map(screen => String(screen.id)); // Ensure IDs are strings
-
-    console.log('Editing playlist:', playlist.id, playlist.name);
-    console.log('Screen IDs from zones:', screenIdsFromZones);
-    console.log('Total screens:', screens.length);
-    console.log('Screen zones:', screenZones);
-    console.log('Sample screen ID type:', typeof screens[0]?.id);
+      .map(screen => String(screen.id));
+    const savedScreenIds = Array.isArray(playlist.screen_ids)
+      ? playlist.screen_ids.map(id => String(id))
+      : [];
+    const combinedScreenIds = Array.from(new Set([...screenIdsFromZones, ...savedScreenIds]));
 
     // Auto-select the first location that has selected screens
-    if (screenIdsFromZones.length > 0) {
-      const firstSelectedScreen = screens.find(s => screenIdsFromZones.includes(String(s.id)));
+    if (combinedScreenIds.length > 0) {
+      const firstSelectedScreen = screens.find(s => combinedScreenIds.includes(String(s.id)));
       if (firstSelectedScreen) {
         setSelectedLocationForScreens(firstSelectedScreen.location_id);
       }
@@ -763,7 +772,7 @@ export const Playlists = () => {
       is_scheduled: playlist.is_scheduled || false,
       start_at: toLocalInput(playlist.start_at),
       end_at: toLocalInput(playlist.end_at),
-      screen_ids: screenIdsFromZones
+      screen_ids: combinedScreenIds
     });
     const initialGeneral = playlist.default_duration || (playlist.items && playlist.items[0]?.duration) || 10;
     setGeneralDuration(initialGeneral);
@@ -1030,10 +1039,17 @@ export const Playlists = () => {
     }
   };
 
-  // Check if a playlist is assigned to a screen
+  // Check if a playlist is assigned to a screen (either in screen_zones or scheduled via playlist.screen_ids)
   const isPlaylistOnScreen = (playlistId, screenId) => {
     const zones = screenZones[screenId] || [];
-    return zones.some(z => z.content_type === 'playlist' && z.playlist_id === playlistId);
+    if (zones.some(z => z.content_type === 'playlist' && z.playlist_id === playlistId)) {
+      return true;
+    }
+    const pl = playlists.find(p => p.id === playlistId);
+    if (pl && pl.is_scheduled && Array.isArray(pl.screen_ids) && pl.screen_ids.map(String).includes(String(screenId))) {
+      return true;
+    }
+    return false;
   };
 
   // Brands logic

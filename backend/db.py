@@ -118,7 +118,7 @@ async def init_db() -> None:
                 database=database,
                 ssl=ssl_mode if ssl_mode != "disable" else None,
                 min_size=1, 
-                max_size=3, # Reduced for testing stability
+                max_size=15,
                 command_timeout=20,
                 timeout=15,
                 statement_cache_size=100  # Enable statement caching for performance
@@ -136,7 +136,7 @@ async def init_db() -> None:
                 # Last resort: try the raw URL
                 try:
                     logger.info("Attempting connection via raw DATABASE_URL string...")
-                    pool = await asyncpg.create_pool(url, min_size=1, max_size=5, command_timeout=20)
+                    pool = await asyncpg.create_pool(url, min_size=1, max_size=15, command_timeout=20)
                     logger.info("Database connection established successfully via URL string.")
                     break
                 except Exception as final_e:
@@ -729,6 +729,16 @@ async def content_get(id: str) -> Optional[Dict[str, Any]]:
     return await _fetch_one("SELECT * FROM content WHERE id = $1", id)
 
 
+async def content_get_many(ids: List[str]) -> Dict[str, Dict[str, Any]]:
+    if not ids:
+        return {}
+    unique_ids = list({str(i) for i in ids if i})
+    if not unique_ids:
+        return {}
+    rows = await _fetch_all("SELECT * FROM content WHERE id = ANY($1::text[])", unique_ids)
+    return {r["id"]: r for r in rows}
+
+
 async def content_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:
     if org_id:
         return await _fetch_all("SELECT * FROM content WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1000", org_id)
@@ -919,6 +929,10 @@ async def folder_get_content_count(folder_id: str) -> int:
 
 async def playlist_get(id: str) -> Optional[Dict[str, Any]]:
     return await _fetch_one("SELECT * FROM playlists WHERE id = $1", id)
+
+
+async def playlists_scheduled_active() -> List[Dict[str, Any]]:
+    return await _fetch_all("SELECT * FROM playlists WHERE status = 'active' AND is_scheduled = TRUE ORDER BY created_at DESC")
 
 
 async def playlists_list(org_id: Optional[str] = None) -> List[Dict[str, Any]]:

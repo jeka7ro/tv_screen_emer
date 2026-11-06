@@ -76,12 +76,14 @@ from db import (
     screen_zone_delete,
     screen_zones_delete_by_screen,
     content_get,
+    content_get_many,
     content_list,
     content_insert,
     content_delete,
     content_count,
     content_update_title,
     playlist_get,
+    playlists_scheduled_active,
     playlists_list,
     playlist_insert,
     playlist_update,
@@ -189,6 +191,7 @@ async def upload_to_supabase(file_bytes: bytes, file_path: str, content_type: st
                 Key=file_path,
                 Body=file_bytes,
                 ContentType=content_type,
+                CacheControl="public, max-age=31536000, immutable",
             )
             public_url = f"{R2_PUBLIC_URL}/{file_path}"
             print(f"✅ Uploaded to R2: {file_path}")
@@ -2096,10 +2099,23 @@ async def delete_content_item(content_id: str, current_user: User = Depends(requ
     # 2. Cleanup from screen zones (set to NULL)
     await content_clear_from_screen_zones(content_id)
 
-    file_url = item.get("file_url")
+    file_url = item.get("file_url") or ""
     
+    # For Cloudflare R2 URLs, extract key and delete from R2
+    if R2_PUBLIC_URL and file_url.startswith(R2_PUBLIC_URL + "/"):
+        try:
+            r2_key = file_url[len(R2_PUBLIC_URL) + 1:]
+            await delete_from_supabase(r2_key)
+        except Exception as e:
+            print(f"Error deleting from R2: {e}")
+    elif ".r2.dev/" in file_url:
+        try:
+            r2_key = file_url.split(".r2.dev/", 1)[1]
+            await delete_from_supabase(r2_key)
+        except Exception as e:
+            print(f"Error deleting from R2: {e}")
     # For Supabase URLs, extract path and delete
-    if "supabase.co/storage" in file_url:
+    elif "supabase.co/storage" in file_url:
         # Extract path from URL: https://.../storage/v1/object/public/content/images/file.jpg
         # We want: images/file.jpg
         try:
@@ -2636,6 +2652,56 @@ async def update_sync_group(group_id: str, data: ScreenSyncUpdate, current_user:
 
 # ============ PUBLIC DISPLAY ROUTES ============
 
+def _parse_playlist_dt(val: Any) -> Optional[datetime]:
+    if not val:
+        return None
+    from zoneinfo import ZoneInfo
+    ro_tz = ZoneInfo("Europe/Bucharest")
+    if isinstance(val, datetime):
+        return val.replace(tzinfo=ro_tz) if val.tzinfo is None else val.astimezone(ro_tz)
+    if isinstance(val, str):
+        try:
+            s = val.strip()
+            if s.endswith("Z"):
+                s = s[:-1] + "+00:00"
+            dt = datetime.fromisoformat(s)
+            return dt.replace(tzinfo=ro_tz) if dt.tzinfo is None else dt.astimezone(ro_tz)
+        except Exception:
+            return None
+    return None
+
+
+def _is_playlist_currently_active(playlist: Dict[str, Any]) -> bool:
+    if not playlist:
+        return False
+    if playlist.get("status") == "inactive":
+        return False
+    if not playlist.get("is_scheduled"):
+        return True
+    from zoneinfo import ZoneInfo
+    now_ro = datetime.now(ZoneInfo("Europe/Bucharest"))
+    start_dt = _parse_playlist_dt(playlist.get("start_at"))
+    end_dt = _parse_playlist_dt(playlist.get("end_at"))
+    if start_dt and now_ro < start_dt:
+        return False
+    if end_dt and now_ro > end_dt:
+        return False
+    return True
+
+
+async def _enrich_playlist_items(playlist: Dict[str, Any]) -> Dict[str, Any]:
+    raw_items = playlist.get("items") or []
+    c_ids = [it.get("content_id") for it in raw_items if it.get("content_id")]
+    c_map = await content_get_many(c_ids)
+    items = []
+    for it in raw_items:
+        c = c_map.get(it.get("content_id"))
+        if c:
+            item_dur = it.get("duration") or it.get("duration_override") or c.get("duration") or 10
+            items.append({**c, "duration": item_dur, "duration_override": item_dur})
+    return {**playlist, "content_items": items}
+
+
 @api_router.get("/display/{slug}")
 async def get_display_data(slug: str, security_code: Optional[str] = None):
     screen = await screen_get_by_slug(slug)
@@ -2710,19 +2776,49 @@ async def get_display_data(slug: str, security_code: Optional[str] = None):
                 zc["digital_menu"] = menu
         elif zc.get("content_type") == "playlist" and zc.get("playlist_id"):
             playlist = await playlist_get(zc["playlist_id"])
-            if playlist:
-                items = []
-                for it in playlist.get("items") or []:
-                    c = await content_get(it["content_id"])
-                    if c:
-                        item_dur = it.get("duration") or it.get("duration_override") or c.get("duration") or 10
-                        items.append({**c, "duration": item_dur, "duration_override": item_dur})
-                playlist = {**playlist, "content_items": items}
-                zc["playlist"] = playlist
+            if playlist and _is_playlist_currently_active(playlist):
+                zc["playlist"] = await _enrich_playlist_items(playlist)
+            else:
+                zc["playlist"] = None
         elif zc.get("content_type") == "single_content" and zc.get("content_id"):
             c = await content_get(zc["content_id"])
             if c:
                 zc["content"] = c
+    
+    # ============ SCHEDULED PLAYLIST OVERRIDE (start_at / end_at) ============
+    try:
+        screen_id_str = str(screen["id"])
+        sched_playlists = await playlists_scheduled_active()
+        matching_sched = []
+        for sp in sched_playlists:
+            sp_screens = [str(sid) for sid in (sp.get("screen_ids") or [])]
+            if screen_id_str in sp_screens and _is_playlist_currently_active(sp):
+                matching_sched.append(sp)
+        if matching_sched:
+            # Prioritize playlists with an explicit end_at window, then latest start_at
+            matching_sched.sort(
+                key=lambda x: (
+                    1 if x.get("end_at") else 0,
+                    str(x.get("start_at") or ""),
+                    str(x.get("created_at") or "")
+                ),
+                reverse=True
+            )
+            chosen_sp = matching_sched[0]
+            current_pid = zones_config[0].get("playlist_id") if zones_config else None
+            has_active_zone_pl = bool(zones_config and zones_config[0].get("playlist"))
+            if chosen_sp["id"] != current_pid or not has_active_zone_pl:
+                enriched_sp = await _enrich_playlist_items(chosen_sp)
+                fit_m = zones_config[0].get("fit_mode", "cover") if zones_config else "cover"
+                zones_config = [{
+                    "zone_id": "zone1",
+                    "content_type": "playlist",
+                    "playlist_id": chosen_sp["id"],
+                    "fit_mode": fit_m,
+                    "playlist": enriched_sp
+                }]
+    except Exception as e:
+        logger.warning(f"Scheduled playlist check failed for screen {slug}: {e}")
     
     # Get sync group info if applicable
     sync_info = None
@@ -2760,13 +2856,7 @@ async def get_display_data(slug: str, security_code: Optional[str] = None):
                 if hh.get("content_type") == "playlist" and hh.get("playlist_id"):
                     playlist = await playlist_get(hh["playlist_id"])
                     if playlist:
-                        items = []
-                        for it in playlist.get("items") or []:
-                            c = await content_get(it["content_id"])
-                            if c:
-                                item_dur = it.get("duration") or it.get("duration_override") or c.get("duration") or 10
-                                items.append({**c, "duration": item_dur, "duration_override": item_dur})
-                        playlist = {**playlist, "content_items": items}
+                        playlist = await _enrich_playlist_items(playlist)
                         override_zones.append({
                             "zone_id": "zone1",
                             "content_type": "playlist",
